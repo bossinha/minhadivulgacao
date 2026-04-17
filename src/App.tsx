@@ -70,7 +70,7 @@ const NOTIFICATION_NAMES = ["João", "Maria", "Carlos", "Ana", "Paulo", "Fernand
 const NOTIFICATION_ACTIONS = ["acabou de procurar internet fibra", "visitou uma pizzaria", "pediu orçamento de oficina", "procurou salão de beleza", "visualizou uma empresa", "procurou restaurante", "buscou serviços na plataforma"];
 
 const DEFAULT_DATA = {
-  theme: { primary: "#ffffff", bg: "#000000", text: "#ffffff", textDim: "#a0a0a0" },
+  theme: { primary: "#fbbf24", bg: "#000000", text: "#ffffff", textDim: "#a0a0a0" },
   siteInfo: {
     name: "Minha", suffix: "Divulgação", description: "A maior vitrine digital para o seu negócio na Grande Fortaleza.",
     cnpj: "62.133.196/0001-40", phone: "85 99290-8713", address: "Fortaleza - Ceará - Brasil",
@@ -515,7 +515,7 @@ export default function App() {
                    </button>
                    <button 
                      className="dev-btn" 
-                     style={{ background: '#ff000022', borderColor: '#ff000044', color: '#ff0000' }}
+                     style={{ background: 'rgba(251, 191, 36, 0.1)', borderColor: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24' }}
                      onClick={async () => {
                        if(confirm(`ATENÇÃO: Excluir permanentemente ${udata.city} e todos os seus dados?`)) {
                           await deleteDoc(doc(db, 'tenants', uname));
@@ -1509,7 +1509,7 @@ export default function App() {
         .tv-section { background: #050505; display: flex; flex-direction: column; align-items: center; padding: 60px 0; }
         #tv-container { width: 95%; max-width: 340px; aspect-ratio: 9/16; border-radius: 40px; overflow: hidden; border: 12px solid #1a1a1a; background: #000; box-shadow: 0 50px 100px rgba(0, 0, 0, 0.9); position: relative; }
         #tv-player { width: 100%; height: 100%; object-fit: cover; }
-        .tv-live-badge { position: absolute; top: 20px; left: 20px; background: #ff0000; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.7rem; font-weight: 900; z-index: 10; display: flex; align-items: center; gap: 6px; }
+        .tv-live-badge { position: absolute; top: 20px; left: 20px; background: #fbbf24; color: black; padding: 4px 12px; border-radius: 4px; font-size: 0.7rem; font-weight: 900; z-index: 10; display: flex; align-items: center; gap: 6px; }
         .tv-live-dot { width: 8px; height: 8px; background: white; border-radius: 50%; animation: blink 1s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
@@ -1559,7 +1559,7 @@ export default function App() {
         .segmento-card { background: var(--surface); padding: 20px; border-radius: 20px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .status-badge { padding: 5px 12px; border-radius: 100px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
         .status-disponivel { background: rgba(37, 211, 102, 0.1); color: #25D366; border: 1px solid #25D366; }
-        .status-ocupado { background: rgba(255, 0, 0, 0.1); color: #ff0000; border: 1px solid #ff0000; }
+        .status-ocupado { background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid #fbbf24; }
 
         .pricing-card { background: var(--surface); padding: 50px 40px; border-radius: 35px; border: 1px solid var(--border); text-align: center; position: relative; max-width: 600px; margin: 0 auto; }
         .pricing-badge { background: var(--primary); color: #fff; padding: 6px 20px; border-radius: 100px; font-size: 0.7rem; font-weight: 800; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); }

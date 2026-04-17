@@ -2,8 +2,8 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #ff0000;
-  --color-primary-hover: #cc0000;
+  --color-primary: #fbbf24;
+  --color-primary-hover: #d97706;
   --color-bg: #050505;
   --color-surface: #111111;
   --color-surface-accent: #1a1a1a;
@@ -15,8 +15,8 @@
 
 @layer base {
   :root {
-    --primary: #ff0000;
-    --primary-hover: #cc0000;
+    --primary: #fbbf24;
+    --primary-hover: #d97706;
     --bg: #050505;
     --surface: #111111;
     --surface-accent: #1a1a1a;
@@ -135,7 +135,7 @@
     border-color: var(--primary);
     transform: translateY(-10px);
     background: var(--surface-accent);
-    box-shadow: 0 20px 40px rgba(255, 0, 0, 0.1);
+    box-shadow: 0 20px 40px rgba(251, 191, 36, 0.1);
   }
 
   .home-category-icon {
@@ -228,7 +228,7 @@
     font-size: 0.75rem !important;
     font-weight: 700;
     color: var(--primary);
-    background: rgba(255, 0, 0, 0.05);
+    background: rgba(251, 191, 36, 0.05);
     padding: 4px 12px !important;
     border-radius: 100px;
     margin-bottom: 12px !important;
@@ -339,8 +339,8 @@
     position: absolute;
     top: 20px;
     left: 20px;
-    background: #ff0000;
-    color: white;
+    background: #fbbf24;
+    color: black;
     padding: 4px 12px;
     border-radius: 4px;
     font-size: 0.7rem;
@@ -569,7 +569,7 @@
     font-size: 1.5rem;
     font-weight: 900;
     margin: 0 auto 24px;
-    box-shadow: 0 10px 20px rgba(255, 0, 0, 0.3);
+    box-shadow: 0 10px 20px rgba(251, 191, 36, 0.3);
   }
 
   .step-text {
@@ -587,7 +587,7 @@
     padding: 60px 40px;
     text-align: center;
     position: relative;
-    box-shadow: 0 30px 60px rgba(255, 0, 0, 0.1);
+    box-shadow: 0 30px 60px rgba(251, 191, 36, 0.1);
   }
 
   .pricing-badge {
@@ -653,7 +653,7 @@
     font-weight: 900;
     font-size: 1.2rem;
     transition: all 0.3s ease;
-    box-shadow: 0 15px 30px rgba(255, 0, 0, 0.3);
+    box-shadow: 0 15px 30px rgba(251, 191, 36, 0.3);
   }
 
   .cta-button:hover {
@@ -691,8 +691,8 @@
   }
 
   .status-ocupado {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
+    background: rgba(251, 191, 36, 0.1);
+    color: #fbbf24;
   }
 
   .testimonial-card {
@@ -1058,7 +1058,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 10px 30px rgba(255, 0, 0, 0.3);
+    box-shadow: 0 10px 30px rgba(251, 191, 36, 0.3);
     transition: all 0.3s;
     position: relative;
   }
@@ -1365,7 +1365,7 @@
   gap: 5px;
   font-weight: 700;
   cursor: pointer;
-  background: rgba(255,0,0,0.1);
+  background: rgba(251, 191, 36, 0.1);
   padding: 4px 8px;
   border-radius: 4px;
 }
@@ -1408,8 +1408,8 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  background: #ef4444;
-  color: #fff;
+  background: var(--primary);
+  color: #000;
   border: none;
   width: 24px;
   height: 24px;
@@ -1510,6 +1510,6 @@
 }
 
 .dev-btn-danger {
-  background: #ef4444;
-  color: #fff;
+  background: var(--primary);
+  color: #000;
 }
