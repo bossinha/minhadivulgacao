@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { BrowserRouter, Routes, Route, useParams, useNavigate, useLocation } from 'react-router-dom';
 
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -143,6 +144,21 @@ interface AppData {
 }
 
 export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<AppContent />} />
+        <Route path="/:tenantId" element={<AppContent />} />
+        <Route path="/" element={<AppContent />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+function AppContent() {
+  const navigate = useNavigate();
+  const { tenantId } = useParams();
+  const location = useLocation();
   const [user, setUser] = useState<{ uid: string; email: string | null; username: string; city: string; isAdmin?: boolean } | null>(null);
   const [loginForm, setLoginForm] = useState({ username: '', password: '', city: '' });
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -155,26 +171,32 @@ export default function App() {
 
   // --- Initial Firebase Data Load ---
   useEffect(() => {
-    // Load persisted tenant session if exists
-    const loadSession = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const urlId = params.get('id');
-      
-      // Prioritize URL parameter for viewing
-      if (urlId) {
+    if (tenantId && tenantId !== 'login') {
+      const fetchCity = async () => {
         setIsLoading(true);
         try {
-          const snap = await getDoc(doc(db, 'tenants', urlId.toLowerCase()));
+          const snap = await getDoc(doc(db, 'tenants', tenantId.toLowerCase()));
           if (snap.exists()) {
             setAppData(snap.data().data || DEFAULT_DATA);
+          } else {
+            setAppData(null);
           }
-        } catch (e) { console.error(e); }
-        finally { setIsLoading(false); }
-      }
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchCity();
+    }
+  }, [tenantId]);
 
+  useEffect(() => {
+    // Load persisted tenant session if exists
+    const loadSession = async () => {
       const savedId = localStorage.getItem('tenantId');
       const savedPass = localStorage.getItem('tenantPass');
-      if (savedId && savedPass && !urlId) {
+      if (savedId && savedPass) {
         try {
           const snap = await getDoc(doc(db, 'tenants', savedId));
           if (snap.exists()) {
@@ -289,6 +311,8 @@ export default function App() {
         setUser({ uid: id, email: null, username: id, city: loginForm.city, isAdmin: false });
         setAppData(DEFAULT_DATA);
         alert("Portal criado com sucesso!");
+        setIsDevAreaOpen(true);
+        navigate('/' + id);
         return;
       }
 
@@ -308,6 +332,8 @@ export default function App() {
             isAdmin: data.isAdmin 
           });
           setAppData(data.data || DEFAULT_DATA);
+          setIsDevAreaOpen(true);
+          navigate('/' + id);
           return;
         }
       }
@@ -335,6 +361,8 @@ export default function App() {
     await signOut(auth);
     setUser(null);
     setAppData(null);
+    setIsDevAreaOpen(false);
+    navigate('/login');
   };
 
   const saveToFirebase = async () => {
@@ -611,7 +639,16 @@ export default function App() {
     );
   }
 
-  if (!appData && !isLoading) {
+  if (isLoading || isAuthChecking) {
+    return (
+      <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Inter' }}>
+        <p>Carregando...</p>
+      </div>
+    );
+  }
+
+  // Login UI (Always available at /login or if no appData)
+  if (location.pathname === '/login' || (!appData && !tenantId)) {
     return (
       <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Inter' }}>
         <div style={{ width: '100%', maxWidth: '400px', padding: '40px', background: '#111', borderRadius: '24px', border: '1px solid #222' }}>
@@ -689,6 +726,16 @@ export default function App() {
     );
   }
 
+  if (!appData) {
+    return (
+      <div style={{ background: '#000', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Inter' }}>
+        <h2 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '20px' }}>Cidade não encontrada</h2>
+        <p style={{ color: '#888', marginBottom: '40px' }}>Verifique se o link está correto ou portal ainda não foi criado.</p>
+        <button onClick={() => navigate('/login')} className="dev-btn" style={{ background: '#fff', color: '#000' }}>Voltar ao Login</button>
+      </div>
+    );
+  }
+
   return (
     <div 
       className="min-h-screen bg-bg text-text font-jakarta"
@@ -700,14 +747,16 @@ export default function App() {
         '--text-dim': appData.theme.textDim
       }}
     >
-      {/* Floating Dev Button */}
-      <button 
-        onClick={() => setIsDevAreaOpen(true)}
-        className="dev-floating-btn"
-        title="Área do Desenvolvedor"
-      >
-        🛠️
-      </button>
+      {/* Floating Dev Button - SHOW ONLY IF LOGGED IN MANAGER OR MASTER ADMIN */}
+      {(user?.isAdmin || (user?.uid && user.uid === tenantId)) && (
+        <button 
+          onClick={() => setIsDevAreaOpen(true)}
+          className="dev-floating-btn"
+          title="Área do Desenvolvedor"
+        >
+          🛠️
+        </button>
+      )}
 
       {/* Navigation */}
       <nav>
@@ -1145,14 +1194,14 @@ export default function App() {
                           type="text" 
                           className="dev-input" 
                           readOnly 
-                          value={`${window.location.origin}/?id=${user?.username || ''}`} 
+                          value={`${window.location.origin}/${user?.username || ''}`} 
                           style={{ flex: 1, fontSize: '0.8rem', opacity: 0.8 }} 
                         />
                         <button 
                           className="dev-btn dev-btn-primary" 
                           style={{ padding: '0 15px', fontSize: '0.7rem' }}
                           onClick={() => {
-                            navigator.clipboard.writeText(`${window.location.origin}/?id=${user?.username || ''}`);
+                            navigator.clipboard.writeText(`${window.location.origin}/${user?.username || ''}`);
                             alert("Link copiado com sucesso! Agora você pode enviar para seus clientes.");
                           }}
                         >
