@@ -155,6 +155,33 @@ export default function App() {
 
   // --- Initial Firebase Data Load ---
   useEffect(() => {
+    // Load persisted tenant session if exists
+    const loadSession = async () => {
+      const savedId = localStorage.getItem('tenantId');
+      const savedPass = localStorage.getItem('tenantPass');
+      if (savedId && savedPass) {
+        try {
+          const snap = await getDoc(doc(db, 'tenants', savedId));
+          if (snap.exists()) {
+            const data = snap.data();
+            if (data.password === savedPass) {
+              setUser({ 
+                uid: savedId, 
+                email: null,
+                username: savedId, 
+                city: data.city, 
+                isAdmin: data.isAdmin 
+              });
+              setAppData(data.data || DEFAULT_DATA);
+            }
+          }
+        } catch (e) {
+          console.error("Session restoration failed:", e);
+        }
+      }
+    };
+    loadSession();
+
     // Listen for config changes
     const unsubConfig = onSnapshot(doc(db, 'settings', 'universal'), (snap) => {
       if (snap.exists()) setUniversalConfig(snap.data() as any);
@@ -166,6 +193,10 @@ export default function App() {
     const unsubAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       setIsAuthChecking(true);
       if (firebaseUser) {
+        // Clear manual session if entering as Admin Master
+        localStorage.removeItem('tenantId');
+        localStorage.removeItem('tenantPass');
+
         // Find if user is a tenant or admin
         const tenantSnap = await getDoc(doc(db, 'tenants', firebaseUser.uid));
         
@@ -201,8 +232,11 @@ export default function App() {
           }
         }
       } else {
-        setUser(null);
-        setAppData(null);
+        // Only clear if not a manual tenant
+        if (!localStorage.getItem('tenantId')) {
+          setUser(null);
+          setAppData(null);
+        }
       }
       setIsAuthChecking(false);
     });
@@ -213,8 +247,9 @@ export default function App() {
   const handleLogin = async () => {
     setIsLoading(true);
     try {
+      const id = loginForm.username.toLowerCase().trim();
+      
       if (authMode === 'register') {
-        const id = loginForm.username.toLowerCase().trim();
         if (!id || !loginForm.password || !loginForm.city) {
           alert("Preencha todos os campos.");
           return;
@@ -233,37 +268,36 @@ export default function App() {
           isAdmin: false
         });
 
+        localStorage.setItem('tenantId', id);
+        localStorage.setItem('tenantPass', loginForm.password);
+        
         setUser({ uid: id, email: null, username: id, city: loginForm.city, isAdmin: false });
         setAppData(DEFAULT_DATA);
         alert("Portal criado com sucesso!");
         return;
       }
 
-      // Find tenant by city name/username (in this model we use IDs, but we can search)
-      const tenantsSnap = await getDocs(collection(db, 'tenants'));
-      let foundTenant = null;
-      let tenantId = null;
-
-      tenantsSnap.forEach(d => {
-        const data = d.data();
-        if (d.id === loginForm.username && data.password === loginForm.password) {
-          foundTenant = data;
-          tenantId = d.id;
+      // Login mode
+      const snap = await getDoc(doc(db, 'tenants', id));
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.password === loginForm.password) {
+          localStorage.setItem('tenantId', id);
+          localStorage.setItem('tenantPass', loginForm.password);
+          
+          setUser({ 
+            uid: id, 
+            email: null,
+            username: id, 
+            city: data.city, 
+            isAdmin: data.isAdmin 
+          });
+          setAppData(data.data || DEFAULT_DATA);
+          return;
         }
-      });
-
-      if (foundTenant && tenantId) {
-        setUser({ 
-          uid: tenantId, 
-          email: null,
-          username: tenantId, 
-          city: (foundTenant as any).city, 
-          isAdmin: (foundTenant as any).isAdmin 
-        });
-        setAppData((foundTenant as any).data || DEFAULT_DATA);
-      } else {
-        alert("Credenciais inválidas ou inquilino não encontrado.");
       }
+      
+      alert("Credenciais inválidas ou inquilino não encontrado.");
     } catch (e) {
       console.error(e);
     } finally {
@@ -281,6 +315,8 @@ export default function App() {
   };
 
   const logout = async () => {
+    localStorage.removeItem('tenantId');
+    localStorage.removeItem('tenantPass');
     await signOut(auth);
     setUser(null);
     setAppData(null);
