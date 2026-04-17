@@ -395,6 +395,7 @@ function AppContent() {
       alert("Erro ao salvar no Firebase. Verifique suas permissões.");
     }
   };
+  const [openCompanyIndex, setOpenCompanyIndex] = useState<number | null>(null);
   const [visitorCount, setVisitorCount] = useState(2000);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(true);
@@ -745,7 +746,7 @@ function AppContent() {
             🔑 Entrar como Admin Master
           </button>
           <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '12px', color: '#888' }}>
-            Alugue sua rádio e guia digital. Contato: (85) 99286-2177
+            Desenvolvido por Bossa Infor. Contato: (85) 99286-2177
           </p>
         </div>
       </div>
@@ -946,8 +947,8 @@ function AppContent() {
                   <div key={i} className="vu-bar" style={{ animationDelay: `${delay}s` }}></div>
                 ))}
               </div>
-              <audio controls style={{ height: '35px', filter: 'invert(1) brightness(1.5)', opacity: 0.8 }}>
-                <source src={appData.siteInfo.radioLink} type="audio/mpeg" />
+              <audio key={universalConfig.radioLink || appData.siteInfo.radioLink} controls style={{ height: '35px', filter: 'invert(1) brightness(1.5)', opacity: 0.8 }}>
+                <source src={universalConfig.radioLink || appData.siteInfo.radioLink} type="audio/mpeg" />
               </audio>
             </div>
           </div>
@@ -1185,7 +1186,7 @@ function AppContent() {
               <p>CNPJ: {appData.siteInfo.cnpj}</p>
             </div>
           </div>
-          <p style={{ textAlign: 'center', marginTop: '40px', color: '#444', fontSize: '0.8rem' }}>&copy; 2025 Minha Divulgação. Todos os direitos reservados.</p>
+          <p style={{ textAlign: 'center', marginTop: '40px', color: '#444', fontSize: '0.8rem' }}>&copy; 2026 Desenvolvido por Bossa Infor. Todos os direitos reservados.</p>
         </div>
       </footer>
 
@@ -1298,77 +1299,107 @@ function AppContent() {
                   <div className="dev-forms-container">
                     <h3>Gerenciar Empresas</h3>
                     {appData.companies.map((c, idx) => (
-                      <div key={idx} className="dev-item-card">
-                        <button className="dev-remove-btn" onClick={() => updateData('companies', appData.companies.filter((_, i) => i !== idx))}>✕</button>
-                        <div className="dev-grid-2">
-                          <div className="dev-form-group">
-                            <label>Nome</label>
-                            <input type="text" className="dev-input" value={c.name} onChange={(e) => {
-                              const newList = [...appData.companies];
-                              newList[idx].name = e.target.value;
-                              updateData('companies', newList);
-                            }} />
+                      <div key={idx} className={`dev-accordion-item ${openCompanyIndex === idx ? 'open' : ''}`}>
+                        <div className="dev-accordion-header" onClick={() => setOpenCompanyIndex(openCompanyIndex === idx ? null : idx)}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                            {c.logo ? <img src={c.logo} style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }} alt="" referrerPolicy="no-referrer" /> : '🏢'}
+                            <div style={{ textAlign: 'left' }}>
+                              <div style={{ fontWeight: 800, fontSize: '0.9rem' }}>{c.name || 'Nova Empresa'}</div>
+                              <div style={{ fontSize: '11px', color: '#888' }}>{c.category}</div>
+                            </div>
                           </div>
-                          <div className="dev-form-group">
-                            <label>Categoria</label>
-                            <input type="text" className="dev-input" value={c.category} onChange={(e) => {
-                              const newList = [...appData.companies];
-                              newList[idx].category = e.target.value;
-                              updateData('companies', newList);
-                            }} />
+                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                            <button className="dev-remove-btn" style={{ position: 'static', padding: '5px' }} onClick={(e) => { e.stopPropagation(); updateData('companies', appData.companies.filter((_, i) => i !== idx)); }}>✕</button>
+                            <span>{openCompanyIndex === idx ? '▲' : '▼'}</span>
                           </div>
                         </div>
-                        <div className="dev-form-group">
-                          <label>Descrição da Empresa</label>
-                          <textarea 
-                            className="dev-input" 
-                            style={{ minHeight: '80px', resize: 'vertical' }}
-                            value={c.desc} 
-                            onChange={(e) => {
-                              const newList = [...appData.companies];
-                              newList[idx].desc = e.target.value;
-                              updateData('companies', newList);
-                            }} 
-                          />
-                        </div>
-                        <div className="dev-form-group">
-                          <div className="dev-label-row">
-                            <label>Link da Logo (URL)</label>
-                            <a href="https://postimages.org/" target="_blank" rel="noreferrer" className="dev-helper-link">
-                              📸 Abrir PostImages
-                            </a>
-                          </div>
-                          <input type="text" className="dev-input" value={c.logo} onChange={(e) => {
-                            const newList = [...appData.companies];
-                            newList[idx].logo = e.target.value;
-                            updateData('companies', newList);
-                          }} placeholder="Cole o link direto .jpg ou .png aqui" />
-                          {c.logo && <img src={c.logo} className="dev-img-preview" alt="Preview da Logo" referrerPolicy="no-referrer" />}
-                        </div>
-                        <div className="dev-grid-2">
-                          <div className="dev-form-group">
-                            <label>WhatsApp (Apenas números)</label>
-                            <input type="text" className="dev-input" value={c.wa} onChange={(e) => {
-                              const newList = [...appData.companies];
-                              newList[idx].wa = e.target.value;
-                              updateData('companies', newList);
-                            }} />
-                          </div>
-                          <div className="dev-form-group">
-                            <label>Destaque?</label>
-                            <select className="dev-input" value={c.featured ? 'sim' : 'nao'} onChange={(e) => {
-                              const newList = [...appData.companies];
-                              newList[idx].featured = e.target.value === 'sim';
-                              updateData('companies', newList);
-                            }}>
-                              <option value="sim">Sim</option>
-                              <option value="nao">Não</option>
-                            </select>
-                          </div>
-                        </div>
+                        
+                        <AnimatePresence>
+                          {openCompanyIndex === idx && (
+                            <motion.div 
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              style={{ overflow: 'hidden' }}
+                            >
+                              <div style={{ padding: '20px', borderTop: '1px solid #222' }}>
+                                <div className="dev-grid-2">
+                                  <div className="dev-form-group">
+                                    <label>Nome</label>
+                                    <input type="text" className="dev-input" value={c.name} onChange={(e) => {
+                                      const newList = [...appData.companies];
+                                      newList[idx].name = e.target.value;
+                                      updateData('companies', newList);
+                                    }} />
+                                  </div>
+                                  <div className="dev-form-group">
+                                    <label>Categoria</label>
+                                    <input type="text" className="dev-input" value={c.category} onChange={(e) => {
+                                      const newList = [...appData.companies];
+                                      newList[idx].category = e.target.value;
+                                      updateData('companies', newList);
+                                    }} />
+                                  </div>
+                                </div>
+                                <div className="dev-form-group">
+                                  <label>Descrição da Empresa</label>
+                                  <textarea 
+                                    className="dev-input" 
+                                    style={{ minHeight: '80px', resize: 'vertical' }}
+                                    value={c.desc} 
+                                    onChange={(e) => {
+                                      const newList = [...appData.companies];
+                                      newList[idx].desc = e.target.value;
+                                      updateData('companies', newList);
+                                    }} 
+                                  />
+                                </div>
+                                <div className="dev-form-group">
+                                  <div className="dev-label-row">
+                                    <label>Link da Logo (URL)</label>
+                                    <a href="https://postimages.org/" target="_blank" rel="noreferrer" className="dev-helper-link">
+                                      📸 Abrir PostImages
+                                    </a>
+                                  </div>
+                                  <input type="text" className="dev-input" value={c.logo} onChange={(e) => {
+                                    const newList = [...appData.companies];
+                                    newList[idx].logo = e.target.value;
+                                    updateData('companies', newList);
+                                  }} placeholder="Cole o link direto .jpg ou .png aqui" />
+                                  {c.logo && <img src={c.logo} className="dev-img-preview" alt="Preview da Logo" referrerPolicy="no-referrer" />}
+                                </div>
+                                <div className="dev-grid-2">
+                                  <div className="dev-form-group">
+                                    <label>WhatsApp (Apenas números)</label>
+                                    <input type="text" className="dev-input" value={c.wa} onChange={(e) => {
+                                      const newList = [...appData.companies];
+                                      newList[idx].wa = e.target.value;
+                                      updateData('companies', newList);
+                                    }} />
+                                  </div>
+                                  <div className="dev-form-group">
+                                    <label>Destaque?</label>
+                                    <select className="dev-input" value={c.featured ? 'sim' : 'nao'} onChange={(e) => {
+                                      const newList = [...appData.companies];
+                                      newList[idx].featured = e.target.value === 'sim';
+                                      updateData('companies', newList);
+                                    }}>
+                                      <option value="sim">Sim</option>
+                                      <option value="nao">Não</option>
+                                    </select>
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     ))}
-                    <button className="dev-add-btn" onClick={() => updateData('companies', [...appData.companies, { id: Date.now(), name: "Nova Empresa", category: "Geral", desc: "Descrição aqui", logo: "", wa: "", ig: "#", featured: false }])}>+ Adicionar Empresa</button>
+                    <button className="dev-add-btn" onClick={() => {
+                      const newIdx = appData.companies.length;
+                      updateData('companies', [...appData.companies, { id: Date.now(), name: "Nova Empresa", category: "Geral", desc: "Descrição aqui", logo: "", wa: "", ig: "#", featured: false }]);
+                      setOpenCompanyIndex(newIdx);
+                    }}>+ Adicionar Empresa</button>
                   </div>
                 )}
 
