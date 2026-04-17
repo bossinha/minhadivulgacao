@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'bossinhaa80@gmail.com' && 
+        request.auth.token.email_verified == true
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Tenants Collection
+    match /tenants/{tenantId} {
+      // Anyone can GET their own tenant data if they know the ID (Public view)
+      allow get: if isValidId(tenantId);
+      
+      // List only for Admin Master
+      allow list: if isAdmin();
+      
+      // Self-Registration: Anyone can create a NEW tenant if ID is unique and not an admin
+      allow create: if isValidId(tenantId) && 
+                      !exists(/databases/$(database)/documents/tenants/$(tenantId)) &&
+                      request.resource.data.keys().hasAll(['city', 'password', 'data', 'isAdmin']) &&
+                      request.resource.data.isAdmin == false;
+      
+      // Admin can do anything
+      allow update, delete: if isAdmin();
+      
+      // Tenant can update their own data if they pass a simple "password" check 
+      allow update: if isValidId(tenantId) && (
+        request.resource.data.password == resource.data.password &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['data'])
+      );
+    }
+
+    // Dynamic Settings
+    match /settings/universal {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

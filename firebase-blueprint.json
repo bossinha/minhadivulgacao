@@ -1,0 +1,35 @@
+{
+  "entities": {
+    "Tenant": {
+      "title": "Tenant",
+      "description": "Data for a specific city/tenant",
+      "type": "object",
+      "properties": {
+        "city": { "type": "string" },
+        "password": { "type": "string" },
+        "data": { "type": "object" },
+        "isAdmin": { "type": "boolean" },
+        "ownerEmail": { "type": "string" }
+      },
+      "required": ["city", "password"]
+    },
+    "GlobalConfig": {
+      "title": "Global Config",
+      "description": "Universal settings for all sites",
+      "type": "object",
+      "properties": {
+        "radioLink": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/tenants/{tenantId}": {
+      "schema": "Tenant",
+      "description": "City specific data"
+    },
+    "/settings/universal": {
+      "schema": "GlobalConfig",
+      "description": "Global radio link"
+    }
+  }
+}
