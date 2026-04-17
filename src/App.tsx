@@ -1561,20 +1561,11 @@ function AppContent() {
               <div className="dev-actions">
                 <button 
                   className="dev-btn dev-btn-primary" 
-                  style={{ background: '#25D366', borderColor: '#25D366', color: '#fff' }}
+                  style={{ background: '#25D366', borderColor: '#25D366', color: '#fff', width: '100%' }}
                   onClick={saveToFirebase}
                 >
-                  💾 Salvar no Firebase
+                  💾 Salvar
                 </button>
-
-                <button className="dev-btn dev-btn-primary" onClick={() => {
-                  const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = 'minha-divulgacao-data.json';
-                  a.click();
-                }}>Exportar Backup</button>
               </div>
             </div>
           </motion.div>
