@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BrowserRouter, Routes, Route, useParams, useNavigate, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, useParams, useNavigate, useLocation } from 'react-router-dom';
 
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -145,13 +145,13 @@ interface AppData {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route path="/login" element={<AppContent />} />
         <Route path="/:tenantId" element={<AppContent />} />
         <Route path="/" element={<AppContent />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
@@ -159,6 +159,13 @@ function AppContent() {
   const navigate = useNavigate();
   const { tenantId } = useParams();
   const location = useLocation();
+
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
   const [user, setUser] = useState<{ uid: string; email: string | null; username: string; city: string; isAdmin?: boolean } | null>(null);
   const [loginForm, setLoginForm] = useState({ username: '', password: '', city: '' });
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -179,6 +186,7 @@ function AppContent() {
           if (snap.exists()) {
             setAppData(snap.data().data || DEFAULT_DATA);
           } else {
+            console.warn("Cidade não encontrada no banco");
             setAppData(null);
           }
         } catch (e) {
@@ -188,6 +196,11 @@ function AppContent() {
         }
       };
       fetchCity();
+    } else {
+      // Clear data if at root or login and not logged in
+      if (!localStorage.getItem('tenantId')) {
+        setAppData(null);
+      }
     }
   }, [tenantId]);
 
@@ -210,11 +223,16 @@ function AppContent() {
                 isAdmin: data.isAdmin 
               });
               setAppData(data.data || DEFAULT_DATA);
+              if (!tenantId || tenantId === 'login') {
+                navigate('/' + savedId);
+              }
             }
           }
         } catch (e) {
           console.error("Session restoration failed:", e);
         }
+      } else if (!tenantId) {
+        navigate('/login');
       }
     };
     loadSession();
@@ -576,6 +594,14 @@ function AppContent() {
                 <div style={{ display: 'flex', gap: '10px' }}>
                    <button 
                      className="dev-btn" 
+                     style={{ background: '#25D366', borderColor: '#25D366', color: '#fff' }}
+                     onClick={() => navigate('/' + uname)}
+                     title="Ver e Editar Portal"
+                   >
+                     👁️
+                   </button>
+                   <button 
+                     className="dev-btn" 
                      style={{ background: '#333', borderColor: '#444' }}
                      onClick={async () => {
                        const newPass = prompt("Nova senha?", udata.password);
@@ -731,7 +757,9 @@ function AppContent() {
       <div style={{ background: '#000', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Inter' }}>
         <h2 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '20px' }}>Cidade não encontrada</h2>
         <p style={{ color: '#888', marginBottom: '40px' }}>Verifique se o link está correto ou portal ainda não foi criado.</p>
-        <button onClick={() => navigate('/login')} className="dev-btn" style={{ background: '#fff', color: '#000' }}>Voltar ao Login</button>
+        <div style={{ display: 'flex', gap: '20px' }}>
+          <button onClick={() => navigate('/login')} className="dev-btn" style={{ background: '#fff', color: '#000', width: '200px' }}>Ir para Login</button>
+        </div>
       </div>
     );
   }
@@ -762,8 +790,8 @@ function AppContent() {
       <nav>
         <div className="container">
           <div className="nav-content">
-            <a href="#" className="logo">{appData.siteInfo.name}<span style={{ color: '#ffffff' }}>{appData.siteInfo.suffix}</span></a>
-            <a href="#anuncie" className="btn-view" style={{ padding: '8px 20px', fontSize: '0.8rem', background: 'var(--primary)', border: 'none' }}>Anunciar</a>
+            <a href="#" className="logo" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>{appData.siteInfo.name}<span style={{ color: '#ffffff' }}>{appData.siteInfo.suffix}</span></a>
+            <button onClick={() => scrollToSection('anuncie')} className="btn-view" style={{ padding: '8px 20px', fontSize: '0.8rem', background: 'var(--primary)', border: 'none', cursor: 'pointer' }}>Anunciar</button>
           </div>
         </div>
       </nav>
@@ -1036,7 +1064,7 @@ function AppContent() {
       </section>
 
       {/* Pricing */}
-      <section className="container">
+      <section className="container" id="anuncie">
         <div className="pricing-card">
           <div className="pricing-badge">{appData.pricing.badge}</div>
           <h3 style={{ fontSize: '1.8rem', fontWeight: 900 }}>{appData.pricing.title}</h3>
@@ -1097,21 +1125,55 @@ function AppContent() {
                 <a href={appData.siteInfo.social.ig} target="_blank" className="social-icon ig">IG</a>
                 <a href={appData.siteInfo.social.wa} target="_blank" className="social-icon wa">WA</a>
               </div>
-              <button 
-                onClick={() => setIsDevAreaOpen(true)}
-                style={{ 
-                  marginTop: '20px', 
-                  background: 'none', 
-                  border: '1px solid #333', 
-                  color: '#444', 
-                  padding: '5px 10px', 
-                  borderRadius: '5px', 
-                  fontSize: '0.7rem',
-                  cursor: 'pointer'
-                }}
-              >
-                Área do Desenvolvedor
-              </button>
+              <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+                {(user?.isAdmin || (user?.uid && user.uid === tenantId)) && (
+                  <button 
+                    onClick={() => setIsDevAreaOpen(true)}
+                    style={{ 
+                      background: 'none', 
+                      border: '1px solid #333', 
+                      color: '#666', 
+                      padding: '5px 10px', 
+                      borderRadius: '5px', 
+                      fontSize: '0.7rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ⚙️ Painel de Gestor
+                  </button>
+                )}
+                {user ? (
+                  <button 
+                    onClick={logout}
+                    style={{ 
+                      background: 'none', 
+                      border: '1px solid #333', 
+                      color: '#666', 
+                      padding: '5px 10px', 
+                      borderRadius: '5px', 
+                      fontSize: '0.7rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🚪 Sair
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => navigate('/login')}
+                    style={{ 
+                      background: 'none', 
+                      border: '1px solid #333', 
+                      color: '#666', 
+                      padding: '5px 10px', 
+                      borderRadius: '5px', 
+                      fontSize: '0.7rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🔑 Login
+                  </button>
+                )}
+              </div>
             </div>
             <div className="footer-col">
               <h4>CONTATO</h4>
@@ -1194,14 +1256,14 @@ function AppContent() {
                           type="text" 
                           className="dev-input" 
                           readOnly 
-                          value={`${window.location.origin}/${user?.username || ''}`} 
+                          value={`${window.location.origin}/#/${user?.username || ''}`} 
                           style={{ flex: 1, fontSize: '0.8rem', opacity: 0.8 }} 
                         />
                         <button 
                           className="dev-btn dev-btn-primary" 
                           style={{ padding: '0 15px', fontSize: '0.7rem' }}
                           onClick={() => {
-                            navigator.clipboard.writeText(`${window.location.origin}/${user?.username || ''}`);
+                            navigator.clipboard.writeText(`${window.location.origin}/#/${user?.username || ''}`);
                             alert("Link copiado com sucesso! Agora você pode enviar para seus clientes.");
                           }}
                         >
