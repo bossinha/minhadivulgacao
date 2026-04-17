@@ -281,6 +281,7 @@ function AppContent() {
              const users: any = {};
              tenantsSnap.forEach(d => users[d.id] = d.data());
              setAllUsers(users);
+             if (!tenantId || tenantId === 'login') navigate('/master');
           } else {
             // Unrecognized user
             await signOut(auth);
@@ -539,7 +540,7 @@ function AppContent() {
     ? appData.companies.filter(c => c.category === selectedCategory)
     : (appData?.companies || []);
 
-  if (user?.isAdmin) {
+  if (user?.isAdmin && (!tenantId || tenantId.toLowerCase() === 'master')) {
     return (
       <div style={{ background: '#000', minHeight: '100vh', color: '#fff', fontFamily: 'Inter', padding: '40px' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -777,6 +778,29 @@ function AppContent() {
       }}
     >
       {/* Floating Dev Button - SHOW ONLY IF LOGGED IN MANAGER OR MASTER ADMIN */}
+      {user?.isAdmin && tenantId !== 'master' && (
+        <button 
+          onClick={() => navigate('/master')}
+          style={{
+            position: 'fixed',
+            top: '20px',
+            left: '20px',
+            zIndex: 1100,
+            background: '#fbbf24',
+            color: '#000',
+            border: 'none',
+            padding: '10px 20px',
+            borderRadius: '100px',
+            fontWeight: 800,
+            fontSize: '0.7rem',
+            cursor: 'pointer',
+            boxShadow: '0 4px 15px rgba(251, 191, 36, 0.3)'
+          }}
+        >
+          ⬅️ VOLTAR AO MASTER
+        </button>
+      )}
+
       {(user?.isAdmin || (user?.uid && user.uid === tenantId)) && (
         <button 
           onClick={() => setIsDevAreaOpen(true)}
