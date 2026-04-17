@@ -157,9 +157,24 @@ export default function App() {
   useEffect(() => {
     // Load persisted tenant session if exists
     const loadSession = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const urlId = params.get('id');
+      
+      // Prioritize URL parameter for viewing
+      if (urlId) {
+        setIsLoading(true);
+        try {
+          const snap = await getDoc(doc(db, 'tenants', urlId.toLowerCase()));
+          if (snap.exists()) {
+            setAppData(snap.data().data || DEFAULT_DATA);
+          }
+        } catch (e) { console.error(e); }
+        finally { setIsLoading(false); }
+      }
+
       const savedId = localStorage.getItem('tenantId');
       const savedPass = localStorage.getItem('tenantPass');
-      if (savedId && savedPass) {
+      if (savedId && savedPass && !urlId) {
         try {
           const snap = await getDoc(doc(db, 'tenants', savedId));
           if (snap.exists()) {
@@ -596,7 +611,7 @@ export default function App() {
     );
   }
 
-  if (!user || !appData) {
+  if (!appData && !isLoading) {
     return (
       <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Inter' }}>
         <div style={{ width: '100%', maxWidth: '400px', padding: '40px', background: '#111', borderRadius: '24px', border: '1px solid #222' }}>
@@ -1074,8 +1089,17 @@ export default function App() {
           >
             <div className="dev-area-content">
               <div className="dev-header">
-                <h2 className="dev-title">ÁREA DO DESENVOLVEDOR</h2>
-                <button className="dev-close" onClick={() => setIsDevAreaOpen(false)}>✕</button>
+                <h2 className="dev-title">ÁREA DO GESTOR</h2>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <button 
+                    className="dev-btn" 
+                    style={{ background: '#333', color: '#fff', fontSize: '11px', padding: '8px 12px' }} 
+                    onClick={logout}
+                  >
+                    Sair / Logout
+                  </button>
+                  <button className="dev-close" onClick={() => setIsDevAreaOpen(false)}>✕</button>
+                </div>
               </div>
 
               <div className="dev-tabs">
@@ -1114,6 +1138,29 @@ export default function App() {
                         <input type="text" className="dev-input" value={appData.siteInfo.suffix} onChange={(e) => updateData('siteInfo', { ...appData.siteInfo, suffix: e.target.value })} />
                       </div>
                     </div>
+                    <div className="dev-form-group">
+                      <label>Seu Link para Divulgação</label>
+                      <div style={{ display: 'flex', gap: '5px' }}>
+                        <input 
+                          type="text" 
+                          className="dev-input" 
+                          readOnly 
+                          value={`${window.location.origin}/?id=${user?.username || ''}`} 
+                          style={{ flex: 1, fontSize: '0.8rem', opacity: 0.8 }} 
+                        />
+                        <button 
+                          className="dev-btn dev-btn-primary" 
+                          style={{ padding: '0 15px', fontSize: '0.7rem' }}
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${window.location.origin}/?id=${user?.username || ''}`);
+                            alert("Link copiado com sucesso! Agora você pode enviar para seus clientes.");
+                          }}
+                        >
+                          COPIAR LINK
+                        </button>
+                      </div>
+                    </div>
+
                     <div className="dev-form-group">
                       <label>Descrição</label>
                       <textarea className="dev-input" value={appData.siteInfo.description} onChange={(e) => updateData('siteInfo', { ...appData.siteInfo, description: e.target.value })} />
@@ -1417,499 +1464,6 @@ export default function App() {
                   a.download = 'minha-divulgacao-data.json';
                   a.click();
                 }}>Exportar Backup</button>
-                
-                <button className="dev-btn dev-btn-secondary" onClick={() => {
-                  const input = document.createElement('input');
-                  input.type = 'file';
-                  input.accept = 'application/json';
-                  input.onchange = (e: any) => {
-                    const file = e.target.files[0];
-                    const reader = new FileReader();
-                    reader.onload = (event: any) => {
-                      try {
-                        const newData = JSON.parse(event.target.result);
-                        setAppData(newData);
-                        alert('Dados importados com sucesso!');
-                      } catch (err) {
-                        alert('Erro ao importar arquivo.');
-                      }
-                    };
-                    reader.readAsText(file);
-                  };
-                  input.click();
-                }}>Importar Backup</button>
-
-                <button className="dev-btn dev-btn-secondary" onClick={() => {
-                  const getEmbedHTML = () => {
-                    const apiBase = window.location.origin;
-                    const embedScript = `<script>
-    const tenantId = "${user.username}";
-    const apiBase = "${apiBase}";
-    
-    // Este script é apenas um exemplo de como carregar os dados dinâmicamente no site real.
-    // Para que o Google Sites carregue os dados da sua cidade específica:
-    console.log("SaaS Data Loaded for", tenantId);
-</script>`;
-
-                    const categoriesHTML = appData.categories.map(cat => `
-    <div class="home-category-card" onclick="filtrarCategoria('${cat.name}', this)" style="cursor: pointer;">
-        <div class="home-category-icon">${cat.icon}</div>
-        <span class="home-category-name">${cat.name}</span>
-    </div>`).join('\n');
-
-                    const companiesHTML = appData.companies.map(c => `
-    <div class="company-card">
-      <div class="card-inner ${c.featured ? 'featured-company' : ''}">
-        ${c.featured ? '<div class="featured-badge">Destaque</div>' : ''}
-        <div class="logo-wrapper">
-          <img src="${c.logo}" alt="${c.name}" class="company-logo" referrerPolicy="no-referrer">
-        </div>
-        <h3 class="company-name">${c.name}</h3>
-        <span class="company-category">${c.category}</span>
-        <p class="company-desc">${c.desc}</p>
-        <div class="card-actions">
-          <a href="https://wa.me/${c.wa}" target="_blank" class="wa-button">WhatsApp</a>
-          <a href="${c.ig}" target="_blank" class="btn-view">Ver Empresa</a>
-        </div>
-      </div>
-    </div>`).join('\n');
-
-                    const flyersHTML = appData.flyers.map(src => `
-    <div class="flyer-item">
-      <div class="flyer-inner">
-        <img src="${src}" alt="Flyer" class="flyer-img" referrerPolicy="no-referrer">
-      </div>
-    </div>`).join('\n');
-
-                    const segmentsHTML = appData.segmentsList.map(s => `
-    <div class="segmento-card">
-        <div class="segmento-info">
-            <h4>${s.name}</h4>
-            <p style="font-size: 0.8rem; color: var(--text-dim);">${s.status === 'Ocupado' ? 'Empresa oficial da categoria' : 'Vaga em aberto'}</p>
-        </div>
-        <div class="status-badge ${s.status === 'Ocupado' ? 'status-ocupado' : 'status-disponivel'}">
-            ${s.status}
-        </div>
-    </div>`).join('\n');
-
-                    const logoCarouselHTML = appData.companies.map(c => `
-    <div class="logo-item">
-      <img src="${c.logo}" alt="${c.name}" class="carousel-logo" referrerPolicy="no-referrer">
-    </div>`).join('\n');
-
-                    return `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${appData.siteInfo.name} ${appData.siteInfo.suffix} | ${appData.sections.categories.title}</title>
-    <meta name="description" content="${appData.siteInfo.description}">
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --primary: ${appData.theme.primary};
-            --primary-hover: ${appData.theme.primary}cc;
-            --bg: ${appData.theme.bg};
-            --surface: #111111;
-            --surface-accent: #1a1a1a;
-            --text: ${appData.theme.text};
-            --text-dim: ${appData.theme.textDim};
-            --border: rgba(255, 255, 255, 0.1);
-            --font: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
-        body { background-color: var(--bg); color: var(--text); font-family: var(--font); line-height: 1.6; overflow-x: hidden; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-        
-        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(5, 5, 5, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); height: 80px; display: flex; align-items: center; }
-        .nav-content { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .logo { font-weight: 800; font-size: 1.5rem; color: var(--text); text-decoration: none; display: flex; align-items: center; gap: 10px; }
-        .logo span { color: var(--primary); }
-        .live-badge { background: var(--primary); color: white; font-size: 0.6rem; padding: 2px 8px; border-radius: 4px; font-weight: 900; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        section { padding: 80px 0; }
-        .section-header { text-align: center; margin-bottom: 60px; }
-        .section-tag { color: var(--primary); font-weight: 900; font-size: 1.25rem; text-transform: uppercase; letter-spacing: 0.3em; margin-bottom: 16px; display: block; }
-        .section-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; letter-spacing: -0.02em; }
-
-        .hero { padding: 180px 0 100px; text-align: center; }
-        .hero h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 800; line-height: 1.1; margin-bottom: 24px; letter-spacing: -0.03em; text-transform: uppercase; }
-        .hero p { font-size: clamp(1.1rem, 2vw, 1.5rem); color: var(--text-dim); margin-bottom: 48px; max-width: 600px; margin-left: auto; margin-right: auto; }
-
-        .tv-section { background: #050505; display: flex; flex-direction: column; align-items: center; padding: 60px 0; }
-        #tv-container { width: 95%; max-width: 340px; aspect-ratio: 9/16; border-radius: 40px; overflow: hidden; border: 12px solid #1a1a1a; background: #000; box-shadow: 0 50px 100px rgba(0, 0, 0, 0.9); position: relative; }
-        #tv-player { width: 100%; height: 100%; object-fit: cover; }
-        .tv-live-badge { position: absolute; top: 20px; left: 20px; background: #fbbf24; color: black; padding: 4px 12px; border-radius: 4px; font-size: 0.7rem; font-weight: 900; z-index: 10; display: flex; align-items: center; gap: 6px; }
-        .tv-live-dot { width: 8px; height: 8px; background: white; border-radius: 50%; animation: blink 1s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-
-        .tv-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 30; cursor: pointer; }
-        .tv-overlay-icon { width: 70px; height: 70px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; margin-bottom: 15px; animation: pulse-tv 2s infinite; }
-        .tv-overlay-text { background: rgba(0, 0, 0, 0.7); color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; }
-        @keyframes pulse-tv { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-        .tv-mute-btn { position: absolute; bottom: 20px; right: 20px; width: 40px; height: 40px; background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; z-index: 40; cursor: pointer; }
-        .hidden { display: none !important; }
-
-        .home-categories { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-bottom: 60px; }
-        .home-category-card { background: var(--surface); border: 1px solid var(--border); padding: 15px 25px; border-radius: 100px; display: flex; align-items: center; gap: 10px; transition: all 0.3s; color: white; text-decoration: none; }
-        .home-category-card.active { background: var(--primary); border-color: var(--primary); }
-
-        .carousel-wrapper { width: 100%; overflow: hidden; position: relative; padding: 40px 0; }
-        .carousel-track { display: flex; gap: 24px; width: max-content; animation: scroll 60s linear infinite; }
-        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        .track-copy { display: flex; gap: 24px; }
-
-        .logo-item { width: 220px; height: 110px; display: flex; align-items: center; justify-content: center; padding: 15px; background: rgba(255, 255, 255, 0.03); border-radius: 20px; border: 1px solid var(--border); flex-shrink: 0; }
-        .carousel-logo { max-width: 100%; max-height: 100%; object-fit: contain; }
-
-        .company-card { width: 360px; flex-shrink: 0; }
-        .card-inner { background: var(--surface); border: 1px solid var(--border); padding: 32px 24px; border-radius: 32px; text-align: center; transition: all 0.4s ease; position: relative; }
-        .featured-company { border-color: var(--primary); }
-        .featured-badge { position: absolute; top: 15px; right: 15px; background: var(--primary); color: white; padding: 4px 12px; border-radius: 100px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; }
-        .logo-wrapper { width: 96px; height: 96px; margin: 0 auto 20px; padding: 2px; border: 1px solid var(--border); border-radius: 50%; overflow: hidden; }
-        .company-logo { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-        .company-name { font-size: 1.25rem; font-weight: 800; margin-bottom: 4px; }
-        .company-category { display: inline-block; font-size: 0.75rem; font-weight: 700; color: var(--primary); background: rgba(255, 0, 0, 0.05); padding: 4px 12px; border-radius: 100px; margin-bottom: 12px; text-transform: uppercase; }
-        .company-desc { font-size: 0.9rem; color: var(--text-dim); margin-bottom: 24px; height: 2.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-        .wa-button { background: #25D366; color: white; text-decoration: none; padding: 14px; border-radius: 16px; font-size: 0.85rem; font-weight: 800; display: block; margin-bottom: 10px; }
-        .btn-view { background: rgba(255, 255, 255, 0.05); color: white; text-decoration: none; padding: 14px; border-radius: 16px; font-size: 0.85rem; font-weight: 800; border: 1px solid var(--border); display: block; }
-
-        .flyer-item { width: 300px; flex-shrink: 0; }
-        .flyer-inner { border-radius: 20px; overflow: hidden; border: 1px solid var(--border); aspect-ratio: 4/5; }
-        .flyer-img { width: 100%; height: 100%; object-fit: cover; }
-
-        .player-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 999; background: rgba(5, 5, 5, 0.9); backdrop-filter: blur(20px); border-top: 1px solid var(--border); padding: 15px 0; }
-        .player-flex { display: flex; justify-content: space-between; align-items: center; }
-        .vu-container { display: flex; align-items: center; gap: 20px; }
-        .vu-meter { display: flex; align-items: flex-end; gap: 3px; height: 20px; }
-        .vu-bar { width: 3px; background: var(--primary); border-radius: 10px; animation: vu 0.5s ease-in-out infinite alternate; }
-        @keyframes vu { 0% { height: 5px; } 100% { height: 20px; } }
-
-        .segments-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-        .segmento-card { background: var(--surface); padding: 20px; border-radius: 20px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .status-badge { padding: 5px 12px; border-radius: 100px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
-        .status-disponivel { background: rgba(37, 211, 102, 0.1); color: #25D366; border: 1px solid #25D366; }
-        .status-ocupado { background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid #fbbf24; }
-
-        .pricing-card { background: var(--surface); padding: 50px 40px; border-radius: 35px; border: 1px solid var(--border); text-align: center; position: relative; max-width: 600px; margin: 0 auto; }
-        .pricing-badge { background: var(--primary); color: #fff; padding: 6px 20px; border-radius: 100px; font-size: 0.7rem; font-weight: 800; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); }
-        .price-tag { font-size: 3rem; font-weight: 900; color: var(--primary); margin: 20px 0; }
-        .pricing-list { list-style: none; text-align: left; margin-bottom: 40px; }
-        .pricing-list li { margin-bottom: 15px; color: var(--text-dim); display: flex; gap: 10px; align-items: center; }
-        .pricing-list li::before { content: '✓'; color: var(--primary); font-weight: 900; }
-        .cta-button { background: var(--primary); color: #fff; text-decoration: none; padding: 20px; border-radius: 100px; font-weight: 800; display: block; text-align: center; }
-
-        footer { background: #000; padding: 100px 0 120px; border-top: 1px solid var(--border); }
-        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 50px; margin-bottom: 60px; }
-        .footer-col h4 { color: #fff; margin-bottom: 25px; font-weight: 800; }
-        .footer-col p { color: var(--text-dim); margin-bottom: 15px; }
-
-        /* Chat */
-        #chat-window { position: fixed; bottom: 100px; right: 30px; width: 350px; height: 500px; background: var(--surface); border: 1px solid var(--border); border-radius: 24px; display: none; flex-direction: column; z-index: 2000; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        #chat-window.active { display: flex; }
-        .chat-header { background: var(--surface-accent); padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        #chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .message { padding: 12px 16px; border-radius: 18px; max-width: 85%; font-size: 0.9rem; }
-        .message.bot { background: var(--surface-accent); align-self: flex-start; border-bottom-left-radius: 4px; }
-        .message.user { background: var(--primary); align-self: flex-end; border-bottom-right-radius: 4px; }
-        .chat-input-area { padding: 20px; border-top: 1px solid var(--border); background: var(--surface-accent); }
-        .chat-input-wrapper { display: flex; gap: 10px; }
-        #chat-input { flex: 1; background: #000; border: 1px solid var(--border); padding: 12px; border-radius: 12px; color: white; outline: none; }
-        #chat-send { background: var(--primary); border: none; width: 45px; height: 45px; border-radius: 12px; color: white; cursor: pointer; }
-        #chat-toggle { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: var(--primary); color: white; border: none; cursor: pointer; z-index: 2000; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(255,0,0,0.3); }
-
-        @media (max-width: 768px) {
-            .hero h1 { font-size: 2.5rem; }
-            #chat-window { width: calc(100% - 40px); right: 20px; bottom: 90px; }
-        }
-    </style>
-</head>
-<body>
-    ${embedScript}
-    <nav>
-        <div class="container">
-            <div class="nav-content">
-                <a href="#" class="logo">${appData.siteInfo.name}<span>${appData.siteInfo.suffix}</span> <div class="live-badge">LIVE</div></a>
-                <a href="#anuncie" class="btn" style="padding: 10px 24px; font-size: 0.7rem; background: var(--primary); color: white; border-radius: 100px; text-decoration: none; font-weight: 800;">ANUNCIAR</a>
-            </div>
-        </div>
-    </nav>
-
-    <section class="hero">
-        <div class="container">
-            <h1>${appData.sections.categories.title}</h1>
-            <p>${appData.sections.categories.desc}</p>
-            <a href="#anuncie" class="cta-button" style="display: inline-block; padding: 18px 40px;">CADASTRAR MINHA EMPRESA</a>
-        </div>
-    </section>
-
-    <section class="tv-section">
-        <div class="section-header">
-            <span class="section-tag">${appData.sections.tv.tag}</span>
-            <h2 class="section-title">${appData.sections.tv.title}</h2>
-        </div>
-        <div id="tv-container">
-            <div class="tv-live-badge"><div class="tv-live-dot"></div>AO VIVO</div>
-            <div id="tv-overlay" class="tv-overlay" onclick="toggleMute()">
-                <div class="tv-overlay-icon">🔇</div>
-                <div class="tv-overlay-text">Clique para Ativar o Som</div>
-            </div>
-            <video id="tv-player" autoplay muted playsinline>
-                <source src="${appData.videos[0]}" type="video/mp4">
-            </video>
-            <button class="tv-mute-btn" onclick="toggleMute()" id="mute-btn">🔇</button>
-        </div>
-    </section>
-
-    <section id="empresas">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-tag">${appData.sections.companies.tag}</span>
-                <h2 class="section-title">${appData.sections.companies.title}</h2>
-            </div>
-            <div class="home-categories">
-                <div class="home-category-card active" onclick="filtrarCategoria('todos', this)" style="cursor: pointer;">
-                    <span class="home-category-name">TODOS</span>
-                </div>
-                ${categoriesHTML}
-            </div>
-            <div class="carousel-wrapper">
-                <div class="carousel-track" id="companies-track">
-                    <div class="track-copy">${companiesHTML}</div>
-                    <div class="track-copy">${companiesHTML}</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section style="background: #080808;">
-        <div class="container">
-            <div class="carousel-wrapper">
-                <div class="carousel-track" style="animation-duration: 40s;">
-                    <div class="track-copy">${logoCarouselHTML}</div>
-                    <div class="track-copy">${logoCarouselHTML}</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section>
-        <div class="container">
-            <div class="section-header">
-                <span class="section-tag">${appData.sections.flyers.tag}</span>
-            </div>
-            <div class="carousel-wrapper">
-                <div class="carousel-track" style="animation-duration: 120s;">
-                    <div class="track-copy">${flyersHTML}</div>
-                    <div class="track-copy">${flyersHTML}</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="segmentos">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-tag">${appData.sections.segments.tag}</span>
-                <h2 class="section-title">${appData.sections.segments.title}</h2>
-            </div>
-            <div class="segments-grid">${segmentsHTML}</div>
-        </div>
-    </section>
-
-    <section id="anuncie">
-        <div class="container">
-            <div class="pricing-card">
-                <div class="pricing-badge">${appData.pricing.badge}</div>
-                <h3 style="font-size: 1.8rem; font-weight: 900;">${appData.pricing.title}</h3>
-                <div class="price-tag">R$ ${appData.pricing.price}<span>${appData.pricing.period}</span></div>
-                <ul class="pricing-list">
-                    ${appData.pricing.features.map(f => `<li>${f}</li>`).join('')}
-                </ul>
-                <a href="${appData.pricing.waLink}" target="_blank" class="cta-button">${appData.pricing.cta}</a>
-            </div>
-        </div>
-    </section>
-
-    <footer>
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-col">
-                    <a href="#" class="logo" style="margin-bottom: 25px;">${appData.siteInfo.name}<span>${appData.siteInfo.suffix}</span></a>
-                    <p>${appData.siteInfo.description}</p>
-                </div>
-                <div class="footer-col">
-                    <h4>CONTATO</h4>
-                    <p>📞 ${appData.siteInfo.phone}</p>
-                    <p>📍 ${appData.siteInfo.address}</p>
-                </div>
-                <div class="footer-col">
-                    <h4>LEGAL</h4>
-                    <p>CNPJ: ${appData.siteInfo.cnpj}</p>
-                </div>
-            </div>
-            <div style="text-align: center; padding-top: 40px; border-top: 1px solid var(--border); color: #444; font-size: 0.8rem;">
-                <p>&copy; 2025 ${appData.siteInfo.name} ${appData.siteInfo.suffix}. Todos os direitos reservados.</p>
-            </div>
-        </div>
-    </footer>
-
-    <div class="player-bar">
-        <div class="container">
-            <div class="player-flex">
-                <div style="display: flex; flexDirection: column; gap: 4px;">
-                    <span style="color: var(--primary); fontWeight: 900; fontSize: 0.8rem; textTransform: uppercase; letterSpacing: 0.2em;">Rádio Ao Vivo</span>
-                    <span style="fontSize: 0.6rem; color: var(--text-dim); fontWeight: 700; textTransform: uppercase;">Programação Exclusiva 24h</span>
-                </div>
-                <div class="vu-container">
-                    <div class="vu-meter">
-                        <div class="vu-bar" style="animation-delay: 0.1s"></div>
-                        <div class="vu-bar" style="animation-delay: 0.3s"></div>
-                        <div class="vu-bar" style="animation-delay: 0.2s"></div>
-                        <div class="vu-bar" style="animation-delay: 0.5s"></div>
-                        <div class="vu-bar" style="animation-delay: 0.4s"></div>
-                    </div>
-                    <audio controls style="height: 35px; filter: invert(1) brightness(1.5); opacity: 0.8;">
-                        <source src="${appData.siteInfo.radioLink}" type="audio/mpeg">
-                    </audio>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <button id="chat-toggle" onclick="toggleChat()">💬</button>
-    <div id="chat-window">
-        <div class="chat-header">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 1.2rem;">💬</span>
-                <div>
-                    <div style="font-weight: 800; font-size: 0.9rem;">Assistente Virtual</div>
-                    <div style="font-size: 0.7rem; color: #25D366;">● Online</div>
-                </div>
-            </div>
-            <button onclick="toggleChat()" style="background: none; border: none; color: white; cursor: pointer;">✕</button>
-        </div>
-        <div id="chat-messages">
-            <div class="message bot">Olá! Como posso ajudar você hoje? Digite o que procura (ex: mercado, pizza...)</div>
-        </div>
-        <div class="chat-input-area">
-            <div class="chat-input-wrapper">
-                <input type="text" id="chat-input" placeholder="Digite aqui..." onkeydown="if(event.key==='Enter') sendMessage()">
-                <button id="chat-send" onclick="sendMessage()">➤</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const companies = ${JSON.stringify(appData.companies)};
-        const chatKeywords = ${JSON.stringify(appData.chatKeywords)};
-        const videos = ${JSON.stringify(appData.videos)};
-        let currentVideoIndex = 0;
-
-        const player = document.getElementById('tv-player');
-        player.onended = function() {
-            currentVideoIndex = (currentVideoIndex + 1) % videos.length;
-            player.src = videos[currentVideoIndex];
-            player.play();
-        };
-
-        function toggleMute() {
-            const player = document.getElementById('tv-player');
-            const overlay = document.getElementById('tv-overlay');
-            const btn = document.getElementById('mute-btn');
-            
-            player.muted = !player.muted;
-            if (player.muted) {
-                btn.innerHTML = '🔇';
-                overlay.classList.remove('hidden');
-            } else {
-                btn.innerHTML = '🔊';
-                overlay.classList.add('hidden');
-            }
-        }
-
-        function filtrarCategoria(cat, el) {
-            document.querySelectorAll('.home-category-card').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
-            const track = document.getElementById('companies-track');
-            const filtered = cat === 'todos' ? companies : companies.filter(c => c.category === cat);
-            
-            const html = filtered.map(c => \`
-                <div class="company-card">
-                    <div class="card-inner \${c.featured ? 'featured-company' : ''}">
-                        \${c.featured ? '<div class="featured-badge">Destaque</div>' : ''}
-                        <div class="logo-wrapper"><img src="\${c.logo}" class="company-logo"></div>
-                        <h3 class="company-name">\${c.name}</h3>
-                        <span class="company-category">\${c.category}</span>
-                        <p class="company-desc">\${c.desc}</p>
-                        <div class="card-actions">
-                            <a href="https://wa.me/\${c.wa}" target="_blank" class="wa-button">WhatsApp</a>
-                            <a href="\${c.ig}" target="_blank" class="btn-view">Ver Empresa</a>
-                        </div>
-                    </div>
-                </div>\`).join('');
-            
-            track.innerHTML = '<div class="track-copy">' + html + '</div><div class="track-copy">' + html + '</div>';
-        }
-
-        function toggleChat() {
-            document.getElementById('chat-window').classList.toggle('active');
-        }
-
-        function sendMessage() {
-            const input = document.getElementById('chat-input');
-            const text = input.value.trim().toLowerCase();
-            if(!text) return;
-
-            addMessage(input.value, 'user');
-            input.value = '';
-
-            setTimeout(() => {
-                let response = "Desculpe, não encontrei o que você procura. Tente palavras como 'mercado', 'comida' ou 'serviços'.";
-                let found = false;
-
-                for(const key in chatKeywords) {
-                    if(text.includes(key)) {
-                        const cat = chatKeywords[key];
-                        const results = companies.filter(c => c.category === cat);
-                        if(results.length > 0) {
-                            response = "Encontrei essas empresas na categoria " + cat + ":";
-                            addMessage(response, 'bot');
-                            results.forEach(c => {
-                                addMessage(\`<strong>\${c.name}</strong><br><a href="https://wa.me/\${c.wa}" target="_blank" style="color: #25D366; text-decoration: none;">Chamar no WhatsApp</a>\`, 'bot');
-                            });
-                            found = true;
-                            break;
-                        }
-                    }
-                }
-
-                if(!found) addMessage(response, 'bot');
-            }, 500);
-        }
-
-        function addMessage(text, sender) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'message ' + sender;
-            msgDiv.innerHTML = text;
-            const container = document.getElementById('chat-messages');
-            container.appendChild(msgDiv);
-            container.scrollTop = container.scrollHeight;
-        }
-    </script>
-</body>
-</html>`;
-                  };
-                  const embedCode = getEmbedHTML();
-                  navigator.clipboard.writeText(embedCode);
-                  alert('Código HTML completo copiado! Agora basta colar no "Incorporar código" do Google Sites.');
-                }}>Código Google Sites</button>
               </div>
             </div>
           </motion.div>
