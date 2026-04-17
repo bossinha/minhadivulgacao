@@ -517,8 +517,9 @@ export default function App() {
                      className="dev-btn" 
                      style={{ background: '#ff000022', borderColor: '#ff000044', color: '#ff0000' }}
                      onClick={async () => {
-                       if(confirm(`Excluir a cidade ${udata.city}?`)) {
-                         await deleteDoc(doc(db, 'tenants', uname));
+                       if(confirm(`ATENÇÃO: Excluir permanentemente ${udata.city} e todos os seus dados?`)) {
+                          await deleteDoc(doc(db, 'tenants', uname));
+                          alert("Removido com sucesso do banco de dados.");
                          const s = await getDocs(collection(db, 'tenants'));
                          const u: any = {};
                          s.forEach(d => u[d.id] = d.data());
