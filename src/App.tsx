@@ -70,7 +70,7 @@ const NOTIFICATION_NAMES = ["João", "Maria", "Carlos", "Ana", "Paulo", "Fernand
 const NOTIFICATION_ACTIONS = ["acabou de procurar internet fibra", "visitou uma pizzaria", "pediu orçamento de oficina", "procurou salão de beleza", "visualizou uma empresa", "procurou restaurante", "buscou serviços na plataforma"];
 
 const DEFAULT_DATA = {
-  theme: { primary: "#ff0000", bg: "#000000", text: "#ffffff", textDim: "#888888" },
+  theme: { primary: "#ffffff", bg: "#000000", text: "#ffffff", textDim: "#a0a0a0" },
   siteInfo: {
     name: "Minha", suffix: "Divulgação", description: "A maior vitrine digital para o seu negócio na Grande Fortaleza.",
     cnpj: "62.133.196/0001-40", phone: "85 99290-8713", address: "Fortaleza - Ceará - Brasil",
@@ -446,7 +446,7 @@ export default function App() {
       <div style={{ background: '#000', minHeight: '100vh', color: '#fff', fontFamily: 'Inter', padding: '40px' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-            <h1 style={{ color: '#ff0000', fontWeight: 900 }}>ADMIN MASTER PORTAL</h1>
+            <h1 style={{ color: '#ffffff', fontWeight: 900 }}>ADMIN MASTER PORTAL</h1>
             <button className="dev-btn dev-btn-secondary" onClick={logout}>Sair</button>
           </div>
 
@@ -564,7 +564,7 @@ export default function App() {
     return (
       <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Inter' }}>
         <div style={{ width: '100%', maxWidth: '400px', padding: '40px', background: '#111', borderRadius: '24px', border: '1px solid #222' }}>
-          <h2 style={{ textAlign: 'center', marginBottom: '30px', color: '#ff0000', fontWeight: 900, fontSize: '1.5rem' }}>
+          <h2 style={{ textAlign: 'center', marginBottom: '30px', color: '#ffffff', fontWeight: 900, fontSize: '1.5rem' }}>
             {authMode === 'login' ? 'PAINEL DO GESTOR' : 'CRIAR MEU PORTAL'}
           </h2>
           
@@ -605,7 +605,7 @@ export default function App() {
 
           <button 
             className="dev-btn dev-btn-primary" 
-            style={{ width: '100%', marginTop: '30px', opacity: isLoading ? 0.7 : 1, background: '#ff0000', color: '#fff' }}
+            style={{ width: '100%', marginTop: '30px', opacity: isLoading ? 0.7 : 1, background: '#ffffff', color: '#000000' }}
             disabled={isLoading}
             onClick={() => handleLogin()}
           >
@@ -662,7 +662,7 @@ export default function App() {
       <nav>
         <div className="container">
           <div className="nav-content">
-            <a href="#" className="logo">{appData.siteInfo.name}<span>{appData.siteInfo.suffix}</span></a>
+            <a href="#" className="logo">{appData.siteInfo.name}<span style={{ color: '#ffffff' }}>{appData.siteInfo.suffix}</span></a>
             <a href="#anuncie" className="btn-view" style={{ padding: '8px 20px', fontSize: '0.8rem', background: 'var(--primary)', border: 'none' }}>Anunciar</a>
           </div>
         </div>
