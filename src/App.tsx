@@ -854,7 +854,29 @@ function AppContent() {
         <div className="container">
           <div className="nav-content">
             <a href="#" className="logo" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>{appData.siteInfo.name}<span style={{ color: '#ffffff' }}>{appData.siteInfo.suffix}</span></a>
-            <button onClick={() => scrollToSection('anuncie')} className="btn-view" style={{ padding: '8px 20px', fontSize: '0.8rem', background: 'var(--primary)', border: 'none', cursor: 'pointer' }}>Anunciar</button>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+               {user && (
+                 <button 
+                   onClick={logout}
+                   style={{ 
+                     padding: '8px 15px', 
+                     fontSize: '0.75rem', 
+                     background: '#ff4444', 
+                     color: '#fff',
+                     border: 'none', 
+                     borderRadius: '8px',
+                     fontWeight: 800,
+                     cursor: 'pointer',
+                     display: 'flex',
+                     alignItems: 'center',
+                     gap: '5px'
+                   }}
+                 >
+                   🚪 SAIR
+                 </button>
+               )}
+               <button onClick={() => scrollToSection('anuncie')} className="btn-view" style={{ padding: '8px 20px', fontSize: '0.8rem', background: 'var(--primary)', border: 'none', cursor: 'pointer' }}>Anunciar</button>
+            </div>
           </div>
         </div>
       </nav>
@@ -1203,22 +1225,6 @@ function AppContent() {
                     }}
                   >
                     ⚙️ Painel de Gestor
-                  </button>
-                )}
-                {user && (
-                  <button 
-                    onClick={logout}
-                    style={{ 
-                      background: 'none', 
-                      border: '1px solid #333', 
-                      color: '#666', 
-                      padding: '5px 10px', 
-                      borderRadius: '5px', 
-                      fontSize: '0.7rem',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    🚪 Sair
                   </button>
                 )}
               </div>
