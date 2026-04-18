@@ -176,7 +176,7 @@ function AppContent() {
 
   const [appData, setAppData] = useState<AppData | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
-  const [showVideos, setShowVideos] = useState(true);
+  const [showVideos, setShowVideos] = useState(false);
 
   // --- Initial Firebase Data Load ---
   useEffect(() => {
@@ -189,7 +189,7 @@ function AppContent() {
             const tData = snap.data();
             setAppData(tData.data || DEFAULT_DATA);
             setIsBlocked(tData.isBlocked || false);
-            setShowVideos(tData.showVideos !== false); // Default to true
+            setShowVideos(tData.showVideos === true);
           } else {
             console.warn("Cidade não encontrada no banco");
             setAppData(null);
@@ -228,7 +228,7 @@ function AppContent() {
                 isAdmin: data.isAdmin 
               });
               setAppData(data.data || DEFAULT_DATA);
-              setShowVideos(data.showVideos !== false);
+              setShowVideos(data.showVideos === true);
               if (!tenantId || tenantId === 'login') {
                 navigate('/' + savedId);
               }
@@ -272,7 +272,7 @@ function AppContent() {
           });
           setAppData(tenantData.data || DEFAULT_DATA);
           setIsBlocked(tenantData.isBlocked || false);
-          setShowVideos(tenantData.showVideos !== false);
+          setShowVideos(tenantData.showVideos === true);
           
           if (tenantData.isAdmin) {
              const tenantsSnap = await getDocs(collection(db, 'tenants'));
@@ -329,7 +329,8 @@ function AppContent() {
           city: loginForm.city,
           password: loginForm.password,
           data: DEFAULT_DATA,
-          isAdmin: false
+          isAdmin: false,
+          showVideos: false
         });
 
         localStorage.setItem('tenantId', id);
@@ -604,18 +605,18 @@ function AppContent() {
                 <div style={{ display: 'flex', gap: '10px' }}>
                     <button 
                       className="dev-btn" 
-                      style={{ background: udata.showVideos !== false ? '#25D366' : '#333', borderColor: udata.showVideos !== false ? '#25D366' : '#444' }}
+                      style={{ background: udata.showVideos === true ? '#25D366' : '#333', borderColor: udata.showVideos === true ? '#25D366' : '#444' }}
                       onClick={async () => {
-                        await updateDoc(doc(db, 'tenants', uname), { showVideos: udata.showVideos === false });
+                        await updateDoc(doc(db, 'tenants', uname), { showVideos: udata.showVideos !== true });
                         // Refresh list
                         const s = await getDocs(collection(db, 'tenants'));
                         const u: any = {};
                         s.forEach(d => u[d.id] = d.data());
                         setAllUsers(u);
                       }}
-                      title={udata.showVideos === false ? "Vídeos Ocultos (Clique para LIBERAR)" : "Vídeos Liberados (Clique para OCULTAR)"}
+                      title={udata.showVideos === true ? "Vídeos Liberados (Clique para OCULTAR)" : "Vídeos Ocultos (Clique para LIBERAR)"}
                     >
-                      {udata.showVideos === false ? '🎥❌' : '🎥✅'}
+                      {udata.showVideos === true ? '🎥✅' : '🎥❌'}
                     </button>
                     <button 
                       className="dev-btn" 
@@ -691,7 +692,8 @@ function AppContent() {
                     password: upass, 
                     city: ucity, 
                     data: DEFAULT_DATA,
-                    isAdmin: false 
+                    isAdmin: false,
+                    showVideos: false 
                   });
                   const s = await getDocs(collection(db, 'tenants'));
                   const u: any = {};
