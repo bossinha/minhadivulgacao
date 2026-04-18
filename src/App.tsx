@@ -176,6 +176,7 @@ function AppContent() {
 
   const [appData, setAppData] = useState<AppData | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [showVideos, setShowVideos] = useState(true);
 
   // --- Initial Firebase Data Load ---
   useEffect(() => {
@@ -188,6 +189,7 @@ function AppContent() {
             const tData = snap.data();
             setAppData(tData.data || DEFAULT_DATA);
             setIsBlocked(tData.isBlocked || false);
+            setShowVideos(tData.showVideos !== false); // Default to true
           } else {
             console.warn("Cidade não encontrada no banco");
             setAppData(null);
@@ -226,6 +228,7 @@ function AppContent() {
                 isAdmin: data.isAdmin 
               });
               setAppData(data.data || DEFAULT_DATA);
+              setShowVideos(data.showVideos !== false);
               if (!tenantId || tenantId === 'login') {
                 navigate('/' + savedId);
               }
@@ -269,6 +272,7 @@ function AppContent() {
           });
           setAppData(tenantData.data || DEFAULT_DATA);
           setIsBlocked(tenantData.isBlocked || false);
+          setShowVideos(tenantData.showVideos !== false);
           
           if (tenantData.isAdmin) {
              const tenantsSnap = await getDocs(collection(db, 'tenants'));
@@ -600,6 +604,21 @@ function AppContent() {
                 <div style={{ display: 'flex', gap: '10px' }}>
                     <button 
                       className="dev-btn" 
+                      style={{ background: udata.showVideos !== false ? '#25D366' : '#333', borderColor: udata.showVideos !== false ? '#25D366' : '#444' }}
+                      onClick={async () => {
+                        await updateDoc(doc(db, 'tenants', uname), { showVideos: udata.showVideos === false });
+                        // Refresh list
+                        const s = await getDocs(collection(db, 'tenants'));
+                        const u: any = {};
+                        s.forEach(d => u[d.id] = d.data());
+                        setAllUsers(u);
+                      }}
+                      title={udata.showVideos === false ? "Vídeos Ocultos (Clique para LIBERAR)" : "Vídeos Liberados (Clique para OCULTAR)"}
+                    >
+                      {udata.showVideos === false ? '🎥❌' : '🎥✅'}
+                    </button>
+                    <button 
+                      className="dev-btn" 
                       style={{ background: udata.isBlocked ? '#ff4444' : '#333', borderColor: udata.isBlocked ? '#ff4444' : '#444' }}
                       onClick={async () => {
                         const action = udata.isBlocked ? 'liberar' : 'bloquear';
@@ -902,44 +921,46 @@ function AppContent() {
       </section>
 
       {/* TV Section */}
-      <section className="section-comerciais">
-        <div className="section-header">
-          <span className="section-tag">{appData.sections.tv.tag}</span>
-          <h2 className="section-title">{appData.sections.tv.title}</h2>
-          <div className="visitors-counter">
-            <div className="online-dot"></div>
-            <span>{visitorCount.toLocaleString()}</span>
-            <span>Visitantes Online</span>
+      {showVideos && (
+        <section className="section-comerciais">
+          <div className="section-header">
+            <span className="section-tag">{appData.sections.tv.tag}</span>
+            <h2 className="section-title">{appData.sections.tv.title}</h2>
+            <div className="visitors-counter">
+              <div className="online-dot"></div>
+              <span>{visitorCount.toLocaleString()}</span>
+              <span>Visitantes Online</span>
+            </div>
           </div>
-        </div>
-        <div id="tv-comerciais">
-          <div className="live-badge"><div className="live-dot"></div>AO VIVO</div>
-          <AnimatePresence>
-            {isMuted && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="tv-overlay" 
-                onClick={() => setIsMuted(false)}
-              >
-                <div className="tv-overlay-icon">🔇</div>
-                <div className="tv-overlay-text">Clique para Ativar o Som</div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <video 
-            ref={videoRef}
-            autoPlay 
-            playsInline 
-            muted={isMuted}
-            onEnded={handleVideoEnd}
-          />
-          <button className="tv-mute-btn" onClick={() => setIsMuted(!isMuted)}>
-            {isMuted ? '🔇' : '🔊'}
-          </button>
-        </div>
-      </section>
+          <div id="tv-comerciais">
+            <div className="live-badge"><div className="live-dot"></div>AO VIVO</div>
+            <AnimatePresence>
+              {isMuted && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="tv-overlay" 
+                  onClick={() => setIsMuted(false)}
+                >
+                  <div className="tv-overlay-icon">🔇</div>
+                  <div className="tv-overlay-text">Clique para Ativar o Som</div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <video 
+              ref={videoRef}
+              autoPlay 
+              playsInline 
+              muted={isMuted}
+              onEnded={handleVideoEnd}
+            />
+            <button className="tv-mute-btn" onClick={() => setIsMuted(!isMuted)}>
+              {isMuted ? '🔇' : '🔊'}
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Companies Section */}
       <section id="empresas-whatsapp">
