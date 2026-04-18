@@ -175,6 +175,7 @@ function AppContent() {
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   const [appData, setAppData] = useState<AppData | null>(null);
+  const [isBlocked, setIsBlocked] = useState(false);
 
   // --- Initial Firebase Data Load ---
   useEffect(() => {
@@ -184,7 +185,9 @@ function AppContent() {
         try {
           const snap = await getDoc(doc(db, 'tenants', tenantId.toLowerCase()));
           if (snap.exists()) {
-            setAppData(snap.data().data || DEFAULT_DATA);
+            const tData = snap.data();
+            setAppData(tData.data || DEFAULT_DATA);
+            setIsBlocked(tData.isBlocked || false);
           } else {
             console.warn("Cidade não encontrada no banco");
             setAppData(null);
@@ -265,6 +268,7 @@ function AppContent() {
             isAdmin: tenantData.isAdmin 
           });
           setAppData(tenantData.data || DEFAULT_DATA);
+          setIsBlocked(tenantData.isBlocked || false);
           
           if (tenantData.isAdmin) {
              const tenantsSnap = await getDocs(collection(db, 'tenants'));
@@ -594,6 +598,24 @@ function AppContent() {
                    </div>
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
+                    <button 
+                      className="dev-btn" 
+                      style={{ background: udata.isBlocked ? '#ff4444' : '#333', borderColor: udata.isBlocked ? '#ff4444' : '#444' }}
+                      onClick={async () => {
+                        const action = udata.isBlocked ? 'liberar' : 'bloquear';
+                        if (confirm(`Deseja ${action} o portal de ${udata.city}?`)) {
+                          await updateDoc(doc(db, 'tenants', uname), { isBlocked: !udata.isBlocked });
+                          // Refresh list
+                          const s = await getDocs(collection(db, 'tenants'));
+                          const u: any = {};
+                          s.forEach(d => u[d.id] = d.data());
+                          setAllUsers(u);
+                        }
+                      }}
+                      title={udata.isBlocked ? "Portal Bloqueado (Clique para LIBERAR)" : "Portal Liberado (Clique para BLOQUEAR)"}
+                    >
+                      {udata.isBlocked ? '🔒' : '🔓'}
+                    </button>
                    <button 
                      className="dev-btn" 
                      style={{ background: '#25D366', borderColor: '#25D366', color: '#fff' }}
@@ -762,6 +784,22 @@ function AppContent() {
         <div style={{ display: 'flex', gap: '20px' }}>
           <button onClick={() => navigate('/login')} className="dev-btn" style={{ background: '#fff', color: '#000', width: '200px' }}>Ir para Login</button>
         </div>
+      </div>
+    );
+  }
+
+  // Blocked Screen Logic
+  if (isBlocked && !user?.isAdmin) {
+    return (
+      <div style={{ background: '#000', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Inter', textAlign: 'center', padding: '20px' }}>
+        <div style={{ fontSize: '5rem', marginBottom: '20px' }}>🔒</div>
+        <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '10px', color: '#ff4444' }}>SERVIÇO SUSPENSO</h2>
+        <p style={{ color: '#888', maxWidth: '500px', fontSize: '1.1rem', marginBottom: '40px', lineHeight: 1.6 }}>
+          Este portal encontra-se temporariamente indisponível. Por favor, entre em contato com o administrador master para regularizar sua situação e restabelecer o acesso.
+        </p>
+        <a href="https://wa.me/5585992908713" target="_blank" className="cta-button" style={{ background: '#25D366' }}>
+          ENTRAR EM CONTATO AGORA
+        </a>
       </div>
     );
   }
@@ -1167,7 +1205,7 @@ function AppContent() {
                     ⚙️ Painel de Gestor
                   </button>
                 )}
-                {user ? (
+                {user && (
                   <button 
                     onClick={logout}
                     style={{ 
@@ -1181,21 +1219,6 @@ function AppContent() {
                     }}
                   >
                     🚪 Sair
-                  </button>
-                ) : (
-                  <button 
-                    onClick={() => navigate('/login')}
-                    style={{ 
-                      background: 'none', 
-                      border: '1px solid #333', 
-                      color: '#666', 
-                      padding: '5px 10px', 
-                      borderRadius: '5px', 
-                      fontSize: '0.7rem',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    🔑 Login
                   </button>
                 )}
               </div>
