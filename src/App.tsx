@@ -126,6 +126,7 @@ const DEFAULT_DATA = {
 
 // --- Helper Functions ---
 const normalize = (str: string) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const slugify = (str: string) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
 
 // --- Types ---
 interface AppData {
@@ -184,7 +185,8 @@ function AppContent() {
       const fetchCity = async () => {
         setIsLoading(true);
         try {
-          const snap = await getDoc(doc(db, 'tenants', tenantId.toLowerCase()));
+          const id = slugify(tenantId);
+          const snap = await getDoc(doc(db, 'tenants', id));
           if (snap.exists()) {
             const tData = snap.data();
             setAppData(tData.data || DEFAULT_DATA);
@@ -311,17 +313,25 @@ function AppContent() {
   const handleLogin = async () => {
     setIsLoading(true);
     try {
-      const id = loginForm.username.toLowerCase().trim();
+      const id = slugify(loginForm.username);
       
+      if (!id) {
+        alert("Por favor, digite um nome de usuário.");
+        setIsLoading(false);
+        return;
+      }
+
       if (authMode === 'register') {
-        if (!id || !loginForm.password || !loginForm.city) {
+        if (!loginForm.password || !loginForm.city) {
           alert("Preencha todos os campos.");
+          setIsLoading(false);
           return;
         }
         
         const snap = await getDoc(doc(db, 'tenants', id));
         if (snap.exists()) {
-          alert("Este ID já está em uso. Escolha outro.");
+          alert("Este ID de acesso já existe. Tente outro nome.");
+          setIsLoading(false);
           return;
         }
 
@@ -338,9 +348,10 @@ function AppContent() {
         
         setUser({ uid: id, email: null, username: id, city: loginForm.city, isAdmin: false });
         setAppData(DEFAULT_DATA);
-        alert("Portal criado com sucesso!");
+        alert("Portal criado com sucesso! Redirecionando...");
         setIsDevAreaOpen(true);
-        navigate('/' + id);
+        window.location.href = '#/' + id;
+        window.location.reload();
         return;
       }
 
@@ -360,15 +371,21 @@ function AppContent() {
             isAdmin: data.isAdmin 
           });
           setAppData(data.data || DEFAULT_DATA);
+          setShowVideos(data.showVideos === true);
           setIsDevAreaOpen(true);
-          navigate('/' + id);
+          alert("Login realizado com sucesso!");
+          window.location.href = '#/' + id;
+          window.location.reload();
           return;
+        } else {
+          alert("Senha incorreta. Tente novamente.");
         }
+      } else {
+        alert("Cidade/Usuário não encontrado. Verifique o que digitou.");
       }
-      
-      alert("Credenciais inválidas ou inquilino não encontrado.");
     } catch (e) {
       console.error(e);
+      alert("Ocorreu um erro ao tentar entrar. Verifique sua conexão.");
     } finally {
       setIsLoading(false);
     }
@@ -741,13 +758,14 @@ function AppContent() {
           )}
 
           <div className="dev-form-group">
-            <label>{authMode === 'login' ? 'Usuário (Cidade)' : 'ID de Acesso (sem espaços)'}</label>
+            <label>{authMode === 'login' ? 'Usuário (Cidade)' : 'ID de Acesso (sem espaços ou acentos)'}</label>
             <input 
               type="text" 
               className="dev-input" 
               value={loginForm.username} 
               onChange={e => setLoginForm({...loginForm, username: e.target.value})} 
-              placeholder={authMode === 'login' ? 'ex: fortaleza' : 'fortaleza'}
+              placeholder={authMode === 'login' ? 'ex: saopaulo' : 'saopaulo'}
+              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
             />
           </div>
           
@@ -759,6 +777,7 @@ function AppContent() {
               value={loginForm.password} 
               onChange={e => setLoginForm({...loginForm, password: e.target.value})} 
               placeholder="••••••"
+              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
             />
           </div>
 
