@@ -639,69 +639,69 @@ function AppContent() {
               </div>
               <div className="dev-grid-2">
                 <div className="dev-form-group">
-                  <label>Velocidade das Logos</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  <label style={{ fontSize: '0.7rem' }}>Velocidade das Logos</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <button 
                       className="dev-btn dev-btn-secondary" 
-                      style={{ padding: '0', width: '40px', height: '40px', borderRadius: '10px', fontSize: '1.2rem' }}
+                      style={{ padding: '0', width: '32px', height: '32px', borderRadius: '8px', fontSize: '1rem', minWidth: '32px' }}
                       onClick={() => setUniversalConfig(prev => ({ ...prev, logoSpeed: Math.min(500, (prev.logoSpeed || 100) + 10) }))}
                     >
                       -
                     </button>
-                    <div style={{ flex: 1, textAlign: 'center', background: '#111', padding: '8px', borderRadius: '8px', border: '1px solid #333' }}>
-                      <span style={{ fontWeight: 900, color: '#fbbf24' }}>{(universalConfig.logoSpeed || 100)}s</span>
+                    <div style={{ flex: 1, textAlign: 'center', background: '#111', padding: '6px', borderRadius: '6px', border: '1px solid #333' }}>
+                      <span style={{ fontWeight: 900, color: '#fbbf24', fontSize: '0.8rem' }}>{(universalConfig.logoSpeed || 100)}s</span>
                     </div>
                     <button 
                       className="dev-btn dev-btn-secondary" 
-                      style={{ padding: '0', width: '40px', height: '40px', borderRadius: '10px', fontSize: '1.2rem' }}
+                      style={{ padding: '0', width: '32px', height: '32px', borderRadius: '8px', fontSize: '1rem', minWidth: '32px' }}
                       onClick={() => setUniversalConfig(prev => ({ ...prev, logoSpeed: Math.max(10, (prev.logoSpeed || 100) - 10) }))}
                     >
                       +
                     </button>
                   </div>
-                  <small style={{ color: '#888' }}>+ Veloz (-) seg | - Veloz (+) seg</small>
                   
                   {/* Logo Preview */}
-                  <div style={{ marginTop: '15px', overflow: 'hidden', background: '#080808', borderRadius: '15px', border: '1px solid #222', padding: '10px 0' }}>
-                    <div style={{ display: 'flex', gap: '20px', width: 'max-content', animation: `scroll ${universalConfig.logoSpeed || 100}s linear infinite` }}>
-                      {[1, 2, 3, 4, 5, 1, 2, 3, 4, 5].map((n, i) => (
-                        <div key={i} style={{ width: '100px', height: '50px', background: '#111', borderRadius: '8px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.6rem', color: '#555', fontWeight: 900 }}>LOGO {n}</div>
+                  <div style={{ marginTop: '10px', overflow: 'hidden', background: '#080808', borderRadius: '12px', border: '1px solid #222' }}>
+                    <div style={{ display: 'flex', gap: '15px', width: 'max-content', padding: '8px', animation: `scroll ${universalConfig.logoSpeed || 100}s linear infinite` }}>
+                      {[1, 2, 3, 4, 1, 2, 3, 4].map((n, i) => (
+                        <div key={i} style={{ width: '60px', height: '30px', background: '#111', borderRadius: '6px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.5rem', color: '#555', fontWeight: 900 }}>L{n}</div>
                       ))}
                     </div>
                   </div>
+                  <small style={{ color: '#666', fontSize: '0.6rem', marginTop: '4px', display: 'block' }}>(-) veloz / (+) veloz</small>
                 </div>
 
                 <div className="dev-form-group">
-                  <label>Velocidade dos Flyers</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  <label style={{ fontSize: '0.7rem' }}>Velocidade dos Flyers</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <button 
                       className="dev-btn dev-btn-secondary" 
-                      style={{ padding: '0', width: '40px', height: '40px', borderRadius: '10px', fontSize: '1.2rem' }}
+                      style={{ padding: '0', width: '32px', height: '32px', borderRadius: '8px', fontSize: '1rem', minWidth: '32px' }}
                       onClick={() => setUniversalConfig(prev => ({ ...prev, flyerSpeed: Math.min(800, (prev.flyerSpeed || 180) + 20) }))}
                     >
                       -
                     </button>
-                    <div style={{ flex: 1, textAlign: 'center', background: '#111', padding: '8px', borderRadius: '8px', border: '1px solid #333' }}>
-                      <span style={{ fontWeight: 900, color: '#fbbf24' }}>{(universalConfig.flyerSpeed || 180)}s</span>
+                    <div style={{ flex: 1, textAlign: 'center', background: '#111', padding: '6px', borderRadius: '6px', border: '1px solid #333' }}>
+                      <span style={{ fontWeight: 900, color: '#fbbf24', fontSize: '0.8rem' }}>{(universalConfig.flyerSpeed || 180)}s</span>
                     </div>
                     <button 
                       className="dev-btn dev-btn-secondary" 
-                      style={{ padding: '0', width: '40px', height: '40px', borderRadius: '10px', fontSize: '1.2rem' }}
+                      style={{ padding: '0', width: '32px', height: '32px', borderRadius: '8px', fontSize: '1rem', minWidth: '32px' }}
                       onClick={() => setUniversalConfig(prev => ({ ...prev, flyerSpeed: Math.max(20, (prev.flyerSpeed || 180) - 20) }))}
                     >
                       +
                     </button>
                   </div>
-                  <small style={{ color: '#888' }}>+ Veloz (-) seg | - Veloz (+) seg</small>
 
                   {/* Flyer Preview */}
-                  <div style={{ marginTop: '15px', overflow: 'hidden', background: '#080808', borderRadius: '15px', border: '1px solid #222', padding: '10px 0' }}>
-                    <div style={{ display: 'flex', gap: '15px', width: 'max-content', animation: `scroll ${universalConfig.flyerSpeed || 180}s linear infinite` }}>
+                  <div style={{ marginTop: '10px', overflow: 'hidden', background: '#080808', borderRadius: '12px', border: '1px solid #222' }}>
+                    <div style={{ display: 'flex', gap: '10px', width: 'max-content', padding: '8px', animation: `scroll ${universalConfig.flyerSpeed || 180}s linear infinite` }}>
                       {[1, 2, 3, 1, 2, 3].map((n, i) => (
-                        <div key={i} style={{ width: '80px', height: '120px', background: '#111', borderRadius: '8px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.6rem', color: '#555', fontWeight: 900, textAlign: 'center' }}>FLYER {n}</div>
+                        <div key={i} style={{ width: '40px', height: '60px', background: '#111', borderRadius: '6px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.5rem', color: '#555', fontWeight: 900 }}>F{n}</div>
                       ))}
                     </div>
                   </div>
+                  <small style={{ color: '#666', fontSize: '0.6rem', marginTop: '4px', display: 'block' }}>(-) veloz / (+) veloz</small>
                 </div>
               </div>
               <button 
