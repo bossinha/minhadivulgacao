@@ -464,6 +464,26 @@ function AppContent() {
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  const catNavRef = useRef<HTMLDivElement>(null);
+
+  const scrollCats = (direction: 'left' | 'right') => {
+    if (catNavRef.current) {
+      const scrollAmount = 300;
+      catNavRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  const handleCategoryClick = (categoryName: string | null) => {
+    setSelectedCategory(categoryName);
+    // Smooth scroll to results
+    setTimeout(() => {
+      const element = document.getElementById('empresas-whatsapp');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  };
+
   // --- Helper to update specific data ---
   const updateData = (key: string, value: any) => {
     setAppData(prev => {
@@ -938,17 +958,27 @@ function AppContent() {
           <h2 className="section-title">{appData.sections.categories.title}</h2>
           <p style={{ color: 'var(--text-dim)', marginTop: '10px' }}>{appData.sections.categories.desc}</p>
         </div>
-        <div className="home-categories-grid">
-          {appData.categories.map(cat => (
-            <div 
-              key={cat.name} 
-              className={`home-category-card cursor-pointer ${selectedCategory === cat.name ? 'active' : ''}`}
-              onClick={() => setSelectedCategory(prev => prev === cat.name ? null : cat.name)}
+        
+        <div className="category-nav-wrapper">
+          <button className="category-nav-btn" onClick={() => scrollCats('left')}>❮</button>
+          <div className="category-nav-container" ref={catNavRef}>
+            <button 
+              className={`category-pill ${selectedCategory === null ? 'active' : ''}`}
+              onClick={() => handleCategoryClick(null)}
             >
-              <div className="home-category-icon">{cat.icon}</div>
-              <span className="home-category-name">{cat.name}</span>
-            </div>
-          ))}
+              ⭐ TODOS
+            </button>
+            {appData.categories.map(cat => (
+              <button 
+                key={cat.name} 
+                className={`category-pill ${selectedCategory === cat.name ? 'active' : ''}`}
+                onClick={() => handleCategoryClick(cat.name)}
+              >
+                <span>{cat.icon}</span> {cat.name}
+              </button>
+            ))}
+          </div>
+          <button className="category-nav-btn" onClick={() => scrollCats('right')}>❯</button>
         </div>
       </section>
 
