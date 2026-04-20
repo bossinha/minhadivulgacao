@@ -1666,7 +1666,12 @@ function AppContent() {
                           }}>✕</button>
                           <div className="dev-grid-2">
                             <div className="dev-form-group">
-                              <label>Ícone (Emoji)</label>
+                              <div className="dev-label-row">
+                                <label>Ícone (Emoji)</label>
+                                <a href="https://getemoji.com/#activities" target="_blank" rel="noreferrer" className="dev-helper-link">
+                                  🔎 Ver Lista de Emojis
+                                </a>
+                              </div>
                               <input 
                                 type="text" 
                                 className="dev-input" 
