@@ -1335,7 +1335,7 @@ function AppContent() {
               </div>
 
               <div className="dev-tabs">
-                {['geral', 'seções', 'nichos', 'empresas', user?.isAdmin ? 'tv' : null, 'flyers', 'preços', 'segmentos', 'chat'].filter(Boolean).map(tab => (
+                {['geral', 'seções', 'categorias', 'empresas', user?.isAdmin ? 'tv' : null, 'flyers', 'preços', 'segmentos', 'chat'].filter(Boolean).map(tab => (
                   <button 
                     key={tab} 
                     className={`dev-tab ${activeTab === tab ? 'active' : ''}`}
@@ -1685,12 +1685,12 @@ function AppContent() {
                   </div>
                 )}
 
-                {activeTab === 'nichos' && (
+                {activeTab === 'categorias' && (
                   <div className="dev-forms-container">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                      <h3>Gerenciar Nichos (Categorias)</h3>
+                      <h3>Gerenciar Categorias</h3>
                       <button className="dev-add-btn" onClick={() => {
-                        const newCat = { name: "Novo Nicho", icon: "📁" };
+                        const newCat = { name: "Nova Categoria", icon: "📁" };
                         setAppData(prev => {
                           if (!prev) return prev;
                           return { ...prev, categories: [...prev.categories, newCat] };
@@ -1730,7 +1730,7 @@ function AppContent() {
                               />
                             </div>
                             <div className="dev-form-group">
-                              <label>Nome do Nicho</label>
+                              <label>Nome da Categoria</label>
                               <input 
                                 type="text" 
                                 className="dev-input" 
@@ -1796,7 +1796,7 @@ function AppContent() {
                                   </div>
                                   <div className="dev-form-group">
                                     <label>Categoria</label>
-                                    <input type="text" className="dev-input" value={c.category} onChange={(e) => {
+                                    <select className="dev-input" value={c.category} onChange={(e) => {
                                       const val = e.target.value;
                                       setAppData(prev => {
                                         if (!prev) return prev;
@@ -1804,7 +1804,12 @@ function AppContent() {
                                         newList[idx] = { ...newList[idx], category: val };
                                         return { ...prev, companies: newList };
                                       });
-                                    }} />
+                                    }}>
+                                      <option value="">Selecione uma categoria</option>
+                                      {appData.categories.map(cat => (
+                                        <option key={cat.name} value={cat.name}>{cat.name}</option>
+                                      ))}
+                                    </select>
                                   </div>
                                 </div>
                                 <div className="dev-form-group">
