@@ -1169,12 +1169,12 @@ function AppContent() {
                 <div key={i} className="flyer-item">
                   <div className="flyer-inner">
                     <img src={typeof flyer === 'string' ? flyer : flyer?.image} alt="Flyer" className="flyer-img" referrerPolicy="no-referrer" />
-                    {(typeof flyer === 'object' && flyer?.link) && (
-                      <a href={flyer.link} target="_blank" rel="noreferrer" className="flyer-action-btn">
-                        MAIS INFORMAÇÕES
-                      </a>
-                    )}
                   </div>
+                  {(typeof flyer === 'object' && flyer?.link) && (
+                    <a href={flyer.link} target="_blank" rel="noreferrer" className="flyer-action-btn">
+                      MAIS INFORMAÇÕES
+                    </a>
+                  )}
                 </div>
               ))}
             </div>
@@ -1183,12 +1183,12 @@ function AppContent() {
                 <div key={`${i}-dup`} className="flyer-item">
                   <div className="flyer-inner">
                     <img src={typeof flyer === 'string' ? flyer : flyer?.image} alt="Flyer" className="flyer-img" referrerPolicy="no-referrer" />
-                    {(typeof flyer === 'object' && flyer?.link) && (
-                      <a href={flyer.link} target="_blank" rel="noreferrer" className="flyer-action-btn">
-                        MAIS INFORMAÇÕES
-                      </a>
-                    )}
                   </div>
+                  {(typeof flyer === 'object' && flyer?.link) && (
+                    <a href={flyer.link} target="_blank" rel="noreferrer" className="flyer-action-btn">
+                      MAIS INFORMAÇÕES
+                    </a>
+                  )}
                 </div>
               ))}
             </div>
