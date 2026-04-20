@@ -639,24 +639,69 @@ function AppContent() {
               </div>
               <div className="dev-grid-2">
                 <div className="dev-form-group">
-                  <label>Velocidade das Logos (segundos)</label>
-                  <input 
-                    type="number" 
-                    className="dev-input" 
-                    value={universalConfig.logoSpeed} 
-                    onChange={e => setUniversalConfig({ ...universalConfig, logoSpeed: parseInt(e.target.value) || 0 })}
-                  />
-                  <small style={{ color: '#888' }}>Quanto menos tempo, mais rápido. Padrão: 100</small>
+                  <label>Velocidade das Logos</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <button 
+                      className="dev-btn dev-btn-secondary" 
+                      style={{ padding: '0', width: '40px', height: '40px', borderRadius: '10px', fontSize: '1.2rem' }}
+                      onClick={() => setUniversalConfig(prev => ({ ...prev, logoSpeed: Math.min(500, (prev.logoSpeed || 100) + 10) }))}
+                    >
+                      -
+                    </button>
+                    <div style={{ flex: 1, textAlign: 'center', background: '#111', padding: '8px', borderRadius: '8px', border: '1px solid #333' }}>
+                      <span style={{ fontWeight: 900, color: '#fbbf24' }}>{(universalConfig.logoSpeed || 100)}s</span>
+                    </div>
+                    <button 
+                      className="dev-btn dev-btn-secondary" 
+                      style={{ padding: '0', width: '40px', height: '40px', borderRadius: '10px', fontSize: '1.2rem' }}
+                      onClick={() => setUniversalConfig(prev => ({ ...prev, logoSpeed: Math.max(10, (prev.logoSpeed || 100) - 10) }))}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <small style={{ color: '#888' }}>+ Veloz (-) seg | - Veloz (+) seg</small>
+                  
+                  {/* Logo Preview */}
+                  <div style={{ marginTop: '15px', overflow: 'hidden', background: '#080808', borderRadius: '15px', border: '1px solid #222', padding: '10px 0' }}>
+                    <div style={{ display: 'flex', gap: '20px', width: 'max-content', animation: `scroll ${universalConfig.logoSpeed || 100}s linear infinite` }}>
+                      {[1, 2, 3, 4, 5, 1, 2, 3, 4, 5].map((n, i) => (
+                        <div key={i} style={{ width: '100px', height: '50px', background: '#111', borderRadius: '8px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.6rem', color: '#555', fontWeight: 900 }}>LOGO {n}</div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
+
                 <div className="dev-form-group">
-                  <label>Velocidade dos Flyers (segundos)</label>
-                  <input 
-                    type="number" 
-                    className="dev-input" 
-                    value={universalConfig.flyerSpeed} 
-                    onChange={e => setUniversalConfig({ ...universalConfig, flyerSpeed: parseInt(e.target.value) || 0 })}
-                  />
-                  <small style={{ color: '#888' }}>Quanto menos tempo, mais rápido. Padrão: 180</small>
+                  <label>Velocidade dos Flyers</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <button 
+                      className="dev-btn dev-btn-secondary" 
+                      style={{ padding: '0', width: '40px', height: '40px', borderRadius: '10px', fontSize: '1.2rem' }}
+                      onClick={() => setUniversalConfig(prev => ({ ...prev, flyerSpeed: Math.min(800, (prev.flyerSpeed || 180) + 20) }))}
+                    >
+                      -
+                    </button>
+                    <div style={{ flex: 1, textAlign: 'center', background: '#111', padding: '8px', borderRadius: '8px', border: '1px solid #333' }}>
+                      <span style={{ fontWeight: 900, color: '#fbbf24' }}>{(universalConfig.flyerSpeed || 180)}s</span>
+                    </div>
+                    <button 
+                      className="dev-btn dev-btn-secondary" 
+                      style={{ padding: '0', width: '40px', height: '40px', borderRadius: '10px', fontSize: '1.2rem' }}
+                      onClick={() => setUniversalConfig(prev => ({ ...prev, flyerSpeed: Math.max(20, (prev.flyerSpeed || 180) - 20) }))}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <small style={{ color: '#888' }}>+ Veloz (-) seg | - Veloz (+) seg</small>
+
+                  {/* Flyer Preview */}
+                  <div style={{ marginTop: '15px', overflow: 'hidden', background: '#080808', borderRadius: '15px', border: '1px solid #222', padding: '10px 0' }}>
+                    <div style={{ display: 'flex', gap: '15px', width: 'max-content', animation: `scroll ${universalConfig.flyerSpeed || 180}s linear infinite` }}>
+                      {[1, 2, 3, 1, 2, 3].map((n, i) => (
+                        <div key={i} style={{ width: '80px', height: '120px', background: '#111', borderRadius: '8px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.6rem', color: '#555', fontWeight: 900, textAlign: 'center' }}>FLYER {n}</div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
               <button 
@@ -2005,7 +2050,18 @@ function AppContent() {
                           <button className="dev-remove-btn" onClick={() => updateData('flyers', appData.flyers.filter((_, i) => i !== idx))}>✕</button>
                           <div className="dev-grid-2">
                             <div className="dev-form-group">
-                              <label>Link da Imagem Flyer</label>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                                <label style={{ marginBottom: '0' }}>Link da Imagem Flyer</label>
+                                <a 
+                                  href="https://postimages.org/" 
+                                  target="_blank" 
+                                  rel="noreferrer" 
+                                  className="dev-btn dev-btn-secondary"
+                                  style={{ padding: '4px 10px', fontSize: '0.65rem', textDecoration: 'none', height: 'auto', display: 'flex', alignItems: 'center', gap: '5px' }}
+                                >
+                                  🖼️ Enviar Foto no PostImage
+                                </a>
+                              </div>
                               <input type="text" className="dev-input" value={flyerObj.image || ''} onChange={(e) => {
                                 const newList = [...appData.flyers];
                                 if (typeof newList[idx] === 'string') {
@@ -2015,6 +2071,7 @@ function AppContent() {
                                 }
                                 updateData('flyers', newList);
                               }} placeholder="Link .jpg ou .png" />
+                              <small style={{ color: '#888', fontSize: '0.65rem' }}>Dica: No PostImage, use o "Link Direto"</small>
                             </div>
                             <div className="dev-form-group">
                               <label>Link de Ação (WhatsApp/IG/Site)</label>
