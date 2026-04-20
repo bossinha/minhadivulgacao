@@ -438,8 +438,11 @@ function AppContent() {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // --- Helper to update specific data ---
-  const updateData = (key: keyof typeof appData, value: any) => {
-    setAppData(prev => ({ ...prev, [key]: value }));
+  const updateData = (key: string, value: any) => {
+    setAppData(prev => {
+      if (!prev) return prev;
+      return { ...prev, [key]: value };
+    });
   };
 
   // --- Visitor Simulation ---
@@ -849,10 +852,10 @@ function AppContent() {
       className="min-h-screen bg-bg text-text font-jakarta"
       style={{
         // @ts-ignore
-        '--primary': appData.theme.primary,
-        '--bg': appData.theme.bg,
-        '--text': appData.theme.text,
-        '--text-dim': appData.theme.textDim
+        '--primary': appData?.theme?.primary || '#fbbf24',
+        '--bg': appData?.theme?.bg || '#000000',
+        '--text': appData?.theme?.text || '#ffffff',
+        '--text-dim': appData?.theme?.textDim || '#a0a0a0'
       }}
     >
       {/* Floating Dev Button - SHOW ONLY IF LOGGED IN MANAGER OR MASTER ADMIN */}
@@ -1308,21 +1311,65 @@ function AppContent() {
                     <div className="dev-grid-2">
                       <div className="dev-form-group">
                         <label>Cor Primária</label>
-                        <input type="color" className="dev-input" value={appData.theme.primary} onChange={(e) => updateData('theme', { ...appData.theme, primary: e.target.value })} />
+                        <input 
+                          type="color" 
+                          className="dev-input" 
+                          value={appData.theme.primary} 
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAppData(prev => {
+                              if (!prev) return prev;
+                              return { ...prev, theme: { ...prev.theme, primary: val } };
+                            });
+                          }} 
+                        />
                       </div>
                       <div className="dev-form-group">
                         <label>Cor de Fundo</label>
-                        <input type="color" className="dev-input" value={appData.theme.bg} onChange={(e) => updateData('theme', { ...appData.theme, bg: e.target.value })} />
+                        <input 
+                          type="color" 
+                          className="dev-input" 
+                          value={appData.theme.bg} 
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAppData(prev => {
+                              if (!prev) return prev;
+                              return { ...prev, theme: { ...prev.theme, bg: val } };
+                            });
+                          }} 
+                        />
                       </div>
                     </div>
                     <div className="dev-grid-2">
                       <div className="dev-form-group">
                         <label>Nome do Site</label>
-                        <input type="text" className="dev-input" value={appData.siteInfo.name} onChange={(e) => updateData('siteInfo', { ...appData.siteInfo, name: e.target.value })} />
+                        <input 
+                          type="text" 
+                          className="dev-input" 
+                          value={appData.siteInfo.name} 
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAppData(prev => {
+                              if (!prev) return prev;
+                              return { ...prev, siteInfo: { ...prev.siteInfo, name: val } };
+                            });
+                          }} 
+                        />
                       </div>
                       <div className="dev-form-group">
                         <label>Sufixo (ex: Divulgação)</label>
-                        <input type="text" className="dev-input" value={appData.siteInfo.suffix} onChange={(e) => updateData('siteInfo', { ...appData.siteInfo, suffix: e.target.value })} />
+                        <input 
+                          type="text" 
+                          className="dev-input" 
+                          value={appData.siteInfo.suffix} 
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAppData(prev => {
+                              if (!prev) return prev;
+                              return { ...prev, siteInfo: { ...prev.siteInfo, suffix: val } };
+                            });
+                          }} 
+                        />
                       </div>
                     </div>
                     <div className="dev-form-group">
@@ -1350,7 +1397,17 @@ function AppContent() {
 
                     <div className="dev-form-group">
                       <label>Descrição</label>
-                      <textarea className="dev-input" value={appData.siteInfo.description} onChange={(e) => updateData('siteInfo', { ...appData.siteInfo, description: e.target.value })} />
+                      <textarea 
+                        className="dev-input" 
+                        value={appData.siteInfo.description} 
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setAppData(prev => {
+                            if (!prev) return prev;
+                            return { ...prev, siteInfo: { ...prev.siteInfo, description: val } };
+                          });
+                        }} 
+                      />
                     </div>
                     <div className="dev-form-group">
                       <label>Link da Rádio (Universal - Apenas Visualização)</label>
@@ -1360,15 +1417,48 @@ function AppContent() {
                     <div className="dev-grid-2">
                       <div className="dev-form-group">
                         <label>WhatsApp (Link completo)</label>
-                        <input type="text" className="dev-input" value={appData.siteInfo.social.wa} onChange={(e) => updateData('siteInfo', { ...appData.siteInfo, social: { ...appData.siteInfo.social, wa: e.target.value } })} />
+                        <input 
+                          type="text" 
+                          className="dev-input" 
+                          value={appData.siteInfo.social.wa} 
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAppData(prev => {
+                              if (!prev) return prev;
+                              return { ...prev, siteInfo: { ...prev.siteInfo, social: { ...prev.siteInfo.social, wa: val } } };
+                            });
+                          }} 
+                        />
                       </div>
                       <div className="dev-form-group">
                         <label>Instagram (URL Completa)</label>
-                        <input type="text" className="dev-input" value={appData.siteInfo.social.ig} onChange={(e) => updateData('siteInfo', { ...appData.siteInfo, social: { ...appData.siteInfo.social, ig: e.target.value } })} />
+                        <input 
+                          type="text" 
+                          className="dev-input" 
+                          value={appData.siteInfo.social.ig} 
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAppData(prev => {
+                              if (!prev) return prev;
+                              return { ...prev, siteInfo: { ...prev.siteInfo, social: { ...prev.siteInfo.social, ig: val } } };
+                            });
+                          }} 
+                        />
                       </div>
                       <div className="dev-form-group">
                         <label>Facebook (URL Completa)</label>
-                        <input type="text" className="dev-input" value={appData.siteInfo.social.fb} onChange={(e) => updateData('siteInfo', { ...appData.siteInfo, social: { ...appData.siteInfo.social, fb: e.target.value } })} />
+                        <input 
+                          type="text" 
+                          className="dev-input" 
+                          value={appData.siteInfo.social.fb} 
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAppData(prev => {
+                              if (!prev) return prev;
+                              return { ...prev, siteInfo: { ...prev.siteInfo, social: { ...prev.siteInfo.social, fb: val } } };
+                            });
+                          }} 
+                        />
                       </div>
                     </div>
 
@@ -1376,16 +1466,49 @@ function AppContent() {
                     <div className="dev-grid-2">
                        <div className="dev-form-group">
                          <label>CNPJ</label>
-                         <input type="text" className="dev-input" value={appData.siteInfo.cnpj} onChange={(e) => updateData('siteInfo', { ...appData.siteInfo, cnpj: e.target.value })} />
+                         <input 
+                           type="text" 
+                           className="dev-input" 
+                           value={appData.siteInfo.cnpj} 
+                           onChange={(e) => {
+                             const val = e.target.value;
+                             setAppData(prev => {
+                               if (!prev) return prev;
+                               return { ...prev, siteInfo: { ...prev.siteInfo, cnpj: val } };
+                             });
+                           }} 
+                         />
                        </div>
                        <div className="dev-form-group">
                          <label>Telefone de Contato</label>
-                         <input type="text" className="dev-input" value={appData.siteInfo.phone} onChange={(e) => updateData('siteInfo', { ...appData.siteInfo, phone: e.target.value })} />
+                         <input 
+                           type="text" 
+                           className="dev-input" 
+                           value={appData.siteInfo.phone} 
+                           onChange={(e) => {
+                             const val = e.target.value;
+                             setAppData(prev => {
+                               if (!prev) return prev;
+                               return { ...prev, siteInfo: { ...prev.siteInfo, phone: val } };
+                             });
+                           }} 
+                         />
                        </div>
                     </div>
                     <div className="dev-form-group">
                        <label>Endereço Completo</label>
-                       <input type="text" className="dev-input" value={appData.siteInfo.address} onChange={(e) => updateData('siteInfo', { ...appData.siteInfo, address: e.target.value })} />
+                       <input 
+                         type="text" 
+                         className="dev-input" 
+                         value={appData.siteInfo.address} 
+                         onChange={(e) => {
+                           const val = e.target.value;
+                           setAppData(prev => {
+                             if (!prev) return prev;
+                             return { ...prev, siteInfo: { ...prev.siteInfo, address: val } };
+                           });
+                         }} 
+                       />
                     </div>
                   </div>
                 )}
@@ -1398,11 +1521,33 @@ function AppContent() {
                       <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Categorias</h4>
                       <div className="dev-form-group">
                         <label>Título Principal</label>
-                        <input type="text" className="dev-input" value={appData.sections.categories.title} onChange={(e) => updateData('sections', { ...appData.sections, categories: { ...appData.sections.categories, title: e.target.value } })} />
+                        <input 
+                          type="text" 
+                          className="dev-input" 
+                          value={appData.sections.categories.title} 
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAppData(prev => {
+                              if (!prev) return prev;
+                              return { ...prev, sections: { ...prev.sections, categories: { ...prev.sections.categories, title: val } } };
+                            });
+                          }} 
+                        />
                       </div>
                       <div className="dev-form-group">
                         <label>Subtítulo</label>
-                        <input type="text" className="dev-input" value={appData.sections.categories.desc} onChange={(e) => updateData('sections', { ...appData.sections, categories: { ...appData.sections.categories, desc: e.target.value } })} />
+                        <input 
+                          type="text" 
+                          className="dev-input" 
+                          value={appData.sections.categories.desc} 
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAppData(prev => {
+                              if (!prev) return prev;
+                              return { ...prev, sections: { ...prev.sections, categories: { ...prev.sections.categories, desc: val } } };
+                            });
+                          }} 
+                        />
                       </div>
                     </div>
 
@@ -1530,17 +1675,25 @@ function AppContent() {
                                   <div className="dev-form-group">
                                     <label>Nome</label>
                                     <input type="text" className="dev-input" value={c.name} onChange={(e) => {
-                                      const newList = [...appData.companies];
-                                      newList[idx].name = e.target.value;
-                                      updateData('companies', newList);
+                                      const val = e.target.value;
+                                      setAppData(prev => {
+                                        if (!prev) return prev;
+                                        const newList = [...prev.companies];
+                                        newList[idx] = { ...newList[idx], name: val };
+                                        return { ...prev, companies: newList };
+                                      });
                                     }} />
                                   </div>
                                   <div className="dev-form-group">
                                     <label>Categoria</label>
                                     <input type="text" className="dev-input" value={c.category} onChange={(e) => {
-                                      const newList = [...appData.companies];
-                                      newList[idx].category = e.target.value;
-                                      updateData('companies', newList);
+                                      const val = e.target.value;
+                                      setAppData(prev => {
+                                        if (!prev) return prev;
+                                        const newList = [...prev.companies];
+                                        newList[idx] = { ...newList[idx], category: val };
+                                        return { ...prev, companies: newList };
+                                      });
                                     }} />
                                   </div>
                                 </div>
