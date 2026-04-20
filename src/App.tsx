@@ -170,7 +170,7 @@ function AppContent() {
   const [user, setUser] = useState<{ uid: string; email: string | null; username: string; city: string; isAdmin?: boolean } | null>(null);
   const [loginForm, setLoginForm] = useState({ username: '', password: '', city: '' });
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [universalConfig, setUniversalConfig] = useState({ radioLink: '', logoSpeed: 100, flyerSpeed: 180 });
+  const [universalConfig, setUniversalConfig] = useState({ radioLink: '', logoSpeed: 100, flyerSpeed: 180, testimonialSpeed: 120, companySpeed: 200 });
   const [allUsers, setAllUsers] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
@@ -247,7 +247,16 @@ function AppContent() {
 
     // Listen for config changes
     const unsubConfig = onSnapshot(doc(db, 'settings', 'universal'), (snap) => {
-      if (snap.exists()) setUniversalConfig(snap.data() as any);
+      if (snap.exists()) {
+        const data = snap.data();
+        setUniversalConfig({
+          radioLink: data.radioLink || '',
+          logoSpeed: data.logoSpeed || 100,
+          flyerSpeed: data.flyerSpeed || 180,
+          testimonialSpeed: data.testimonialSpeed || 120,
+          companySpeed: data.companySpeed || 200
+        });
+      }
     }, (error) => {
       console.warn("Config listener notice (wait for login if needed):", error.message);
     });
@@ -637,7 +646,7 @@ function AppContent() {
                   onChange={e => setUniversalConfig({ ...universalConfig, radioLink: e.target.value })}
                 />
               </div>
-              <div className="dev-grid-2">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
                 <div className="dev-form-group">
                   <label style={{ fontSize: '0.7rem' }}>Velocidade das Logos</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -698,6 +707,72 @@ function AppContent() {
                     <div style={{ display: 'flex', gap: '10px', width: 'max-content', padding: '8px', animation: `scroll ${universalConfig.flyerSpeed || 180}s linear infinite` }}>
                       {[1, 2, 3, 1, 2, 3].map((n, i) => (
                         <div key={i} style={{ width: '40px', height: '60px', background: '#111', borderRadius: '6px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.5rem', color: '#555', fontWeight: 900 }}>F{n}</div>
+                      ))}
+                    </div>
+                  </div>
+                  <small style={{ color: '#666', fontSize: '0.6rem', marginTop: '4px', display: 'block' }}>(-) veloz / (+) veloz</small>
+                </div>
+
+                <div className="dev-form-group">
+                  <label style={{ fontSize: '0.7rem' }}>Velocidade Depoimentos</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <button 
+                      className="dev-btn dev-btn-secondary" 
+                      style={{ padding: '0', width: '32px', height: '32px', borderRadius: '8px', fontSize: '1rem', minWidth: '32px' }}
+                      onClick={() => setUniversalConfig(prev => ({ ...prev, testimonialSpeed: Math.min(800, (prev.testimonialSpeed || 120) + 15) }))}
+                    >
+                      -
+                    </button>
+                    <div style={{ flex: 1, textAlign: 'center', background: '#111', padding: '6px', borderRadius: '6px', border: '1px solid #333' }}>
+                      <span style={{ fontWeight: 900, color: '#fbbf24', fontSize: '0.8rem' }}>{(universalConfig.testimonialSpeed || 120)}s</span>
+                    </div>
+                    <button 
+                      className="dev-btn dev-btn-secondary" 
+                      style={{ padding: '0', width: '32px', height: '32px', borderRadius: '8px', fontSize: '1rem', minWidth: '32px' }}
+                      onClick={() => setUniversalConfig(prev => ({ ...prev, testimonialSpeed: Math.max(15, (prev.testimonialSpeed || 120) - 15) }))}
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  {/* Testimonial Preview */}
+                  <div style={{ marginTop: '10px', overflow: 'hidden', background: '#080808', borderRadius: '12px', border: '1px solid #222' }}>
+                    <div style={{ display: 'flex', gap: '10px', width: 'max-content', padding: '8px', animation: `scroll ${universalConfig.testimonialSpeed || 120}s linear infinite` }}>
+                      {[1, 2, 3, 1, 2, 3].map((n, i) => (
+                        <div key={i} style={{ width: '100px', height: '50px', background: '#111', borderRadius: '6px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.5rem', color: '#555', fontWeight: 900, textAlign: 'center' }}>DEP. {n}</div>
+                      ))}
+                    </div>
+                  </div>
+                  <small style={{ color: '#666', fontSize: '0.6rem', marginTop: '4px', display: 'block' }}>(-) veloz / (+) veloz</small>
+                </div>
+
+                <div className="dev-form-group">
+                  <label style={{ fontSize: '0.7rem' }}>Velocidade das Empresas</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <button 
+                      className="dev-btn dev-btn-secondary" 
+                      style={{ padding: '0', width: '32px', height: '32px', borderRadius: '8px', fontSize: '1rem', minWidth: '32px' }}
+                      onClick={() => setUniversalConfig(prev => ({ ...prev, companySpeed: Math.min(1000, (prev.companySpeed || 200) + 20) }))}
+                    >
+                      -
+                    </button>
+                    <div style={{ flex: 1, textAlign: 'center', background: '#111', padding: '6px', borderRadius: '6px', border: '1px solid #333' }}>
+                      <span style={{ fontWeight: 900, color: '#fbbf24', fontSize: '0.8rem' }}>{(universalConfig.companySpeed || 200)}s</span>
+                    </div>
+                    <button 
+                      className="dev-btn dev-btn-secondary" 
+                      style={{ padding: '0', width: '32px', height: '32px', borderRadius: '8px', fontSize: '1rem', minWidth: '32px' }}
+                      onClick={() => setUniversalConfig(prev => ({ ...prev, companySpeed: Math.max(20, (prev.companySpeed || 200) - 20) }))}
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  {/* Company Preview */}
+                  <div style={{ marginTop: '10px', overflow: 'hidden', background: '#080808', borderRadius: '12px', border: '1px solid #222' }}>
+                    <div style={{ display: 'flex', gap: '10px', width: 'max-content', padding: '8px', animation: `scroll ${universalConfig.companySpeed || 200}s linear infinite` }}>
+                      {[1, 2, 3, 1, 2, 3].map((n, i) => (
+                        <div key={i} style={{ width: '120px', height: '80px', background: '#111', borderRadius: '6px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.5rem', color: '#555', fontWeight: 900, textAlign: 'center' }}>EMPRESA {n}</div>
                       ))}
                     </div>
                   </div>
@@ -1102,7 +1177,7 @@ function AppContent() {
           </div>
         </div>
         <div className="carousel-wrapper">
-          <div className="carousel-track">
+          <div className="carousel-track" style={{ animationDuration: `${universalConfig.companySpeed || 200}s` }}>
             <div className="track-copy">
               {filteredCompanies.map(company => (
                 <div key={company.id} className="company-card">
@@ -1340,7 +1415,7 @@ function AppContent() {
       <section style={{ background: '#080808' }}>
         <div className="container"><div className="section-header"><span className="section-tag">Depoimentos</span><h2 className="section-title" style={{ marginTop: '10px' }}>O QUE DIZEM NOSSOS PARCEIROS</h2></div></div>
         <div className="carousel-wrapper">
-          <div className="carousel-track" style={{ animationDuration: '120s' }}>
+          <div className="carousel-track" style={{ animationDuration: `${universalConfig.testimonialSpeed || 120}s` }}>
             <div className="track-copy">
               {appData.testimonials.map((t, i) => (
                 <div key={i} className="testimonial-card">
