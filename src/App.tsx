@@ -9,7 +9,7 @@ import { HashRouter, Routes, Route, useParams, useNavigate, useLocation } from '
 
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs, deleteDoc, query, where, limit } from 'firebase/firestore';
 
 // --- Constants ---
 const COMPANIES_DATA = [
@@ -261,14 +261,34 @@ function AppContent() {
         localStorage.removeItem('tenantPass');
 
         // Find if user is a tenant or admin
-        const tenantSnap = await getDoc(doc(db, 'tenants', firebaseUser.uid));
+        // Step 1: Check by UID (direct)
+        let tenantSnap = await getDoc(doc(db, 'tenants', firebaseUser.uid));
+        let tenantIdFromDb = firebaseUser.uid;
+        let tenantData = tenantSnap.exists() ? tenantSnap.data() : null;
+
+        // Step 2: Check by querying ownerUid or ownerEmail
+        if (!tenantData) {
+          const q = query(collection(db, 'tenants'), where('ownerEmail', '==', firebaseUser.email), limit(1));
+          const qSnap = await getDocs(q);
+          if (!qSnap.empty) {
+            tenantIdFromDb = qSnap.docs[0].id;
+            tenantData = qSnap.docs[0].data();
+          } else {
+            // Try query by ownerUid
+            const q2 = query(collection(db, 'tenants'), where('ownerUid', '==', firebaseUser.uid), limit(1));
+            const qSnap2 = await getDocs(q2);
+            if (!qSnap2.empty) {
+              tenantIdFromDb = qSnap2.docs[0].id;
+              tenantData = qSnap2.docs[0].data();
+            }
+          }
+        }
         
-        if (tenantSnap.exists()) {
-          const tenantData = tenantSnap.data();
+        if (tenantData) {
           setUser({ 
             uid: firebaseUser.uid, 
             email: firebaseUser.email,
-            username: firebaseUser.uid, 
+            username: tenantIdFromDb, // Use the slug/id from DB
             city: tenantData.city, 
             isAdmin: tenantData.isAdmin 
           });
@@ -276,6 +296,11 @@ function AppContent() {
           setIsBlocked(tenantData.isBlocked || false);
           setShowVideos(tenantData.showVideos === true);
           
+          // Auto navigate to the correct city if on login or wrong page
+          if (tenantId === 'login' || tenantId === firebaseUser.uid) {
+            navigate('/' + tenantIdFromDb);
+          }
+
           if (tenantData.isAdmin) {
              const tenantsSnap = await getDocs(collection(db, 'tenants'));
              const users: any = {};
@@ -293,8 +318,10 @@ function AppContent() {
              setAllUsers(users);
              if (!tenantId || tenantId === 'login') navigate('/master');
           } else {
-            // Unrecognized user
-            await signOut(auth);
+            // Unrecognized user. Before signing out, we allow them to potentially link 
+            // if they browse to their city and use the password then.
+            // For now, we take them to login.
+            navigate('/login');
           }
         }
       } else {
@@ -615,6 +642,7 @@ function AppContent() {
                    <div>
                     <div style={{ fontWeight: 800, fontSize: '1.1rem' }}>{udata.city}</div>
                     <div style={{ fontSize: '12px', color: '#888' }}>ID: {uname} | Senha: {udata.password}</div>
+                    {udata.ownerEmail && <div style={{ fontSize: '10px', color: '#4285F4' }}>📧 {udata.ownerEmail}</div>}
                     <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
                        <span style={{ fontSize: '10px', background: udata.data ? 'rgba(37, 211, 102, 0.1)' : 'rgba(255, 140, 0, 0.1)', color: udata.data ? '#25D366' : '#FF8C00', padding: '2px 8px', borderRadius: '4px', border: '1px solid currentColor' }}>
                          {udata.data ? 'ATIVO' : 'AGUARDANDO'}
@@ -2098,6 +2126,28 @@ function AppContent() {
                 >
                   💾 Salvar
                 </button>
+
+                {/* Link Google Button */}
+                {auth.currentUser && appData && (
+                  <button 
+                    className="dev-btn" 
+                    style={{ background: '#4285F4', borderColor: '#4285F4', color: '#fff', width: '100%', marginTop: '10px' }}
+                    onClick={async () => {
+                      if (!auth.currentUser) return;
+                      try {
+                        await updateDoc(doc(db, 'tenants', user!.username), {
+                          ownerUid: auth.currentUser.uid,
+                          ownerEmail: auth.currentUser.email
+                        });
+                        alert("Sua conta Google foi vinculada a este portal com sucesso!");
+                      } catch (e) {
+                         alert("Erro ao vincular conta.");
+                      }
+                    }}
+                  >
+                    🔗 Vincular minha conta Google
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>
