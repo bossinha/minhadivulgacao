@@ -170,7 +170,7 @@ function AppContent() {
   const [user, setUser] = useState<{ uid: string; email: string | null; username: string; city: string; isAdmin?: boolean } | null>(null);
   const [loginForm, setLoginForm] = useState({ username: '', password: '', city: '' });
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [universalConfig, setUniversalConfig] = useState({ radioLink: '' });
+  const [universalConfig, setUniversalConfig] = useState({ radioLink: '', logoSpeed: 100, flyerSpeed: 180 });
   const [allUsers, setAllUsers] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
@@ -627,29 +627,52 @@ function AppContent() {
 
           <div className="dev-item-card" style={{ marginBottom: '40px' }}>
             <h3 style={{ marginBottom: '20px' }}>Configurações Globais (Todos os Sites)</h3>
-            <div className="dev-form-group">
-              <label>Link da Rádio (Universal)</label>
-              <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'grid', gap: '20px' }}>
+              <div className="dev-form-group">
+                <label>Link da Rádio (Universal)</label>
                 <input 
                   type="text" 
                   className="dev-input" 
                   value={universalConfig.radioLink} 
-                  onChange={e => setUniversalConfig({ radioLink: e.target.value })}
+                  onChange={e => setUniversalConfig({ ...universalConfig, radioLink: e.target.value })}
                 />
-                <button 
-                  className="dev-btn dev-btn-primary" 
-                  onClick={async () => {
-                   try {
-                     await setDoc(doc(db, 'settings', 'universal'), universalConfig);
-                     alert("Configuração salva para todos!");
-                   } catch(e) {
-                     alert("Sem permissão para alterar configurações globais.");
-                   }
-                  }}
-                >
-                  Atualizar
-                </button>
               </div>
+              <div className="dev-grid-2">
+                <div className="dev-form-group">
+                  <label>Velocidade das Logos (segundos)</label>
+                  <input 
+                    type="number" 
+                    className="dev-input" 
+                    value={universalConfig.logoSpeed} 
+                    onChange={e => setUniversalConfig({ ...universalConfig, logoSpeed: parseInt(e.target.value) || 0 })}
+                  />
+                  <small style={{ color: '#888' }}>Quanto menos tempo, mais rápido. Padrão: 100</small>
+                </div>
+                <div className="dev-form-group">
+                  <label>Velocidade dos Flyers (segundos)</label>
+                  <input 
+                    type="number" 
+                    className="dev-input" 
+                    value={universalConfig.flyerSpeed} 
+                    onChange={e => setUniversalConfig({ ...universalConfig, flyerSpeed: parseInt(e.target.value) || 0 })}
+                  />
+                  <small style={{ color: '#888' }}>Quanto menos tempo, mais rápido. Padrão: 180</small>
+                </div>
+              </div>
+              <button 
+                className="dev-btn dev-btn-primary" 
+                style={{ width: '100%' }}
+                onClick={async () => {
+                 try {
+                   await setDoc(doc(db, 'settings', 'universal'), universalConfig);
+                   alert("Configuração salva para todos!");
+                 } catch(e) {
+                   alert("Sem permissão para alterar configurações globais.");
+                 }
+                }}
+              >
+                Atualizar Tudo
+              </button>
             </div>
           </div>
 
@@ -1095,7 +1118,7 @@ function AppContent() {
       <section style={{ background: '#080808' }}>
         <div className="container"><div className="section-header"><span className="section-tag">{appData.sections.companies.tag}</span></div></div>
         <div className="carousel-wrapper">
-          <div className="carousel-track">
+          <div className="carousel-track" style={{ animationDuration: `${universalConfig.logoSpeed || 100}s` }}>
             <div className="track-copy">
               {appData.companies.map(c => (
                 <div key={c.id} className="logo-item">
@@ -1140,7 +1163,7 @@ function AppContent() {
       <section>
         <div className="container"><div className="section-header"><span className="section-tag">{appData.sections.flyers.tag}</span></div></div>
         <div className="carousel-wrapper">
-          <div className="carousel-track" style={{ animationDuration: '180s' }}>
+          <div className="carousel-track" style={{ animationDuration: `${universalConfig.flyerSpeed || 180}s` }}>
             <div className="track-copy">
               {appData.flyers.map((flyer, i) => (
                 <div key={i} className="flyer-item">
