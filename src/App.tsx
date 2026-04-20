@@ -1293,7 +1293,7 @@ function AppContent() {
               </div>
 
               <div className="dev-tabs">
-                {['geral', 'seções', 'empresas', user?.isAdmin ? 'tv' : null, 'flyers', 'preços', 'segmentos', 'chat'].filter(Boolean).map(tab => (
+                {['geral', 'seções', 'nichos', 'empresas', user?.isAdmin ? 'tv' : null, 'flyers', 'preços', 'segmentos', 'chat'].filter(Boolean).map(tab => (
                   <button 
                     key={tab} 
                     className={`dev-tab ${activeTab === tab ? 'active' : ''}`}
@@ -1639,6 +1639,69 @@ function AppContent() {
                         <label>Chamada para Ação</label>
                         <input type="text" className="dev-input" value={appData.sections.segments.callToAction} onChange={(e) => updateData('sections', { ...appData.sections, segments: { ...appData.sections.segments, callToAction: e.target.value } })} />
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'nichos' && (
+                  <div className="dev-forms-container">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                      <h3>Gerenciar Nichos (Categorias)</h3>
+                      <button className="dev-add-btn" onClick={() => {
+                        const newCat = { name: "Novo Nicho", icon: "📁" };
+                        setAppData(prev => {
+                          if (!prev) return prev;
+                          return { ...prev, categories: [...prev.categories, newCat] };
+                        });
+                      }}>+ Novo Nicho</button>
+                    </div>
+                    <div className="dev-items-grid">
+                      {appData.categories.map((cat, idx) => (
+                        <div key={idx} className="dev-item-card">
+                          <button className="dev-remove-btn" onClick={() => {
+                            setAppData(prev => {
+                              if (!prev) return prev;
+                              return { ...prev, categories: prev.categories.filter((_, i) => i !== idx) };
+                            });
+                          }}>✕</button>
+                          <div className="dev-grid-2">
+                            <div className="dev-form-group">
+                              <label>Ícone (Emoji)</label>
+                              <input 
+                                type="text" 
+                                className="dev-input" 
+                                value={cat.icon} 
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setAppData(prev => {
+                                    if (!prev) return prev;
+                                    const newList = [...prev.categories];
+                                    newList[idx] = { ...newList[idx], icon: val };
+                                    return { ...prev, categories: newList };
+                                  });
+                                }} 
+                              />
+                            </div>
+                            <div className="dev-form-group">
+                              <label>Nome do Nicho</label>
+                              <input 
+                                type="text" 
+                                className="dev-input" 
+                                value={cat.name} 
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setAppData(prev => {
+                                    if (!prev) return prev;
+                                    const newList = [...prev.categories];
+                                    newList[idx] = { ...newList[idx], name: val };
+                                    return { ...prev, categories: newList };
+                                  });
+                                }} 
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
