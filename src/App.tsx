@@ -1930,12 +1930,14 @@ function AppContent() {
                                 </div>
                                 <div className="dev-grid-2">
                                   <div className="dev-form-group">
-                                    <label>WhatsApp (Apenas números)</label>
+                                    <label>WhatsApp (Contato)</label>
                                     <input type="text" className="dev-input" value={c.wa} onChange={(e) => {
+                                      const digits = e.target.value.replace(/\D/g, '');
                                       const newList = [...appData.companies];
-                                      newList[idx].wa = e.target.value;
+                                      newList[idx].wa = digits;
                                       updateData('companies', newList);
-                                    }} />
+                                    }} placeholder="Ex: 95991263666" />
+                                    <small style={{ color: '#888', fontSize: '0.7rem' }}>Apenas números (DDD + número)</small>
                                   </div>
                                   <div className="dev-form-group">
                                     <label>Destaque?</label>
@@ -2015,16 +2017,47 @@ function AppContent() {
                               }} placeholder="Link .jpg ou .png" />
                             </div>
                             <div className="dev-form-group">
-                              <label>Link de Ação (WhatsApp/IG)</label>
-                              <input type="text" className="dev-input" value={flyerObj.link || ''} onChange={(e) => {
-                                const newList = [...appData.flyers];
-                                if (typeof newList[idx] === 'string') {
-                                  newList[idx] = { image: newList[idx] as any, link: e.target.value };
-                                } else {
-                                  newList[idx] = { ...newList[idx], link: e.target.value };
-                                }
-                                updateData('flyers', newList);
-                              }} placeholder="Ex: https://wa.me/..." />
+                              <label>Link de Ação (WhatsApp/IG/Site)</label>
+                              <div style={{ position: 'relative' }}>
+                                <input type="text" className="dev-input" value={flyerObj.link || ''} onChange={(e) => {
+                                  const newList = [...appData.flyers];
+                                  if (typeof newList[idx] === 'string') {
+                                    newList[idx] = { image: newList[idx] as any, link: e.target.value };
+                                  } else {
+                                    newList[idx] = { ...newList[idx], link: e.target.value };
+                                  }
+                                  updateData('flyers', newList);
+                                }} placeholder="Ex: 95991263666 ou https://..." />
+                                
+                                {flyerObj.link && !flyerObj.link.startsWith('http') && flyerObj.link.replace(/\D/g, '').length >= 10 && (
+                                  <button 
+                                    className="dev-btn dev-btn-primary" 
+                                    style={{ 
+                                      position: 'absolute', 
+                                      right: '5px', 
+                                      top: '50%', 
+                                      transform: 'translateY(-50%)',
+                                      padding: '4px 10px',
+                                      fontSize: '0.6rem',
+                                      height: 'auto'
+                                    }}
+                                    onClick={() => {
+                                      const digits = flyerObj.link.replace(/\D/g, '');
+                                      const waLink = digits.length <= 11 ? `https://wa.me/55${digits}` : `https://wa.me/${digits}`;
+                                      const newList = [...appData.flyers];
+                                      if (typeof newList[idx] === 'string') {
+                                        newList[idx] = { image: newList[idx] as any, link: waLink };
+                                      } else {
+                                        newList[idx] = { ...newList[idx], link: waLink };
+                                      }
+                                      updateData('flyers', newList);
+                                    }}
+                                  >
+                                    Gerar Link Whats
+                                  </button>
+                                )}
+                              </div>
+                              <small style={{ color: '#888', fontSize: '0.7rem' }}>Cole o link ou apenas o número (DDD + número)</small>
                             </div>
                           </div>
                           {flyerObj.image && <img src={flyerObj.image} className="dev-img-preview" alt="Preview" style={{ marginTop: '10px' }} referrerPolicy="no-referrer" />}
