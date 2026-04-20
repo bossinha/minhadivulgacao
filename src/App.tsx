@@ -1110,7 +1110,7 @@ function AppContent() {
             </div>
           </div>
           <div style={{ textAlign: 'center', marginTop: '60px' }}>
-            <a href="https://wa.me/5585992908713" target="_blank" className="cta-button">ANUNCIAR AGORA</a>
+            <a href={appData.pricing.waLink} target="_blank" className="cta-button">ANUNCIAR AGORA</a>
           </div>
         </div>
       </section>
@@ -1290,7 +1290,7 @@ function AppContent() {
               </div>
 
               <div className="dev-tabs">
-                {['geral', 'empresas', 'tv', 'flyers', 'preços', 'segmentos', 'chat'].map(tab => (
+                {['geral', 'seções', 'empresas', user?.isAdmin ? 'tv' : null, 'flyers', 'preços', 'segmentos', 'chat'].filter(Boolean).map(tab => (
                   <button 
                     key={tab} 
                     className={`dev-tab ${activeTab === tab ? 'active' : ''}`}
@@ -1363,8 +1363,136 @@ function AppContent() {
                         <input type="text" className="dev-input" value={appData.siteInfo.social.wa} onChange={(e) => updateData('siteInfo', { ...appData.siteInfo, social: { ...appData.siteInfo.social, wa: e.target.value } })} />
                       </div>
                       <div className="dev-form-group">
-                        <label>Instagram</label>
+                        <label>Instagram (URL Completa)</label>
                         <input type="text" className="dev-input" value={appData.siteInfo.social.ig} onChange={(e) => updateData('siteInfo', { ...appData.siteInfo, social: { ...appData.siteInfo.social, ig: e.target.value } })} />
+                      </div>
+                      <div className="dev-form-group">
+                        <label>Facebook (URL Completa)</label>
+                        <input type="text" className="dev-input" value={appData.siteInfo.social.fb} onChange={(e) => updateData('siteInfo', { ...appData.siteInfo, social: { ...appData.siteInfo.social, fb: e.target.value } })} />
+                      </div>
+                    </div>
+
+                    <h4 style={{ marginTop: '30px', marginBottom: '15px' }}>Informações de Contato e Legal</h4>
+                    <div className="dev-grid-2">
+                       <div className="dev-form-group">
+                         <label>CNPJ</label>
+                         <input type="text" className="dev-input" value={appData.siteInfo.cnpj} onChange={(e) => updateData('siteInfo', { ...appData.siteInfo, cnpj: e.target.value })} />
+                       </div>
+                       <div className="dev-form-group">
+                         <label>Telefone de Contato</label>
+                         <input type="text" className="dev-input" value={appData.siteInfo.phone} onChange={(e) => updateData('siteInfo', { ...appData.siteInfo, phone: e.target.value })} />
+                       </div>
+                    </div>
+                    <div className="dev-form-group">
+                       <label>Endereço Completo</label>
+                       <input type="text" className="dev-input" value={appData.siteInfo.address} onChange={(e) => updateData('siteInfo', { ...appData.siteInfo, address: e.target.value })} />
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'seções' && (
+                  <div className="dev-forms-container">
+                    <h3>Títulos e Textos das Seções</h3>
+                    
+                    <div className="dev-item-card">
+                      <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Categorias</h4>
+                      <div className="dev-form-group">
+                        <label>Título Principal</label>
+                        <input type="text" className="dev-input" value={appData.sections.categories.title} onChange={(e) => updateData('sections', { ...appData.sections, categories: { ...appData.sections.categories, title: e.target.value } })} />
+                      </div>
+                      <div className="dev-form-group">
+                        <label>Subtítulo</label>
+                        <input type="text" className="dev-input" value={appData.sections.categories.desc} onChange={(e) => updateData('sections', { ...appData.sections, categories: { ...appData.sections.categories, desc: e.target.value } })} />
+                      </div>
+                    </div>
+
+                    <div className="dev-item-card">
+                      <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>TV de Comerciais</h4>
+                      <div className="dev-grid-2">
+                        <div className="dev-form-group">
+                          <label>Selinho (Tag)</label>
+                          <input type="text" className="dev-input" value={appData.sections.tv.tag} onChange={(e) => updateData('sections', { ...appData.sections, tv: { ...appData.sections.tv, tag: e.target.value } })} />
+                        </div>
+                        <div className="dev-form-group">
+                          <label>Título</label>
+                          <input type="text" className="dev-input" value={appData.sections.tv.title} onChange={(e) => updateData('sections', { ...appData.sections, tv: { ...appData.sections.tv, title: e.target.value } })} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="dev-item-card">
+                      <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Guia de Empresas</h4>
+                      <div className="dev-grid-2">
+                        <div className="dev-form-group">
+                          <label>Selinho (Tag)</label>
+                          <input type="text" className="dev-input" value={appData.sections.companies.tag} onChange={(e) => updateData('sections', { ...appData.sections, companies: { ...appData.sections.companies, tag: e.target.value } })} />
+                        </div>
+                        <div className="dev-form-group">
+                          <label>Título</label>
+                          <input type="text" className="dev-input" value={appData.sections.companies.title} onChange={(e) => updateData('sections', { ...appData.sections, companies: { ...appData.sections.companies, title: e.target.value } })} />
+                        </div>
+                      </div>
+                      <div className="dev-form-group">
+                        <label>Subtítulo</label>
+                        <input type="text" className="dev-input" value={appData.sections.companies.desc} onChange={(e) => updateData('sections', { ...appData.sections, companies: { ...appData.sections.companies, desc: e.target.value } })} />
+                      </div>
+                    </div>
+
+                    <div className="dev-item-card">
+                      <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Flyers</h4>
+                      <div className="dev-form-group">
+                        <label>Selinho (Tag)</label>
+                        <input type="text" className="dev-input" value={appData.sections.flyers.tag} onChange={(e) => updateData('sections', { ...appData.sections, flyers: { ...appData.sections.flyers, tag: e.target.value } })} />
+                      </div>
+                    </div>
+
+                    <div className="dev-item-card">
+                      <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Como Anunciar</h4>
+                      <div className="dev-grid-2">
+                        <div className="dev-form-group">
+                          <label>Selinho (Tag)</label>
+                          <input type="text" className="dev-input" value={appData.sections.howTo.tag} onChange={(e) => updateData('sections', { ...appData.sections, howTo: { ...appData.sections.howTo, tag: e.target.value } })} />
+                        </div>
+                        <div className="dev-form-group">
+                          <label>Título</label>
+                          <input type="text" className="dev-input" value={appData.sections.howTo.title} onChange={(e) => updateData('sections', { ...appData.sections, howTo: { ...appData.sections.howTo, title: e.target.value } })} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="dev-item-card">
+                      <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Benefícios</h4>
+                      <div className="dev-grid-2">
+                        <div className="dev-form-group">
+                          <label>Selinho (Tag)</label>
+                          <input type="text" className="dev-input" value={appData.sections.benefits.tag} onChange={(e) => updateData('sections', { ...appData.sections, benefits: { ...appData.sections.benefits, tag: e.target.value } })} />
+                        </div>
+                        <div className="dev-form-group">
+                          <label>Título</label>
+                          <input type="text" className="dev-input" value={appData.sections.benefits.title} onChange={(e) => updateData('sections', { ...appData.sections, benefits: { ...appData.sections.benefits, title: e.target.value } })} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="dev-item-card">
+                      <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Segmentos (Urgência)</h4>
+                      <div className="dev-grid-2">
+                        <div className="dev-form-group">
+                          <label>Selinho (Tag)</label>
+                          <input type="text" className="dev-input" value={appData.sections.segments.tag} onChange={(e) => updateData('sections', { ...appData.sections, segments: { ...appData.sections.segments, tag: e.target.value } })} />
+                        </div>
+                        <div className="dev-form-group">
+                          <label>Título</label>
+                          <input type="text" className="dev-input" value={appData.sections.segments.title} onChange={(e) => updateData('sections', { ...appData.sections, segments: { ...appData.sections.segments, title: e.target.value } })} />
+                        </div>
+                      </div>
+                      <div className="dev-form-group">
+                        <label>Frase de Destaque</label>
+                        <input type="text" className="dev-input" value={appData.sections.segments.highlight} onChange={(e) => updateData('sections', { ...appData.sections, segments: { ...appData.sections.segments, highlight: e.target.value } })} />
+                      </div>
+                      <div className="dev-form-group">
+                        <label>Chamada para Ação</label>
+                        <input type="text" className="dev-input" value={appData.sections.segments.callToAction} onChange={(e) => updateData('sections', { ...appData.sections, segments: { ...appData.sections.segments, callToAction: e.target.value } })} />
                       </div>
                     </div>
                   </div>
@@ -1534,12 +1662,18 @@ function AppContent() {
                   </div>
                 )}
 
-                {activeTab === 'preços' && (
+                 {activeTab === 'preços' && (
                   <div className="dev-forms-container">
                     <h3>Plano e Preços</h3>
-                    <div className="dev-form-group">
-                      <label>Título do Plano</label>
-                      <input type="text" className="dev-input" value={appData.pricing.title} onChange={(e) => updateData('pricing', { ...appData.pricing, title: e.target.value })} />
+                    <div className="dev-grid-2">
+                       <div className="dev-form-group">
+                         <label>Selinho (Badge)</label>
+                         <input type="text" className="dev-input" value={appData.pricing.badge} onChange={(e) => updateData('pricing', { ...appData.pricing, badge: e.target.value })} />
+                       </div>
+                       <div className="dev-form-group">
+                         <label>Título do Plano</label>
+                         <input type="text" className="dev-input" value={appData.pricing.title} onChange={(e) => updateData('pricing', { ...appData.pricing, title: e.target.value })} />
+                       </div>
                     </div>
                     <div className="dev-grid-2">
                       <div className="dev-form-group">
@@ -1551,6 +1685,37 @@ function AppContent() {
                         <input type="text" className="dev-input" value={appData.pricing.period} onChange={(e) => updateData('pricing', { ...appData.pricing, period: e.target.value })} />
                       </div>
                     </div>
+                    <div className="dev-grid-2">
+                      <div className="dev-form-group">
+                        <label>Texto do Botão (CTA)</label>
+                        <input type="text" className="dev-input" value={appData.pricing.cta} onChange={(e) => updateData('pricing', { ...appData.pricing, cta: e.target.value })} />
+                      </div>
+                      <div className="dev-form-group">
+                        <label>Link do WhatsApp de Venda (URL Completa)</label>
+                        <input type="text" className="dev-input" value={appData.pricing.waLink} onChange={(e) => updateData('pricing', { ...appData.pricing, waLink: e.target.value })} />
+                      </div>
+                    </div>
+
+                    <h4 style={{ marginTop: '20px', marginBottom: '10px' }}>Benefícios do Plano</h4>
+                    {appData.pricing.features.map((f: string, idx: number) => (
+                      <div key={idx} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                        <input 
+                          type="text" 
+                          className="dev-input" 
+                          value={f} 
+                          onChange={(e) => {
+                            const newFeatures = [...appData.pricing.features];
+                            newFeatures[idx] = e.target.value;
+                            updateData('pricing', { ...appData.pricing, features: newFeatures });
+                          }} 
+                        />
+                        <button className="dev-remove-btn" style={{ position: 'static' }} onClick={() => {
+                          const newFeatures = appData.pricing.features.filter((_: any, i: number) => i !== idx);
+                          updateData('pricing', { ...appData.pricing, features: newFeatures });
+                        }}>✕</button>
+                      </div>
+                    ))}
+                    <button className="dev-add-btn" onClick={() => updateData('pricing', { ...appData.pricing, features: [...appData.pricing.features, "Novo benefício"] })}>+ Adicionar Benefício</button>
                   </div>
                 )}
 
