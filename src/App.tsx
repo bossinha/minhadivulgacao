@@ -13,15 +13,15 @@ import { doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs, delete
 
 // --- Constants ---
 const COMPANIES_DATA = [
-  { id: 1, name: "Bossa Infor", category: "Publicidade", desc: "Soluções em Áudio & Vídeo", logo: "https://i.postimg.cc/Gpykbbz5/nova_logo_bossa_infor_png.png", wa: "5585992862177", ig: "https://www.instagram.com/bossainfor/", featured: true },
-  { id: 2, name: "Belém Rolamentos", category: "Oficina", desc: "Manutenção preventiva e corretiva.", logo: "https://i.postimg.cc/Y2mTTF1h/1.png", wa: "5591980342025", ig: "https://cutt.ly/belemrolamentoss", featured: true },
-  { id: 3, name: "Assai Atacadista", category: "Supermercado", desc: "Preço Baixo Todo dia", logo: "https://i.postimg.cc/LX4fh1rh/assai.jpg", wa: "558535334476", ig: "https://www.assai.com.br/", featured: true },
-  { id: 4, name: "Carneiro do Ordones", category: "Restaurante & bar", desc: "Restaurante Pioneiro em Fortaleza", logo: "https://i.postimg.cc/C1KwKkhv/images.jpg", wa: "558532815959", ig: "https://www.instagram.com/carneirodoordonesoriginal/", featured: true },
-  { id: 6, name: "Atacadão", category: "Supermercado", desc: "Preço baixo de verdade", logo: "https://i.postimg.cc/8PfPWRR8/atacadao-square-Logo-1758223460501.webp", wa: "558532159868", ig: "https://www.atacadao.com.br/", featured: true },
-  { id: 7, name: "North Shopping", category: "Lazer", desc: "O Shopping mais completo para você", logo: "https://i.postimg.cc/mZ5m083x/images.png", wa: "558534043073", ig: "https://www.northshoppingfortaleza.com.br/", featured: true },
-  { id: 8, name: "Gih Cred", category: "Financeiro", desc: "Crédito Rápido e Seguro", logo: "https://i.postimg.cc/QCby11tL/GIH_CRED.jpg", wa: "5585981502984", ig: "https://www.gihcred.com.br/", featured: false },
-  { id: 9, name: "Cartão de Todos", category: "Saúde", desc: "O maior cartão de descontos do Brasil", logo: "https://i.postimg.cc/K8SfGPPV/Whats-App-Image-2026-03-12-at-06-48-20.jpg", wa: "5585999093518", ig: "#", featured: false },
-  { id: 10, name: "ESPAÇO FRIO REFRIGERAÇÃO", category: "Refrigeração", desc: "Soluções em climatização com qualidade, eficiência e conforto para seu ambiente.", logo: "https://i.postimg.cc/7ZwfTgVM/LOGO.png", wa: "5585997403872", ig: "https://wa.me/5585997403872", featured: true }
+  { id: 1, name: "Bossa Infor", category: "Publicidade", desc: "Soluções em Áudio & Vídeo", logo: "https://i.postimg.cc/Gpykbbz5/nova_logo_bossa_infor_png.png", wa: "5585992862177", ig: "https://www.instagram.com/bossainfor/", website: "", featured: true },
+  { id: 2, name: "Belém Rolamentos", category: "Oficina", desc: "Manutenção preventiva e corretiva.", logo: "https://i.postimg.cc/Y2mTTF1h/1.png", wa: "5591980342025", ig: "https://cutt.ly/belemrolamentoss", website: "", featured: true },
+  { id: 3, name: "Assai Atacadista", category: "Supermercado", desc: "Preço Baixo Todo dia", logo: "https://i.postimg.cc/LX4fh1rh/assai.jpg", wa: "558535334476", ig: "https://www.assai.com.br/", website: "", featured: true },
+  { id: 4, name: "Carneiro do Ordones", category: "Restaurante & bar", desc: "Restaurante Pioneiro em Fortaleza", logo: "https://i.postimg.cc/C1KwKkhv/images.jpg", wa: "558532815959", ig: "https://www.instagram.com/carneirodoordonesoriginal/", website: "", featured: true },
+  { id: 6, name: "Atacadão", category: "Supermercado", desc: "Preço baixo de verdade", logo: "https://i.postimg.cc/8PfPWRR8/atacadao-square-Logo-1758223460501.webp", wa: "558532159868", ig: "https://www.atacadao.com.br/", website: "", featured: true },
+  { id: 7, name: "North Shopping", category: "Lazer", desc: "O Shopping mais completo para você", logo: "https://i.postimg.cc/mZ5m083x/images.png", wa: "558534043073", ig: "https://www.northshoppingfortaleza.com.br/", website: "", featured: true },
+  { id: 8, name: "Gih Cred", category: "Financeiro", desc: "Crédito Rápido e Seguro", logo: "https://i.postimg.cc/QCby11tL/GIH_CRED.jpg", wa: "5585981502984", ig: "https://www.gihcred.com.br/", website: "", featured: false },
+  { id: 9, name: "Cartão de Todos", category: "Saúde", desc: "O maior cartão de descontos do Brasil", logo: "https://i.postimg.cc/K8SfGPPV/Whats-App-Image-2026-03-12-at-06-48-20.jpg", wa: "5585999093518", ig: "#", website: "", featured: false },
+  { id: 10, name: "ESPAÇO FRIO REFRIGERAÇÃO", category: "Refrigeração", desc: "Soluções em climatização com qualidade, eficiência e conforto para seu ambiente.", logo: "https://i.postimg.cc/7ZwfTgVM/LOGO.png", wa: "5585997403872", ig: "https://wa.me/5585997403872", website: "", featured: true }
 ];
 
 const VIDEOS = [
@@ -988,9 +988,16 @@ function AppContent() {
                     <h3 className="company-name">{company.name}</h3>
                     <span className="company-category">{company.category}</span>
                     <p className="company-desc">{company.desc}</p>
-                    <div className="card-actions">
+                    <div className="card-actions" style={{ flexDirection: 'column' }}>
                       <a href={`https://wa.me/${company.wa}`} target="_blank" className="wa-button">WhatsApp</a>
-                      <a href={company.ig} target="_blank" className="btn-view">Ver Empresa</a>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        {company.ig && company.ig !== '#' && company.ig !== '' && (
+                          <a href={company.ig} target="_blank" className="btn-view" style={{ flex: 1 }}>Instagram</a>
+                        )}
+                        {company.website && company.website !== '' && (
+                          <a href={company.website} target="_blank" className="btn-view" style={{ flex: 1, background: 'var(--primary)', color: 'black' }}>Site</a>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1007,9 +1014,16 @@ function AppContent() {
                     <h3 className="company-name">{company.name}</h3>
                     <span className="company-category">{company.category}</span>
                     <p className="company-desc">{company.desc}</p>
-                    <div className="card-actions">
+                    <div className="card-actions" style={{ flexDirection: 'column' }}>
                       <a href={`https://wa.me/${company.wa}`} target="_blank" className="wa-button">WhatsApp</a>
-                      <a href={company.ig} target="_blank" className="btn-view">Ver Empresa</a>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        {company.ig && company.ig !== '#' && company.ig !== '' && (
+                          <a href={company.ig} target="_blank" className="btn-view" style={{ flex: 1 }}>Instagram</a>
+                        )}
+                        {company.website && company.website !== '' && (
+                          <a href={company.website} target="_blank" className="btn-view" style={{ flex: 1, background: 'var(--primary)', color: 'black' }}>Site</a>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1794,6 +1808,32 @@ function AppContent() {
                                 </div>
                                 <div className="dev-grid-2">
                                   <div className="dev-form-group">
+                                    <label>Link do Instagram</label>
+                                    <input type="text" className="dev-input" value={c.ig} onChange={(e) => {
+                                      const val = e.target.value;
+                                      setAppData(prev => {
+                                        if (!prev) return prev;
+                                        const newList = [...prev.companies];
+                                        newList[idx] = { ...newList[idx], ig: val };
+                                        return { ...prev, companies: newList };
+                                      });
+                                    }} placeholder="Opcional" />
+                                  </div>
+                                  <div className="dev-form-group">
+                                    <label>Link do Site</label>
+                                    <input type="text" className="dev-input" value={c.website} onChange={(e) => {
+                                      const val = e.target.value;
+                                      setAppData(prev => {
+                                        if (!prev) return prev;
+                                        const newList = [...prev.companies];
+                                        newList[idx] = { ...newList[idx], website: val };
+                                        return { ...prev, companies: newList };
+                                      });
+                                    }} placeholder="Opcional" />
+                                  </div>
+                                </div>
+                                <div className="dev-grid-2">
+                                  <div className="dev-form-group">
                                     <label>WhatsApp (Apenas números)</label>
                                     <input type="text" className="dev-input" value={c.wa} onChange={(e) => {
                                       const newList = [...appData.companies];
@@ -1821,7 +1861,7 @@ function AppContent() {
                     ))}
                     <button className="dev-add-btn" onClick={() => {
                       const newIdx = appData.companies.length;
-                      updateData('companies', [...appData.companies, { id: Date.now(), name: "Nova Empresa", category: "Geral", desc: "Descrição aqui", logo: "", wa: "", ig: "#", featured: false }]);
+                      updateData('companies', [...appData.companies, { id: Date.now(), name: "Nova Empresa", category: "Geral", desc: "Descrição aqui", logo: "", wa: "", ig: "", website: "", featured: false }]);
                       setOpenCompanyIndex(newIdx);
                     }}>+ Adicionar Empresa</button>
                   </div>
@@ -2122,9 +2162,21 @@ function AppContent() {
                             <div className="chat-result-cat">{c.category}</div>
                           </div>
                         </div>
-                        <a href={`https://wa.me/${c.wa}`} target="_blank" className="chat-result-wa">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                        </a>
+                        <div className="chat-result-actions" style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
+                          <a href={`https://wa.me/${c.wa}`} target="_blank" className="chat-result-wa" style={{ flex: 1 }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                          </a>
+                          {c.ig && c.ig !== '' && c.ig !== '#' && (
+                            <a href={c.ig} target="_blank" className="chat-result-wa" style={{ flex: 1, background: '#E1306C' }}>
+                              IG
+                            </a>
+                          )}
+                          {c.website && c.website !== '' && (
+                            <a href={c.website} target="_blank" className="chat-result-wa" style={{ flex: 1, background: 'var(--primary)', color: 'black' }}>
+                              Web
+                            </a>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
