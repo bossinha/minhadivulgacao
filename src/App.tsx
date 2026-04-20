@@ -36,18 +36,18 @@ const VIDEOS = [
 ];
 
 const FLYERS = [
-  "https://i.postimg.cc/zDHJ5cCD/CURSO.png",
-  "https://i.postimg.cc/qMbRP4YH/flyer-minha-divulgacao-c-zap-grupos.png",
-  "https://i.postimg.cc/d0MqF19v/banner-mer-marco.jpg",
-  "https://i.postimg.cc/MKvxjRsD/site.png",
-  "https://i.postimg.cc/0j4TCWtL/supermercados.png",
-  "https://i.postimg.cc/jjTGvJXY/banner-novo-comerciais-video.png",
-  "https://i.postimg.cc/W3nCr9nF/Chat-GPT-Image-12-de-mar-de-2026-06-55-05.png",
-  "https://i.postimg.cc/fbdt577W/gih-cred-2.png",
-  "https://i.postimg.cc/3wQNLBMN/b-CRIE-ALGO-MAIS-OU.jpg",
-  "https://i.postimg.cc/XYJ9KyDZ/gih-cred-1.png",
-  "https://i.postimg.cc/CLX8Swgp/ok.png",
-  "https://i.postimg.cc/fyyVkZjF/BANNER.png"
+  { image: "https://i.postimg.cc/zDHJ5cCD/CURSO.png", link: "https://wa.me/5585992908713" },
+  { image: "https://i.postimg.cc/qMbRP4YH/flyer-minha-divulgacao-c-zap-grupos.png", link: "https://wa.me/5585992908713" },
+  { image: "https://i.postimg.cc/d0MqF19v/banner-mer-marco.jpg", link: "https://wa.me/5585992908713" },
+  { image: "https://i.postimg.cc/MKvxjRsD/site.png", link: "https://wa.me/5585992908713" },
+  { image: "https://i.postimg.cc/0j4TCWtL/supermercados.png", link: "https://wa.me/5585992908713" },
+  { image: "https://i.postimg.cc/jjTGvJXY/banner-novo-comerciais-video.png", link: "https://wa.me/5585992908713" },
+  { image: "https://i.postimg.cc/W3nCr9nF/Chat-GPT-Image-12-de-mar-de-2026-06-55-05.png", link: "https://wa.me/5585992908713" },
+  { image: "https://i.postimg.cc/fbdt577W/gih-cred-2.png", link: "https://wa.me/5585992908713" },
+  { image: "https://i.postimg.cc/3wQNLBMN/b-CRIE-ALGO-MAIS-OU.jpg", link: "https://wa.me/5585992908713" },
+  { image: "https://i.postimg.cc/XYJ9KyDZ/gih-cred-1.png", link: "https://wa.me/5585992908713" },
+  { image: "https://i.postimg.cc/CLX8Swgp/ok.png", link: "https://wa.me/5585992908713" },
+  { image: "https://i.postimg.cc/fyyVkZjF/BANNER.png", link: "https://wa.me/5585992908713" }
 ];
 
 const TESTIMONIALS = [
@@ -139,7 +139,7 @@ interface AppData {
   notificationsData: any;
   companies: any[];
   videos: string[];
-  flyers: string[];
+  flyers: { image: string; link: string }[];
   testimonials: any[];
   categories: any[];
 }
@@ -1142,19 +1142,29 @@ function AppContent() {
         <div className="carousel-wrapper">
           <div className="carousel-track" style={{ animationDuration: '180s' }}>
             <div className="track-copy">
-              {appData.flyers.map((src, i) => (
+              {appData.flyers.map((flyer, i) => (
                 <div key={i} className="flyer-item">
                   <div className="flyer-inner">
-                    <img src={src} alt="Flyer" className="flyer-img" referrerPolicy="no-referrer" />
+                    <img src={typeof flyer === 'string' ? flyer : flyer?.image} alt="Flyer" className="flyer-img" referrerPolicy="no-referrer" />
+                    {(typeof flyer === 'object' && flyer?.link) && (
+                      <a href={flyer.link} target="_blank" rel="noreferrer" className="flyer-action-btn">
+                        MAIS INFORMAÇÕES
+                      </a>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
             <div className="track-copy duplicate">
-              {appData.flyers.map((src, i) => (
+              {appData.flyers.map((flyer, i) => (
                 <div key={`${i}-dup`} className="flyer-item">
                   <div className="flyer-inner">
-                    <img src={src} alt="Flyer" className="flyer-img" referrerPolicy="no-referrer" />
+                    <img src={typeof flyer === 'string' ? flyer : flyer?.image} alt="Flyer" className="flyer-img" referrerPolicy="no-referrer" />
+                    {(typeof flyer === 'object' && flyer?.link) && (
+                      <a href={flyer.link} target="_blank" rel="noreferrer" className="flyer-action-btn">
+                        MAIS INFORMAÇÕES
+                      </a>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1962,27 +1972,43 @@ function AppContent() {
 
                 {activeTab === 'flyers' && (
                   <div className="dev-forms-container">
-                    <h3>Flyers de Promoção (Links de Imagem)</h3>
-                    {appData.flyers.map((f, idx) => (
-                      <div key={idx} className="dev-item-card">
-                        <button className="dev-remove-btn" onClick={() => updateData('flyers', appData.flyers.filter((_, i) => i !== idx))}>✕</button>
-                        <div className="dev-form-group">
-                          <div className="dev-label-row">
-                            <label>Link da Imagem Flyer</label>
-                            <a href="https://postimages.org/" target="_blank" rel="noreferrer" className="dev-helper-link">
-                              📸 Abrir PostImages
-                            </a>
+                    <h3>Flyers de Promoção (Imagens e Links)</h3>
+                    {appData.flyers.map((f: any, idx) => {
+                      const flyerObj = typeof f === 'string' ? { image: f, link: '' } : f;
+                      return (
+                        <div key={idx} className="dev-item-card">
+                          <button className="dev-remove-btn" onClick={() => updateData('flyers', appData.flyers.filter((_, i) => i !== idx))}>✕</button>
+                          <div className="dev-grid-2">
+                            <div className="dev-form-group">
+                              <label>Link da Imagem Flyer</label>
+                              <input type="text" className="dev-input" value={flyerObj.image || ''} onChange={(e) => {
+                                const newList = [...appData.flyers];
+                                if (typeof newList[idx] === 'string') {
+                                  newList[idx] = { image: e.target.value, link: '' };
+                                } else {
+                                  newList[idx] = { ...newList[idx], image: e.target.value };
+                                }
+                                updateData('flyers', newList);
+                              }} placeholder="Link .jpg ou .png" />
+                            </div>
+                            <div className="dev-form-group">
+                              <label>Link de Ação (WhatsApp/IG)</label>
+                              <input type="text" className="dev-input" value={flyerObj.link || ''} onChange={(e) => {
+                                const newList = [...appData.flyers];
+                                if (typeof newList[idx] === 'string') {
+                                  newList[idx] = { image: newList[idx] as any, link: e.target.value };
+                                } else {
+                                  newList[idx] = { ...newList[idx], link: e.target.value };
+                                }
+                                updateData('flyers', newList);
+                              }} placeholder="Ex: https://wa.me/..." />
+                            </div>
                           </div>
-                          <input type="text" className="dev-input" value={f} onChange={(e) => {
-                            const newList = [...appData.flyers];
-                            newList[idx] = e.target.value;
-                            updateData('flyers', newList);
-                          }} placeholder="Cole o link direto .jpg ou .png aqui" />
-                          {f && <img src={f} className="dev-img-preview" alt="Preview do Flyer" referrerPolicy="no-referrer" />}
+                          {flyerObj.image && <img src={flyerObj.image} className="dev-img-preview" alt="Preview" style={{ marginTop: '10px' }} referrerPolicy="no-referrer" />}
                         </div>
-                      </div>
-                    ))}
-                    <button className="dev-add-btn" onClick={() => updateData('flyers', [...appData.flyers, ""])}>+ Adicionar Flyer</button>
+                      );
+                    })}
+                    <button className="dev-add-btn" onClick={() => updateData('flyers', [...appData.flyers, { image: "", link: "" }])}>+ Adicionar Flyer</button>
                   </div>
                 )}
 
