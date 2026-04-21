@@ -9,7 +9,7 @@ import { HashRouter, Routes, Route, useParams, useNavigate, useLocation } from '
 
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs, deleteDoc, query, where, limit } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs, deleteDoc, query, where, limit, increment } from 'firebase/firestore';
 
 // --- Constants ---
 const COMPANIES_DATA = [
@@ -170,7 +170,8 @@ function AppContent() {
   const [user, setUser] = useState<{ uid: string; email: string | null; username: string; city: string; isAdmin?: boolean } | null>(null);
   const [loginForm, setLoginForm] = useState({ username: '', password: '', city: '' });
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [universalConfig, setUniversalConfig] = useState({ radioLink: '', logoSpeed: 100, flyerSpeed: 180, testimonialSpeed: 120, companySpeed: 200 });
+  const [universalConfig, setUniversalConfig] = useState({ radioLink: '', logoSpeed: 100, flyerSpeed: 180, testimonialSpeed: 120, companySpeed: 200, totalVisits: 0 });
+  const [onlineCount, setOnlineCount] = useState(Math.floor(Math.random() * (22 - 12 + 1)) + 12);
   const [allUsers, setAllUsers] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
@@ -212,7 +213,41 @@ function AppContent() {
   }, [tenantId]);
 
   useEffect(() => {
-    // Load persisted tenant session if exists
+    // Session visit count
+    if (!sessionStorage.getItem('site_visited')) {
+      const incrementVisits = async () => {
+        try {
+          const configRef = doc(db, 'settings', 'universal');
+          const snap = await getDoc(configRef);
+          if (snap.exists()) {
+            await updateDoc(configRef, { totalVisits: increment(1) });
+          } else {
+            await setDoc(configRef, { 
+              totalVisits: 1201, 
+              radioLink: '', 
+              logoSpeed: 100, 
+              flyerSpeed: 180, 
+              testimonialSpeed: 120, 
+              companySpeed: 200 
+            });
+          }
+          sessionStorage.setItem('site_visited', 'true');
+        } catch (e) {
+          console.error("Error updating visits:", e);
+        }
+      };
+      incrementVisits();
+    }
+
+    // Simulate variations in online users
+    const onlineInterval = setInterval(() => {
+      setOnlineCount(prev => {
+        const change = Math.floor(Math.random() * 3) - 1; // -1, 0, or 1
+        return Math.max(8, Math.min(35, prev + change));
+      });
+    }, 20000);
+
+    // Persist login state
     const loadSession = async () => {
       const savedId = localStorage.getItem('tenantId');
       const savedPass = localStorage.getItem('tenantPass');
@@ -254,7 +289,8 @@ function AppContent() {
           logoSpeed: data.logoSpeed || 100,
           flyerSpeed: data.flyerSpeed || 180,
           testimonialSpeed: data.testimonialSpeed || 120,
-          companySpeed: data.companySpeed || 200
+          companySpeed: data.companySpeed || 200,
+          totalVisits: data.totalVisits || 1200
         });
       }
     }, (error) => {
@@ -343,8 +379,12 @@ function AppContent() {
       setIsAuthChecking(false);
     });
 
-    return () => { unsubAuth(); unsubConfig(); };
-  }, []);
+    return () => { 
+      unsubAuth(); 
+      unsubConfig(); 
+      clearInterval(onlineInterval); 
+    };
+  }, [tenantId, navigate]);
 
   const handleLogin = async () => {
     setIsLoading(true);
@@ -645,6 +685,22 @@ function AppContent() {
                   value={universalConfig.radioLink} 
                   onChange={e => setUniversalConfig({ ...universalConfig, radioLink: e.target.value })}
                 />
+              </div>
+              <div className="dev-form-group">
+                <label>Contador de Visitas (Total)</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  <input 
+                    type="number" 
+                    className="dev-input" 
+                    style={{ flex: 1 }}
+                    value={universalConfig.totalVisits} 
+                    onChange={e => setUniversalConfig({ ...universalConfig, totalVisits: parseInt(e.target.value) || 0 })}
+                  />
+                  <div style={{ padding: '10px 15px', background: 'rgba(37, 211, 102, 0.1)', border: '1px solid #25D366', borderRadius: '8px', color: '#25D366', fontSize: '0.8rem', fontWeight: 800 }}>
+                    ESTATÍSTICA ATIVA
+                  </div>
+                </div>
+                <small style={{ color: '#666' }}>O contador aumenta automaticamente. Você pode ajustar o número base aqui.</small>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
                 <div className="dev-form-group">
@@ -1452,10 +1508,30 @@ function AppContent() {
       <footer>
         <div className="container">
           <div className="footer-grid">
-            <div className="footer-col">
-              <h4 style={{ color: 'var(--primary)', fontWeight: 900 }}>{appData.siteInfo.name} {appData.siteInfo.suffix}</h4>
-              <p>{appData.siteInfo.description}</p>
-              <div className="social-links">
+            <div className="footer-col" style={{ gridColumn: 'span 2' }}>
+               <h4 style={{ color: 'var(--primary)', fontWeight: 900 }}>{appData.siteInfo.name} {appData.siteInfo.suffix}</h4>
+               <p>{appData.siteInfo.description}</p>
+               
+               <div style={{ marginTop: '25px', display: 'flex', gap: '30px', alignItems: 'center', padding: '15px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', width: 'fit-content', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontSize: '0.65rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px', fontWeight: 700 }}>Total de Acessos</div>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--primary)', fontFamily: 'monospace' }}>{(universalConfig.totalVisits || 1200).toLocaleString()}</div>
+                  </div>
+                  <div style={{ width: '1px', height: '30px', background: 'rgba(255,255,255,0.1)' }}></div>
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontSize: '0.65rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px', fontWeight: 700 }}>Online Agora</div>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#25D366', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'monospace' }}>
+                        <motion.div 
+                          animate={{ opacity: [1, 0.4, 1] }} 
+                          transition={{ repeat: Infinity, duration: 2 }}
+                          style={{ width: '8px', height: '8px', background: '#25D366', borderRadius: '50%', boxShadow: '0 0 10px rgba(37, 211, 102, 0.6)' }} 
+                        />
+                        {onlineCount}
+                    </div>
+                  </div>
+               </div>
+
+               <div className="social-links" style={{ marginTop: '20px' }}>
                 <a href={appData.siteInfo.social.fb} target="_blank" className="social-icon fb">FB</a>
                 <a href={appData.siteInfo.social.ig} target="_blank" className="social-icon ig">IG</a>
                 <a href={appData.siteInfo.social.wa} target="_blank" className="social-icon wa">WA</a>
