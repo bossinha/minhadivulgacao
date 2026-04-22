@@ -179,6 +179,9 @@ function AppContent() {
   const [appData, setAppData] = useState<AppData | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
   const [showVideos, setShowVideos] = useState(false);
+  const [hasAffiliateSystem, setHasAffiliateSystem] = useState(false);
+  const [affiliates, setAffiliates] = useState<any[]>([]);
+  const [isAffLoading, setIsAffLoading] = useState(false);
 
   // --- Initial Firebase Data Load ---
   useEffect(() => {
@@ -193,6 +196,7 @@ function AppContent() {
             setAppData(tData.data || DEFAULT_DATA);
             setIsBlocked(tData.isBlocked || false);
             setShowVideos(tData.showVideos === true);
+            setHasAffiliateSystem(tData.hasAffiliateSystem === true);
           } else {
             console.warn("Cidade não encontrada no banco");
             setAppData(null);
@@ -237,6 +241,26 @@ function AppContent() {
         }
       };
       incrementVisits();
+    }
+
+    // Capture Referral
+    const queryParams = new URLSearchParams(window.location.search);
+    const refCode = queryParams.get('ref') || queryParams.get('indica');
+    if (refCode && tenantId && tenantId !== 'login') {
+      const trackClick = async () => {
+        try {
+          const id = slugify(tenantId);
+          const affDoc = doc(db, 'tenants', id, 'affiliates', refCode);
+          const affSnap = await getDoc(affDoc);
+          if (affSnap.exists()) {
+             await updateDoc(affDoc, { clicks: increment(1) });
+             sessionStorage.setItem(`ref_${id}`, refCode);
+          }
+        } catch (e) {
+          console.error("Error tracking affiliate:", e);
+        }
+      };
+      trackClick();
     }
 
     // Simulate variations in online users
@@ -337,9 +361,10 @@ function AppContent() {
             city: tenantData.city, 
             isAdmin: tenantData.isAdmin 
           });
-          setAppData(tenantData.data || DEFAULT_DATA);
-          setIsBlocked(tenantData.isBlocked || false);
-          setShowVideos(tenantData.showVideos === true);
+            setAppData(tenantData.data || DEFAULT_DATA);
+            setIsBlocked(tenantData.isBlocked || false);
+            setShowVideos(tenantData.showVideos === true);
+            setHasAffiliateSystem(tenantData.hasAffiliateSystem === true);
           
           // Auto navigate to the correct city if on login or wrong page
           if (tenantId === 'login' || tenantId === firebaseUser.uid) {
@@ -385,6 +410,8 @@ function AppContent() {
       clearInterval(onlineInterval); 
     };
   }, [tenantId, navigate]);
+
+
 
   const handleLogin = async () => {
     setIsLoading(true);
@@ -510,6 +537,27 @@ function AppContent() {
   const [isTyping, setIsTyping] = useState(false);
   const [isDevAreaOpen, setIsDevAreaOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('geral');
+
+  useEffect(() => {
+    if (activeTab === 'divulgadores' && tenantId) {
+      const fetchAffiliates = async () => {
+        setIsAffLoading(true);
+        try {
+          const tid = slugify(tenantId);
+          const q = collection(db, 'tenants', tid, 'affiliates');
+          const snap = await getDocs(q);
+          const list: any[] = [];
+          snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+          setAffiliates(list);
+        } catch (e) {
+          console.error("Error fetching affiliates:", e);
+        } finally {
+          setIsAffLoading(false);
+        }
+      };
+      fetchAffiliates();
+    }
+  }, [activeTab, tenantId]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -870,9 +918,24 @@ function AppContent() {
                    </div>
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <button 
-                      className="dev-btn" 
-                      style={{ background: udata.showVideos === true ? '#25D366' : '#333', borderColor: udata.showVideos === true ? '#25D366' : '#444' }}
+                     <button 
+                        className="dev-btn" 
+                        style={{ background: udata.hasAffiliateSystem === true ? '#4285F4' : '#333', borderColor: udata.hasAffiliateSystem === true ? '#4285F4' : '#444' }}
+                        onClick={async () => {
+                          await updateDoc(doc(db, 'tenants', uname), { hasAffiliateSystem: udata.hasAffiliateSystem !== true });
+                          // Refresh list
+                          const s = await getDocs(collection(db, 'tenants'));
+                          const u: any = {};
+                          s.forEach(d => u[d.id] = d.data());
+                          setAllUsers(u);
+                        }}
+                        title={udata.hasAffiliateSystem === true ? "Sistema de Divulgadores Ativo (Clique para DESATIVAR)" : "Sistema de Divulgadores Inativo (Clique para ATIVAR)"}
+                      >
+                        {udata.hasAffiliateSystem === true ? '🤝✅' : '🤝❌'}
+                      </button>
+                      <button 
+                        className="dev-btn" 
+                        style={{ background: udata.showVideos === true ? '#25D366' : '#333', borderColor: udata.showVideos === true ? '#25D366' : '#444' }}
                       onClick={async () => {
                         await updateDoc(doc(db, 'tenants', uname), { showVideos: udata.showVideos !== true });
                         // Refresh list
@@ -1246,7 +1309,13 @@ function AppContent() {
                     <span className="company-category">{company.category}</span>
                     <p className="company-desc">{company.desc}</p>
                     <div className="card-actions" style={{ flexDirection: 'column' }}>
-                      <a href={`https://wa.me/${company.wa}`} target="_blank" className="wa-button">WhatsApp</a>
+                      <a 
+                        href={`https://wa.me/${company.wa}?text=${encodeURIComponent(`Olá, vi seu anúncio no portal ${appData.siteInfo.name}.${sessionStorage.getItem(`ref_${slugify(tenantId || '')}`) ? ` Fui indicado pelo parceiro: ${sessionStorage.getItem(`ref_${slugify(tenantId || '')}`)}` : ''}`)}`} 
+                        target="_blank" 
+                        className="wa-button"
+                      >
+                        WhatsApp
+                      </a>
                       <div style={{ display: 'flex', gap: '10px' }}>
                         {company.ig && company.ig !== '#' && company.ig !== '' && (
                           <a href={company.ig} target="_blank" className="btn-view" style={{ flex: 1 }}>Instagram</a>
@@ -1272,7 +1341,13 @@ function AppContent() {
                     <span className="company-category">{company.category}</span>
                     <p className="company-desc">{company.desc}</p>
                     <div className="card-actions" style={{ flexDirection: 'column' }}>
-                      <a href={`https://wa.me/${company.wa}`} target="_blank" className="wa-button">WhatsApp</a>
+                      <a 
+                        href={`https://wa.me/${company.wa}?text=${encodeURIComponent(`Olá, vi seu anúncio no portal ${appData.siteInfo.name}.${sessionStorage.getItem(`ref_${slugify(tenantId || '')}`) ? ` Fui indicado pelo parceiro: ${sessionStorage.getItem(`ref_${slugify(tenantId || '')}`)}` : ''}`)}`} 
+                        target="_blank" 
+                        className="wa-button"
+                      >
+                        WhatsApp
+                      </a>
                       <div style={{ display: 'flex', gap: '10px' }}>
                         {company.ig && company.ig !== '#' && company.ig !== '' && (
                           <a href={company.ig} target="_blank" className="btn-view" style={{ flex: 1 }}>Instagram</a>
@@ -1594,7 +1669,7 @@ function AppContent() {
               </div>
 
               <div className="dev-tabs">
-                {['geral', 'seções', 'categorias', 'empresas', user?.isAdmin ? 'tv' : null, 'flyers', 'preços', 'segmentos', 'chat'].filter(Boolean).map(tab => (
+                {['geral', 'seções', 'categorias', 'empresas', user?.isAdmin ? 'tv' : null, 'flyers', 'preços', 'segmentos', 'chat', (hasAffiliateSystem || user?.isAdmin) ? 'divulgadores' : null].filter(Boolean).map(tab => (
                   <button 
                     key={tab} 
                     className={`dev-tab ${activeTab === tab ? 'active' : ''}`}
@@ -2439,6 +2514,131 @@ function AppContent() {
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {activeTab === 'divulgadores' && (
+                  <div className="dev-forms-container">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                      <h3>Gerenciar Divulgadores (Afiliados)</h3>
+                      <button className="dev-add-btn" onClick={async () => {
+                        const name = prompt("Nome do Divulgador?");
+                        const codeInput = prompt("Código/Slug do Link (ex: joao)?");
+                        if (name && codeInput && tenantId) {
+                          const tid = slugify(tenantId);
+                          const slug = slugify(codeInput);
+                          const affDoc = doc(db, 'tenants', tid, 'affiliates', slug);
+                          const check = await getDoc(affDoc);
+                          if (check.exists()) {
+                            alert("Este código já está em uso por outro divulgador.");
+                            return;
+                          }
+                          const newAff = {
+                            name,
+                            code: slug,
+                            commission: "20%",
+                            whatsapp: "",
+                            clicks: 0,
+                            sales: 0,
+                            totalEarned: 0
+                          };
+                          await setDoc(affDoc, newAff);
+                          setAffiliates(prev => [...prev, newAff]);
+                        }
+                      }}>+ Novo Divulgador</button>
+                    </div>
+
+                    {isAffLoading ? <div style={{ color: '#888' }}>Carregando divulgadores...</div> : (
+                      <div className="dev-items-grid">
+                        {!affiliates || affiliates.length === 0 ? <p style={{ color: '#555', fontSize: '0.8rem' }}>Nenhum divulgador cadastrado ainda.</p> : affiliates.map((aff, i) => (
+                          <div key={aff.code} className="dev-item-card">
+                            <button className="dev-remove-btn" onClick={async () => {
+                              if (confirm(`Excluir divulgador ${aff.name}?`)) {
+                                const tid = slugify(tenantId!);
+                                await deleteDoc(doc(db, 'tenants', tid, 'affiliates', aff.code));
+                                setAffiliates(prev => prev.filter(item => item.code !== aff.code));
+                              }
+                            }}>✕</button>
+                            
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
+                              <div>
+                                <h4 style={{ color: 'var(--primary)', margin: 0 }}>{aff.name}</h4>
+                                <code style={{ fontSize: '10px', color: '#888' }}>Código: {aff.code}</code>
+                              </div>
+                              <div style={{ background: 'rgba(37, 211, 102, 0.1)', color: '#25D366', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 900 }}>
+                                {aff.commission} de Comissão
+                              </div>
+                            </div>
+
+                            <div style={{ background: '#080808', padding: '10px', borderRadius: '8px', border: '1px solid #222', marginBottom: '15px' }}>
+                               <div style={{ fontSize: '10px', color: '#555', marginBottom: '5px' }}>Link para Divulgar:</div>
+                               <div style={{ fontSize: '11px', color: '#4285F4', wordBreak: 'break-all' }}>
+                                 {window.location.origin}/#/{tenantId}?ref={aff.code}
+                               </div>
+                               <button 
+                                 className="dev-btn" 
+                                 style={{ marginTop: '10px', width: '100%', fontSize: '11px', padding: '6px' }}
+                                 onClick={() => {
+                                   navigator.clipboard.writeText(`${window.location.origin}/#/${tenantId}?ref=${aff.code}`);
+                                   alert("Link copiado!");
+                                 }}
+                               >
+                                 Copiar Link
+                               </button>
+                            </div>
+
+                            <div className="dev-grid-2" style={{ gap: '10px' }}>
+                               <div style={{ background: '#111', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
+                                  <div style={{ fontSize: '10px', color: '#666' }}>CLIQUES</div>
+                                  <div style={{ fontWeight: 900, color: '#fff' }}>{aff.clicks || 0}</div>
+                               </div>
+                               <div style={{ background: '#111', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
+                                  <div style={{ fontSize: '10px', color: '#666' }}>VENDAS</div>
+                                  <div style={{ fontWeight: 900, color: '#fbbf24' }}>{aff.sales || 0}</div>
+                               </div>
+                            </div>
+
+                            <div className="dev-form-group" style={{ marginTop: '15px' }}>
+                              <label>Ajustar Comissão / WhatsApp</label>
+                              <div className="dev-grid-2" style={{ gap: '10px' }}>
+                                <input 
+                                  type="text" 
+                                  className="dev-input" 
+                                  value={aff.commission} 
+                                  placeholder="20%"
+                                  onChange={async (e) => {
+                                    const val = e.target.value;
+                                    const tid = slugify(tenantId!);
+                                    setAffiliates(prev => {
+                                      const newList = [...prev];
+                                      newList[i] = { ...newList[i], commission: val };
+                                      return newList;
+                                    });
+                                    await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { commission: val });
+                                  }}
+                                />
+                                <input 
+                                  type="text" 
+                                  className="dev-input" 
+                                  value={aff.whatsapp || ''} 
+                                  placeholder="WhatsApp"
+                                  onChange={async (e) => {
+                                    const val = e.target.value;
+                                    const tid = slugify(tenantId!);
+                                    setAffiliates(prev => {
+                                      const newList = [...prev];
+                                      newList[i] = { ...newList[i], whatsapp: val };
+                                      return newList;
+                                    });
+                                    await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { whatsapp: val });
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

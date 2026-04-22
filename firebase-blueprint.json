@@ -10,16 +10,37 @@
         "data": { "type": "object" },
         "isAdmin": { "type": "boolean" },
         "ownerEmail": { "type": "string" },
-        "showVideos": { "type": "boolean" }
+        "showVideos": { "type": "boolean" },
+        "hasAffiliateSystem": { "type": "boolean" }
       },
       "required": ["city", "password"]
+    },
+    "Affiliate": {
+      "title": "Affiliate",
+      "description": "Affiliate marketer for a specific tenant",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "code": { "type": "string" },
+        "commission": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "clicks": { "type": "number" },
+        "sales": { "type": "number" },
+        "totalEarned": { "type": "number" }
+      },
+      "required": ["name", "code"]
     },
     "GlobalConfig": {
       "title": "Global Config",
       "description": "Universal settings for all sites",
       "type": "object",
       "properties": {
-        "radioLink": { "type": "string" }
+        "radioLink": { "type": "string" },
+        "logoSpeed": { "type": "number" },
+        "flyerSpeed": { "type": "number" },
+        "testimonialSpeed": { "type": "number" },
+        "companySpeed": { "type": "number" },
+        "totalVisits": { "type": "number" }
       }
     }
   },
@@ -27,6 +48,10 @@
     "/tenants/{tenantId}": {
       "schema": "Tenant",
       "description": "City specific data"
+    },
+    "/tenants/{tenantId}/affiliates/{affiliateId}": {
+      "schema": "Affiliate",
+      "description": "Affiliates for a specific tenant"
     },
     "/settings/universal": {
       "schema": "GlobalConfig",

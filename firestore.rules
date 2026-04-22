@@ -45,12 +45,48 @@ service cloud.firestore {
         request.resource.data.password == resource.data.password &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['data'])
       );
+
+      // Affiliates Sub-collection
+      match /affiliates/{affiliateId} {
+        // Tenant owners can manage their affiliates
+        allow read, write: if isAdmin();
+        
+        // Allow tenant to manage via password/session-like logic (matching the tenant's password)
+        // Since we don't have complex auth for tenants yet, we use the same protection as tenant update
+        // But for simplicity in the rules, we check if they are the admin or have the same credential.
+        // Actually, we'll allow public GET if valid ID.
+        allow get: if isValidId(affiliateId);
+        
+        // Write: Admin Master or if we are the tenant (using the same password check logic is hard for subcollections without get doc)
+        // Let's use a simpler check: if it's the admin master. 
+        // For the tenant to manage, we'll rely on the client knowing the secret or being logged in.
+        // Since we have a 'user' state in App.tsx, we can check if request.auth.uid matches tenant owner.
+        allow read, write: if isAdmin() || (isSignedIn() && (
+                               exists(/databases/$(database)/documents/tenants/$(tenantId)) && 
+                               get(/databases/$(database)/documents/tenants/$(tenantId)).data.ownerUid == request.auth.uid
+                            ));
+        
+        // Public click increment
+        allow update: if (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['clicks']) &&
+          request.resource.data.clicks == resource.data.clicks + 1
+        );
+      }
     }
 
     // Dynamic Settings
     match /settings/universal {
       allow read: if true;
-      allow write: if isAdmin();
+      allow update: if (
+        isAdmin() || 
+        (
+          // Allow anyone to increment totalVisits
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalVisits']) &&
+          request.resource.data.totalVisits is number &&
+          request.resource.data.totalVisits > resource.data.totalVisits
+        )
+      );
+      allow create: if isAdmin();
     }
   }
 }
