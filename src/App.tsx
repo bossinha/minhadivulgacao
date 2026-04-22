@@ -250,11 +250,12 @@ function AppContent() {
       const trackClick = async () => {
         try {
           const id = slugify(tenantId);
-          const affDoc = doc(db, 'tenants', id, 'affiliates', refCode);
+          const cleanRef = slugify(refCode);
+          const affDoc = doc(db, 'tenants', id, 'affiliates', cleanRef);
           const affSnap = await getDoc(affDoc);
           if (affSnap.exists()) {
              await updateDoc(affDoc, { clicks: increment(1) });
-             sessionStorage.setItem(`ref_${id}`, refCode);
+             sessionStorage.setItem(`ref_${id}`, cleanRef);
           }
         } catch (e) {
           console.error("Error tracking affiliate:", e);
@@ -412,6 +413,17 @@ function AppContent() {
   }, [tenantId, navigate]);
 
 
+
+  const getWaLinkWithReferral = (baseUrl: string) => {
+    if (!baseUrl) return '#';
+    const tid = slugify(tenantId || '');
+    const ref = sessionStorage.getItem(`ref_${tid}`);
+    if (!ref) return baseUrl;
+    
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    const referralText = `Olá, vi o plano no portal ${appData?.siteInfo.name} e fui indicado pelo parceiro: ${ref}`;
+    return `${baseUrl}${separator}text=${encodeURIComponent(referralText)}`;
+  };
 
   const handleLogin = async () => {
     setIsLoading(true);
@@ -1469,7 +1481,7 @@ function AppContent() {
             </div>
           </div>
           <div style={{ textAlign: 'center', marginTop: '60px' }}>
-            <a href={appData.pricing.waLink} target="_blank" className="cta-button">ANUNCIAR AGORA</a>
+            <a href={getWaLinkWithReferral(appData.pricing.waLink)} target="_blank" className="cta-button">ANUNCIAR AGORA</a>
           </div>
         </div>
       </section>
@@ -1538,7 +1550,7 @@ function AppContent() {
           <ul className="pricing-list">
             {appData.pricing.features.map((f, i) => <li key={i}>{f}</li>)}
           </ul>
-          <a href={appData.pricing.waLink} target="_blank" className="cta-button" style={{ width: '100%' }}>{appData.pricing.cta}</a>
+          <a href={getWaLinkWithReferral(appData.pricing.waLink)} target="_blank" className="cta-button" style={{ width: '100%' }}>{appData.pricing.cta}</a>
         </div>
       </section>
 
