@@ -24,22 +24,16 @@ service cloud.firestore {
 
     // Tenants Collection
     match /tenants/{tenantId} {
-      // Anyone can GET their own tenant data if they know the ID (Public view)
       allow get: if isValidId(tenantId);
-      
-      // List only for Admin Master
       allow list: if isAdmin();
       
-      // Self-Registration: Anyone can create a NEW tenant if ID is unique and not an admin
       allow create: if isValidId(tenantId) && 
                       !exists(/databases/$(database)/documents/tenants/$(tenantId)) &&
                       request.resource.data.keys().hasAll(['city', 'password', 'data', 'isAdmin']) &&
                       request.resource.data.isAdmin == false;
       
-      // Admin can do anything
       allow update, delete: if isAdmin();
       
-      // Tenant can update their own data if they pass a simple "password" check 
       allow update: if isValidId(tenantId) && (
         request.resource.data.password == resource.data.password &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['data'])
@@ -49,16 +43,13 @@ service cloud.firestore {
       match /affiliates/{affiliateId} {
         allow get: if isValidId(affiliateId);
         
-        // Write: Admin Master or if we are the tenant (using the same password check logic is hard for subcollections without get doc)
-        // Let's use a simpler check: if it's the admin master. 
-        // For the tenant to manage, we'll rely on the client knowing the secret or being logged in.
-        // Since we have a 'user' state in App.tsx, we can check if request.auth.uid matches tenant owner.
-        allow read, write: if isAdmin() || (isSignedIn() && (
-                               exists(/databases/$(database)/documents/tenants/$(tenantId)) && 
-                               get(/databases/$(database)/documents/tenants/$(tenantId)).data.ownerUid == request.auth.uid
-                            ));
+        // Simplificado: Admin Master OU possui a senha do portal no campo _auth
+        allow read, write: if isAdmin() || 
+          (request.resource.data._auth == get(/databases/$(database)/documents/tenants/$(tenantId)).data.password) ||
+          (resource != null && resource.data._auth == get(/databases/$(database)/documents/tenants/$(tenantId)).data.password);
+
+        allow list: if true;
         
-        // Public click increment
         allow update: if (
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['clicks']) &&
           request.resource.data.clicks == resource.data.clicks + 1
@@ -72,7 +63,6 @@ service cloud.firestore {
       allow update: if (
         isAdmin() || 
         (
-          // Allow anyone to increment totalVisits
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalVisits']) &&
           request.resource.data.totalVisits is number &&
           request.resource.data.totalVisits > resource.data.totalVisits

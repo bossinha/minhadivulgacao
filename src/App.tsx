@@ -244,7 +244,9 @@ function AppContent() {
     }
 
     // Capture Referral
-    const queryParams = new URLSearchParams(window.location.search);
+    const fullUrl = window.location.href;
+    const searchPart = fullUrl.includes('?') ? fullUrl.split('?')[1] : '';
+    const queryParams = new URLSearchParams(searchPart);
     const refCode = queryParams.get('ref') || queryParams.get('indica');
     if (refCode && tenantId && tenantId !== 'login') {
       const trackClick = async () => {
@@ -420,8 +422,14 @@ function AppContent() {
     const ref = sessionStorage.getItem(`ref_${tid}`);
     if (!ref) return baseUrl;
     
+    const referralText = `Olá, vim pelo portal ${appData?.siteInfo.name} indicado pelo divulgador: ${ref}`;
+    
+    // Se o link já tem text=, a gente substitui para manter o indicativo do divulgador
+    if (baseUrl.toLowerCase().includes('text=')) {
+      return baseUrl.replace(/([?&])text=[^&]*/i, `$1text=${encodeURIComponent(referralText)}`);
+    }
+
     const separator = baseUrl.includes('?') ? '&' : '?';
-    const referralText = `Olá, vi o plano no portal ${appData?.siteInfo.name} e fui indicado pelo parceiro: ${ref}`;
     return `${baseUrl}${separator}text=${encodeURIComponent(referralText)}`;
   };
 
@@ -1437,7 +1445,7 @@ function AppContent() {
                     <img src={typeof flyer === 'string' ? flyer : flyer?.image} alt="Flyer" className="flyer-img" referrerPolicy="no-referrer" />
                   </div>
                   {(typeof flyer === 'object' && flyer?.link) && (
-                    <a href={flyer.link} target="_blank" rel="noreferrer" className="flyer-action-btn">
+                    <a href={getWaLinkWithReferral(flyer.link)} target="_blank" rel="noreferrer" className="flyer-action-btn">
                       MAIS INFORMAÇÕES
                     </a>
                   )}
@@ -1451,7 +1459,7 @@ function AppContent() {
                     <img src={typeof flyer === 'string' ? flyer : flyer?.image} alt="Flyer" className="flyer-img" referrerPolicy="no-referrer" />
                   </div>
                   {(typeof flyer === 'object' && flyer?.link) && (
-                    <a href={flyer.link} target="_blank" rel="noreferrer" className="flyer-action-btn">
+                    <a href={getWaLinkWithReferral(flyer.link)} target="_blank" rel="noreferrer" className="flyer-action-btn">
                       MAIS INFORMAÇÕES
                     </a>
                   )}
@@ -1624,7 +1632,7 @@ function AppContent() {
                <div className="social-links" style={{ marginTop: '20px' }}>
                 <a href={appData.siteInfo.social.fb} target="_blank" className="social-icon fb">FB</a>
                 <a href={appData.siteInfo.social.ig} target="_blank" className="social-icon ig">IG</a>
-                <a href={appData.siteInfo.social.wa} target="_blank" className="social-icon wa">WA</a>
+                <a href={getWaLinkWithReferral(appData.siteInfo.social.wa)} target="_blank" className="social-icon wa">WA</a>
               </div>
               <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
                 {(user?.isAdmin || (user?.uid && user.uid === tenantId)) && (
