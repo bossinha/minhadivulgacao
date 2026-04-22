@@ -2536,147 +2536,158 @@ function AppContent() {
                   <div className="dev-forms-container">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                       <h3>Gerenciar Divulgadores (Afiliados)</h3>
-                      <button className="dev-add-btn" onClick={async () => {
-                        const nameInput = prompt("Nome do Divulgador?");
-                        const codeInput = prompt("Código/Slug do Link (ex: joao)?");
-                        
-                        if (!nameInput || !codeInput) return;
-                        if (!tenantId) {
-                          alert("Erro: ID da cidade não detectado.");
-                          return;
-                        }
-
-                        const tid = slugify(tenantId);
-                        const slug = slugify(codeInput);
-                        const affDoc = doc(db, 'tenants', tid, 'affiliates', slug);
-                        
-                        try {
-                          const check = await getDoc(affDoc);
-                          if (check.exists()) {
-                            alert("Este código já está em uso por outro divulgador.");
+                      
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <button className="dev-add-btn" style={{ margin: 0 }} onClick={async () => {
+                          const nameInput = prompt("Nome do Divulgador?");
+                          const codeInput = prompt("Código/Slug do Link (ex: joao)?");
+                          
+                          if (!nameInput || !codeInput) return;
+                          if (!tenantId) {
+                            alert("Erro: ID da cidade não detectado.");
                             return;
                           }
+
+                          const tid = slugify(tenantId);
+                          const slug = slugify(codeInput);
+                          const affDoc = doc(db, 'tenants', tid, 'affiliates', slug);
                           
-                          const newAff = {
-                            name: nameInput,
-                            code: slug,
-                            commission: "20%",
-                            whatsapp: "",
-                            clicks: 0,
-                            sales: 0,
-                            totalEarned: 0
-                          };
-                          
-                          await setDoc(affDoc, newAff);
-                          
-                          // Update local state and ensure UI refreshes
-                          setAffiliates(prev => [...(prev || []), { ...newAff, id: slug }]);
-                          alert("Divulgador adicionado com sucesso!");
-                        } catch (err: any) {
-                          console.error("Erro ao adicionar divulgador:", err);
-                          if (err.message?.includes('permission-denied')) {
-                            alert("Erro de permissão! Você precisa estar logado com sua conta Google e vinculada a este portal para gerenciar divulgadores.");
-                          } else {
+                          try {
+                            const check = await getDoc(affDoc);
+                            if (check.exists()) {
+                              alert("Este código já está em uso por outro divulgador.");
+                              return;
+                            }
+                            
+                            const newAff = {
+                              name: nameInput,
+                              code: slug,
+                              commission: "20%",
+                              whatsapp: "",
+                              clicks: 0,
+                              sales: 0,
+                              totalEarned: 0,
+                              _auth: localStorage.getItem('tenantPass') 
+                            };
+                            
+                            await setDoc(affDoc, newAff);
+                            
+                            // Update local state and ensure UI refreshes
+                            setAffiliates(prev => [...(prev || []), { ...newAff, id: slug }]);
+                            alert("Divulgador adicionado com sucesso!");
+                          } catch (err: any) {
+                            console.error("Erro ao adicionar divulgador:", err);
                             alert("Erro ao adicionar: " + err.message);
                           }
-                        }
-                      }}>+ Novo Divulgador</button>
+                        }}>+ Novo Divulgador</button>
+                      </div>
                     </div>
 
-                    {isAffLoading ? <div style={{ color: '#888' }}>Carregando divulgadores...</div> : (
+                    {isAffLoading ? (
+                      <div style={{ color: '#888' }}>Carregando divulgadores...</div>
+                    ) : (
                       <div className="dev-items-grid">
-                        {!affiliates || affiliates.length === 0 ? <p style={{ color: '#555', fontSize: '0.8rem' }}>Nenhum divulgador cadastrado ainda.</p> : affiliates.map((aff, i) => (
-                          <div key={aff.code} className="dev-item-card">
-                            <button className="dev-remove-btn" onClick={async () => {
-                              if (confirm(`Excluir divulgador ${aff.name}?`)) {
-                                const tid = slugify(tenantId!);
-                                await deleteDoc(doc(db, 'tenants', tid, 'affiliates', aff.code));
-                                setAffiliates(prev => prev.filter(item => item.code !== aff.code));
-                              }
-                            }}>✕</button>
-                            
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
-                              <div>
-                                <h4 style={{ color: 'var(--primary)', margin: 0 }}>{aff.name}</h4>
-                                <code style={{ fontSize: '10px', color: '#888' }}>Código: {aff.code}</code>
-                              </div>
-                              <div style={{ background: 'rgba(37, 211, 102, 0.1)', color: '#25D366', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 900 }}>
-                                {aff.commission} de Comissão
-                              </div>
-                            </div>
-
-                            <div style={{ background: '#080808', padding: '10px', borderRadius: '8px', border: '1px solid #222', marginBottom: '15px' }}>
-                               <div style={{ fontSize: '10px', color: '#555', marginBottom: '5px' }}>Link para Divulgar:</div>
-                               <div style={{ fontSize: '11px', color: '#4285F4', wordBreak: 'break-all' }}>
-                                 {window.location.origin}/#/{tenantId}?ref={aff.code}
-                               </div>
-                               <button 
-                                 className="dev-btn" 
-                                 style={{ marginTop: '10px', width: '100%', fontSize: '11px', padding: '6px' }}
-                                 onClick={() => {
-                                   navigator.clipboard.writeText(`${window.location.origin}/#/${tenantId}?ref=${aff.code}`);
-                                   alert("Link copiado!");
-                                 }}
-                               >
-                                 Copiar Link
-                               </button>
-                            </div>
-
-                            <div className="dev-grid-2" style={{ gap: '10px' }}>
-                               <div style={{ background: '#111', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
-                                  <div style={{ fontSize: '10px', color: '#666' }}>CLIQUES</div>
-                                  <div style={{ fontWeight: 900, color: '#fff' }}>{aff.clicks || 0}</div>
-                               </div>
-                               <div style={{ background: '#111', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
-                                  <div style={{ fontSize: '10px', color: '#666' }}>VENDAS</div>
-                                  <div style={{ fontWeight: 900, color: '#fbbf24' }}>{aff.sales || 0}</div>
-                               </div>
-                            </div>
-
-                            <div className="dev-form-group" style={{ marginTop: '15px' }}>
-                              <label>Ajustar Comissão / WhatsApp</label>
-                              <div className="dev-grid-2" style={{ gap: '10px' }}>
-                                <input 
-                                  type="text" 
-                                  className="dev-input" 
-                                  value={aff.commission} 
-                                  placeholder="20%"
-                                  onChange={async (e) => {
-                                    const val = e.target.value;
+                        {!affiliates || affiliates.length === 0 ? (
+                          <p style={{ color: '#555', fontSize: '0.8rem' }}>Nenhum divulgador cadastrado ainda.</p>
+                        ) : (
+                          affiliates.map((aff, i) => (
+                              <div key={aff.code} className="dev-item-card">
+                                <button className="dev-remove-btn" onClick={async () => {
+                                  if (confirm(`Excluir divulgador ${aff.name}?`)) {
                                     const tid = slugify(tenantId!);
-                                    setAffiliates(prev => {
-                                      const newList = [...prev];
-                                      newList[i] = { ...newList[i], commission: val };
-                                      return newList;
-                                    });
-                                    await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { commission: val });
-                                  }}
-                                />
-                                <input 
-                                  type="text" 
-                                  className="dev-input" 
-                                  value={aff.whatsapp || ''} 
-                                  placeholder="WhatsApp"
-                                  onChange={async (e) => {
-                                    const val = e.target.value;
-                                    const tid = slugify(tenantId!);
-                                    setAffiliates(prev => {
-                                      const newList = [...prev];
-                                      newList[i] = { ...newList[i], whatsapp: val };
-                                      return newList;
-                                    });
-                                    await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { whatsapp: val });
-                                  }}
-                                />
+                                    await deleteDoc(doc(db, 'tenants', tid, 'affiliates', aff.code));
+                                    setAffiliates(prev => prev.filter(item => item.code !== aff.code));
+                                  }
+                                }}>✕</button>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
+                                  <div>
+                                    <h4 style={{ color: 'var(--primary)', margin: 0 }}>{aff.name}</h4>
+                                    <code style={{ fontSize: '10px', color: '#888' }}>Código: {aff.code}</code>
+                                  </div>
+                                  <div style={{ background: 'rgba(37, 211, 102, 0.1)', color: '#25D366', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 900 }}>
+                                    {aff.commission} de Comissão
+                                  </div>
+                                </div>
+    
+                                <div style={{ background: '#080808', padding: '10px', borderRadius: '8px', border: '1px solid #222', marginBottom: '15px' }}>
+                                   <div style={{ fontSize: '10px', color: '#555', marginBottom: '5px' }}>Link para Divulgar:</div>
+                                   <div style={{ fontSize: '11px', color: '#4285F4', wordBreak: 'break-all' }}>
+                                     {window.location.origin}/#/{tenantId}?ref={aff.code}
+                                   </div>
+                                   <button 
+                                     className="dev-btn" 
+                                     style={{ marginTop: '10px', width: '100%', fontSize: '11px', padding: '6px' }}
+                                     onClick={() => {
+                                       navigator.clipboard.writeText(`${window.location.origin}/#/${tenantId}?ref=${aff.code}`);
+                                       alert("Link copiado!");
+                                     }}
+                                   >
+                                     Copiar Link
+                                   </button>
+                                </div>
+    
+                                <div className="dev-grid-2" style={{ gap: '10px' }}>
+                                   <div style={{ background: '#111', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
+                                      <div style={{ fontSize: '10px', color: '#666' }}>CLIQUES</div>
+                                      <div style={{ fontWeight: 900, color: '#fff' }}>{aff.clicks || 0}</div>
+                                   </div>
+                                   <div style={{ background: '#111', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
+                                      <div style={{ fontSize: '10px', color: '#666' }}>VENDAS</div>
+                                      <div style={{ fontWeight: 900, color: '#fbbf24' }}>{aff.sales || 0}</div>
+                                   </div>
+                                </div>
+    
+                                <div className="dev-form-group" style={{ marginTop: '15px' }}>
+                                  <label>Ajustar Comissão / WhatsApp</label>
+                                  <div className="dev-grid-2" style={{ gap: '10px' }}>
+                                    <input 
+                                      type="text" 
+                                      className="dev-input" 
+                                      value={aff.commission} 
+                                      placeholder="20%"
+                                      onChange={async (e) => {
+                                        const val = e.target.value;
+                                        const tid = slugify(tenantId!);
+                                        setAffiliates(prev => {
+                                          const newList = [...prev];
+                                          newList[i] = { ...newList[i], commission: val };
+                                          return newList;
+                                        });
+                                        await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
+                                          commission: val,
+                                          _auth: localStorage.getItem('tenantPass')
+                                        });
+                                      }}
+                                    />
+                                    <input 
+                                      type="text" 
+                                      className="dev-input" 
+                                      value={aff.whatsapp || ''} 
+                                      placeholder="WhatsApp"
+                                      onChange={async (e) => {
+                                        const val = e.target.value;
+                                        const tid = slugify(tenantId!);
+                                        setAffiliates(prev => {
+                                          const newList = [...prev];
+                                          newList[i] = { ...newList[i], whatsapp: val };
+                                          return newList;
+                                        });
+                                        await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
+                                          whatsapp: val,
+                                          _auth: localStorage.getItem('tenantPass')
+                                        });
+                                      }}
+                                    />
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
 
               <div className="dev-actions">
                 <button 
