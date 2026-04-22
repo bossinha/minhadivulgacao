@@ -2651,28 +2651,6 @@ function AppContent() {
                 >
                   💾 Salvar
                 </button>
-
-                {/* Link Google Button */}
-                {auth.currentUser && appData && (
-                  <button 
-                    className="dev-btn" 
-                    style={{ background: '#4285F4', borderColor: '#4285F4', color: '#fff', width: '100%', marginTop: '10px' }}
-                    onClick={async () => {
-                      if (!auth.currentUser) return;
-                      try {
-                        await updateDoc(doc(db, 'tenants', user!.username), {
-                          ownerUid: auth.currentUser.uid,
-                          ownerEmail: auth.currentUser.email
-                        });
-                        alert("Sua conta Google foi vinculada a este portal com sucesso!");
-                      } catch (e) {
-                         alert("Erro ao vincular conta.");
-                      }
-                    }}
-                  >
-                    🔗 Vincular minha conta Google
-                  </button>
-                )}
               </div>
             </div>
           </motion.div>
