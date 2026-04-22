@@ -42,18 +42,18 @@ service cloud.firestore {
       // Affiliates Sub-collection
       match /affiliates/{affiliateId} {
         allow get: if isValidId(affiliateId);
-        
-        // Simplificado: Admin Master OU possui a senha do portal no campo _auth
-        allow read, write: if isAdmin() || 
-          (request.resource.data._auth == get(/databases/$(database)/documents/tenants/$(tenantId)).data.password) ||
-          (resource != null && resource.data._auth == get(/databases/$(database)/documents/tenants/$(tenantId)).data.password);
-
         allow list: if true;
         
+        // Public increment for clicks
         allow update: if (
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['clicks']) &&
-          request.resource.data.clicks == resource.data.clicks + 1
+          request.resource.data.clicks is number
         );
+
+        // Management writes (needs portal password or Admin)
+        allow write: if isAdmin() || 
+          (request.resource.data._auth == get(/databases/$(database)/documents/tenants/$(tenantId)).data.password) ||
+          (resource != null && resource.data._auth == get(/databases/$(database)/documents/tenants/$(tenantId)).data.password);
       }
     }
 

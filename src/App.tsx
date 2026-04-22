@@ -248,22 +248,32 @@ function AppContent() {
     const searchPart = fullUrl.includes('?') ? fullUrl.split('?')[1] : '';
     const queryParams = new URLSearchParams(searchPart);
     const refCode = queryParams.get('ref') || queryParams.get('indica');
+    
     if (refCode && tenantId && tenantId !== 'login') {
-      const trackClick = async () => {
-        try {
-          const id = slugify(tenantId);
-          const cleanRef = slugify(refCode);
-          const affDoc = doc(db, 'tenants', id, 'affiliates', cleanRef);
-          const affSnap = await getDoc(affDoc);
-          if (affSnap.exists()) {
-             await updateDoc(affDoc, { clicks: increment(1) });
-             sessionStorage.setItem(`ref_${id}`, cleanRef);
+      const id = slugify(tenantId);
+      const cleanRef = slugify(refCode);
+      const refKey = `ref_tracked_${id}_${cleanRef}`;
+      
+      // Armazena quem é o divulgador na sessão
+      sessionStorage.setItem(`ref_${id}`, cleanRef);
+
+      // Track click apenas se ainda não trackeou nesta sessão
+      if (!sessionStorage.getItem(refKey)) {
+        const trackClick = async () => {
+          try {
+            const affDoc = doc(db, 'tenants', id, 'affiliates', cleanRef);
+            const affSnap = await getDoc(affDoc);
+            if (affSnap.exists()) {
+               await updateDoc(affDoc, { clicks: increment(1) });
+               sessionStorage.setItem(refKey, 'true');
+               console.log("Clique trackeado com sucesso:", cleanRef);
+            }
+          } catch (e) {
+            console.error("Error tracking affiliate:", e);
           }
-        } catch (e) {
-          console.error("Error tracking affiliate:", e);
-        }
-      };
-      trackClick();
+        };
+        trackClick();
+      }
     }
 
     // Simulate variations in online users
