@@ -48,13 +48,6 @@ service cloud.firestore {
 
       // Affiliates Sub-collection
       match /affiliates/{affiliateId} {
-        // Tenant owners can manage their affiliates
-        allow read, write: if isAdmin();
-        
-        // Allow tenant to manage via password/session-like logic (matching the tenant's password)
-        // Since we don't have complex auth for tenants yet, we use the same protection as tenant update
-        // But for simplicity in the rules, we check if they are the admin or have the same credential.
-        // Actually, we'll allow public GET if valid ID.
         allow get: if isValidId(affiliateId);
         
         // Write: Admin Master or if we are the tenant (using the same password check logic is hard for subcollections without get doc)

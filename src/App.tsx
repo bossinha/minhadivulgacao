@@ -550,17 +550,20 @@ function AppContent() {
   const [isDevAreaOpen, setIsDevAreaOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('geral');
 
+  // Load affiliates when tab is active
   useEffect(() => {
     if (activeTab === 'divulgadores' && tenantId) {
       const fetchAffiliates = async () => {
         setIsAffLoading(true);
         try {
           const tid = slugify(tenantId);
+          console.log("Fetching affiliates for:", tid);
           const q = collection(db, 'tenants', tid, 'affiliates');
           const snap = await getDocs(q);
           const list: any[] = [];
           snap.forEach(d => list.push({ id: d.id, ...d.data() }));
           setAffiliates(list);
+          console.log("Affiliates loaded:", list.length);
         } catch (e) {
           console.error("Error fetching affiliates:", e);
         } finally {
@@ -2534,19 +2537,28 @@ function AppContent() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                       <h3>Gerenciar Divulgadores (Afiliados)</h3>
                       <button className="dev-add-btn" onClick={async () => {
-                        const name = prompt("Nome do Divulgador?");
+                        const nameInput = prompt("Nome do Divulgador?");
                         const codeInput = prompt("Código/Slug do Link (ex: joao)?");
-                        if (name && codeInput && tenantId) {
-                          const tid = slugify(tenantId);
-                          const slug = slugify(codeInput);
-                          const affDoc = doc(db, 'tenants', tid, 'affiliates', slug);
+                        
+                        if (!nameInput || !codeInput) return;
+                        if (!tenantId) {
+                          alert("Erro: ID da cidade não detectado.");
+                          return;
+                        }
+
+                        const tid = slugify(tenantId);
+                        const slug = slugify(codeInput);
+                        const affDoc = doc(db, 'tenants', tid, 'affiliates', slug);
+                        
+                        try {
                           const check = await getDoc(affDoc);
                           if (check.exists()) {
                             alert("Este código já está em uso por outro divulgador.");
                             return;
                           }
+                          
                           const newAff = {
-                            name,
+                            name: nameInput,
                             code: slug,
                             commission: "20%",
                             whatsapp: "",
@@ -2554,8 +2566,19 @@ function AppContent() {
                             sales: 0,
                             totalEarned: 0
                           };
+                          
                           await setDoc(affDoc, newAff);
-                          setAffiliates(prev => [...prev, newAff]);
+                          
+                          // Update local state and ensure UI refreshes
+                          setAffiliates(prev => [...(prev || []), { ...newAff, id: slug }]);
+                          alert("Divulgador adicionado com sucesso!");
+                        } catch (err: any) {
+                          console.error("Erro ao adicionar divulgador:", err);
+                          if (err.message?.includes('permission-denied')) {
+                            alert("Erro de permissão! Você precisa estar logado com sua conta Google e vinculada a este portal para gerenciar divulgadores.");
+                          } else {
+                            alert("Erro ao adicionar: " + err.message);
+                          }
                         }
                       }}>+ Novo Divulgador</button>
                     </div>
