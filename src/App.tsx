@@ -2612,9 +2612,29 @@ function AppContent() {
                               <div key={aff.code} className="dev-item-card">
                                 <button className="dev-remove-btn" onClick={async () => {
                                   if (confirm(`Excluir divulgador ${aff.name}?`)) {
-                                    const tid = slugify(tenantId!);
-                                    await deleteDoc(doc(db, 'tenants', tid, 'affiliates', aff.code));
-                                    setAffiliates(prev => prev.filter(item => item.code !== aff.code));
+                                    try {
+                                      const tid = slugify(tenantId!);
+                                      const pass = localStorage.getItem('tenantPass');
+                                      const docRef = doc(db, 'tenants', tid, 'affiliates', aff.id || aff.code);
+                                      
+                                      // Tenta deletar. Se falhar por ser cadastro antigo (sem campo _auth), 
+                                      // a gente "conserta" o doc com a senha e deleta de novo.
+                                      try {
+                                        await deleteDoc(docRef);
+                                      } catch (e) {
+                                        if (pass) {
+                                          await updateDoc(docRef, { _auth: pass });
+                                          await deleteDoc(docRef);
+                                        } else {
+                                          throw e;
+                                        }
+                                      }
+                                      
+                                      setAffiliates(prev => prev.filter(item => (item.id || item.code) !== (aff.id || aff.code)));
+                                    } catch (err: any) {
+                                      console.error("Erro ao excluir:", err);
+                                      alert("Erro ao excluir: " + err.message);
+                                    }
                                   }
                                 }}>✕</button>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
