@@ -660,8 +660,15 @@ function AppContent() {
 
   // --- Video Logic ---
   const handleVideoEnd = () => {
-    if (!appData?.videos) return;
-    setCurrentVideoIndex(prev => (prev + 1) % appData.videos.length);
+    if (!appData?.videos || appData.videos.length === 0) return;
+    if (appData.videos.length === 1) {
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.play().catch(() => {});
+      }
+    } else {
+      setCurrentVideoIndex(prev => (prev + 1) % appData.videos.length);
+    }
   };
 
   useEffect(() => {
