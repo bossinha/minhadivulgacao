@@ -2288,8 +2288,28 @@ function AppContent() {
                             updateData('videos', newList);
                           }} placeholder="Cole o link direto .mp4 aqui" />
                           {v && (
-                            <div className="dev-video-preview">
-                              <video src={v} controls style={{ width: '100%', height: '100%', borderRadius: '8px' }} muted />
+                            <div className="dev-video-preview" style={{ marginTop: '15px', display: 'flex', alignItems: 'center', gap: '15px', background: 'rgba(255,255,255,0.03)', padding: '10px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                              <div style={{ width: '120px', height: '70px', borderRadius: '8px', overflow: 'hidden', background: '#000', flexShrink: 0 }}>
+                                <video 
+                                  src={v} 
+                                  muted 
+                                  playsInline 
+                                  autoPlay 
+                                  loop 
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                  onMouseOver={e => (e.target as HTMLVideoElement).play()}
+                                />
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#fff' }}>Prévia do Vídeo</span>
+                                <span style={{ fontSize: '0.65rem', color: 'var(--text-dim)' }}>Se o vídeo carregar ao lado, o link está correto.</span>
+                                <button 
+                                  onClick={() => window.open(v, '_blank')}
+                                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.65rem', padding: 0, marginTop: '5px', cursor: 'pointer', textAlign: 'left', fontWeight: 700 }}
+                                >
+                                  🔗 TESTAR EM NOVA ABA
+                                </button>
+                              </div>
                             </div>
                           )}
                         </div>
