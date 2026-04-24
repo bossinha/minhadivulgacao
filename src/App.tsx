@@ -1702,7 +1702,7 @@ function AppContent() {
               </div>
 
               <div className="dev-tabs">
-                {['geral', 'seções', 'categorias', 'empresas', user?.isAdmin ? 'tv' : null, 'flyers', 'preços', 'segmentos', 'chat', (hasAffiliateSystem || user?.isAdmin) ? 'divulgadores' : null].filter(Boolean).map(tab => (
+                {['geral', 'seções', 'categorias', 'empresas', user?.isAdmin ? 'vídeos' : null, 'flyers', 'preços', 'segmentos', 'chat', (hasAffiliateSystem || user?.isAdmin) ? 'divulgadores' : null].filter(Boolean).map(tab => (
                   <button 
                     key={tab} 
                     className={`dev-tab ${activeTab === tab ? 'active' : ''}`}
@@ -2269,8 +2269,16 @@ function AppContent() {
                   </div>
                 )}
 
-                {activeTab === 'tv' && (
+                {activeTab === 'vídeos' && (
                   <div className="dev-forms-container">
+                    <div style={{ background: 'rgba(251, 191, 36, 0.1)', border: '1px solid rgba(251, 191, 36, 0.2)', padding: '15px', borderRadius: '12px', marginBottom: '20px' }}>
+                      <h4 style={{ color: '#fbbf24', margin: 0, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        ⚠️ ÁREA EXCLUSIVA DO ADMINISTRADOR
+                      </h4>
+                      <p style={{ margin: '5px 0 0 0', fontSize: '11px', color: '#aaa' }}>
+                        Esta aba e os links abaixo são visíveis apenas para você. O cliente não tem acesso a esta configuração no painel dele.
+                      </p>
+                    </div>
                     <h3>Vídeos da TV (Links MP4)</h3>
                     {appData.videos.map((v, idx) => (
                       <div key={idx} className="dev-item-card">
