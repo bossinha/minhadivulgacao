@@ -173,6 +173,7 @@ function AppContent() {
   const [universalConfig, setUniversalConfig] = useState({ radioLink: '', logoSpeed: 100, flyerSpeed: 180, testimonialSpeed: 120, companySpeed: 200, totalVisits: 0 });
   const [onlineCount, setOnlineCount] = useState(Math.floor(Math.random() * (22 - 12 + 1)) + 12);
   const [allUsers, setAllUsers] = useState<any>(null);
+  const [editingVideosFor, setEditingVideosFor] = useState<{id: string, city: string, videos: string[]} | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
@@ -966,9 +967,9 @@ function AppContent() {
                       >
                         {udata.hasAffiliateSystem === true ? '🤝✅' : '🤝❌'}
                       </button>
-                      <button 
-                        className="dev-btn" 
-                        style={{ background: udata.showVideos === true ? '#25D366' : '#333', borderColor: udata.showVideos === true ? '#25D366' : '#444' }}
+                    <button 
+                      className="dev-btn" 
+                      style={{ background: udata.showVideos === true ? '#25D366' : '#333', borderColor: udata.showVideos === true ? '#25D366' : '#444' }}
                       onClick={async () => {
                         await updateDoc(doc(db, 'tenants', uname), { showVideos: udata.showVideos !== true });
                         // Refresh list
@@ -980,6 +981,20 @@ function AppContent() {
                       title={udata.showVideos === true ? "Vídeos Liberados (Clique para OCULTAR)" : "Vídeos Ocultos (Clique para LIBERAR)"}
                     >
                       {udata.showVideos === true ? '🎥✅' : '🎥❌'}
+                    </button>
+                    <button 
+                      className="dev-btn" 
+                      style={{ background: '#6366f1', borderColor: '#6366f1' }}
+                      onClick={() => {
+                        setEditingVideosFor({ 
+                          id: uname, 
+                          city: udata.city, 
+                          videos: udata.data?.videos || [] 
+                        });
+                      }}
+                      title="Gerenciar Vídeos desta Loja"
+                    >
+                      🎬
                     </button>
                     <button 
                       className="dev-btn" 
@@ -1068,6 +1083,101 @@ function AppContent() {
               + Adicionar Nova Cidade
             </button>
           </div>
+
+          {editingVideosFor && (
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: '20px' }}>
+              <div style={{ background: '#111', width: '100%', maxWidth: '600px', padding: '30px', borderRadius: '24px', border: '1px solid #222', maxHeight: '90vh', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+                  <div>
+                    <h2 style={{ margin: 0, color: '#fff' }}>Gerenciar Vídeos</h2>
+                    <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '13px' }}>Editando vídeos de: <strong style={{ color: '#fbbf24' }}>{editingVideosFor.city}</strong></p>
+                  </div>
+                  <button onClick={() => setEditingVideosFor(null)} style={{ background: '#222', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer' }}>✕</button>
+                </div>
+
+                <div style={{ display: 'grid', gap: '15px' }}>
+                  {editingVideosFor.videos.map((v, idx) => (
+                    <div key={idx} className="dev-item-card" style={{ border: '1px solid #222' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <label style={{ fontSize: '12px', color: '#888', fontWeight: 800 }}>VÍDEO #{idx + 1}</label>
+                        <button 
+                          style={{ background: 'none', border: 'none', color: '#ff4444', fontSize: '10px', cursor: 'pointer', fontWeight: 800 }}
+                          onClick={() => {
+                            const newList = editingVideosFor.videos.filter((_, i) => i !== idx);
+                            setEditingVideosFor({ ...editingVideosFor, videos: newList });
+                          }}
+                        >
+                          EXCLUIR
+                        </button>
+                      </div>
+                      <input 
+                        type="text" 
+                        className="dev-input" 
+                        value={v} 
+                        onChange={e => {
+                          const newList = [...editingVideosFor.videos];
+                          newList[idx] = e.target.value;
+                          setEditingVideosFor({ ...editingVideosFor, videos: newList });
+                        }}
+                        placeholder="Link MP4 do vídeo"
+                      />
+                    </div>
+                  ))}
+                  
+                  <button 
+                    className="dev-add-btn" 
+                    onClick={() => {
+                      setEditingVideosFor({ ...editingVideosFor, videos: [...editingVideosFor.videos, ""] });
+                    }}
+                    style={{ background: 'rgba(255,255,255,0.02)' }}
+                  >
+                    + Adicionar Novo Vídeo
+                  </button>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '20px' }}>
+                    <button 
+                      className="dev-btn dev-btn-secondary" 
+                      onClick={() => setEditingVideosFor(null)}
+                      style={{ height: '45px' }}
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      className="dev-btn dev-btn-primary" 
+                      onClick={async () => {
+                        try {
+                          const userRef = doc(db, 'tenants', editingVideosFor.id);
+                          const snap = await getDoc(userRef);
+                          if (snap.exists()) {
+                            const currentDoc = snap.data();
+                            const updatedData = { 
+                              ...(currentDoc.data || DEFAULT_DATA), 
+                              videos: editingVideosFor.videos.filter(v => v.trim() !== "") 
+                            };
+                            await updateDoc(userRef, { data: updatedData });
+                            
+                            // Refresh master list local state
+                            const s = await getDocs(collection(db, 'tenants'));
+                            const u: any = {};
+                            s.forEach(d => u[d.id] = d.data());
+                            setAllUsers(u);
+
+                            setEditingVideosFor(null);
+                            alert("Vídeos atualizados com sucesso!");
+                          }
+                        } catch (e) {
+                          alert("Erro ao salvar vídeos.");
+                        }
+                      }}
+                      style={{ height: '45px', background: '#25D366', color: '#000' }}
+                    >
+                      Salvar Alterações
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
