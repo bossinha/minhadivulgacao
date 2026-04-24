@@ -372,7 +372,7 @@ function AppContent() {
             email: firebaseUser.email,
             username: tenantIdFromDb, // Use the slug/id from DB
             city: tenantData.city, 
-            isAdmin: tenantData.isAdmin 
+            isAdmin: tenantData.isAdmin || firebaseUser.email === 'bossinhaa80@gmail.com'
           });
             setAppData(tenantData.data || DEFAULT_DATA);
             setIsBlocked(tenantData.isBlocked || false);
@@ -1702,7 +1702,7 @@ function AppContent() {
               </div>
 
               <div className="dev-tabs">
-                {['geral', 'seções', 'categorias', 'empresas', user?.isAdmin ? 'vídeos' : null, 'flyers', 'preços', 'segmentos', 'chat', (hasAffiliateSystem || user?.isAdmin) ? 'divulgadores' : null].filter(Boolean).map(tab => (
+                {['geral', 'seções', 'categorias', 'empresas', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'preços', 'segmentos', 'chat', (hasAffiliateSystem || user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'divulgadores' : null].filter(Boolean).map(tab => (
                   <button 
                     key={tab} 
                     className={`dev-tab ${activeTab === tab ? 'active' : ''}`}
