@@ -756,16 +756,16 @@ function AppContent() {
 
   if (user?.isAdmin && (!tenantId || tenantId.toLowerCase() === 'master')) {
     return (
-      <div style={{ background: '#000', minHeight: '100vh', color: '#fff', fontFamily: 'Inter', padding: '40px' }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-            <h1 style={{ color: '#ffffff', fontWeight: 900 }}>ADMIN MASTER PORTAL</h1>
+      <div className="master-portal-container">
+        <div className="master-portal-inner">
+          <div className="master-header">
+            <h1>ADMIN MASTER PORTAL</h1>
             <button className="dev-btn dev-btn-secondary" onClick={logout}>Sair</button>
           </div>
 
           <div className="dev-item-card" style={{ marginBottom: '40px' }}>
             <h3 style={{ marginBottom: '20px' }}>Configurações Globais (Todos os Sites)</h3>
-            <div style={{ display: 'grid', gap: '20px' }}>
+            <div className="global-config-grid">
               <div className="dev-form-group">
                 <label>Link da Rádio (Universal)</label>
                 <input 
@@ -777,11 +777,11 @@ function AppContent() {
               </div>
               <div className="dev-form-group">
                 <label>Contador de Visitas (Total)</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
                   <input 
                     type="number" 
                     className="dev-input" 
-                    style={{ flex: 1 }}
+                    style={{ flex: '1 1 200px' }}
                     value={universalConfig.totalVisits} 
                     onChange={e => setUniversalConfig({ ...universalConfig, totalVisits: parseInt(e.target.value) || 0 })}
                   />
@@ -791,7 +791,7 @@ function AppContent() {
                 </div>
                 <small style={{ color: '#666' }}>O contador aumenta automaticamente. Você pode ajustar o número base aqui.</small>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+              <div className="speed-settings-wrapper">
                 <div className="dev-form-group">
                   <label style={{ fontSize: '0.7rem' }}>Velocidade das Logos</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -926,7 +926,7 @@ function AppContent() {
               </div>
               <button 
                 className="dev-btn dev-btn-primary" 
-                style={{ width: '100%' }}
+                style={{ width: '100%', marginTop: '20px' }}
                 onClick={async () => {
                  try {
                    await setDoc(doc(db, 'settings', 'universal'), universalConfig);
@@ -944,9 +944,9 @@ function AppContent() {
           <h3 style={{ marginBottom: '20px' }}>GERENCIAR LOJAS (CIDADES)</h3>
           <div style={{ display: 'grid', gap: '15px' }}>
             {allUsers && Object.entries(allUsers).map(([uname, udata]: [string, any]) => (
-              <div key={uname} className="dev-item-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                   <div style={{ width: '40px', height: '40px', background: '#222', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>🏙️</div>
+              <div key={uname} className="dev-item-card store-card">
+                <div className="store-info">
+                   <div style={{ width: '40px', height: '40px', background: '#222', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>🏙️</div>
                    <div>
                     <div style={{ fontWeight: 800, fontSize: '1.1rem' }}>{udata.city}</div>
                     <div style={{ fontSize: '12px', color: '#888' }}>ID: {uname} | Senha: {udata.password}</div>
@@ -958,10 +958,10 @@ function AppContent() {
                     </div>
                    </div>
                 </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div className="store-actions">
                      <button 
                         className="dev-btn" 
-                        style={{ background: udata.hasAffiliateSystem === true ? '#4285F4' : '#333', borderColor: udata.hasAffiliateSystem === true ? '#4285F4' : '#444' }}
+                        style={{ height: '36px', background: udata.hasAffiliateSystem === true ? '#4285F4' : '#333', borderColor: udata.hasAffiliateSystem === true ? '#4285F4' : '#444' }}
                         onClick={async () => {
                           await updateDoc(doc(db, 'tenants', uname), { hasAffiliateSystem: udata.hasAffiliateSystem !== true });
                           // Refresh list
@@ -976,7 +976,7 @@ function AppContent() {
                       </button>
                     <button 
                       className="dev-btn" 
-                      style={{ background: udata.showVideos === true ? '#25D366' : '#333', borderColor: udata.showVideos === true ? '#25D366' : '#444' }}
+                      style={{ height: '36px', background: udata.showVideos === true ? '#25D366' : '#333', borderColor: udata.showVideos === true ? '#25D366' : '#444' }}
                       onClick={async () => {
                         await updateDoc(doc(db, 'tenants', uname), { showVideos: udata.showVideos !== true });
                         // Refresh list
@@ -991,7 +991,7 @@ function AppContent() {
                     </button>
                     <button 
                       className="dev-btn" 
-                      style={{ background: '#6366f1', borderColor: '#6366f1' }}
+                      style={{ height: '36px', background: '#6366f1', borderColor: '#6366f1' }}
                       onClick={() => {
                         setEditingVideosFor({ 
                           id: uname, 
@@ -1005,7 +1005,7 @@ function AppContent() {
                     </button>
                     <button 
                       className="dev-btn" 
-                      style={{ background: udata.isBlocked ? '#ff4444' : '#333', borderColor: udata.isBlocked ? '#ff4444' : '#444' }}
+                      style={{ height: '36px', background: udata.isBlocked ? '#ff4444' : '#333', borderColor: udata.isBlocked ? '#ff4444' : '#444' }}
                       onClick={async () => {
                         const action = udata.isBlocked ? 'liberar' : 'bloquear';
                         if (confirm(`Deseja ${action} o portal de ${udata.city}?`)) {
@@ -1023,7 +1023,7 @@ function AppContent() {
                     </button>
                    <button 
                      className="dev-btn" 
-                     style={{ background: '#25D366', borderColor: '#25D366', color: '#fff' }}
+                     style={{ height: '36px', background: '#25D366', borderColor: '#25D366', color: '#fff' }}
                      onClick={() => navigate('/' + uname)}
                      title="Ver e Editar Portal"
                    >
@@ -1031,7 +1031,7 @@ function AppContent() {
                    </button>
                    <button 
                      className="dev-btn" 
-                     style={{ background: '#333', borderColor: '#444' }}
+                     style={{ height: '36px', background: '#333', borderColor: '#444' }}
                      onClick={async () => {
                        const newPass = prompt("Nova senha?", udata.password);
                        const newCity = prompt("Nome da cidade?", udata.city);
@@ -1049,7 +1049,7 @@ function AppContent() {
                    </button>
                    <button 
                      className="dev-btn" 
-                     style={{ background: 'rgba(251, 191, 36, 0.1)', borderColor: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24' }}
+                     style={{ height: '36px', background: 'rgba(251, 191, 36, 0.1)', borderColor: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24' }}
                      onClick={async () => {
                        if(confirm(`ATENÇÃO: Excluir permanentemente ${udata.city} e todos os seus dados?`)) {
                           await deleteDoc(doc(db, 'tenants', uname));
@@ -1092,8 +1092,8 @@ function AppContent() {
           </div>
 
           {editingVideosFor && (
-            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: '20px' }}>
-              <div style={{ background: '#111', width: '100%', maxWidth: '600px', padding: '30px', borderRadius: '24px', border: '1px solid #222', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="modal-overlay">
+              <div className="modal-content">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
                   <div>
                     <h2 style={{ margin: 0, color: '#fff' }}>Gerenciar Vídeos</h2>
