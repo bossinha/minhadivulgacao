@@ -1201,8 +1201,8 @@ function AppContent() {
   // Login UI (Always available at /login or if no appData)
   if (location.pathname === '/login' || (!appData && !tenantId)) {
     return (
-      <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Inter' }}>
-        <div style={{ width: '100%', maxWidth: '400px', padding: '40px', background: '#111', borderRadius: '24px', border: '1px solid #222' }}>
+      <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Inter', padding: '20px' }}>
+        <div style={{ width: '100%', maxWidth: '400px', padding: '30px', background: '#111', borderRadius: '24px', border: '1px solid #222' }}>
           <h2 style={{ textAlign: 'center', marginBottom: '30px', color: '#ffffff', fontWeight: 900, fontSize: '1.5rem' }}>
             {authMode === 'login' ? 'PAINEL DO GESTOR' : 'CRIAR MEU PORTAL'}
           </h2>
@@ -1295,9 +1295,9 @@ function AppContent() {
   if (isBlocked && !user?.isAdmin) {
     return (
       <div style={{ background: '#000', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Inter', textAlign: 'center', padding: '20px' }}>
-        <div style={{ fontSize: '5rem', marginBottom: '20px' }}>🔒</div>
-        <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '10px', color: '#ff4444' }}>SERVIÇO SUSPENSO</h2>
-        <p style={{ color: '#888', maxWidth: '500px', fontSize: '1.1rem', marginBottom: '40px', lineHeight: 1.6 }}>
+        <div style={{ fontSize: 'clamp(3rem, 10vw, 5rem)', marginBottom: '20px' }}>🔒</div>
+        <h2 style={{ fontSize: 'clamp(1.5rem, 6vw, 2.5rem)', fontWeight: 900, marginBottom: '10px', color: '#ff4444' }}>SERVIÇO SUSPENSO</h2>
+        <p style={{ color: '#888', maxWidth: '500px', fontSize: 'clamp(0.9rem, 4vw, 1.1rem)', marginBottom: '40px', lineHeight: 1.6 }}>
           Este portal encontra-se temporariamente indisponível. Por favor, entre em contato com o administrador master para regularizar sua situação e restabelecer o acesso.
         </p>
         <a href="https://wa.me/5585992908713" target="_blank" className="cta-button" style={{ background: '#25D366' }}>
@@ -1365,7 +1365,7 @@ function AppContent() {
       </nav>
 
       {/* Categories Section */}
-      <section className="container" style={{ paddingTop: '140px' }}>
+      <section className="container first-section">
         <div className="section-header">
           <h2 className="section-title">{appData.sections.categories.title}</h2>
           <p style={{ color: 'var(--text-dim)', marginTop: '10px' }}>{appData.sections.categories.desc}</p>
