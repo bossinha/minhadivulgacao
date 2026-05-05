@@ -692,7 +692,7 @@ function AppContent() {
     const timeout = setTimeout(() => {
       addNotification();
       const scheduleNext = () => {
-        const delay = Math.floor(Math.random() * 7000) + 8000;
+        const delay = Math.floor(Math.random() * 15000) + 15000;
         setTimeout(() => {
           addNotification();
           scheduleNext();
