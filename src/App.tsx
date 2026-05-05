@@ -12,6 +12,21 @@ import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs, deleteDoc, query, where, limit, increment } from 'firebase/firestore';
 
 // --- Constants ---
+const calculateDaysLeft = (expiresAt: string | undefined) => {
+  if (!expiresAt) return null;
+  try {
+    const expiry = new Date(expiresAt);
+    const now = new Date();
+    const expiryDate = new Date(expiry.getFullYear(), expiry.getMonth(), expiry.getDate());
+    const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffTime = expiryDate.getTime() - nowDate.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  } catch (e) {
+    return null;
+  }
+};
+
 const COMPANIES_DATA = [
   { id: 1, name: "Bossa Infor", category: "Publicidade", desc: "Soluções em Áudio & Vídeo", logo: "https://i.postimg.cc/Gpykbbz5/nova_logo_bossa_infor_png.png", wa: "5585992862177", ig: "https://www.instagram.com/bossainfor/", website: "", featured: true },
   { id: 2, name: "Belém Rolamentos", category: "Oficina", desc: "Manutenção preventiva e corretiva.", logo: "https://i.postimg.cc/Y2mTTF1h/1.png", wa: "5591980342025", ig: "https://cutt.ly/belemrolamentoss", website: "", featured: true },
@@ -207,7 +222,17 @@ function AppContent() {
           if (snap.exists()) {
             const tData = snap.data();
             setAppData(tData.data || DEFAULT_DATA);
-            setIsBlocked(tData.isBlocked || false);
+            
+            // Check Expiration
+            let blockedFlag = tData.isBlocked || false;
+            if (tData.expiresAt) {
+              const expiry = new Date(tData.expiresAt);
+              if (expiry < new Date()) {
+                blockedFlag = true;
+              }
+            }
+            setIsBlocked(blockedFlag);
+            
             setShowVideos(tData.showVideos === true);
             setHasAffiliateSystem(tData.hasAffiliateSystem === true);
           } else {
@@ -388,7 +413,15 @@ function AppContent() {
             isAdmin: tenantData.isAdmin || firebaseUser.email === 'bossinhaa80@gmail.com'
           });
             setAppData(tenantData.data || DEFAULT_DATA);
-            setIsBlocked(tenantData.isBlocked || false);
+            // Check Expiration
+            let blockedFlag = tenantData.isBlocked || false;
+            if (tenantData.expiresAt) {
+              const expiry = new Date(tenantData.expiresAt);
+              if (expiry < new Date()) {
+                blockedFlag = true;
+              }
+            }
+            setIsBlocked(blockedFlag);
             setShowVideos(tenantData.showVideos === true);
             setHasAffiliateSystem(tenantData.hasAffiliateSystem === true);
           
@@ -963,10 +996,26 @@ function AppContent() {
                     <div style={{ fontWeight: 800, fontSize: '1.1rem' }}>{udata.city}</div>
                     <div style={{ fontSize: '12px', color: '#888' }}>ID: {uname} | Senha: {udata.password}</div>
                     {udata.ownerEmail && <div style={{ fontSize: '10px', color: '#4285F4' }}>📧 {udata.ownerEmail}</div>}
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
-                       <span style={{ fontSize: '10px', background: udata.data ? 'rgba(37, 211, 102, 0.1)' : 'rgba(255, 140, 0, 0.1)', color: udata.data ? '#25D366' : '#FF8C00', padding: '2px 8px', borderRadius: '4px', border: '1px solid currentColor' }}>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                       <span style={{ fontSize: '10px', background: udata.data ? 'rgba(37, 211, 102, 0.1)' : 'rgba(255, 140, 0, 0.1)', color: udata.data ? '#25D366' : '#FF8C00', padding: '2px 8px', borderRadius: '4px', border: '1px solid currentColor', fontWeight: 800 }}>
                          {udata.data ? 'ATIVO' : 'AGUARDANDO'}
                        </span>
+                       {udata.expiresAt && (() => {
+                         const days = calculateDaysLeft(udata.expiresAt);
+                         return (
+                           <span style={{ 
+                             fontSize: '10px', 
+                             background: days !== null && days <= 3 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(99, 102, 241, 0.1)', 
+                             color: days !== null && days <= 3 ? '#ef4444' : '#6366f1', 
+                             padding: '2px 8px', 
+                             borderRadius: '4px', 
+                             border: '1px solid currentColor',
+                             fontWeight: 800
+                           }}>
+                             {days === null ? 'DATA INVÁLIDA' : days <= 0 ? 'EXPIRADO' : `FALTAM ${days} DIAS`}
+                           </span>
+                         );
+                       })()}
                     </div>
                    </div>
                 </div>
@@ -1015,6 +1064,37 @@ function AppContent() {
                     >
                       🎬
                     </button>
+                     <button 
+                       className="dev-btn" 
+                       style={{ height: '36px', background: '#fbbf24', borderColor: '#fbbf24', color: '#000' }}
+                       onClick={async () => {
+                         const daysToAdd = parseInt(prompt("Quantos dias deseja adicionar?", "30") || "0");
+                         if (daysToAdd > 0) {
+                           let baseDate = new Date();
+                           if (udata.expiresAt) {
+                             const currentExpiry = new Date(udata.expiresAt);
+                             // If not expired, add to current expiry. If expired, add to today.
+                             if (currentExpiry > baseDate) {
+                               baseDate = currentExpiry;
+                             }
+                           }
+                           const newExpiry = new Date(baseDate.getTime() + (daysToAdd * 24 * 60 * 60 * 1000));
+                           const expiryStr = newExpiry.toISOString().split('T')[0];
+                           
+                           await updateDoc(doc(db, 'tenants', uname), { expiresAt: expiryStr });
+                           alert(`Assinatura renovada até ${expiryStr}`);
+                           
+                           // Refresh list
+                           const s = await getDocs(collection(db, 'tenants'));
+                           const u: any = {};
+                           s.forEach(d => u[d.id] = d.data());
+                           setAllUsers(u);
+                         }
+                       }}
+                       title="Renovar / Adicionar Dias de Assinatura"
+                     >
+                       📅+
+                     </button>
                     <button 
                       className="dev-btn" 
                       style={{ height: '36px', background: udata.isBlocked ? '#ff4444' : '#333', borderColor: udata.isBlocked ? '#ff4444' : '#444' }}
