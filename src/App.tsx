@@ -1853,24 +1853,6 @@ function AppContent() {
                 <a href={appData.siteInfo.social.ig} target="_blank" className="social-icon ig">IG</a>
                 <a href={getWaLinkWithReferral(appData.siteInfo.social.wa)} target="_blank" className="social-icon wa">WA</a>
               </div>
-              <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
-                {(user?.isAdmin || (user?.uid && user.uid === tenantId)) && (
-                  <button 
-                    onClick={() => setIsDevAreaOpen(true)}
-                    style={{ 
-                      background: 'none', 
-                      border: '1px solid #333', 
-                      color: '#666', 
-                      padding: '5px 10px', 
-                      borderRadius: '5px', 
-                      fontSize: '0.7rem',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    ⚙️ Painel de Gestor
-                  </button>
-                )}
-              </div>
             </div>
             <div className="footer-col">
               <h4>CONTATO</h4>
