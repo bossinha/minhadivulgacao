@@ -68,7 +68,19 @@ const CATEGORIES = [
 ];
 
 const NOTIFICATION_NAMES = ["João", "Maria", "Carlos", "Ana", "Paulo", "Fernanda", "Lucas", "Juliana", "Roberto", "Patricia", "Rafael", "Camila", "Bruno", "Larissa", "Diego", "Renata", "Felipe", "Vanessa", "Eduardo", "Carla"];
-const NOTIFICATION_ACTIONS = ["acabou de procurar internet fibra", "visitou uma pizzaria", "pediu orçamento de oficina", "procurou salão de beleza", "visualizou uma empresa", "procurou restaurante", "buscou serviços na plataforma"];
+const NOTIFICATION_ACTIONS = [
+  "acabou de procurar internet fibra", 
+  "visitou uma pizzaria", 
+  "pediu orçamento de oficina", 
+  "procurou salão de beleza", 
+  "visualizou uma empresa", 
+  "procurou restaurante", 
+  "buscou serviços de construção",
+  "procurou materiais de construção",
+  "solicitou orçamento de pedreiro",
+  "procurou eletricista",
+  "buscou serviços na plataforma"
+];
 
 const DEFAULT_DATA = {
   theme: { primary: "#fbbf24", bg: "#000000", text: "#ffffff", textDim: "#a0a0a0" },
@@ -640,7 +652,7 @@ function AppContent() {
     setNotifications(prev => [...prev, { id, name, action }]);
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id));
-    }, 5000);
+    }, 8000);
   }, [appData]);
 
   useEffect(() => {
