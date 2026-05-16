@@ -1247,11 +1247,12 @@ function AppContent() {
                             EXCLUIR
                           </button>
                         </div>
-                        <div style={{ display: 'flex', gap: '15px' }}>
-                          <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', gap: '15px', flexDirection: 'row-reverse', flexWrap: 'wrap-reverse', alignItems: 'center' }}>
+                          <div style={{ flex: '1 1 200px' }}>
                             <input 
                               type="text" 
                               className="dev-input" 
+                              style={{ width: '100%' }}
                               value={v.url} 
                               onChange={e => {
                                 const newList = [...editingVideosFor.videos];
@@ -1262,7 +1263,7 @@ function AppContent() {
                             />
                           </div>
                           {v.url && (
-                            <div style={{ width: '80px', height: '45px', borderRadius: '6px', overflow: 'hidden', background: '#000', flexShrink: 0, border: '1px solid #333' }}>
+                            <div style={{ width: '120px', height: '70px', borderRadius: '8px', overflow: 'hidden', background: '#000', flexShrink: 0, border: '1px solid #333' }}>
                               <video 
                                 src={v.url} 
                                 muted 
@@ -1425,6 +1426,15 @@ function AppContent() {
           >
             🔑 Entrar como Admin Master
           </button>
+          
+          {(navigator.userAgent.includes('wv') || navigator.userAgent.includes('Kodular')) && (
+            <div style={{ marginTop: '15px', padding: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px' }}>
+              <p style={{ color: '#f87171', fontSize: '11px', margin: 0, textAlign: 'center', lineHeight: '1.4' }}>
+                ⚠️ <strong>Atenção:</strong> O login do Google pode ser bloqueado dentro de aplicativos Android (Kodular). 
+                Caso ocorra erro, abra este site diretamente no <strong>Google Chrome</strong> do seu celular.
+              </p>
+            </div>
+          )}
           <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '12px', color: '#888' }}>
             Desenvolvido por Bossa Infor. Contato: (85) 99286-2177
           </p>
@@ -2589,9 +2599,9 @@ function AppContent() {
                                 🎥 Abrir Archive.org
                               </a>
                             </div>
-                            <div style={{ display: 'flex', gap: '15px' }}>
-                              <div style={{ flex: 1 }}>
-                                <input type="text" className="dev-input" value={v.url} onChange={(e) => {
+                            <div style={{ display: 'flex', gap: '15px', flexDirection: 'row-reverse', flexWrap: 'wrap-reverse', alignItems: 'center' }}>
+                              <div style={{ flex: '1 1 250px' }}>
+                                <input type="text" className="dev-input" style={{ width: '100%' }} value={v.url} onChange={(e) => {
                                   const newList = [...appData.videos];
                                   newList[idx] = { ...v, url: e.target.value };
                                   updateData('videos', newList);
@@ -2601,7 +2611,7 @@ function AppContent() {
                                 </small>
                               </div>
                               {v.url && (
-                                <div style={{ width: '100px', height: '60px', borderRadius: '8px', overflow: 'hidden', background: '#000', flexShrink: 0, border: '1px solid #333' }}>
+                                <div style={{ width: '120px', height: '70px', borderRadius: '8px', overflow: 'hidden', background: '#000', flexShrink: 0, border: '1px solid #333' }}>
                                   <video 
                                     src={v.url} 
                                     muted 
