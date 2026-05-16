@@ -613,6 +613,21 @@ function AppContent() {
   const [isTyping, setIsTyping] = useState(false);
   const [isDevAreaOpen, setIsDevAreaOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('geral');
+  
+  const filteredCompaniesRaw = (selectedCategory && appData)
+    ? appData.companies.filter(c => c.category === selectedCategory)
+    : (appData?.companies || []);
+  
+  const filteredCompanies = filteredCompaniesRaw.filter(c => c.active !== false);
+
+  const visibleFlyers = (appData?.flyers || []).filter((f: any) => {
+    const obj = typeof f === 'string' ? { image: f, link: '', active: true } : f;
+    return obj.active !== false;
+  });
+
+  const visibleVideos = (appData?.videos || [])
+    .map((v: any) => typeof v === 'string' ? { url: v, active: true } : v)
+    .filter((v: any) => v.active !== false);
 
   // Load affiliates when tab is active
   useEffect(() => {
@@ -705,23 +720,26 @@ function AppContent() {
 
   // --- Video Logic ---
   const handleVideoEnd = () => {
-    if (!appData?.videos || appData.videos.length === 0) return;
-    if (appData.videos.length === 1) {
+    if (!visibleVideos || visibleVideos.length === 0) return;
+    if (visibleVideos.length === 1) {
       if (videoRef.current) {
         videoRef.current.currentTime = 0;
         videoRef.current.play().catch(() => {});
       }
     } else {
-      setCurrentVideoIndex(prev => (prev + 1) % appData.videos.length);
+      setCurrentVideoIndex(prev => (prev + 1) % visibleVideos.length);
     }
   };
 
   useEffect(() => {
-    if (videoRef.current && appData?.videos) {
-      videoRef.current.src = appData.videos[currentVideoIndex];
-      videoRef.current.play().catch(() => {});
+    if (videoRef.current && visibleVideos && visibleVideos.length > 0) {
+      const targetVideo = visibleVideos[currentVideoIndex];
+      if (targetVideo) {
+        videoRef.current.src = targetVideo.url;
+        videoRef.current.play().catch(() => {});
+      }
     }
-  }, [currentVideoIndex, appData]);
+  }, [currentVideoIndex, visibleVideos]);
 
   // --- Chat Logic ---
   const toggleChat = () => {
@@ -794,10 +812,6 @@ function AppContent() {
       }
     }, 800);
   };
-
-  const filteredCompanies = (selectedCategory && appData)
-    ? appData.companies.filter(c => c.category === selectedCategory)
-    : (appData?.companies || []);
 
   if (user?.isAdmin && (!tenantId || tenantId.toLowerCase() === 'master')) {
     return (
@@ -1658,7 +1672,7 @@ function AppContent() {
         <div className="carousel-wrapper">
           <div className="carousel-track" style={{ animationDuration: `${universalConfig.flyerSpeed || 180}s` }}>
             <div className="track-copy">
-              {appData.flyers.map((flyer, i) => (
+              {visibleFlyers.map((flyer: any, i: number) => (
                 <div key={i} className="flyer-item">
                   <div className="flyer-inner">
                     <img src={typeof flyer === 'string' ? flyer : flyer?.image} alt="Flyer" className="flyer-img" referrerPolicy="no-referrer" />
@@ -1672,7 +1686,7 @@ function AppContent() {
               ))}
             </div>
             <div className="track-copy duplicate">
-              {appData.flyers.map((flyer, i) => (
+              {visibleFlyers.map((flyer: any, i: number) => (
                 <div key={`${i}-dup`} className="flyer-item">
                   <div className="flyer-inner">
                     <img src={typeof flyer === 'string' ? flyer : flyer?.image} alt="Flyer" className="flyer-img" referrerPolicy="no-referrer" />
@@ -2324,7 +2338,27 @@ function AppContent() {
                               <div style={{ fontSize: '11px', color: '#888' }}>{c.category}</div>
                             </div>
                           </div>
-                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <button 
+                              className="dev-btn" 
+                              style={{ 
+                                padding: '5px 8px', 
+                                background: c.active !== false ? '#25D366' : '#333', 
+                                border: '1px solid #444', 
+                                fontSize: '0.65rem', 
+                                fontWeight: 800,
+                                borderRadius: '6px'
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const newList = [...appData.companies];
+                                newList[idx] = { ...c, active: c.active === false ? true : false };
+                                updateData('companies', newList);
+                              }}
+                              title={c.active !== false ? "Anúncio Ativo (Clique para Ocultar)" : "Anúncio Oculto (Clique para Ativar)"}
+                            >
+                              {c.active !== false ? '👁️ ATIVO' : '🙈 OCULTO'}
+                            </button>
                             <button className="dev-remove-btn" style={{ position: 'static', padding: '5px' }} onClick={(e) => { e.stopPropagation(); updateData('companies', appData.companies.filter((_, i) => i !== idx)); }}>✕</button>
                             <span>{openCompanyIndex === idx ? '▲' : '▼'}</span>
                           </div>
@@ -2471,49 +2505,74 @@ function AppContent() {
                       </p>
                     </div>
                     <h3>Vídeos da TV (Links MP4)</h3>
-                    {appData.videos.map((v, idx) => (
-                      <div key={idx} className="dev-item-card">
-                        <button className="dev-remove-btn" onClick={() => updateData('videos', appData.videos.filter((_, i) => i !== idx))}>✕</button>
-                        <div className="dev-form-group">
-                          <div className="dev-label-row">
-                            <label>Link do Vídeo MP4</label>
-                            <a href="https://archive.org/" target="_blank" rel="noreferrer" className="dev-helper-link">
-                              🎥 Abrir Archive.org
-                            </a>
-                          </div>
-                          <input type="text" className="dev-input" value={v} onChange={(e) => {
-                            const newList = [...appData.videos];
-                            newList[idx] = e.target.value;
-                            updateData('videos', newList);
-                          }} placeholder="Cole o link direto .mp4 aqui" />
-                          {v && (
-                            <div className="dev-video-preview" style={{ marginTop: '15px', display: 'flex', alignItems: 'center', gap: '15px', background: 'rgba(255,255,255,0.03)', padding: '10px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                              <div style={{ width: '120px', height: '70px', borderRadius: '8px', overflow: 'hidden', background: '#000', flexShrink: 0 }}>
-                                <video 
-                                  src={v} 
-                                  muted 
-                                  playsInline 
-                                  autoPlay 
-                                  loop 
-                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                                  onMouseOver={e => (e.target as HTMLVideoElement).play()}
-                                />
-                              </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#fff' }}>Prévia do Vídeo</span>
-                                <span style={{ fontSize: '0.65rem', color: 'var(--text-dim)' }}>Se o vídeo carregar ao lado, o link está correto.</span>
-                                <button 
-                                  onClick={() => window.open(v, '_blank')}
-                                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.65rem', padding: 0, marginTop: '5px', cursor: 'pointer', textAlign: 'left', fontWeight: 700 }}
-                                >
-                                  🔗 TESTAR EM NOVA ABA
-                                </button>
-                              </div>
+                    {appData.videos.map((vRaw, idx) => {
+                      const v = typeof vRaw === 'string' ? { url: vRaw, active: true } : vRaw;
+                      return (
+                        <div key={idx} className="dev-item-card" style={{ opacity: v.active !== false ? 1 : 0.6 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                              <span style={{ fontSize: '10px', fontWeight: 900, color: '#fbbf24' }}>VÍDEO #{idx + 1}</span>
+                              <button 
+                                className="dev-btn" 
+                                style={{ 
+                                  padding: '4px 8px', 
+                                  background: v.active !== false ? '#25D366' : '#333', 
+                                  border: '1px solid #444', 
+                                  fontSize: '0.6rem', 
+                                  fontWeight: 800,
+                                  borderRadius: '5px',
+                                  height: 'auto'
+                                }}
+                                onClick={() => {
+                                  const newList = [...appData.videos];
+                                  newList[idx] = { ...v, active: v.active === false ? true : false };
+                                  updateData('videos', newList);
+                                }}
+                              >
+                                {v.active !== false ? '👁️ ATIVO' : '🙈 OCULTO'}
+                              </button>
                             </div>
-                          )}
+                            <button className="dev-remove-btn" style={{ position: 'static' }} onClick={() => updateData('videos', appData.videos.filter((_, i) => i !== idx))}>✕</button>
+                          </div>
+                          <div className="dev-form-group">
+                            <div className="dev-label-row">
+                              <label>Link do Vídeo MP4</label>
+                              <a href="https://archive.org/" target="_blank" rel="noreferrer" className="dev-helper-link">
+                                🎥 Abrir Archive.org
+                              </a>
+                            </div>
+                            <div style={{ display: 'flex', gap: '15px' }}>
+                              <div style={{ flex: 1 }}>
+                                <input type="text" className="dev-input" value={v.url} onChange={(e) => {
+                                  const newList = [...appData.videos];
+                                  newList[idx] = { ...v, url: e.target.value };
+                                  updateData('videos', newList);
+                                }} placeholder="Cole o link direto .mp4 aqui" />
+                                <small style={{ color: '#888', fontSize: '0.65rem', marginTop: '5px', display: 'block' }}>
+                                  Ao desativar, o vídeo é mantido no banco mas não aparece na TV do site.
+                                </small>
+                              </div>
+                              {v.url && (
+                                <div style={{ width: '100px', height: '60px', borderRadius: '8px', overflow: 'hidden', background: '#000', flexShrink: 0, border: '1px solid #333' }}>
+                                  <video 
+                                    src={v.url} 
+                                    muted 
+                                    playsInline 
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                    onMouseOver={e => (e.target as HTMLVideoElement).play()}
+                                    onMouseOut={e => {
+                                      const vid = (e.target as HTMLVideoElement);
+                                      vid.pause();
+                                      vid.currentTime = 0;
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     <button className="dev-add-btn" onClick={() => updateData('videos', [...appData.videos, ""])}>+ Adicionar Vídeo</button>
                   </div>
                 )}
@@ -2522,10 +2581,31 @@ function AppContent() {
                   <div className="dev-forms-container">
                     <h3>Flyers de Promoção (Imagens e Links)</h3>
                     {appData.flyers.map((f: any, idx) => {
-                      const flyerObj = typeof f === 'string' ? { image: f, link: '' } : f;
+                      const flyerObj = typeof f === 'string' ? { image: f, link: '', active: true } : f;
                       return (
-                        <div key={idx} className="dev-item-card">
-                          <button className="dev-remove-btn" onClick={() => updateData('flyers', appData.flyers.filter((_, i) => i !== idx))}>✕</button>
+                        <div key={idx} className="dev-item-card" style={{ opacity: flyerObj.active !== false ? 1 : 0.6 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                             <button 
+                              className="dev-btn" 
+                              style={{ 
+                                padding: '4px 8px', 
+                                background: flyerObj.active !== false ? '#25D366' : '#333', 
+                                border: '1px solid #444', 
+                                fontSize: '0.6rem', 
+                                fontWeight: 800,
+                                borderRadius: '5px',
+                                height: 'auto'
+                              }}
+                              onClick={() => {
+                                const newList = [...appData.flyers];
+                                newList[idx] = { ...flyerObj, active: flyerObj.active === false ? true : false };
+                                updateData('flyers', newList);
+                              }}
+                            >
+                              {flyerObj.active !== false ? '👁️ ATIVO' : '🙈 OCULTO'}
+                            </button>
+                            <button className="dev-remove-btn" style={{ position: 'static' }} onClick={() => updateData('flyers', appData.flyers.filter((_, i) => i !== idx))}>✕</button>
+                          </div>
                           <div className="dev-grid-2">
                             <div className="dev-form-group">
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
