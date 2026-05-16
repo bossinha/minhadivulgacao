@@ -1209,38 +1209,83 @@ function AppContent() {
                 </div>
 
                 <div style={{ display: 'grid', gap: '15px' }}>
-                  {editingVideosFor.videos.map((v, idx) => (
-                    <div key={idx} className="dev-item-card" style={{ border: '1px solid #222' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                        <label style={{ fontSize: '12px', color: '#888', fontWeight: 800 }}>VÍDEO #{idx + 1}</label>
-                        <button 
-                          style={{ background: 'none', border: 'none', color: '#ff4444', fontSize: '10px', cursor: 'pointer', fontWeight: 800 }}
-                          onClick={() => {
-                            const newList = editingVideosFor.videos.filter((_, i) => i !== idx);
-                            setEditingVideosFor({ ...editingVideosFor, videos: newList });
-                          }}
-                        >
-                          EXCLUIR
-                        </button>
+                  {editingVideosFor.videos.map((vRaw: any, idx: number) => {
+                    const v = typeof vRaw === 'string' ? { url: vRaw, active: true } : vRaw;
+                    return (
+                      <div key={idx} className="dev-item-card" style={{ border: '1px solid #222', opacity: v.active !== false ? 1 : 0.6 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                            <label style={{ fontSize: '10px', color: '#888', fontWeight: 800 }}>VÍDEO #{idx + 1}</label>
+                            <button 
+                              className="dev-btn" 
+                              style={{ 
+                                padding: '4px 8px', 
+                                background: v.active !== false ? '#25D366' : '#333', 
+                                border: '1px solid #444', 
+                                fontSize: '0.6rem', 
+                                fontWeight: 800,
+                                borderRadius: '5px',
+                                height: 'auto',
+                                color: '#fff'
+                              }}
+                              onClick={() => {
+                                const newList = [...editingVideosFor.videos];
+                                newList[idx] = { ...v, active: v.active === false ? true : false };
+                                setEditingVideosFor({ ...editingVideosFor, videos: newList });
+                              }}
+                            >
+                              {v.active !== false ? '👁️ ATIVO' : '🙈 OCULTO'}
+                            </button>
+                          </div>
+                          <button 
+                            style={{ background: 'none', border: 'none', color: '#ff4444', fontSize: '10px', cursor: 'pointer', fontWeight: 800 }}
+                            onClick={() => {
+                              const newList = editingVideosFor.videos.filter((_: any, i: number) => i !== idx);
+                              setEditingVideosFor({ ...editingVideosFor, videos: newList });
+                            }}
+                          >
+                            EXCLUIR
+                          </button>
+                        </div>
+                        <div style={{ display: 'flex', gap: '15px' }}>
+                          <div style={{ flex: 1 }}>
+                            <input 
+                              type="text" 
+                              className="dev-input" 
+                              value={v.url} 
+                              onChange={e => {
+                                const newList = [...editingVideosFor.videos];
+                                newList[idx] = { ...v, url: e.target.value };
+                                setEditingVideosFor({ ...editingVideosFor, videos: newList });
+                              }}
+                              placeholder="Link MP4 do vídeo"
+                            />
+                          </div>
+                          {v.url && (
+                            <div style={{ width: '80px', height: '45px', borderRadius: '6px', overflow: 'hidden', background: '#000', flexShrink: 0, border: '1px solid #333' }}>
+                              <video 
+                                src={v.url} 
+                                muted 
+                                playsInline 
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                onMouseOver={e => (e.target as HTMLVideoElement).play()}
+                                onMouseOut={e => {
+                                  const vid = (e.target as HTMLVideoElement);
+                                  vid.pause();
+                                  vid.currentTime = 0;
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <input 
-                        type="text" 
-                        className="dev-input" 
-                        value={v} 
-                        onChange={e => {
-                          const newList = [...editingVideosFor.videos];
-                          newList[idx] = e.target.value;
-                          setEditingVideosFor({ ...editingVideosFor, videos: newList });
-                        }}
-                        placeholder="Link MP4 do vídeo"
-                      />
-                    </div>
-                  ))}
+                    );
+                  })}
                   
                   <button 
                     className="dev-add-btn" 
                     onClick={() => {
-                      setEditingVideosFor({ ...editingVideosFor, videos: [...editingVideosFor.videos, ""] });
+                      setEditingVideosFor({ ...editingVideosFor, videos: [...editingVideosFor.videos, { url: "", active: true }] });
                     }}
                     style={{ background: 'rgba(255,255,255,0.02)' }}
                   >
@@ -1265,7 +1310,10 @@ function AppContent() {
                             const currentDoc = snap.data();
                             const updatedData = { 
                               ...(currentDoc.data || DEFAULT_DATA), 
-                              videos: editingVideosFor.videos.filter(v => v.trim() !== "") 
+                              videos: editingVideosFor.videos.filter((v: any) => {
+                                const url = typeof v === 'string' ? v : v.url;
+                                return url.trim() !== "";
+                              }) 
                             };
                             await updateDoc(userRef, { data: updatedData });
                             
