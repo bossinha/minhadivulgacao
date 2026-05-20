@@ -594,7 +594,12 @@ function AppContent() {
   const saveToFirebase = async () => {
     if (!user || !appData) return;
     try {
-      await updateDoc(doc(db, 'tenants', user.uid), {
+      const activeSlug = slugify(tenantId || '');
+      const targetTenantId = (user.isAdmin && activeSlug && activeSlug !== 'login' && activeSlug !== 'master')
+        ? activeSlug
+        : user.username;
+
+      await updateDoc(doc(db, 'tenants', targetTenantId), {
         data: appData
       });
       alert("Alterações salvas com sucesso no Firebase!");
@@ -1514,7 +1519,7 @@ function AppContent() {
         </button>
       )}
 
-      {(user?.isAdmin || (user?.uid && user.uid === tenantId)) && (
+      {(user?.isAdmin || (user?.username && slugify(user.username) === slugify(tenantId || ''))) && (
         <button 
           onClick={() => setIsDevAreaOpen(true)}
           className="dev-floating-btn"
