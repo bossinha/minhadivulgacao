@@ -148,7 +148,8 @@ const DEFAULT_DATA = {
   videos: VIDEOS,
   flyers: FLYERS,
   testimonials: TESTIMONIALS,
-  categories: CATEGORIES
+  categories: CATEGORIES,
+  whatsappTestimonials: []
 };
 
 // --- Helper Functions ---
@@ -169,6 +170,7 @@ interface AppData {
   flyers: { image: string; link: string }[];
   testimonials: any[];
   categories: any[];
+  whatsappTestimonials?: { image: string; active?: boolean }[];
 }
 
 export default function App() {
@@ -613,6 +615,7 @@ function AppContent() {
   const [isTyping, setIsTyping] = useState(false);
   const [isDevAreaOpen, setIsDevAreaOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('geral');
+  const [selectedTestimonialImage, setSelectedTestimonialImage] = useState<string | null>(null);
   
   const filteredCompaniesRaw = (selectedCategory && appData)
     ? appData.companies.filter(c => c.category === selectedCategory)
@@ -628,6 +631,11 @@ function AppContent() {
   const visibleVideos = (appData?.videos || [])
     .map((v: any) => typeof v === 'string' ? { url: v, active: true } : v)
     .filter((v: any) => v.active !== false);
+
+  const visibleWhatsappTestimonials = (appData?.whatsappTestimonials || []).filter((wt: any) => {
+    const obj = typeof wt === 'string' ? { image: wt, active: true } : wt;
+    return obj.active !== false;
+  });
 
   // Load affiliates when tab is active
   useEffect(() => {
@@ -1891,6 +1899,135 @@ function AppContent() {
             </div>
           </div>
         </div>
+
+        {/* WhatsApp Print Testimonials Marquee/Carousel */}
+        {visibleWhatsappTestimonials && visibleWhatsappTestimonials.length > 0 && (
+          <div className="carousel-wrapper" style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px dashed rgba(255,255,255,0.08)' }}>
+            <div className="container" style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#25D366' }}></span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#25D366', letterSpacing: '1px', textTransform: 'uppercase', fontFamily: 'monospace' }}>
+                DEPOIMENTOS DOS PARCEIROS NO WHATSAPP (CLIQUE PARA VER MAIOR)
+              </span>
+            </div>
+            <div className="carousel-track" style={{ animationDuration: `${universalConfig.whatsappTestimonialSpeed || 80}s`, display: 'flex' }}>
+              <div className="track-copy" style={{ display: 'flex', gap: '25px', alignItems: 'center' }}>
+                {visibleWhatsappTestimonials.map((wt: any, idx: number) => {
+                  const imgUrl = typeof wt === 'string' ? wt : wt?.image;
+                  if (!imgUrl) return null;
+                  return (
+                    <div 
+                      key={idx} 
+                      className="whatsapp-testimonial-card" 
+                      style={{ flexShrink: 0, cursor: 'zoom-in', transition: 'all 0.3s ease' }}
+                      onClick={() => setSelectedTestimonialImage(imgUrl)}
+                    >
+                      <img 
+                        src={imgUrl} 
+                        alt="Depoimento WhatsApp" 
+                        style={{ 
+                          height: '240px', 
+                          borderRadius: '12px', 
+                          border: '2px solid rgba(255,255,255,0.1)',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+                          objectFit: 'contain',
+                          background: '#111'
+                        }} 
+                        referrerPolicy="no-referrer" 
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="track-copy duplicate" style={{ display: 'flex', gap: '25px', alignItems: 'center' }}>
+                {visibleWhatsappTestimonials.map((wt: any, idx: number) => {
+                  const imgUrl = typeof wt === 'string' ? wt : wt?.image;
+                  if (!imgUrl) return null;
+                  return (
+                    <div 
+                      key={`${idx}-dup`} 
+                      className="whatsapp-testimonial-card" 
+                      style={{ flexShrink: 0, cursor: 'zoom-in', transition: 'all 0.3s ease' }}
+                      onClick={() => setSelectedTestimonialImage(imgUrl)}
+                    >
+                      <img 
+                        src={imgUrl} 
+                        alt="Depoimento WhatsApp" 
+                        style={{ 
+                          height: '240px', 
+                          borderRadius: '12px', 
+                          border: '2px solid rgba(255,255,255,0.1)',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+                          objectFit: 'contain',
+                          background: '#111'
+                        }} 
+                        referrerPolicy="no-referrer" 
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Lightbox Zoom Modal */}
+        {selectedTestimonialImage && (
+          <div 
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              background: 'rgba(0, 0, 0, 0.92)',
+              zIndex: 100000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'zoom-out'
+            }}
+            onClick={() => setSelectedTestimonialImage(null)}
+          >
+            <button 
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '25px',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: 'none',
+                color: '#fff',
+                fontSize: '24px',
+                width: '50px',
+                height: '50px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                fontWeight: 'bold',
+                zIndex: 100002
+              }}
+              onClick={() => setSelectedTestimonialImage(null)}
+            >
+              ✕
+            </button>
+            <img 
+              src={selectedTestimonialImage} 
+              alt="Depoimento WhatsApp Ampliado" 
+              style={{
+                maxWidth: '90%',
+                maxHeight: '85%',
+                border: '3px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '16px',
+                boxShadow: '0 12px 48px rgba(0,0,0,0.9)',
+                objectFit: 'contain'
+              }}
+              referrerPolicy="no-referrer"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
       </section>
 
       {/* Footer */}
@@ -1965,13 +2102,13 @@ function AppContent() {
               </div>
 
               <div className="dev-tabs">
-                {['geral', 'seções', 'categorias', 'empresas', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'preços', 'segmentos', 'chat', (hasAffiliateSystem || user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'divulgadores' : null].filter(Boolean).map(tab => (
+                {['geral', 'seções', 'categorias', 'empresas', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'depoimentos-whats', 'preços', 'segmentos', 'chat', (hasAffiliateSystem || user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'divulgadores' : null].filter(Boolean).map(tab => (
                   <button 
                     key={tab} 
                     className={`dev-tab ${activeTab === tab ? 'active' : ''}`}
                     onClick={() => setActiveTab(tab)}
                   >
-                    {tab.toUpperCase()}
+                    {tab === 'depoimentos-whats' ? 'DEPOIMENTOS ZAP' : tab.toUpperCase()}
                   </button>
                 ))}
               </div>
@@ -2738,6 +2875,98 @@ function AppContent() {
                       );
                     })}
                     <button className="dev-add-btn" onClick={() => updateData('flyers', [...appData.flyers, { image: "", link: "" }])}>+ Adicionar Flyer</button>
+                  </div>
+                )}
+
+                {activeTab === 'depoimentos-whats' && (
+                  <div className="dev-forms-container">
+                    <h3>Depoimentos em Imagens (Prints do WhatsApp)</h3>
+                    <p style={{ fontSize: '0.75rem', color: '#888', marginTop: '-10px', marginBottom: '20px' }}>
+                      Adicione prints de conversas de WhatsApp com elogios e depoimentos de parceiros para passarem no carrossel.
+                    </p>
+                    
+                    {(appData.whatsappTestimonials || []).map((wt: any, idx: number) => {
+                      const printObj = typeof wt === 'string' ? { image: wt, active: true } : wt;
+                      return (
+                        <div key={idx} className="dev-item-card" style={{ opacity: printObj.active !== false ? 1 : 0.6 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                            <button 
+                              className="dev-btn" 
+                              style={{ 
+                                padding: '4px 8px', 
+                                background: printObj.active !== false ? '#25D366' : '#333', 
+                                border: '1px solid #444', 
+                                fontSize: '0.6rem', 
+                                fontWeight: 800,
+                                borderRadius: '5px',
+                                height: 'auto',
+                                color: '#fff'
+                              }}
+                              onClick={() => {
+                                const newList = [...(appData.whatsappTestimonials || [])];
+                                newList[idx] = { ...printObj, active: printObj.active === false ? true : false };
+                                updateData('whatsappTestimonials', newList);
+                              }}
+                            >
+                              {printObj.active !== false ? '👁️ ATIVO' : '🙈 OCULTO'}
+                            </button>
+                            <button 
+                              className="dev-remove-btn" 
+                              style={{ position: 'static' }} 
+                              onClick={() => {
+                                const newList = (appData.whatsappTestimonials || []).filter((_: any, i: number) => i !== idx);
+                                updateData('whatsappTestimonials', newList);
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                          
+                          <div className="dev-form-group">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                              <label style={{ marginBottom: '0' }}>Link da Imagem do Print</label>
+                              <a 
+                                href="https://postimages.org/" 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                className="dev-btn dev-btn-secondary"
+                                style={{ padding: '4px 10px', fontSize: '0.65rem', textDecoration: 'none', height: 'auto', display: 'flex', alignItems: 'center', gap: '5px' }}
+                              >
+                                🖼️ Enviar Foto no PostImage
+                              </a>
+                            </div>
+                            <input 
+                              type="text" 
+                              className="dev-input" 
+                              value={printObj.image || ''} 
+                              onChange={(e) => {
+                                const newList = [...(appData.whatsappTestimonials || [])];
+                                newList[idx] = { ...printObj, image: e.target.value };
+                                updateData('whatsappTestimonials', newList);
+                              }} 
+                              placeholder="Link direto .jpg ou .png" 
+                            />
+                            <small style={{ color: '#888', fontSize: '0.65rem', marginTop: '4px', display: 'block' }}>Dica: No PostImage, use o "Link Direto"</small>
+                          </div>
+
+                          {printObj.image && (
+                            <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'center', background: '#0a0a0a', padding: '10px', borderRadius: '8px', border: '1px solid #222' }}>
+                              <img src={printObj.image} alt="Preview do Print" style={{ maxHeight: '120px', borderRadius: '6px', objectFit: 'contain' }} referrerPolicy="no-referrer" />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    
+                    <button 
+                      className="dev-add-btn" 
+                      onClick={() => {
+                        const currentList = appData.whatsappTestimonials || [];
+                        updateData('whatsappTestimonials', [...currentList, { image: "", active: true }]);
+                      }}
+                    >
+                      + Adicionar Print de Depoimento
+                    </button>
                   </div>
                 )}
 
