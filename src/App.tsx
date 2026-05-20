@@ -720,18 +720,57 @@ function AppContent() {
     const timeout = setTimeout(() => {
       addNotification();
       const scheduleNext = () => {
-        const delay = Math.floor(Math.random() * 15000) + 15000;
+        // Notification simulation delay: 45 to 75 seconds (averaging ~1 minute)
+        const delay = Math.floor(Math.random() * 30000) + 45000;
         setTimeout(() => {
           addNotification();
           scheduleNext();
         }, delay);
       };
       scheduleNext();
-    }, 3000);
+    }, 15000); // 15 seconds delay before the first simulation notification on load
     return () => clearTimeout(timeout);
   }, [addNotification]);
 
   // --- Video Logic ---
+  const hasRestoredRef = useRef(false);
+
+  // Restore previous stream state or pick a random starting video on mount
+  useEffect(() => {
+    if (!visibleVideos || visibleVideos.length === 0) return;
+    
+    if (!hasRestoredRef.current) {
+      hasRestoredRef.current = true;
+      const savedUrl = localStorage.getItem('tv_last_video_url');
+      const savedTime = localStorage.getItem('tv_last_video_time');
+      
+      if (savedUrl) {
+        const foundIdx = visibleVideos.findIndex((v: any) => v.url === savedUrl);
+        if (foundIdx !== -1) {
+          setCurrentVideoIndex(foundIdx);
+          if (savedTime && videoRef.current) {
+            const parsedTime = parseFloat(savedTime);
+            if (!isNaN(parsedTime)) {
+              const handleLoadedMetadata = () => {
+                if (videoRef.current) {
+                  videoRef.current.currentTime = parsedTime;
+                  videoRef.current.play().catch(() => {});
+                }
+                videoRef.current?.removeEventListener('loadedmetadata', handleLoadedMetadata);
+              };
+              videoRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
+            }
+          }
+          return;
+        }
+      }
+      
+      // Start with a random video for better variety
+      const randomIdx = Math.floor(Math.random() * visibleVideos.length);
+      setCurrentVideoIndex(randomIdx);
+    }
+  }, [visibleVideos]);
+
   const handleVideoEnd = () => {
     if (!visibleVideos || visibleVideos.length === 0) return;
     if (visibleVideos.length === 1) {
@@ -740,7 +779,12 @@ function AppContent() {
         videoRef.current.play().catch(() => {});
       }
     } else {
-      setCurrentVideoIndex(prev => (prev + 1) % visibleVideos.length);
+      // Choose a random next index to ensure non-linear randomness
+      let nextIndex = currentVideoIndex;
+      while (nextIndex === currentVideoIndex) {
+        nextIndex = Math.floor(Math.random() * visibleVideos.length);
+      }
+      setCurrentVideoIndex(nextIndex);
     }
   };
 
@@ -748,11 +792,23 @@ function AppContent() {
     if (videoRef.current && visibleVideos && visibleVideos.length > 0) {
       const targetVideo = visibleVideos[currentVideoIndex];
       if (targetVideo) {
-        videoRef.current.src = targetVideo.url;
-        videoRef.current.play().catch(() => {});
+        const currentSrc = videoRef.current.src || '';
+        if (!currentSrc.includes(targetVideo.url)) {
+          videoRef.current.src = targetVideo.url;
+          videoRef.current.play().catch(() => {});
+        }
       }
     }
   }, [currentVideoIndex, visibleVideos]);
+
+  const handleTimeUpdate = (e: any) => {
+    const vid = e.currentTarget;
+    if (vid.currentTime > 0 && visibleVideos && visibleVideos[currentVideoIndex]) {
+      const url = visibleVideos[currentVideoIndex].url;
+      localStorage.setItem('tv_last_video_url', url);
+      localStorage.setItem('tv_last_video_time', vid.currentTime.toString());
+    }
+  };
 
   // --- Chat Logic ---
   const toggleChat = () => {
@@ -1605,6 +1661,7 @@ function AppContent() {
               playsInline 
               muted={isMuted}
               onEnded={handleVideoEnd}
+              onTimeUpdate={handleTimeUpdate}
             />
             <button className="tv-mute-btn" onClick={() => setIsMuted(!isMuted)}>
               {isMuted ? '🔇' : '🔊'}
