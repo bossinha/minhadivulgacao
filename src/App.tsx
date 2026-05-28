@@ -232,9 +232,14 @@ const DEFAULT_DATA = {
     { name: "Salão de Beleza", status: "Disponível" }, { name: "Farmácia", status: "Disponível" }, { name: "Pet Shop", status: "Disponível" }, { name: "Financeiro", status: "Ocupado" }
   ],
   chatKeywords: {
-    'mercado': 'Supermercado', 'comida': 'Restaurante & bar', 'mecanico': 'Oficina', 'carro': 'Oficina',
-    'saude': 'Saúde', 'dinheiro': 'Financeiro', 'credito': 'Financeiro', 'lazer': 'Lazer',
-    'propaganda': 'Publicidade', 'ar condicionado': 'Refrigeração', 'geladeira': 'Refrigeração'
+    'mercado, mercadinho, feira, supermercado, mercearia, hortifruti, sacolao, compras, alimentos, mantimentos': 'Supermercado',
+    'comida, restaurante, bar, lanche, lanchonete, pizza, pizzaria, hamburguer, marmita, janta, almoco, fome, apetite, gastronomia': 'Restaurante & bar',
+    'mecanico, oficina, carro, conserto, pneu, borracharia, auto, freio, motor, suspensao, alinhamento, balanceamento, pecas, lanternagem': 'Oficina',
+    'saude, clinica, medico, dentista, consulta, remedio, farmacia, exames, hospital, dor, dente, psicologo, fisioterapia, pediatra': 'Saúde',
+    'dinheiro, financeiro, credito, emprestimo, banco, financiamento, investimento, divida, juros, saldo, caixa, financiador, capital': 'Financeiro',
+    'lazer, diversao, festa, show, evento, cinema, parque, hotel, viagem, turismo, praia, piscina, clube, balada, entretenimento': 'Lazer',
+    'propaganda, publicidade, comercial, anuncio, divulgacao, marketing, banner, video, marketing digital, patrocinio, promover, destacar, vendas': 'Publicidade',
+    'ar condicionado, geladeira, refrigeracao, freezers, conserto de geladeira, climatizacao, arcondicionado, split, geladeiras, freezer': 'Refrigeração'
   },
   notificationsData: {
     names: NOTIFICATION_NAMES,
@@ -1016,7 +1021,20 @@ function AppContent() {
 
       let searchTerms = [query];
       Object.keys(keywordMap).forEach(key => {
-        if (query.includes(key)) {
+        // Suporte a múltiplas palavras-chaves/sinônimos separadas por vírgula, ponto e vírgula ou barra
+        const subKeys = key.split(/[,;\/]+/).map(s => normalize(s.trim())).filter(Boolean);
+        
+        const isMatched = subKeys.some(subKey => {
+          if (!subKey) return false;
+          // Se a busca contiver diretamente a palavra-chave
+          if (query.includes(subKey)) return true;
+          
+          // Se a palavra-chave bater com o início de alguma palavra digitada (ex: "mecanic" -> mecânico)
+          const queryWords = query.split(/\s+/);
+          return queryWords.some(qw => qw === subKey || (qw.startsWith(subKey) && subKey.length >= 4));
+        });
+
+        if (isMatched) {
           // @ts-ignore
           searchTerms.push(normalize(keywordMap[key]));
         }
@@ -4044,21 +4062,22 @@ function AppContent() {
 
                 {activeTab === 'chat' && (
                   <div className="dev-forms-container">
-                    <h3>Palavras-chave do Chat</h3>
-                    <p style={{ color: 'var(--text-dim)', fontSize: '0.8rem', marginBottom: '20px' }}>
-                      Ex: Se o cliente digitar "mercado", o chat busca por "Supermercado".
+                    <h3>Palavras-chave do Chat (Sinônimos e Nichos)</h3>
+                    <p style={{ color: 'var(--text-dim)', fontSize: '0.8rem', marginBottom: '20px', lineHeight: '1.4' }}>
+                      <strong>Dica de ouro:</strong> Você pode cadastrar e associar várias palavras separadas por vírgula para a mesma categoria. <br />
+                      Ex: Se o cliente digitar "propaganda", "comercial" ou "divulgação", ele encontrará a categoria "Publicidade".
                     </p>
                     
-                    <div className="dev-item-card" style={{ border: '1px dashed var(--primary)', background: 'rgba(255,0,0,0.05)' }}>
-                      <h4 style={{ fontSize: '0.8rem', marginBottom: '10px', color: 'var(--primary)' }}>+ Adicionar Nova Palavra</h4>
+                    <div className="dev-item-card" style={{ border: '1px dashed var(--primary)', background: 'rgba(251,191,36,0.05)' }}>
+                      <h4 style={{ fontSize: '0.8rem', marginBottom: '10px', color: 'var(--primary)' }}>+ Adicionar Novo Grupo de Palavras-Chave</h4>
                       <div className="dev-grid-2">
                         <div className="dev-form-group">
-                          <label>Palavra do Cliente</label>
-                          <input type="text" id="new-keyword-key" className="dev-input" placeholder="ex: pizza" />
+                          <label>Palavra(s) do Cliente (Separadas por vírgula)</label>
+                          <input type="text" id="new-keyword-key" className="dev-input" placeholder="ex: comercial, propaganda, anuncio, marketing" />
                         </div>
                         <div className="dev-form-group">
                           <label>Categoria Alvo</label>
-                          <input type="text" id="new-keyword-val" className="dev-input" placeholder="ex: Restaurante & bar" />
+                          <input type="text" id="new-keyword-val" className="dev-input" placeholder="ex: Publicidade" />
                         </div>
                       </div>
                       <button 
@@ -4078,7 +4097,7 @@ function AppContent() {
                           }
                         }}
                       >
-                        Adicionar Palavra
+                        Adicionar Grupo de Palavras
                       </button>
                     </div>
 
