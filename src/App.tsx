@@ -215,11 +215,12 @@ function AppContent() {
 
   // --- Initial Firebase Data Load ---
   useEffect(() => {
-    if (tenantId && tenantId !== 'login') {
+    if (location.pathname !== '/login') {
       const fetchCity = async () => {
         setIsLoading(true);
         try {
-          const id = slugify(tenantId);
+          const targetTenantId = tenantId || 'fortaleza';
+          const id = slugify(targetTenantId);
           const snap = await getDoc(doc(db, 'tenants', id));
           if (snap.exists()) {
             const tData = snap.data();
@@ -254,7 +255,7 @@ function AppContent() {
         setAppData(null);
       }
     }
-  }, [tenantId]);
+  }, [tenantId, location.pathname]);
 
   useEffect(() => {
     // Session visit count
@@ -289,8 +290,9 @@ function AppContent() {
     const queryParams = new URLSearchParams(searchPart);
     const refCode = queryParams.get('ref') || queryParams.get('indica');
     
-    if (refCode && tenantId && tenantId !== 'login') {
-      const id = slugify(tenantId);
+    if (refCode && location.pathname !== '/login') {
+      const targetTenantId = tenantId || 'fortaleza';
+      const id = slugify(targetTenantId);
       const cleanRef = slugify(refCode);
       const refKey = `ref_tracked_${id}_${cleanRef}`;
       
@@ -343,7 +345,7 @@ function AppContent() {
               });
               setAppData(data.data || DEFAULT_DATA);
               setShowVideos(data.showVideos === true);
-              if (!tenantId || tenantId === 'login') {
+              if ((!tenantId || tenantId === 'login') && savedId !== 'fortaleza') {
                 navigate('/' + savedId);
               }
             }
@@ -351,8 +353,6 @@ function AppContent() {
         } catch (e) {
           console.error("Session restoration failed:", e);
         }
-      } else if (!tenantId && location.pathname !== '/login') {
-        navigate('/fortaleza');
       }
     };
     loadSession();
