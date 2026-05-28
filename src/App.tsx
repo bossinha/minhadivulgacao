@@ -351,8 +351,8 @@ function AppContent() {
         } catch (e) {
           console.error("Session restoration failed:", e);
         }
-      } else if (!tenantId) {
-        navigate('/login');
+      } else if (!tenantId && location.pathname !== '/login') {
+        navigate('/fortaleza');
       }
     };
     loadSession();
