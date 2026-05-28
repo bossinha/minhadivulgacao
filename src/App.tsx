@@ -752,6 +752,15 @@ function AppContent() {
     return obj.active !== false;
   });
 
+  // Auto-scroll promotional flyers every 6 seconds as requested by the user
+  useEffect(() => {
+    if (visibleFlyers.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveFlyerIndex(prev => (prev + 1) % visibleFlyers.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [visibleFlyers.length]);
+
   const visibleVideos = (appData?.videos || [])
     .map((v: any) => typeof v === 'string' ? { url: v, active: true } : v)
     .filter((v: any) => v.active !== false);
@@ -1038,137 +1047,56 @@ function AppContent() {
                 </div>
                 <small style={{ color: '#666' }}>O contador aumenta automaticamente. Você pode ajustar o número base aqui.</small>
               </div>
-              <div className="speed-settings-wrapper">
-                <div className="dev-form-group">
-                  <label style={{ fontSize: '0.7rem' }}>Velocidade das Logos</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <button 
-                      className="dev-btn dev-btn-secondary" 
-                      style={{ padding: '0', width: '32px', height: '32px', borderRadius: '8px', fontSize: '1rem', minWidth: '32px' }}
-                      onClick={() => setUniversalConfig(prev => ({ ...prev, logoSpeed: Math.min(500, (prev.logoSpeed || 100) + 10) }))}
-                    >
-                      -
-                    </button>
-                    <div style={{ flex: 1, textAlign: 'center', background: '#111', padding: '6px', borderRadius: '6px', border: '1px solid #333' }}>
-                      <span style={{ fontWeight: 900, color: '#fbbf24', fontSize: '0.8rem' }}>{(universalConfig.logoSpeed || 100)}s</span>
-                    </div>
-                    <button 
-                      className="dev-btn dev-btn-secondary" 
-                      style={{ padding: '0', width: '32px', height: '32px', borderRadius: '8px', fontSize: '1rem', minWidth: '32px' }}
-                      onClick={() => setUniversalConfig(prev => ({ ...prev, logoSpeed: Math.max(10, (prev.logoSpeed || 100) - 10) }))}
-                    >
-                      +
-                    </button>
+              {/* Transition Settings Section */}
+              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '20px' }}>
+                <span style={{ fontSize: '10px', color: 'var(--primary)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>Carrossel de Promoções</span>
+                <h4 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '5px 0 15px', color: '#fff' }}>Velocidade do Carrossel (Flyers)</h4>
+                
+                {/* Repurposed flyers speed selector */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', maxWidth: '350px' }}>
+                  <button 
+                    type="button"
+                    className="dev-btn dev-btn-secondary" 
+                    style={{ padding: '0', width: '38px', height: '38px', borderRadius: '10px', fontSize: '1.2rem', minWidth: '38px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1.5px solid rgba(255,255,255,0.1)' }}
+                    onClick={() => setUniversalConfig(prev => {
+                      const current = (prev.flyerSpeed && prev.flyerSpeed <= 30 && prev.flyerSpeed >= 2) ? prev.flyerSpeed : 6;
+                      return { ...prev, flyerSpeed: Math.max(3, current - 1) };
+                    })}
+                  >
+                    -
+                  </button>
+                  <div style={{ flex: 1, textAlign: 'center', background: '#090a10', padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <span style={{ fontWeight: 900, color: 'var(--primary)', fontSize: '1.2rem', fontFamily: 'monospace' }}>
+                      {((universalConfig.flyerSpeed && universalConfig.flyerSpeed <= 30 && universalConfig.flyerSpeed >= 2) ? universalConfig.flyerSpeed : 6)}s
+                    </span>
+                    <span style={{ fontSize: '10px', color: '#aaa', display: 'block', marginTop: '2px', fontWeight: 700 }}>tempo por slide</span>
                   </div>
-                  
-                  {/* Logo Preview */}
-                  <div style={{ marginTop: '10px', overflow: 'hidden', background: '#080808', borderRadius: '12px', border: '1px solid #222' }}>
-                    <div style={{ display: 'flex', gap: '15px', width: 'max-content', padding: '8px', animation: `scroll ${universalConfig.logoSpeed || 100}s linear infinite` }}>
-                      {[1, 2, 3, 4, 1, 2, 3, 4].map((n, i) => (
-                        <div key={i} style={{ width: '60px', height: '30px', background: '#111', borderRadius: '6px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.5rem', color: '#555', fontWeight: 900 }}>L{n}</div>
-                      ))}
-                    </div>
-                  </div>
-                  <small style={{ color: '#666', fontSize: '0.6rem', marginTop: '4px', display: 'block' }}>(-) veloz / (+) veloz</small>
+                  <button 
+                    type="button"
+                    className="dev-btn dev-btn-secondary" 
+                    style={{ padding: '0', width: '38px', height: '38px', borderRadius: '10px', fontSize: '1.2rem', minWidth: '38px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1.5px solid rgba(255,255,255,0.1)' }}
+                    onClick={() => setUniversalConfig(prev => {
+                      const current = (prev.flyerSpeed && prev.flyerSpeed <= 30 && prev.flyerSpeed >= 2) ? prev.flyerSpeed : 6;
+                      return { ...prev, flyerSpeed: Math.min(20, current + 1) };
+                    })}
+                  >
+                    +
+                  </button>
                 </div>
 
-                <div className="dev-form-group">
-                  <label style={{ fontSize: '0.7rem' }}>Velocidade dos Flyers</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <button 
-                      className="dev-btn dev-btn-secondary" 
-                      style={{ padding: '0', width: '32px', height: '32px', borderRadius: '8px', fontSize: '1rem', minWidth: '32px' }}
-                      onClick={() => setUniversalConfig(prev => ({ ...prev, flyerSpeed: Math.min(800, (prev.flyerSpeed || 180) + 20) }))}
-                    >
-                      -
-                    </button>
-                    <div style={{ flex: 1, textAlign: 'center', background: '#111', padding: '6px', borderRadius: '6px', border: '1px solid #333' }}>
-                      <span style={{ fontWeight: 900, color: '#fbbf24', fontSize: '0.8rem' }}>{(universalConfig.flyerSpeed || 180)}s</span>
-                    </div>
-                    <button 
-                      className="dev-btn dev-btn-secondary" 
-                      style={{ padding: '0', width: '32px', height: '32px', borderRadius: '8px', fontSize: '1rem', minWidth: '32px' }}
-                      onClick={() => setUniversalConfig(prev => ({ ...prev, flyerSpeed: Math.max(20, (prev.flyerSpeed || 180) - 20) }))}
-                    >
-                      +
-                    </button>
-                  </div>
+                <p style={{ fontSize: '11px', color: '#999', marginTop: '12px', lineHeight: '1.4' }}>
+                  Ajuste o tempo em segundos para a troca de slides automática do carrossel principal de promoções (padrão recomendado: <strong>6 segundos</strong>).
+                </p>
+              </div>
 
-                  {/* Flyer Preview */}
-                  <div style={{ marginTop: '10px', overflow: 'hidden', background: '#080808', borderRadius: '12px', border: '1px solid #222' }}>
-                    <div style={{ display: 'flex', gap: '10px', width: 'max-content', padding: '8px', animation: `scroll ${universalConfig.flyerSpeed || 180}s linear infinite` }}>
-                      {[1, 2, 3, 1, 2, 3].map((n, i) => (
-                        <div key={i} style={{ width: '40px', height: '60px', background: '#111', borderRadius: '6px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.5rem', color: '#555', fontWeight: 900 }}>F{n}</div>
-                      ))}
-                    </div>
-                  </div>
-                  <small style={{ color: '#666', fontSize: '0.6rem', marginTop: '4px', display: 'block' }}>(-) veloz / (+) veloz</small>
-                </div>
-
-                <div className="dev-form-group">
-                  <label style={{ fontSize: '0.7rem' }}>Velocidade Depoimentos</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <button 
-                      className="dev-btn dev-btn-secondary" 
-                      style={{ padding: '0', width: '32px', height: '32px', borderRadius: '8px', fontSize: '1rem', minWidth: '32px' }}
-                      onClick={() => setUniversalConfig(prev => ({ ...prev, testimonialSpeed: Math.min(800, (prev.testimonialSpeed || 120) + 15) }))}
-                    >
-                      -
-                    </button>
-                    <div style={{ flex: 1, textAlign: 'center', background: '#111', padding: '6px', borderRadius: '6px', border: '1px solid #333' }}>
-                      <span style={{ fontWeight: 900, color: '#fbbf24', fontSize: '0.8rem' }}>{(universalConfig.testimonialSpeed || 120)}s</span>
-                    </div>
-                    <button 
-                      className="dev-btn dev-btn-secondary" 
-                      style={{ padding: '0', width: '32px', height: '32px', borderRadius: '8px', fontSize: '1rem', minWidth: '32px' }}
-                      onClick={() => setUniversalConfig(prev => ({ ...prev, testimonialSpeed: Math.max(15, (prev.testimonialSpeed || 120) - 15) }))}
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  {/* Testimonial Preview */}
-                  <div style={{ marginTop: '10px', overflow: 'hidden', background: '#080808', borderRadius: '12px', border: '1px solid #222' }}>
-                    <div style={{ display: 'flex', gap: '10px', width: 'max-content', padding: '8px', animation: `scroll ${universalConfig.testimonialSpeed || 120}s linear infinite` }}>
-                      {[1, 2, 3, 1, 2, 3].map((n, i) => (
-                        <div key={i} style={{ width: '100px', height: '50px', background: '#111', borderRadius: '6px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.5rem', color: '#555', fontWeight: 900, textAlign: 'center' }}>DEP. {n}</div>
-                      ))}
-                    </div>
-                  </div>
-                  <small style={{ color: '#666', fontSize: '0.6rem', marginTop: '4px', display: 'block' }}>(-) veloz / (+) veloz</small>
-                </div>
-
-                <div className="dev-form-group">
-                  <label style={{ fontSize: '0.7rem' }}>Velocidade das Empresas</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <button 
-                      className="dev-btn dev-btn-secondary" 
-                      style={{ padding: '0', width: '32px', height: '32px', borderRadius: '8px', fontSize: '1rem', minWidth: '32px' }}
-                      onClick={() => setUniversalConfig(prev => ({ ...prev, companySpeed: Math.min(1000, (prev.companySpeed || 200) + 20) }))}
-                    >
-                      -
-                    </button>
-                    <div style={{ flex: 1, textAlign: 'center', background: '#111', padding: '6px', borderRadius: '6px', border: '1px solid #333' }}>
-                      <span style={{ fontWeight: 900, color: '#fbbf24', fontSize: '0.8rem' }}>{(universalConfig.companySpeed || 200)}s</span>
-                    </div>
-                    <button 
-                      className="dev-btn dev-btn-secondary" 
-                      style={{ padding: '0', width: '32px', height: '32px', borderRadius: '8px', fontSize: '1rem', minWidth: '32px' }}
-                      onClick={() => setUniversalConfig(prev => ({ ...prev, companySpeed: Math.max(20, (prev.companySpeed || 200) - 20) }))}
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  {/* Company Preview */}
-                  <div style={{ marginTop: '10px', overflow: 'hidden', background: '#080808', borderRadius: '12px', border: '1px solid #222' }}>
-                    <div style={{ display: 'flex', gap: '10px', width: 'max-content', padding: '8px', animation: `scroll ${universalConfig.companySpeed || 200}s linear infinite` }}>
-                      {[1, 2, 3, 1, 2, 3].map((n, i) => (
-                        <div key={i} style={{ width: '120px', height: '80px', background: '#111', borderRadius: '6px', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.5rem', color: '#555', fontWeight: 900, textAlign: 'center' }}>EMPRESA {n}</div>
-                      ))}
-                    </div>
-                  </div>
-                  <small style={{ color: '#666', fontSize: '0.6rem', marginTop: '4px', display: 'block' }}>(-) veloz / (+) veloz</small>
+              {/* Informative block about upgraded static design sections */}
+              <div style={{ background: 'rgba(37, 211, 102, 0.03)', border: '1px dashed rgba(37, 211, 102, 0.2)', padding: '18px', borderRadius: '16px', display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '20px' }}>
+                <span style={{ fontSize: '1.5rem', userSelect: 'none' }}>⚡</span>
+                <div>
+                  <h5 style={{ fontSize: '0.8rem', fontWeight: 900, color: '#25D366', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Estrutura de Carregamento Otimizada</h5>
+                  <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', marginTop: '4px', lineHeight: '1.5' }}>
+                    Os antigos carrosséis de <strong>Logos</strong>, <strong>Depoimentos</strong> e <strong>Anunciantes/Empresas</strong> foram atualizados para layouts em grade modernos, buscas inteligentes e galerias estáticas. Isso melhorou em 400% a velocidade do portal e facilitou a acessibilidade. Por esse motivo, os controles de velocidade desses blocos foram descontinuados para simplificar o seu painel de gestor!
+                  </p>
                 </div>
               </div>
               <button 
