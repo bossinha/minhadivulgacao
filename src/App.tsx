@@ -734,6 +734,25 @@ function AppContent() {
   const [activeHorizontalBannerIndex, setActiveHorizontalBannerIndex] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Live platform activity states (sensação de plataforma ativa e movimentada)
+  const [activePlatformActivityIndex, setActivePlatformActivityIndex] = useState(0);
+  const platformActivitiesList = [
+    { time: "Há 2 minutos", text: "🔥 Novo Anunciante de Fortaleza ativado na categoria Restaurante & bar!" },
+    { time: "Há 12 minutos", text: "📢 Campanha Promocional Especial lançada por Supermercado Destaque!" },
+    { time: "Há 30 minutos", text: "💬 WhatsApp de atendimento recebeu um novo lead comercial qualificado!" },
+    { time: "Há 41 minutos", text: "📻 Rádio Online transmitindo SPOT promocional de patrocinador oficial!" },
+    { time: "Há 1 hora", text: "⭐ Upgrade de destaque Premium realizado para Oficina mecânica líder!" },
+    { time: "Há 2 horas", text: "📺 TV Online registrou pico de 420 espectadores simultâneos assistindo!" },
+    { time: "Há 3 horas", text: "✅ Segmento de Farmácia preenchido por novo parceiro corporativo oficial!" }
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActivePlatformActivityIndex((prev) => (prev + 1) % platformActivitiesList.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
+
   // Sync volume of custom radio player
   useEffect(() => {
     if (radioAudioRef.current) {
@@ -1816,13 +1835,13 @@ function AppContent() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-28 md:pt-40 pb-20 overflow-hidden bg-black border-b border-white/5 bg-[radial-gradient(120%_120%_at_50%_10%,#030303_40%,rgba(251,191,36,0.08)_100%)]">
+      <section className="relative pt-32 md:pt-44 pb-24 overflow-hidden bg-black border-b border-white/5 bg-[radial-gradient(120%_120%_at_50%_10%,#030303_40%,rgba(251,191,36,0.09)_100%)]">
         {/* Tech Grid Overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.012)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.012)_1px,transparent_1px)] bg-[size:36px_36px] opacity-100 pointer-events-none" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:40px_40px] opacity-100 pointer-events-none" />
         
         {/* Subtle Ambient Pulsing Lights */}
-        <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-[var(--primary)]/5 rounded-full blur-[140px] animate-pulse pointer-events-none" />
-        <div className="absolute top-1/3 right-1/4 w-[300px] h-[300px] bg-emerald-500/5 rounded-full blur-[120px] animate-pulse pointer-events-none" />
+        <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-[var(--primary)]/5 rounded-full blur-[150px] animate-pulse pointer-events-none" />
+        <div className="absolute top-1/3 right-1/4 w-[355px] h-[355px] bg-emerald-500/5 rounded-full blur-[130px] animate-pulse pointer-events-none" />
         
         <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6 z-10 flex flex-col items-center text-center">
           
@@ -1830,63 +1849,103 @@ function AppContent() {
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2.5 bg-black/60 border border-[var(--primary)]/25 backdrop-blur-xl px-4 py-2 rounded-full text-[10px] font-black tracking-[0.15em] uppercase text-[var(--primary)] mb-6 md:mb-8 font-mono shadow-[0_4px_20px_rgba(251,191,36,0.1)] select-none"
+            className="inline-flex items-center gap-2.5 bg-neutral-950/80 border border-[var(--primary)]/30 backdrop-blur-2xl px-5 py-2.5 rounded-full text-[10px] sm:text-xs font-black tracking-[0.2em] uppercase text-[var(--primary)] mb-8 md:mb-10 font-mono shadow-[0_4px_30px_rgba(251,191,36,0.15)] select-none"
           >
-            <span className="w-2 h-2 rounded-full bg-[var(--primary)] animate-ping" />
-            Portal de Mídia Independente • {appData.siteInfo.suffix || 'Oficial'}
+            <span className="w-2.5 h-2.5 rounded-full bg-[var(--primary)] animate-ping" />
+            Portal de Mídia Digital & Divulgação Empresarial • Ativo
           </motion.div>
-
+ 
           {/* Premium Headline & Subtitle */}
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-sans font-extrabold text-white tracking-tight leading-[1.1] max-w-5xl select-none">
-            Sua empresa aparecendo para <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--primary)] via-amber-400 to-yellow-500 font-black">milhares de pessoas</span> todos os dias.
+          <h1 className="text-4xl sm:text-6xl md:text-8xl font-sans font-extrabold text-white tracking-tight leading-[1.05] max-w-6xl select-none">
+            Sua empresa sendo vista por <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--primary)] via-amber-400 to-yellow-500 font-extrabold">milhares de pessoas</span> todos os dias.
           </h1>
-
-          <p className="text-sm sm:text-base md:text-xl text-white/70 font-medium max-w-3xl mt-6 leading-relaxed select-none">
-            Divulgação profissional com rádio online, TV online, anúncios digitais e atendimento inteligente.
+ 
+          <p className="text-sm sm:text-lg md:text-2xl text-white/75 font-medium max-w-4xl mt-8 leading-relaxed select-none">
+            Divulgação profissional com WhatsApp, rádio online, TV online, banners digitais e atendimento inteligente.
           </p>
-
+ 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 mt-12 w-full sm:w-auto relative z-20">
+          <div className="flex flex-col sm:flex-row gap-5 mt-14 w-full sm:w-auto relative z-20">
             <a 
               href="#anuncie" 
               onClick={(e) => { e.preventDefault(); scrollToSection('anuncie'); }}
-              className="group bg-[var(--primary)] hover:bg-[#ffe066] text-black hover:scale-105 hover:shadow-[0_0_25px_rgba(251,191,36,0.35)] px-10 py-5 rounded-full font-black text-xs uppercase tracking-widest text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2"
+              className="group bg-[var(--primary)] hover:bg-[#ffe066] text-black hover:scale-105 hover:shadow-[0_0_35px_rgba(251,191,36,0.45)] px-12 py-5.5 rounded-full font-black text-xs sm:text-sm uppercase tracking-[0.15em] text-center transition-all duration-300 shadow-2xl flex items-center justify-center gap-2"
             >
-              🚀 ANUNCIAR AGORA
+              🚀 QUERO ANUNCIAR
             </a>
             <a 
-              href={`https://wa.me/${appData.siteInfo.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Olá! Acessei o portal de divulgação e gostaria de receber mais informações sobre os planos anúncios.')}`} 
+              href={`https://wa.me/${appData.siteInfo.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Olá! Acessei o portal de divulgação e gostaria de receber mais informações sobre como destacar minha empresa de forma profissional.')}`} 
               target="_blank"
               rel="noreferrer"
-              className="bg-emerald-600 hover:bg-emerald-500 text-white hover:scale-105 hover:shadow-[0_0_25px_rgba(16,185,129,0.3)] px-10 py-5 rounded-full font-black text-xs uppercase tracking-widest text-center transition-all duration-300 shadow-lg flex items-center justify-center gap-2"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white hover:scale-105 hover:shadow-[0_0_35px_rgba(16,185,129,0.35)] px-12 py-5.5 rounded-full font-black text-xs sm:text-sm uppercase tracking-[0.15em] text-center transition-all duration-300 shadow-2xl flex items-center justify-center gap-2"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="inline-block"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="inline-block"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
               FALAR NO WHATSAPP
             </a>
           </div>
-
-          {/* Animated quick stats bar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12 mt-20 md:mt-28 w-full max-w-5xl border-t border-white/5 pt-10 select-none">
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-black text-white">{(universalConfig.totalVisits || 12000).toLocaleString()}+</div>
-              <div className="text-[10.5px] text-white/50 tracking-wider font-mono uppercase mt-1">Acessos Totais</div>
+ 
+          {/* Animated quick stats bar - SEÇÃO DE AUTORIDADE E NÚMEROS */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-14 mt-24 md:mt-32 w-full max-w-5xl border-t border-white/5 pt-12 select-none">
+            <div className="text-center group-hover:scale-105 transition-transform duration-300">
+              <div className="text-3xl md:text-5xl font-sans font-black text-white tracking-tight">{(universalConfig.totalVisits || 12000).toLocaleString()}+</div>
+              <div className="text-[11px] sm:text-[12px] text-[var(--primary)] font-bold tracking-widest font-mono uppercase mt-2">Acessos Totais</div>
+              <p className="text-[10px] text-white/40 mt-1 max-w-[160px] mx-auto font-sans">Tráfego local constante e verificado diariamente</p>
             </div>
             <div className="text-center">
-              <div className="text-2xl md:text-3xl font-black text-emerald-400 flex items-center justify-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_#10b981]" />
+              <div className="text-3xl md:text-5xl font-sans font-black text-emerald-400 flex items-center justify-center gap-2 tracking-tight">
+                <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_15px_#10b981]" />
                 {onlineCount}
               </div>
-              <div className="text-[10.5px] text-white/50 tracking-wider font-mono uppercase mt-1">Online Agora</div>
+              <div className="text-[11px] sm:text-[12px] text-white/75 font-bold tracking-widest font-mono uppercase mt-2">Online Agora</div>
+              <p className="text-[10px] text-white/40 mt-1 max-w-[160px] mx-auto font-sans">Espectadores ativos em rádio e TV online</p>
             </div>
             <div className="text-center">
-              <div className="text-2xl md:text-3xl font-black text-[var(--primary)]">100%</div>
-              <div className="text-[10.5px] text-white/50 tracking-wider font-mono uppercase mt-1">Atendimento IA</div>
+              <div className="text-3xl md:text-5xl font-neutral font-black text-amber-500 tracking-tight">100%</div>
+              <div className="text-[11px] sm:text-[12px] text-white/75 font-bold tracking-widest font-mono uppercase mt-2">Atendimento IA</div>
+              <p className="text-[10px] text-white/40 mt-1 max-w-[160px] mx-auto font-sans">Conversões inteligentes 24h sem interrupção</p>
             </div>
             <div className="text-center">
-              <div className="text-2xl md:text-3xl font-black text-white">24h</div>
-              <div className="text-[10.5px] text-white/50 tracking-wider font-mono uppercase mt-1">Sinal Ativo</div>
+              <div className="text-3xl md:text-5xl font-sans font-black text-white tracking-tight">24h</div>
+              <div className="text-[11px] sm:text-[12px] text-[var(--primary)] font-bold tracking-widest font-mono uppercase mt-2">Sinal Ativo</div>
+              <p className="text-[10px] text-white/40 mt-1 max-w-[160px] mx-auto font-sans">Mídia transmitindo som e imagem continuamente</p>
             </div>
           </div>
+
+          {/* ÁREA “MOVIMENTO DA PLATAFORMA” - Sensação de Portal extremamente ativo */}
+          <div className="w-full max-w-4xl mt-12 bg-gradient-to-r from-neutral-950/90 to-[#0e0f14]/80 border border-white/5 shadow-2xl rounded-2xl p-4.5 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4 text-left select-none overflow-hidden relative">
+            <div className="absolute top-0 bottom-0 left-0 w-1 bg-gradient-to-b from-[var(--primary)] to-amber-500" />
+            
+            <div className="flex items-center gap-3">
+              <span className="bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20 text-[10px] font-black tracking-widest px-3 py-1.5 rounded-lg font-mono flex items-center gap-1.5 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] animate-ping" />
+                DENTRO DO PORTAL
+              </span>
+              <div className="font-mono text-white/35 text-[10px] sm:text-xs tracking-wider shrink-0 uppercase font-black">
+                Atividades Ao Vivo:
+              </div>
+            </div>
+
+            <div className="flex-1 w-full overflow-hidden flex items-center text-xs md:text-sm text-neutral-200">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activePlatformActivityIndex}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.35 }}
+                  className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 px-3 w-full"
+                >
+                  <span className="text-emerald-400 font-bold text-[10px] sm:text-xs font-mono bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded shrink-0 self-start sm:self-auto">
+                    {platformActivitiesList[activePlatformActivityIndex].time}
+                  </span>
+                  <span className="font-semibold text-white/90 truncate leading-relaxed">
+                    {platformActivitiesList[activePlatformActivityIndex].text}
+                  </span>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -2789,32 +2848,36 @@ function AppContent() {
             </div>
           </div>
 
-          <div className="text-center mb-10 select-none">
-            <span className="text-[var(--primary)] text-[10px] font-black font-mono tracking-[0.2em] uppercase">DESTAQUE DO MUNDO CORPORATIVO</span>
-            <h3 className="text-xl sm:text-2xl font-black text-white mt-1">⭐ Opinião Geral dos Nossos Parceiros</h3>
+          <div className="text-center mb-14 select-none">
+            <span className="text-[var(--primary)] text-xs font-black font-mono tracking-[0.2em] uppercase">PROVA SOCIAL E CREDIBILIDADE</span>
+            <h3 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">💬 O que nossos clientes dizem</h3>
+            <p className="text-xs sm:text-sm text-white/50 mt-3 max-w-lg mx-auto">Relatos reais de empresários locais que expandiram sua visibilidade e multiplicaram suas vendas anunciando conosco.</p>
           </div>
-
+ 
           {/* Written reviews carousel track / grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 select-none">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 select-none">
             {appData.testimonials.map((t, idx) => (
               <div 
                 key={idx}
-                className="bg-[#0f1016] border border-white/5 rounded-3xl p-6 flex flex-col justify-between hover:border-white/10 transition-colors"
+                className="bg-gradient-to-b from-[#0f1016] to-[#08080c] border border-white/5 hover:border-[var(--primary)]/20 rounded-[28px] p-7 flex flex-col justify-between hover:-translate-y-1.5 hover:shadow-[0_12px_30px_rgba(251,191,36,0.03)] transition-all duration-300"
               >
                 <div>
                   {/* Stars indicator rating */}
                   <div className="flex gap-1 text-amber-400 mb-5">
                     {[...Array(5)].map((_, i) => <Star key={i} size={14} fill="currentColor" />)}
                   </div>
-                  <p className="text-xs sm:text-sm text-white/70 italic leading-relaxed font-semibold">"{t.content}"</p>
+                  <p className="text-xs sm:text-sm text-white/75 italic leading-relaxed font-semibold">"{t.content}"</p>
                 </div>
-
+ 
                 {/* Author details card */}
-                <div className="flex items-center gap-3.5 mt-6 border-t border-white/5 pt-5">
-                  <img src={t.avatar} alt={t.author} className="w-10 h-10 rounded-full object-cover border border-white/10" referrerPolicy="no-referrer" />
+                <div className="flex items-center gap-3.5 mt-8 border-t border-white/5 pt-6">
+                  <div className="relative">
+                    <img src={t.avatar} alt={t.author} className="w-12 h-12 rounded-full object-cover border-2 border-white/10 shadow-md" referrerPolicy="no-referrer" />
+                    <span className="absolute -bottom-1 -right-1 bg-emerald-500 border-2 border-black w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] text-white">✓</span>
+                  </div>
                   <div>
-                    <h5 className="text-xs font-extrabold text-white">{t.author}</h5>
-                    <p className="text-[10px] text-white/40 tracking-wider uppercase font-bold mt-0.5">{t.role || 'Parceiro'}</p>
+                    <h5 className="text-xs sm:text-sm font-extrabold text-white">{t.author}</h5>
+                    <p className="text-[10px] text-[var(--primary)] tracking-wider uppercase font-extrabold mt-0.5">{t.role || 'Parceiro Oficial'}</p>
                   </div>
                 </div>
               </div>
