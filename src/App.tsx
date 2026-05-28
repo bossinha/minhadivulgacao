@@ -1735,14 +1735,14 @@ function AppContent() {
 
           {/* Clean Menu - Desktop */}
           <div className="hidden lg:flex items-center gap-6 text-xs font-bold uppercase tracking-wider text-white/70">
-            <a href="#destaque" className="hover:text-[var(--primary)] transition-colors duration-200">Destaques</a>
+            <a href="#destaque" onClick={(e) => { e.preventDefault(); scrollToSection('destaque'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Destaques</a>
             {visibleFlyers.length > 0 && (
-              <a href="#promocoes" className="hover:text-[var(--primary)] transition-colors duration-200">Promoções</a>
+              <a href="#promocoes" onClick={(e) => { e.preventDefault(); scrollToSection('promocoes'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Promoções</a>
             )}
-            <a href="#filtro-empresas" className="hover:text-[var(--primary)] transition-colors duration-200">Anunciantes</a>
-            <a href="#radio-tv" className="hover:text-[var(--primary)] transition-colors duration-200">Rádio & TV</a>
-            <a href="#servicos" className="hover:text-[var(--primary)] transition-colors duration-200">Serviços</a>
-            <a href="#depoimentos" className="hover:text-[var(--primary)] transition-colors duration-200">Depoimentos</a>
+            <a href="#filtro-empresas" onClick={(e) => { e.preventDefault(); scrollToSection('filtro-empresas'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Anunciantes</a>
+            <a href="#radio-tv" onClick={(e) => { e.preventDefault(); scrollToSection('radio-tv'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Rádio & TV</a>
+            <a href="#servicos" onClick={(e) => { e.preventDefault(); scrollToSection('servicos'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Serviços</a>
+            <a href="#depoimentos" onClick={(e) => { e.preventDefault(); scrollToSection('depoimentos'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Depoimentos</a>
           </div>
 
           {/* Action Buttons - Desktop */}
@@ -1786,14 +1786,14 @@ function AppContent() {
               className="absolute top-16 md:top-20 left-0 right-0 bg-[#07080e]/95 backdrop-blur-xl border-b border-white/10 px-6 py-8 flex flex-col gap-6 z-40 shadow-2xl lg:hidden font-jakarta"
             >
               <div className="flex flex-col gap-4 text-sm font-bold uppercase tracking-wider">
-                <a href="#destaque" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-[var(--primary)] py-2">⭐ Destaques</a>
+                <a href="#destaque" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('destaque'); }} className="text-white hover:text-[var(--primary)] py-2">⭐ Destaques</a>
                 {visibleFlyers.length > 0 && (
-                  <a href="#promocoes" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-[var(--primary)] py-2">🔥 Promoções</a>
+                  <a href="#promocoes" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('promocoes'); }} className="text-white hover:text-[var(--primary)] py-2">🔥 Promoções</a>
                 )}
-                <a href="#filtro-empresas" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-[var(--primary)] py-2">🔍 Empresas</a>
-                <a href="#radio-tv" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-[var(--primary)] py-2">📻 Rádio & TV</a>
-                <a href="#servicos" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-[var(--primary)] py-2">🛠️ Serviços</a>
-                <a href="#depoimentos" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-[var(--primary)] py-2">💬 Depoimentos</a>
+                <a href="#filtro-empresas" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('filtro-empresas'); }} className="text-white hover:text-[var(--primary)] py-2">🔍 Empresas</a>
+                <a href="#radio-tv" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('radio-tv'); }} className="text-white hover:text-[var(--primary)] py-2">📻 Rádio & TV</a>
+                <a href="#servicos" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('servicos'); }} className="text-white hover:text-[var(--primary)] py-2">🛠️ Serviços</a>
+                <a href="#depoimentos" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('depoimentos'); }} className="text-white hover:text-[var(--primary)] py-2">💬 Depoimentos</a>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/5">
                 <a 
@@ -1846,12 +1846,14 @@ function AppContent() {
           <div className="flex flex-col sm:flex-row gap-4 mt-10 w-full sm:w-auto">
             <a 
               href="#anuncie" 
+              onClick={(e) => { e.preventDefault(); scrollToSection('anuncie'); }}
               className="bg-[var(--primary)] text-black hover:scale-105 hover:shadow-2xl hover:shadow-[rgb(251,191,36)]/20 px-8 py-4 rounded-full font-extrabold text-sm uppercase tracking-wider text-center transition-all duration-300"
             >
               ANUNCIAR MEU NEGÓCIO AGORA
             </a>
             <a 
               href="#filtro-empresas" 
+              onClick={(e) => { e.preventDefault(); scrollToSection('filtro-empresas'); }}
               className="bg-white/5 border border-white/10 hover:border-white/30 text-white hover:bg-white/10 px-8 py-4 rounded-full font-extrabold text-sm uppercase tracking-wider text-center transition-all duration-300 block"
             >
               Explorar Anunciantes
