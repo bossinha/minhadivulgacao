@@ -1835,7 +1835,13 @@ function AppContent() {
             <div className="relative overflow-hidden bg-black/40 border border-white/10 rounded-3xl p-6 md:p-10 shadow-2xl flex flex-col md:flex-row items-center gap-8 md:gap-12">
               
               {/* Active Flyer Image Frame */}
-              <div className="relative w-full md:w-1/2 flex justify-center">
+              <div className="relative w-full md:w-1/2 flex flex-col items-center justify-center">
+                
+                {/* Highlight badge outside and above the image banner */}
+                <span className="mb-4 bg-red-600 text-white font-black text-[10px] tracking-widest uppercase px-4 py-1.5 rounded-full shadow-md z-10 whitespace-nowrap">
+                  🚨 Destaque Comercial
+                </span>
+
                 <div 
                   className="relative w-full max-w-[320px] aspect-[3/4.5] rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl bg-black cursor-pointer"
                   onClick={() => {
@@ -1858,11 +1864,6 @@ function AppContent() {
                       referrerPolicy="no-referrer"
                     />
                   </AnimatePresence>
-                  
-                  {/* Highlight badge inside image */}
-                  <div className="absolute top-4 left-4 bg-red-600 text-white font-black text-[9px] tracking-widest uppercase px-3 py-1 rounded-full shadow-lg">
-                    Destaque Comercial
-                  </div>
                 </div>
               </div>
 
