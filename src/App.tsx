@@ -146,6 +146,21 @@ const FLYERS = [
   { image: "https://i.postimg.cc/fyyVkZjF/BANNER.png", link: "https://wa.me/5585992908713" }
 ];
 
+const HORIZONTAL_BANNERS = [
+  { 
+    image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1200&h=400&q=80", 
+    link: "https://wa.me/5585997147273", 
+    title: "Salão Stephanny Jessie - Promoções que realçam sua beleza!", 
+    active: true 
+  },
+  { 
+    image: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1200&h=400&q=80", 
+    link: "https://wa.me/5585992908713", 
+    title: "Minha Divulgação - Anuncie seu negócio em formato horizontal", 
+    active: true 
+  }
+];
+
 const TESTIMONIALS = [
   { content: "Desde que comecei a anunciar, meu WhatsApp não para. Recebo clientes novos todos os dias procurando nossos pães artesanais.", author: "Ricardo Silva", role: "Dono da Padaria Central", avatar: "https://i.postimg.cc/dVHjL5zV/7.png" },
   { content: "A visibilidade que a plataforma nos trouxe foi incrível. O contato direto facilita muito o agendamento de consultas.", author: "Ana Oliveira", role: "Gerente da Clínica Sorriso", avatar: "https://i.postimg.cc/nhCQwpPY/3.png" },
@@ -230,7 +245,8 @@ const DEFAULT_DATA = {
   flyers: FLYERS,
   testimonials: TESTIMONIALS,
   categories: CATEGORIES,
-  whatsappTestimonials: []
+  whatsappTestimonials: [],
+  horizontalBanners: HORIZONTAL_BANNERS
 };
 
 // --- Helper Functions ---
@@ -252,6 +268,7 @@ interface AppData {
   testimonials: any[];
   categories: any[];
   whatsappTestimonials?: { image: string; active?: boolean }[];
+  horizontalBanners?: { image: string; link: string; title?: string; active?: boolean }[];
 }
 
 export default function App() {
@@ -709,6 +726,7 @@ function AppContent() {
   const [radioVolume, setRadioVolume] = useState(0.8);
   const radioAudioRef = useRef<HTMLAudioElement | null>(null);
   const [activeFlyerIndex, setActiveFlyerIndex] = useState(0);
+  const [activeHorizontalBannerIndex, setActiveHorizontalBannerIndex] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Sync volume of custom radio player
@@ -760,6 +778,39 @@ function AppContent() {
     }, 6000);
     return () => clearInterval(interval);
   }, [visibleFlyers.length]);
+
+  const defaultHorizontalBanners = [
+    { 
+      image: "https://i.postimg.cc/mD8N1b8W/banner-salao.png", 
+      link: "https://wa.me/5585997147273", 
+      title: "Salão Stephanny Jessie - Promoções que realçam sua beleza",
+      active: true 
+    },
+    { 
+      image: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1200&h=400&q=80", 
+      link: "https://wa.me/5585992908713", 
+      title: "Portal Minha Divulgação - Destaque sua Marca Aqui",
+      active: true 
+    }
+  ];
+
+  const rawBanners = appData?.horizontalBanners && appData.horizontalBanners.length > 0 
+    ? appData.horizontalBanners 
+    : defaultHorizontalBanners;
+
+  const visibleHorizontalBanners = rawBanners.filter((fb: any) => {
+    const obj = typeof fb === 'string' ? { image: fb, link: '', active: true } : fb;
+    return obj.active !== false && obj.image;
+  });
+
+  // Auto-scroll horizontal client banners every 5 seconds
+  useEffect(() => {
+    if (visibleHorizontalBanners.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveHorizontalBannerIndex(prev => (prev + 1) % visibleHorizontalBanners.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [visibleHorizontalBanners.length]);
 
   const visibleVideos = (appData?.videos || [])
     .map((v: any) => typeof v === 'string' ? { url: v, active: true } : v)
@@ -1747,49 +1798,57 @@ function AppContent() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-24 md:pt-36 pb-16 overflow-hidden bg-black border-b border-white/5">
-        <div className="absolute inset-0 bg-gradient-to-tr from-[var(--primary)]/5 via-transparent to-transparent opacity-60 z-0 pointer-events-none" />
+      <section className="relative pt-28 md:pt-40 pb-20 overflow-hidden bg-black border-b border-white/5 bg-[radial-gradient(120%_120%_at_50%_10%,#030303_40%,rgba(251,191,36,0.08)_100%)]">
+        {/* Tech Grid Overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.012)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.012)_1px,transparent_1px)] bg-[size:36px_36px] opacity-100 pointer-events-none" />
+        
+        {/* Subtle Ambient Pulsing Lights */}
+        <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-[var(--primary)]/5 rounded-full blur-[140px] animate-pulse pointer-events-none" />
+        <div className="absolute top-1/3 right-1/4 w-[300px] h-[300px] bg-emerald-500/5 rounded-full blur-[120px] animate-pulse pointer-events-none" />
+        
         <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6 z-10 flex flex-col items-center text-center">
           
           {/* Live Badge indicator */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-2 bg-[#fbbf24]/10 border border-[#fbbf24]/20 px-3 py-1.5 rounded-full text-[10px] font-extrabold tracking-widest uppercase text-[#fbbf24] mb-6 md:mb-8 font-mono select-none"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2.5 bg-black/60 border border-[var(--primary)]/25 backdrop-blur-xl px-4 py-2 rounded-full text-[10px] font-black tracking-[0.15em] uppercase text-[var(--primary)] mb-6 md:mb-8 font-mono shadow-[0_4px_20px_rgba(251,191,36,0.1)] select-none"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#fbbf24] animate-ping" />
-            Portal Comercial {appData.siteInfo.suffix || 'Oficial'}
+            <span className="w-2 h-2 rounded-full bg-[var(--primary)] animate-ping" />
+            Portal de Mídia Independente • {appData.siteInfo.suffix || 'Oficial'}
           </motion.div>
 
-          {/* Beautiful Display Typography */}
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-tight max-w-4xl font-sans">
-            Divulgamos <span className="text-[var(--primary)] underline decoration-[#fbbf24]/30 decoration-wavy">empresas, marcas e negócios</span> para milhares de pessoas diariamente.
+          {/* Premium Headline & Subtitle */}
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-sans font-extrabold text-white tracking-tight leading-[1.1] max-w-5xl select-none">
+            Sua empresa aparecendo para <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--primary)] via-amber-400 to-yellow-500 font-black">milhares de pessoas</span> todos os dias.
           </h1>
 
-          <p className="text-sm sm:text-base md:text-lg text-white/70 font-medium max-w-2xl mt-6">
-            Portal de divulgação profissional completo com rádio online, TV online, anúncios comerciais interativos e atendimento automatizado por IA 24 horas.
+          <p className="text-sm sm:text-base md:text-xl text-white/70 font-medium max-w-3xl mt-6 leading-relaxed select-none">
+            Divulgação profissional com rádio online, TV online, anúncios digitais e atendimento inteligente.
           </p>
 
-          {/* Dynamic Actions in Hero */}
-          <div className="flex flex-col sm:flex-row gap-4 mt-10 w-full sm:w-auto">
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 mt-12 w-full sm:w-auto relative z-20">
             <a 
               href="#anuncie" 
               onClick={(e) => { e.preventDefault(); scrollToSection('anuncie'); }}
-              className="bg-[var(--primary)] text-black hover:scale-105 hover:shadow-2xl hover:shadow-[rgb(251,191,36)]/20 px-8 py-4 rounded-full font-extrabold text-sm uppercase tracking-wider text-center transition-all duration-300"
+              className="group bg-[var(--primary)] hover:bg-[#ffe066] text-black hover:scale-105 hover:shadow-[0_0_25px_rgba(251,191,36,0.35)] px-10 py-5 rounded-full font-black text-xs uppercase tracking-widest text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2"
             >
-              ANUNCIAR MEU NEGÓCIO AGORA
+              🚀 ANUNCIAR AGORA
             </a>
             <a 
-              href="#filtro-empresas" 
-              onClick={(e) => { e.preventDefault(); scrollToSection('filtro-empresas'); }}
-              className="bg-white/5 border border-white/10 hover:border-white/30 text-white hover:bg-white/10 px-8 py-4 rounded-full font-extrabold text-sm uppercase tracking-wider text-center transition-all duration-300 block"
+              href={`https://wa.me/${appData.siteInfo.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Olá! Acessei o portal de divulgação e gostaria de receber mais informações sobre os planos anúncios.')}`} 
+              target="_blank"
+              rel="noreferrer"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white hover:scale-105 hover:shadow-[0_0_25px_rgba(16,185,129,0.3)] px-10 py-5 rounded-full font-black text-xs uppercase tracking-widest text-center transition-all duration-300 shadow-lg flex items-center justify-center gap-2"
             >
-              Explorar Anunciantes
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="inline-block"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              FALAR NO WHATSAPP
             </a>
           </div>
 
           {/* Animated quick stats bar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12 mt-16 md:mt-24 w-full max-w-5xl border-t border-white/5 pt-10 select-none">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12 mt-20 md:mt-28 w-full max-w-5xl border-t border-white/5 pt-10 select-none">
             <div className="text-center">
               <div className="text-2xl md:text-3xl font-black text-white">{(universalConfig.totalVisits || 12000).toLocaleString()}+</div>
               <div className="text-[10.5px] text-white/50 tracking-wider font-mono uppercase mt-1">Acessos Totais</div>
@@ -1802,7 +1861,7 @@ function AppContent() {
               <div className="text-[10.5px] text-white/50 tracking-wider font-mono uppercase mt-1">Online Agora</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl md:text-3xl font-black text-[#fbbf24]">100%</div>
+              <div className="text-2xl md:text-3xl font-black text-[var(--primary)]">100%</div>
               <div className="text-[10.5px] text-white/50 tracking-wider font-mono uppercase mt-1">Atendimento IA</div>
             </div>
             <div className="text-center">
@@ -1813,115 +1872,354 @@ function AppContent() {
         </div>
       </section>
 
-      {/* Interactive Promotional Flyers Section */}
+      {/* Showcase Hub of Main Advertisers & Flyers */}
       {visibleFlyers.length > 0 && (
-        <section id="promocoes" className="w-full py-16 md:py-24 border-b border-white/5 bg-[#08080f]">
+        <section id="promocoes" className="w-full py-20 md:py-28 border-b border-white/5 bg-[#07070c] relative">
+          {/* Subtle decoration */}
+          <div className="absolute top-0 right-10 w-96 h-96 bg-amber-500/5 rounded-full blur-[140px] pointer-events-none" />
+          
           <div className="w-full max-w-7xl mx-auto px-4 md:px-6">
             
-            {/* Section Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-16 gap-4">
-              <div>
-                <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase">Parcerias de Sucesso</span>
-                <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">
-                  🔥 Promoções Imperdíveis e Ofertas
-                </h2>
+            {/* 1. SEÇÃO PRINCIPAL: PROMOÇÕES DA SEMANA CARROSSEL */}
+            <div className="mb-20">
+              <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 gap-4">
+                <div>
+                  <span className="text-[var(--primary)] text-xs font-black font-mono tracking-[0.2em] uppercase">CURADORIA DIGITAL</span>
+                  <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mt-2">
+                    📢 Promoções da Semana
+                  </h2>
+                </div>
+                <p className="text-sm text-white/50 max-w-sm leading-relaxed">
+                  Confira as melhores ofertas exclusivas dos patrocinadores oficiais do nosso portal. Clique no anúncio para falar diretamente no WhatsApp!
+                </p>
               </div>
-              <p className="text-sm text-white/50 max-w-sm">
-                Confira as melhores ofertas exclusivas dos patrocinadores oficiais do nosso portal. Clique no anúncio para saber mais no WhatsApp!
-              </p>
+
+              {/* Dynamic Slider Container */}
+              <div className="relative overflow-hidden bg-gradient-to-br from-[#11111a] to-[#0a0a10]/50 border border-white/10 rounded-[32px] p-6 md:p-12 shadow-2xl flex flex-col md:flex-row items-center gap-8 md:gap-16">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[var(--primary)] via-amber-500 to-transparent opacity-80" />
+                
+                {/* Active Flyer Image Frame with device-like card skeleton */}
+                <div className="relative w-full md:w-1/2 flex flex-col items-center justify-center">
+                  
+                  {/* Highlight badge outside and above the image banner */}
+                  <span className="mb-5 bg-gradient-to-r from-red-600 to-amber-600 text-white font-black text-[9px] tracking-widest uppercase px-4 py-1.5 rounded-full shadow-lg z-10 whitespace-nowrap animate-pulse select-none">
+                    🚨 DESTAQUE COMERCIAL DE HOJE
+                  </span>
+
+                  <div 
+                    className="relative w-full max-w-[320px] aspect-[3/4.2] rounded-3xl overflow-hidden border-2 border-white/10 shadow-[0_15px_45px_rgba(0,0,0,0.8)] bg-black cursor-pointer group"
+                    onClick={() => {
+                      const activeFlyer = visibleFlyers[activeFlyerIndex];
+                      if (typeof activeFlyer === 'object' && activeFlyer?.link) {
+                        window.open(getWaLinkWithReferral(activeFlyer.link), '_blank');
+                      }
+                    }}
+                  >
+                    <AnimatePresence mode="wait">
+                      <motion.img 
+                        key={activeFlyerIndex}
+                        initial={{ opacity: 0, scale: 0.96, filter: "blur(5px)" }}
+                        animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                        exit={{ opacity: 0, scale: 1.04, filter: "blur(5px)" }}
+                        transition={{ duration: 0.4, ease: "easeInOut" }}
+                        src={typeof visibleFlyers[activeFlyerIndex] === 'string' ? visibleFlyers[activeFlyerIndex] : visibleFlyers[activeFlyerIndex]?.image} 
+                        alt="Promoção em Destaque" 
+                        className="w-full h-full object-cover select-none group-hover:scale-105 transition-transform duration-500"
+                        referrerPolicy="no-referrer"
+                      />
+                    </AnimatePresence>
+                    
+                    {/* Hover Gloss */}
+                    <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Description and Info block */}
+                <div className="w-full md:w-1/2 flex flex-col justify-center items-center md:items-start text-center md:text-left">
+                  <span className="text-[10px] text-[var(--primary)] tracking-[0.15em] font-black uppercase bg-[var(--primary)]/10 px-4 py-1.5 rounded-full mb-5 font-mono">
+                    PROMOÇÃO Nº {activeFlyerIndex + 1} de {visibleFlyers.length}
+                  </span>
+                  <h3 className="text-2xl sm:text-3.5xl font-sans font-black text-white leading-tight">
+                    Aproveite esta oportunidade exclusiva
+                  </h3>
+                  <p className="text-xs sm:text-base text-white/60 mt-4 leading-relaxed max-w-md font-medium">
+                    Preço especial e atendimento preferencial garantidos para usuários do portal. Toque abaixo para abrir o canal direto com o anunciante.
+                  </p>
+
+                  {/* Slider Action Button wrapper */}
+                  {typeof visibleFlyers[activeFlyerIndex] === 'object' && visibleFlyers[activeFlyerIndex]?.link && (
+                    <a 
+                      href={getWaLinkWithReferral(visibleFlyers[activeFlyerIndex].link)} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="inline-flex items-center gap-3 bg-emerald-600 hover:bg-emerald-500 hover:scale-[1.03] text-white font-extrabold text-xs uppercase tracking-wider px-8 py-4.5 rounded-2xl shadow-xl mt-8 transition-all duration-300"
+                    >
+                      <Sparkles size={16} className="text-amber-300 animate-spin" />
+                      Falar no WhatsApp Comercial
+                    </a>
+                  )}
+
+                  {/* Carousel navigation controls */}
+                  <div className="flex items-center gap-4 mt-8">
+                    <button 
+                      type="button"
+                      onClick={() => setActiveFlyerIndex(prev => (prev - 1 + visibleFlyers.length) % visibleFlyers.length)}
+                      className="w-11 h-11 rounded-full bg-white/5 border border-white/10 hover:border-[var(--primary)] text-white hover:text-[var(--primary)] hover:bg-white/10 flex items-center justify-center transition-all shadow-md cursor-pointer"
+                    >
+                      <ChevronLeft size={22} className="stroke-[2.5]" />
+                    </button>
+                    
+                    {/* dots indicators */}
+                    <div className="flex gap-2.5">
+                      {visibleFlyers.map((_, i) => (
+                        <button 
+                          key={i} 
+                          type="button"
+                          onClick={() => setActiveFlyerIndex(i)}
+                          className={`h-2 transition-all duration-300 rounded-full cursor-pointer ${activeFlyerIndex === i ? 'bg-[var(--primary)] w-7' : 'bg-white/20 w-2 hover:bg-white/40'}`}
+                        />
+                      ))}
+                    </div>
+
+                    <button 
+                      type="button"
+                      onClick={() => setActiveFlyerIndex(prev => (prev + 1) % visibleFlyers.length)}
+                      className="w-11 h-11 rounded-full bg-white/5 border border-white/10 hover:border-[var(--primary)] text-white hover:text-[var(--primary)] hover:bg-white/10 flex items-center justify-center transition-all shadow-md cursor-pointer"
+                    >
+                      <ChevronRight size={22} className="stroke-[2.5]" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Dynamic Slider Container */}
-            <div className="relative overflow-hidden bg-black/40 border border-white/10 rounded-3xl p-6 md:p-10 shadow-2xl flex flex-col md:flex-row items-center gap-8 md:gap-12">
-              
-              {/* Active Flyer Image Frame */}
-              <div className="relative w-full md:w-1/2 flex flex-col items-center justify-center">
-                
-                {/* Highlight badge outside and above the image banner */}
-                <span className="mb-4 bg-red-600 text-white font-black text-[10px] tracking-widest uppercase px-4 py-1.5 rounded-full shadow-md z-10 whitespace-nowrap">
-                  🚨 Destaque Comercial
-                </span>
-
-                <div 
-                  className="relative w-full max-w-[320px] aspect-[3/4.5] rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl bg-black cursor-pointer"
-                  onClick={() => {
-                    const activeFlyer = visibleFlyers[activeFlyerIndex];
-                    if (typeof activeFlyer === 'object' && activeFlyer?.link) {
-                      window.open(getWaLinkWithReferral(activeFlyer.link), '_blank');
-                    }
-                  }}
-                >
-                  <AnimatePresence mode="wait">
-                    <motion.img 
-                      key={activeFlyerIndex}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.4 }}
-                      src={typeof visibleFlyers[activeFlyerIndex] === 'string' ? visibleFlyers[activeFlyerIndex] : visibleFlyers[activeFlyerIndex]?.image} 
-                      alt="Promoção em Destaque" 
-                      className="w-full h-full object-cover select-none"
-                      referrerPolicy="no-referrer"
-                    />
-                  </AnimatePresence>
+            {/* NEW SECTION: LANDSCAPE BANNERS FOR CUSTOMERS AND PARTNERS (RESPONSIVE) */}
+            {visibleHorizontalBanners.length > 0 && (
+              <div className="mb-20 pt-12 border-t border-white/5">
+                <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 gap-4">
+                  <div>
+                    <span className="text-[var(--primary)] text-xs font-black font-mono tracking-[0.2em] uppercase">VITRINE DE PARCEIROS</span>
+                    <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-2 flex items-center gap-2">
+                      ⭐ Promoções Especiais do Comércio
+                    </h2>
+                  </div>
+                  <p className="text-sm text-white/50 max-w-sm leading-relaxed">
+                    Araste para o lado ou clique nos banners horizontais de nossos patrocinadores oficiais para falar no WhatsApp!
+                  </p>
                 </div>
-              </div>
 
-              {/* Description and Info block */}
-              <div className="w-full md:w-1/2 flex flex-col justify-center items-center md:items-start text-center md:text-left">
-                <span className="text-[10px] text-[var(--primary)] tracking-widest font-mono uppercase bg-[var(--primary)]/10 px-3 py-1 rounded-full mb-4">
-                  Promoção Nº {activeFlyerIndex + 1} de {visibleFlyers.length}
-                </span>
-                <h3 className="text-xl sm:text-2xl font-black text-white leading-snug">
-                  Aproveite esta oportunidade exclusiva
-                </h3>
-                <p className="text-xs sm:text-sm text-white/60 mt-4 leading-relaxed max-w-md">
-                  Entre em contato direto com o anunciante parceiro via link especial para obter descontos exclusivos oferecidos aos visitantes do nosso portal!
-                </p>
-
-                {/* Slider Action Button wrapper */}
-                {typeof visibleFlyers[activeFlyerIndex] === 'object' && visibleFlyers[activeFlyerIndex]?.link && (
-                  <a 
-                    href={getWaLinkWithReferral(visibleFlyers[activeFlyerIndex].link)} 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-105 text-white font-extrabold text-xs uppercase tracking-wider px-6 py-3.5 rounded-xl shadow-lg mt-8 transition-all duration-300"
-                  >
-                    <Sparkles size={16} />
-                    Quero saber mais no WhatsApp
-                  </a>
-                )}
-
-                {/* Carousel navigation controls */}
-                <div className="flex items-center gap-4 mt-10">
-                  <button 
-                    type="button"
-                    onClick={() => setActiveFlyerIndex(prev => (prev - 1 + visibleFlyers.length) % visibleFlyers.length)}
-                    className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:border-[var(--primary)] text-white hover:text-[var(--primary)] hover:bg-white/10 flex items-center justify-center transition-all"
-                  >
-                    <ChevronLeft size={20} />
-                  </button>
+                {/* Responsive container styled beautifully like standard design */}
+                <div className="relative overflow-hidden bg-gradient-to-r from-[#0e0e16] to-[#07070b] border border-white/10 rounded-[28px] p-2.5 sm:p-4 md:p-6 shadow-2xl flex flex-col items-center">
                   
-                  {/* dots indicators */}
-                  <div className="flex gap-2">
-                    {visibleFlyers.map((_, i) => (
-                      <button 
-                        key={i} 
-                        type="button"
-                        onClick={() => setActiveFlyerIndex(i)}
-                        className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${activeFlyerIndex === i ? 'bg-[var(--primary)] w-6' : 'bg-white/25 hover:bg-white/55'}`}
-                      />
-                    ))}
+                  {/* Premium floating badge */}
+                  <div className="absolute top-4 right-6 z-20 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black text-[9px] tracking-widest uppercase px-3 py-1.5 rounded-full shadow-lg select-none animate-pulse">
+                     🔥 DESTAQUE
                   </div>
 
-                  <button 
-                    type="button"
-                    onClick={() => setActiveFlyerIndex(prev => (prev + 1) % visibleFlyers.length)}
-                    className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:border-[var(--primary)] text-white hover:text-[var(--primary)] hover:bg-white/10 flex items-center justify-center transition-all"
+                  {/* Banner Slot (3:1 aspect ratio on desktop, perfectly fluid on tablets/mobile) */}
+                  <div 
+                    className="relative w-full aspect-[2.1/1] sm:aspect-[2.6/1] md:aspect-[3/1] rounded-2xl md:rounded-3xl overflow-hidden border border-white/5 bg-black cursor-pointer group"
+                    onClick={() => {
+                      const activeBanner = visibleHorizontalBanners[activeHorizontalBannerIndex];
+                      if (activeBanner?.link) {
+                        window.open(getWaLinkWithReferral(activeBanner.link), '_blank');
+                      }
+                    }}
                   >
-                    <ChevronRight size={20} />
-                  </button>
+                    <AnimatePresence mode="wait">
+                      <motion.img 
+                        key={activeHorizontalBannerIndex}
+                        initial={{ opacity: 0, scale: 0.985, filter: "blur(3px)" }}
+                        animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                        exit={{ opacity: 0, scale: 1.015, filter: "blur(3px)" }}
+                        transition={{ duration: 0.45, ease: "easeInOut" }}
+                        src={visibleHorizontalBanners[activeHorizontalBannerIndex]?.image} 
+                        alt={visibleHorizontalBanners[activeHorizontalBannerIndex]?.title || "Banner Destaque"} 
+                        className="w-full h-full object-cover select-none group-hover:scale-[1.012] transition-transform duration-700"
+                        referrerPolicy="no-referrer"
+                      />
+                    </AnimatePresence>
+
+                    {/* Dark aesthetic overlay for readability of elements */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent pointer-events-none" />
+
+                    {/* Smooth gloss reflection hover trigger */}
+                    <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                  </div>
+
+                  {/* Micro dashboard under the banner image */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between w-full px-2 mt-4 sm:mt-5 gap-3">
+                    <div className="flex items-center gap-2.5 max-w-full sm:max-w-[65%]">
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+                      <p className="text-xs sm:text-sm font-sans font-bold text-white/80 truncate">
+                        {visibleHorizontalBanners[activeHorizontalBannerIndex]?.title || "Banner Comercial Promocional"}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <button 
+                        type="button"
+                        onClick={() => setActiveHorizontalBannerIndex(prev => (prev - 1 + visibleHorizontalBanners.length) % visibleHorizontalBanners.length)}
+                        className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:border-[var(--primary)] text-white hover:text-[var(--primary)] hover:bg-white/10 flex items-center justify-center transition-all cursor-pointer"
+                      >
+                        <ChevronLeft size={20} className="stroke-[2.5]" />
+                      </button>
+                      
+                      {/* Dots indicators */}
+                      <div className="flex gap-2">
+                        {visibleHorizontalBanners.map((_, i) => (
+                          <button 
+                            key={i} 
+                            type="button"
+                            onClick={() => setActiveHorizontalBannerIndex(i)}
+                            className={`h-1.5 transition-all duration-300 rounded-full cursor-pointer ${activeHorizontalBannerIndex === i ? 'bg-[var(--primary)] w-5' : 'bg-white/10 w-1.5 hover:bg-white/30'}`}
+                          />
+                        ))}
+                      </div>
+
+                      <button 
+                        type="button"
+                        onClick={() => setActiveHorizontalBannerIndex(prev => (prev + 1) % visibleHorizontalBanners.length)}
+                        className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:border-[var(--primary)] text-white hover:text-[var(--primary)] hover:bg-white/10 flex items-center justify-center transition-all cursor-pointer"
+                      >
+                        <ChevronRight size={20} className="stroke-[2.5]" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
+              </div>
+            )}
+
+            {/* 2. SEÇÃO: PARCEIROS OFICIAIS */}
+            <div className="mb-20 pt-8 border-t border-white/5">
+              <div className="text-center mb-10">
+                <span className="text-[var(--primary)] text-[10px] font-black font-mono tracking-[0.2em] uppercase">MARCAS DE CONFIANÇA</span>
+                <h3 className="text-xl sm:text-2xl font-black text-white mt-1">🤝 Parceiros Oficiais do Portal</h3>
+              </div>
+              
+              {/* High precision logo marquee - Auto scroll motion effect */}
+              <div className="logo-marquee-container py-4 bg-gradient-to-r from-transparent via-white/[0.02] to-transparent border-y border-white/5 rounded-2xl">
+                <div className="logo-marquee-track opacity-60 hover:opacity-100 transition-opacity duration-300">
+                  {(() => {
+                    const originalLogos = (appData?.companies || []).filter((c: any) => c.logo);
+                    if (originalLogos.length === 0) return null;
+                    // Double the logos list to make infinite scroll continuous and neat
+                    const doubledLogos = [...originalLogos, ...originalLogos, ...originalLogos];
+                    return doubledLogos.map((c: any, idx: number) => (
+                      <div 
+                        key={idx} 
+                        className="h-10 w-28 md:w-36 flex-shrink-0 flex items-center justify-center grayscale hover:grayscale-0 contrast-125 opacity-75 hover:opacity-100 transition-all duration-300 transform hover:scale-105"
+                      >
+                        <img 
+                          src={c.logo} 
+                          alt={c.name} 
+                          className="max-h-full max-w-full object-contain filter drop-shadow-[0_2px_10px_rgba(255,255,255,0.05)]" 
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+            </div>
+
+            {/* 3. SEÇÃO: EMPRESAS EM DESTAQUE */}
+            <div className="mb-20">
+              <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 gap-4">
+                <div>
+                  <span className="text-[var(--primary)] text-xs font-black font-mono tracking-[0.2em] uppercase">VITRINE DE EXCELÊNCIA</span>
+                  <h3 className="text-2xl sm:text-3.5xl font-sans font-extrabold text-white tracking-tight mt-1">
+                    ⭐ Empresas em Destaque
+                  </h3>
+                </div>
+                <p className="text-xs sm:text-sm text-white/50 max-w-sm">
+                  Anunciantes master selecionados por excelente prestação de serviços, avaliação positiva e confiabilidade.
+                </p>
+              </div>
+
+              {/* Grid Layout of Featured Companies */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {(appData.companies || []).filter((c: any) => c.featured === true).slice(0, 4).map((company: any) => (
+                  <div 
+                    key={company.id} 
+                    className="relative bg-gradient-to-b from-[#111119] to-[#08080f] border border-[var(--primary)]/30 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1.5 transition-all duration-300 shadow-[0_10px_30px_rgba(251,191,36,0.03)] hover:shadow-[0_15px_45px_rgba(251,191,36,0.08)] select-none group"
+                  >
+                    <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-black text-[8px] tracking-widest uppercase px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1 z-10">
+                      <Award size={10} /> Destaque
+                    </div>
+                    
+                    <div>
+                      {/* Logo Frame */}
+                      <div className="w-16 h-16 rounded-2xl bg-white border border-white/10 overflow-hidden flex items-center justify-center shadow-lg p-1.5 mb-5 mt-2 group-hover:scale-105 transition-transform duration-300">
+                        <img src={company.logo} alt={company.name} className="max-w-full max-h-full object-contain" referrerPolicy="no-referrer" />
+                      </div>
+
+                      <span className="text-[9px] text-[var(--primary)] font-black uppercase tracking-widest bg-[var(--primary)]/10 px-2.5 py-1 rounded-full select-none">
+                        {company.category}
+                      </span>
+
+                      <h4 className="text-sm font-extrabold text-white mt-4 group-hover:text-[var(--primary)] transition-colors duration-200">{company.name}</h4>
+                      <p className="text-[11px] text-white/50 mt-1.5 leading-relaxed min-h-[2.5rem] line-clamp-2">{company.desc || 'Anunciante comercial verificado na plataforma.'}</p>
+                    </div>
+
+                    <a 
+                      href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu anúncio em destaque no portal ${appData.siteInfo.name}!`)}`} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="w-full mt-6 bg-[#25D366] hover:bg-[#20ba59] text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
+                    >
+                      <Smartphone size={12} /> Contactar Anunciante
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 4. SEÇÃO: ÚLTIMOS ANUNCIANTES */}
+            <div>
+              <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 gap-4">
+                <div>
+                  <span className="text-emerald-400 text-xs font-black font-mono tracking-[0.2em] uppercase">NOVOS MEMBROS</span>
+                  <h3 className="text-2xl sm:text-3.5xl font-sans font-extrabold text-white tracking-tight mt-1">
+                    🆕 Últimos Anunciantes Integrados
+                  </h3>
+                </div>
+                <p className="text-xs sm:text-sm text-white/50 max-w-sm">
+                  As mais recentes marcas locais de alta relevância a iniciarem sua campanha de mídia em nosso portal de anúncios.
+                </p>
+              </div>
+
+              {/* Grid of latest companies */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {(appData.companies || []).slice(0, 4).map((company: any) => (
+                  <div 
+                    key={company.id} 
+                    className="relative bg-gradient-to-b from-[#0f1016]/80 to-[#07070b] border border-white/5 hover:border-white/20 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1.5 transition-all duration-300 shadow-xl select-none group"
+                  >
+                    <div>
+                      {/* Logo Frame */}
+                      <div className="w-16 h-16 rounded-2xl bg-white border border-white/5 overflow-hidden flex items-center justify-center shadow-lg p-1.5 mb-5 mt-2 group-hover:scale-105 transition-transform duration-300">
+                        <img src={company.logo} alt={company.name} className="max-w-full max-h-full object-contain" referrerPolicy="no-referrer" />
+                      </div>
+
+                      <span className="text-[9px] text-white/55 font-bold uppercase tracking-widest bg-white/5 px-2.5 py-1 rounded-full select-none">
+                        {company.category}
+                      </span>
+
+                      <h4 className="text-sm font-extrabold text-white mt-4">{company.name}</h4>
+                      <p className="text-[11px] text-white/45 mt-1.5 leading-relaxed min-h-[2.5rem] line-clamp-2">{company.desc || 'Parceiro local ativo na rede de anúncios.'}</p>
+                    </div>
+
+                    <a 
+                      href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu comércio no portal ${appData.siteInfo.name}!`)}`} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="w-full mt-6 bg-white/5 hover:bg-white/10 text-white border border-white/10 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300"
+                    >
+                      <Smartphone size={12} /> WhatsApp Comercial
+                    </a>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -2263,17 +2561,18 @@ function AppContent() {
       </section>
 
       {/* Professional Services Presentation */}
-      <section id="servicos" className="w-full py-16 md:py-24 bg-[#050508] border-b border-white/5">
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-6">
+      <section id="servicos" className="w-full py-20 md:py-28 bg-[#050508] border-b border-white/5 relative">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[var(--primary)]/5 rounded-full blur-[140px] pointer-events-none" />
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 relative z-10">
           
           {/* Section Header */}
-          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16">
-            <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase">Soluções Comerciais</span>
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">
-              Nossas Áreas de Divulgação
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16 md:mb-20 select-none">
+            <span className="text-[var(--primary)] text-xs font-black font-mono tracking-[0.2em] uppercase">SOLUÇÕES DE ALTA PERFORMANCE</span>
+            <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mt-2">
+              💼 Nossas Áreas de Divulgação
             </h2>
-            <p className="text-sm text-white/50 mt-3">
-              Oferecemos uma variedade de formatos digitais para conectar o seu negócio com milhares de clientes dispostos a comprar.
+            <p className="text-sm sm:text-base text-white/50 mt-4 leading-relaxed">
+              Formatos de mídia integrada que garantem audiência contínua, visibilidade empresarial e conversão direta para o seu caixa.
             </p>
           </div>
 
@@ -2284,26 +2583,27 @@ function AppContent() {
               return (
                 <motion.div 
                   key={idx}
-                  initial={{ opacity: 0, y: 15 }}
+                  initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="bg-[#0f1016] border border-white/5 hover:border-[var(--primary)]/30 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1 transition-all duration-300 select-none group"
+                  transition={{ delay: idx * 0.05, duration: 0.4 }}
+                  className="bg-gradient-to-b from-[#0f1016] to-[#08080c] border border-white/5 hover:border-[var(--primary)]/30 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1.5 transition-all duration-300 shadow-xl select-none group relative overflow-hidden"
                 >
+                  <div className="absolute top-0 left-0 w-full h-1 bg-[var(--primary)] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
                   <div>
                     {/* Icon Wrapper */}
-                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${service.color} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300 shadow-md`}>
+                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${service.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-[0_4px_15px_rgba(0,0,0,0.4)]`}>
                       <ServiceIcon size={22} className="stroke-[2.5]" />
                     </div>
 
-                    <h4 className="text-base font-extrabold text-white group-hover:text-[var(--primary)] transition-colors duration-200">{service.title}</h4>
-                    <p className="text-xs text-white/55 mt-2 leading-relaxed font-semibold">{service.desc}</p>
+                    <h4 className="text-base font-black text-white group-hover:text-[var(--primary)] transition-colors duration-200">{service.title}</h4>
+                    <p className="text-xs text-white/50 mt-3 leading-relaxed font-semibold">{service.desc}</p>
                   </div>
 
                   {/* Action query indicator */}
-                  <div className="w-full border-t border-white/5 mt-5 pt-4 text-left">
-                    <span className="text-[9.5px] text-[var(--primary)] font-extrabold uppercase tracking-widest inline-flex items-center gap-1 group-hover:gap-1.5 transition-all">
-                      Verificar Disponibilidade <ChevronRight size={10} />
+                  <div className="w-full border-t border-white/5 mt-6 pt-4 text-left">
+                    <span className="text-[9px] text-[var(--primary)] font-black uppercase tracking-widest inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                      VERIFICAR SINAL ATIVO <ChevronRight size={10} className="stroke-[3]" />
                     </span>
                   </div>
                 </motion.div>
@@ -2312,18 +2612,18 @@ function AppContent() {
           </div>
 
           {/* Section footer info */}
-          <div className="mt-16 bg-gradient-to-r from-amber-500/5 to-transparent border border-white/5 rounded-3xl p-6 md:p-10 flex flex-col md:flex-row justify-between items-center gap-6 max-w-5xl mx-auto select-none">
+          <div className="mt-20 bg-gradient-to-r from-amber-500/5 to-transparent border border-white/5 rounded-[28px] p-8 md:p-12 flex flex-col md:flex-row justify-between items-center gap-8 max-w-5xl mx-auto select-none">
             <div className="text-center md:text-left">
-              <h4 className="text-lg font-black text-white">Pronto para dar visibilidade à sua empresa?</h4>
-              <p className="text-xs text-white/60 mt-1 max-w-md">Os resultados começam a aparecer no mesmo dia da contratação. Fale com um de nossos consultores comerciais!</p>
+              <h4 className="text-xl font-black text-white">Pronto para dominar seu segmento comercial?</h4>
+              <p className="text-xs sm:text-sm text-white/60 mt-2 max-w-lg leading-relaxed">Não perca vendas para seu maior concorrente da região. Fale agora mesmo com nossa central comercial no WhatsApp!</p>
             </div>
             <a 
-              href={`https://wa.me/${appData.pricing.waLink.replace(/[^0-9]/g, '')}?text=Olá! Quero saber mais sobre os planos de divulgação do portal.`}
+              href={`https://wa.me/${appData.pricing.waLink.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Olá! Acessei a página comercial e gostaria de saber as disponibilidades de vagas para publicidade de meu negócio.')}`}
               target="_blank" 
               rel="noreferrer"
-              className="bg-[var(--primary)] text-black hover:scale-105 px-6 py-3.5 rounded-full font-extrabold text-xs uppercase tracking-wider text-center transition-all duration-300 flex items-center gap-2"
+              className="bg-[var(--primary)] hover:bg-[#ffe066] text-black hover:scale-105 hover:shadow-[0_0_20px_rgba(251,191,36,0.3)] px-8 py-4 rounded-full font-black text-xs uppercase tracking-widest text-center transition-all duration-300 flex items-center gap-2"
             >
-              <Smartphone size={14} /> Falar no WhatsApp
+              <Smartphone size={14} /> Falar com Consultor
             </a>
           </div>
 
@@ -2424,19 +2724,56 @@ function AppContent() {
       </section>
 
       {/* Partner Outcomes and Reviews */}
-      <section id="depoimentos" className="w-full py-16 md:py-24 bg-[#050508] border-b border-white/5 relative overflow-hidden">
+      <section id="depoimentos" className="w-full py-20 md:py-28 bg-[#050508] border-b border-white/5 relative overflow-hidden">
         <div className="absolute inset-0 bg-radial-gradient from-emerald-500/5 via-transparent to-transparent opacity-40 pointer-events-none" />
         <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6">
           
           {/* Section Header */}
           <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16 select-none">
-            <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase">Resultados Reais</span>
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">
-              O que nossos clientes dizem
+            <span className="text-[var(--primary)] text-xs font-black font-mono tracking-[0.2em] uppercase">MÍDIA E AUTORIDADE</span>
+            <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mt-2">
+              📊 Resultados de Alto Impacto
             </h2>
-            <p className="text-sm text-white/50 mt-3">
-              Confira os depoimentos e satisfação de quem já divulga sua marca no nosso portal comercial diariamente.
+            <p className="text-sm text-white/50 mt-3 leading-relaxed max-w-xl">
+              Nossos indicadores comprovam o crescimento e a conversão de novos clientes que as marcas parceiras obtêm todos os dias.
             </p>
+          </div>
+
+          {/* Premium Animated Credibility Metrics Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-16 select-none">
+            <div className="bg-[#0f1016]/60 border border-white/5 hover:border-[var(--primary)]/20 rounded-3xl p-6 flex flex-col justify-between hover:bg-black/40 transition-all duration-300">
+              <span className="text-3xl sm:text-4xl font-mono font-black text-[var(--primary)]">98.2%</span>
+              <div>
+                <h4 className="text-xs sm:text-sm font-extrabold text-white mt-4">Satisfação Comercial</h4>
+                <p className="text-[10px] sm:text-xs text-white/40 mt-1 leading-normal font-semibold">Empresas que divulgam e renovam seus anúncios mensais.</p>
+              </div>
+            </div>
+            <div className="bg-[#0f1016]/60 border border-white/5 hover:border-emerald-500/20 rounded-3xl p-6 flex flex-col justify-between hover:bg-black/40 transition-all duration-300">
+              <span className="text-3xl sm:text-4xl font-mono font-black text-emerald-400">+45 Mil</span>
+              <div>
+                <h4 className="text-xs sm:text-sm font-extrabold text-white mt-4">Leads de WhatsApp</h4>
+                <p className="text-[10px] sm:text-xs text-white/40 mt-1 leading-normal font-semibold">Contatos comerciais diretos disparados para os anunciantes.</p>
+              </div>
+            </div>
+            <div className="bg-[#0f1016]/60 border border-white/5 hover:border-blue-500/20 rounded-3xl p-6 flex flex-col justify-between hover:bg-black/40 transition-all duration-300">
+              <span className="text-3xl sm:text-4xl font-mono font-black text-blue-400">+100</span>
+              <div>
+                <h4 className="text-xs sm:text-sm font-extrabold text-white mt-4">Parceiros Ativos</h4>
+                <p className="text-[10px] sm:text-xs text-white/40 mt-1 leading-normal font-semibold">Marcas locais anunciando estrategicamente em rádio e TV.</p>
+              </div>
+            </div>
+            <div className="bg-[#0f1016]/60 border border-white/5 hover:border-purple-500/20 rounded-3xl p-6 flex flex-col justify-between hover:bg-black/40 transition-all duration-300">
+              <span className="text-3xl sm:text-4xl font-mono font-black text-purple-400">24h/Dia</span>
+              <div>
+                <h4 className="text-xs sm:text-sm font-extrabold text-white mt-4">Sinal Sem Quedas</h4>
+                <p className="text-[10px] sm:text-xs text-white/40 mt-1 leading-normal font-semibold">Exposição contínua e sem quedas em nossa central multimídia.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mb-10 select-none">
+            <span className="text-[var(--primary)] text-[10px] font-black font-mono tracking-[0.2em] uppercase">DESTAQUE DO MUNDO CORPORATIVO</span>
+            <h3 className="text-xl sm:text-2xl font-black text-white mt-1">⭐ Opinião Geral dos Nossos Parceiros</h3>
           </div>
 
           {/* Written reviews carousel track / grid */}
@@ -2611,13 +2948,13 @@ function AppContent() {
               </div>
 
               <div className="dev-tabs">
-                {['geral', 'seções', 'categorias', 'empresas', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'depoimentos-whats', 'preços', 'segmentos', 'chat', (hasAffiliateSystem || user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'divulgadores' : null].filter(Boolean).map(tab => (
+                {['geral', 'seções', 'categorias', 'empresas', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'banners-horizontais', 'depoimentos-whats', 'preços', 'segmentos', 'chat', (hasAffiliateSystem || user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'divulgadores' : null].filter(Boolean).map(tab => (
                   <button 
                     key={tab} 
                     className={`dev-tab ${activeTab === tab ? 'active' : ''}`}
                     onClick={() => setActiveTab(tab)}
                   >
-                    {tab === 'depoimentos-whats' ? 'DEPOIMENTOS ZAP' : tab.toUpperCase()}
+                    {tab === 'depoimentos-whats' ? 'DEPOIMENTOS ZAP' : tab === 'banners-horizontais' ? 'BANNERS HORIZONTAIS' : tab.toUpperCase()}
                   </button>
                 ))}
               </div>
@@ -3384,6 +3721,148 @@ function AppContent() {
                       );
                     })}
                     <button className="dev-add-btn" onClick={() => updateData('flyers', [...appData.flyers, { image: "", link: "" }])}>+ Adicionar Flyer</button>
+                  </div>
+                )}
+
+                {activeTab === 'banners-horizontais' && (
+                  <div className="dev-forms-container">
+                    <h3>Banners Horizontais (PC, Tablet e Celular)</h3>
+                    <p style={{ fontSize: '0.75rem', color: '#888', marginTop: '-10px', marginBottom: '20px' }}>
+                      Gerencie os banners horizontais (aspecto largo de outdoor, como os do Canva/Salão Stephanny Jessie) exibidos abaixo das Promoções da Semana.
+                    </p>
+
+                    {((appData as any).horizontalBanners || []).map((fb: any, idx: number) => {
+                      const bannerObj = typeof fb === 'string' ? { image: fb, link: '', title: 'Banner sem título', active: true } : fb;
+                      return (
+                        <div key={idx} className="dev-item-card" style={{ opacity: bannerObj.active !== false ? 1 : 0.6 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                             <button 
+                              type="button"
+                              className="dev-btn" 
+                              style={{ 
+                                padding: '4px 8px', 
+                                background: bannerObj.active !== false ? '#25D366' : '#333', 
+                                border: '1px solid #444', 
+                                fontSize: '0.6rem', 
+                                fontWeight: 800,
+                                borderRadius: '5px',
+                                height: 'auto'
+                              }}
+                              onClick={() => {
+                                const newList = [...((appData as any).horizontalBanners || [])];
+                                newList[idx] = { ...bannerObj, active: bannerObj.active === false ? true : false };
+                                updateData('horizontalBanners', newList);
+                              }}
+                            >
+                              {bannerObj.active !== false ? '👁️ ATIVO' : '🙈 OCULTO'}
+                            </button>
+                            <button type="button" className="dev-remove-btn" style={{ position: 'static' }} onClick={() => updateData('horizontalBanners', ((appData as any).horizontalBanners || []).filter((_: any, i: number) => i !== idx))}>✕</button>
+                          </div>
+                          
+                          <div className="dev-form-group" style={{ marginBottom: '15px' }}>
+                            <label>Título ou Descrição Curta (Aparece no Banner)</label>
+                            <input 
+                              type="text" 
+                              className="dev-input" 
+                              value={bannerObj.title || ''} 
+                              onChange={(e) => {
+                                const newList = [...((appData as any).horizontalBanners || [])];
+                                newList[idx] = { ...bannerObj, title: e.target.value };
+                                updateData('horizontalBanners', newList);
+                              }} 
+                              placeholder="Ex: Salão Stephanny Jessie - Promoção que realça sua beleza!" 
+                            />
+                          </div>
+
+                          <div className="dev-grid-2">
+                            <div className="dev-form-group">
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                                <label style={{ marginBottom: '0' }}>Link da Imagem Horizontal</label>
+                                <a 
+                                  href="https://postimages.org/" 
+                                  target="_blank" 
+                                  rel="noreferrer" 
+                                  className="dev-btn dev-btn-secondary"
+                                  style={{ padding: '4px 10px', fontSize: '0.65rem', textDecoration: 'none', height: 'auto', display: 'flex', alignItems: 'center', gap: '5px' }}
+                                >
+                                  🖼️ Enviar Foto no PostImage
+                                </a>
+                              </div>
+                              <input 
+                                type="text" 
+                                className="dev-input" 
+                                value={bannerObj.image || ''} 
+                                onChange={(e) => {
+                                  const newList = [...((appData as any).horizontalBanners || [])];
+                                  newList[idx] = { ...bannerObj, image: e.target.value };
+                                  updateData('horizontalBanners', newList);
+                                }} 
+                                placeholder="Link .jpg ou .png" 
+                              />
+                            </div>
+                            
+                            <div className="dev-form-group">
+                              <label>Link de Clique (WhatsApp/Site ou Telefone)</label>
+                              <div style={{ position: 'relative' }}>
+                                <input 
+                                  type="text" 
+                                  className="dev-input" 
+                                  value={bannerObj.link || ''} 
+                                  onChange={(e) => {
+                                    const newList = [...((appData as any).horizontalBanners || [])];
+                                    newList[idx] = { ...bannerObj, link: e.target.value };
+                                    updateData('horizontalBanners', newList);
+                                  }} 
+                                  placeholder="Ex: 85997147273 ou link completo" 
+                                />
+                                
+                                {bannerObj.link && !bannerObj.link.startsWith('http') && bannerObj.link.replace(/\D/g, '').length >= 10 && (
+                                  <button 
+                                    type="button"
+                                    className="dev-btn dev-btn-primary" 
+                                    style={{ 
+                                      position: 'absolute', 
+                                      right: '5px', 
+                                      top: '50%', 
+                                      transform: 'translateY(-50%)',
+                                      padding: '4px 10px',
+                                      fontSize: '0.6rem',
+                                      height: 'auto'
+                                    }}
+                                    onClick={() => {
+                                      const digits = bannerObj.link.replace(/\D/g, '');
+                                      const waLink = digits.length <= 11 ? `https://wa.me/55${digits}` : `https://wa.me/${digits}`;
+                                      const newList = [...((appData as any).horizontalBanners || [])];
+                                      newList[idx] = { ...bannerObj, link: waLink };
+                                      updateData('horizontalBanners', newList);
+                                    }}
+                                  >
+                                    Gerar Whats
+                                  </button>
+                                )}
+                              </div>
+                              <small style={{ color: '#888', fontSize: '0.7rem' }}>Número com DDD ou link completo de destino.</small>
+                            </div>
+                          </div>
+
+                          {bannerObj.image && (
+                            <div style={{ marginTop: '12px', border: '1px solid #222', borderRadius: '12px', overflow: 'hidden' }}>
+                              <img src={bannerObj.image} className="w-full h-auto object-contain" alt="Preview Banner" style={{ maxHeight: '120px' }} referrerPolicy="no-referrer" />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    <button 
+                      type="button"
+                      className="dev-add-btn" 
+                      onClick={() => {
+                        const currentList = (appData as any).horizontalBanners || HORIZONTAL_BANNERS;
+                        updateData('horizontalBanners', [...currentList, { image: "", link: "", title: "", active: true }]);
+                      }}
+                    >
+                      + Adicionar Banner Horizontal
+                    </button>
                   </div>
                 )}
 

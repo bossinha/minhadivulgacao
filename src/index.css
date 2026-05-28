@@ -1234,27 +1234,51 @@
   .chat-toggle {
     width: 60px;
     height: 60px;
-    background: var(--primary);
+    background: linear-gradient(135deg, var(--primary) 0%, #f59e0b 100%);
     border: none;
     border-radius: 50%;
-    color: white;
+    color: black !important;
+    font-weight: 900;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 10px 30px rgba(251, 191, 36, 0.3);
-    transition: all 0.3s;
+    box-shadow: 0 10px 30px rgba(251, 191, 36, 0.45);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
+    z-index: 10001;
+  }
+
+  .chat-toggle::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+    opacity: 0.5;
+    animation: chatPulsingOverlay 2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+    pointer-events: none;
+  }
+
+  @keyframes chatPulsingOverlay {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(1.25); opacity: 0; }
   }
 
   .chat-toggle:hover {
-    transform: scale(1.1);
+    transform: scale(1.08) translateY(-3px);
+    box-shadow: 0 15px 35px rgba(251, 191, 36, 0.6);
   }
 
   .chat-toggle.active {
     background: var(--surface);
     border: 1px solid var(--border);
+    color: white !important;
     transform: rotate(90deg);
+  }
+
+  .chat-toggle.active::after {
+    display: none;
   }
 
   .chat-badge {
@@ -1889,5 +1913,55 @@
 
   .modal-content {
     padding: 20px;
+  }
+}
+
+/* Premium hardware-accelerated horizontal infinity marquee */
+.logo-marquee-container {
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  display: flex;
+}
+
+.logo-marquee-container::before,
+.logo-marquee-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 60px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.logo-marquee-container::before {
+  left: 0;
+  background: linear-gradient(to right, #050508 0%, transparent 100%);
+}
+
+.logo-marquee-container::after {
+  right: 0;
+  background: linear-gradient(to left, #050508 0%, transparent 100%);
+}
+
+.logo-marquee-track {
+  display: flex;
+  gap: 3.5rem;
+  width: max-content;
+  animation: logoMarqueeScroll 32s linear infinite;
+  will-change: transform;
+}
+
+.logo-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes logoMarqueeScroll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
   }
 }
