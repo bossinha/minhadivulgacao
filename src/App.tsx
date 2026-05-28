@@ -6,6 +6,36 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { HashRouter, Routes, Route, useParams, useNavigate, useLocation } from 'react-router-dom';
+import { 
+  Play, 
+  Pause, 
+  Volume2, 
+  VolumeX, 
+  MessageSquare, 
+  Tv, 
+  Radio, 
+  Menu, 
+  X, 
+  ChevronLeft, 
+  ChevronRight, 
+  Search, 
+  Star, 
+  Check, 
+  ExternalLink, 
+  Smartphone, 
+  Target, 
+  Users, 
+  Palette, 
+  Video, 
+  TrendingUp, 
+  Sparkles, 
+  Plus, 
+  Award, 
+  Clock, 
+  Info,
+  Calendar,
+  DollarSign
+} from 'lucide-react';
 
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -26,6 +56,57 @@ const calculateDaysLeft = (expiresAt: string | undefined) => {
     return null;
   }
 };
+
+const SERVICES_DATA = [
+  {
+    title: "Divulgação em Grupos",
+    desc: "Alcance milhares de pessoas interessadas em grupos focados e segmentados no WhatsApp.",
+    icon: Users,
+    color: "from-blue-500/20 to-cyan-500/20 text-cyan-400"
+  },
+  {
+    title: "Divulgação Empresarial",
+    desc: "Destaque sua marca para tomadores de decisão e empresas locais, alavancando vendas B2B.",
+    icon: Target,
+    color: "from-purple-500/20 to-pink-500/20 text-pink-400"
+  },
+  {
+    title: "Criação de Artes",
+    desc: "Design de banners, flyers e posts profissionais adaptados para as suas redes sociais.",
+    icon: Palette,
+    color: "from-amber-500/20 to-red-500/20 text-amber-400"
+  },
+  {
+    title: "Vídeos Comerciais",
+    desc: "Produção de comerciais envolventes em áudio e vídeo sob medida para a TV online e Reels.",
+    icon: Video,
+    color: "from-green-500/20 to-emerald-500/20 text-emerald-400"
+  },
+  {
+    title: "Rádio Online",
+    desc: "Inserções de spot comercial de áudio em nossa programação oficial ativa 24 horas por dia.",
+    icon: Radio,
+    color: "from-orange-500/20 to-yellow-500/20 text-orange-400"
+  },
+  {
+    title: "TV Online",
+    desc: "Seu comercial em vídeo rodando continuamente no telão principal do nosso portal de mídia.",
+    icon: Tv,
+    color: "from-red-500/20 to-orange-500/20 text-red-500"
+  },
+  {
+    title: "Tráfego Pago",
+    desc: "Campanhas otimizadas de anúncios no Meta Ads e Google Ads com foco em vendas diretas.",
+    icon: TrendingUp,
+    color: "from-indigo-500/20 to-violet-500/20 text-indigo-400"
+  },
+  {
+    title: "Redes Sociais",
+    desc: "Publicações estratégicas em nossos canais oficiais de alta audiência no Instagram e Facebook.",
+    icon: Sparkles,
+    color: "from-rose-500/20 to-pink-500/20 text-rose-400"
+  }
+];
 
 const COMPANIES_DATA = [
   { id: 1, name: "Bossa Infor", category: "Publicidade", desc: "Soluções em Áudio & Vídeo", logo: "https://i.postimg.cc/Gpykbbz5/nova_logo_bossa_infor_png.png", wa: "5585992862177", ig: "https://www.instagram.com/bossainfor/", website: "", featured: true },
@@ -476,7 +557,7 @@ function AppContent() {
 
   const getWaLinkWithReferral = (baseUrl: string) => {
     if (!baseUrl) return '#';
-    const tid = slugify(tenantId || '');
+    const tid = slugify(tenantId || 'fortaleza');
     const ref = sessionStorage.getItem(`ref_${tid}`);
     if (!ref) return baseUrl;
     
@@ -594,7 +675,7 @@ function AppContent() {
   const saveToFirebase = async () => {
     if (!user || !appData) return;
     try {
-      const activeSlug = slugify(tenantId || '');
+      const activeSlug = slugify(tenantId || 'fortaleza');
       const targetTenantId = (user.isAdmin && activeSlug && activeSlug !== 'login' && activeSlug !== 'master')
         ? activeSlug
         : user.username;
@@ -622,9 +703,47 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState('geral');
   const [selectedTestimonialImage, setSelectedTestimonialImage] = useState<string | null>(null);
   
-  const filteredCompaniesRaw = (selectedCategory && appData)
-    ? appData.companies.filter(c => c.category === selectedCategory)
-    : (appData?.companies || []);
+  // Custom public portal states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [radioPlaying, setRadioPlaying] = useState(false);
+  const [radioVolume, setRadioVolume] = useState(0.8);
+  const radioAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [activeFlyerIndex, setActiveFlyerIndex] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Sync volume of custom radio player
+  useEffect(() => {
+    if (radioAudioRef.current) {
+      radioAudioRef.current.volume = radioVolume;
+    }
+  }, [radioVolume]);
+
+  const handleRadioTogglePlay = () => {
+    if (radioAudioRef.current) {
+      if (radioPlaying) {
+        radioAudioRef.current.pause();
+        setRadioPlaying(false);
+      } else {
+        // Toggle video sound off to prioritize radio audio clarity
+        setIsMuted(true);
+        radioAudioRef.current.play()
+          .then(() => setRadioPlaying(true))
+          .catch(e => console.error("Radio play failed:", e));
+      }
+    }
+  };
+
+  const filteredCompaniesRaw = appData
+    ? appData.companies.filter(c => {
+        const matchesCategory = selectedCategory ? c.category === selectedCategory : true;
+        const matchesSearch = searchQuery 
+          ? normalize(c.name).includes(normalize(searchQuery)) || 
+            normalize(c.desc).includes(normalize(searchQuery)) || 
+            normalize(c.category).includes(normalize(searchQuery))
+          : true;
+        return matchesCategory && matchesSearch;
+      })
+    : [];
   
   const filteredCompanies = filteredCompaniesRaw.filter(c => c.active !== false);
 
@@ -644,11 +763,11 @@ function AppContent() {
 
   // Load affiliates when tab is active
   useEffect(() => {
-    if (activeTab === 'divulgadores' && tenantId) {
+    if (activeTab === 'divulgadores' && (tenantId || location.pathname !== '/login')) {
       const fetchAffiliates = async () => {
         setIsAffLoading(true);
         try {
-          const tid = slugify(tenantId);
+          const tid = slugify(tenantId || 'fortaleza');
           console.log("Fetching affiliates for:", tid);
           const q = collection(db, 'tenants', tid, 'affiliates');
           const snap = await getDocs(q);
@@ -664,7 +783,7 @@ function AppContent() {
       };
       fetchAffiliates();
     }
-  }, [activeTab, tenantId]);
+  }, [activeTab, tenantId, location.pathname]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -1489,18 +1608,24 @@ function AppContent() {
           <div style={{ margin: '20px 0', borderTop: '1px solid #222' }}></div>
 
           <button 
-            className="dev-btn" 
-            style={{ width: '100%', background: 'transparent', border: '1px solid #333', color: '#888' }}
+            className="dev-btn font-jakarta mb-2" 
+            style={{ width: '100%', background: 'transparent', border: '1px solid #333', color: '#fff' }}
             onClick={loginWithGoogle}
           >
-            🔑 Entrar como Admin Master
+            🔑 Entrar como Admin Master (Google)
           </button>
+
+          <div style={{ padding: '10px', background: 'rgba(251, 191, 36, 0.05)', border: '1px solid rgba(251, 191, 36, 0.15)', borderRadius: '12px', marginTop: '10px', marginBottom: '10px' }}>
+            <p style={{ color: '#fbbf24', fontSize: '11px', margin: 0, textAlign: 'center', lineHeight: '1.4' }}>
+              💡 <strong>Dica de Acesso:</strong> Se o login por Google falhar ou se você estiver usando um domínio próprio, você também pode acessar digitando o usuário do seu portal (ex: <strong>"master"</strong> para administrador geral) e a senha cadastrada nos campos acima.
+            </p>
+          </div>
           
           {(navigator.userAgent.includes('wv') || navigator.userAgent.includes('Kodular')) && (
             <div style={{ marginTop: '15px', padding: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px' }}>
               <p style={{ color: '#f87171', fontSize: '11px', margin: 0, textAlign: 'center', lineHeight: '1.4' }}>
-                ⚠️ <strong>Atenção:</strong> O login do Google pode ser bloqueado dentro de aplicativos Android (Kodular). 
-                Caso ocorra erro, abra este site diretamente no <strong>Google Chrome</strong> do seu celular.
+                ⚠️ <strong>Atenção:</strong> O login do Google costuma ser bloqueado dentro de aplicativos Android (Kodular). 
+                Caso ocorra erro, acesse pelo navegador de internet (Google Chrome) ou utilize o login por usuário e senha.
               </p>
             </div>
           )}
@@ -1575,7 +1700,7 @@ function AppContent() {
         </button>
       )}
 
-      {(user?.isAdmin || (user?.username && slugify(user.username) === slugify(tenantId || ''))) && (
+      {(user?.isAdmin || (user?.username && slugify(user.username) === slugify(tenantId || 'fortaleza'))) && (
         <button 
           onClick={() => setIsDevAreaOpen(true)}
           className="dev-floating-btn"
@@ -1586,442 +1711,854 @@ function AppContent() {
       )}
 
       {/* Navigation */}
-      <nav>
-        <div className="container">
-          <div className="nav-content">
-            <a href="#" className="logo" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>{appData.siteInfo.name}<span style={{ color: '#ffffff' }}>{appData.siteInfo.suffix}</span></a>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-               <button onClick={() => scrollToSection('anuncie')} className="btn-view" style={{ padding: '8px 20px', fontSize: '0.8rem', background: 'var(--primary)', border: 'none', cursor: 'pointer' }}>Anunciar</button>
+      <header className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/5 h-16 md:h-20 flex items-center">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 flex justify-between items-center">
+          {/* Logo Wrapper */}
+          <a 
+            href="#" 
+            className="flex items-center gap-3 decoration-transparent group" 
+            onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          >
+            <img 
+              src="https://i.postimg.cc/nVdYndN2/minha-divulgacao-png.png" 
+              alt="Minha Divulgação" 
+              className="h-10 md:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105" 
+              referrerPolicy="no-referrer"
+            />
+            <div className="flex flex-col select-none">
+              <span className="font-sans font-extrabold text-sm md:text-base leading-none text-white tracking-tight uppercase group-hover:text-[var(--primary)] transition-colors duration-200">
+                {appData.siteInfo.name} <span className="text-[var(--primary)]">{appData.siteInfo.suffix}</span>
+              </span>
+              <span className="text-[9px] text-white/40 tracking-widest font-mono uppercase mt-0.5">Portal de Mídia</span>
+            </div>
+          </a>
+
+          {/* Clean Menu - Desktop */}
+          <div className="hidden lg:flex items-center gap-6 text-xs font-bold uppercase tracking-wider text-white/70">
+            <a href="#destaque" className="hover:text-[var(--primary)] transition-colors duration-200">Destaques</a>
+            {visibleFlyers.length > 0 && (
+              <a href="#promocoes" className="hover:text-[var(--primary)] transition-colors duration-200">Promoções</a>
+            )}
+            <a href="#filtro-empresas" className="hover:text-[var(--primary)] transition-colors duration-200">Anunciantes</a>
+            <a href="#radio-tv" className="hover:text-[var(--primary)] transition-colors duration-200">Rádio & TV</a>
+            <a href="#servicos" className="hover:text-[var(--primary)] transition-colors duration-200">Serviços</a>
+            <a href="#depoimentos" className="hover:text-[var(--primary)] transition-colors duration-200">Depoimentos</a>
+          </div>
+
+          {/* Action Buttons - Desktop */}
+          <div className="hidden lg:flex items-center gap-3 font-jakarta">
+            <a 
+              href={`https://wa.me/${appData.pricing.waLink.replace(/[^0-9]/g, '')}?text=Olá! Quero anunciar no portal agora.`}
+              target="_blank"
+              rel="noreferrer"
+              className="bg-transparent border border-white/20 text-white hover:border-[var(--primary)] hover:text-[var(--primary)] px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300"
+            >
+              Anunciar Agora
+            </a>
+            <a 
+              href={`https://wa.me/${appData.siteInfo.phone.replace(/[^0-9]/g, '')}?text=Olá! Gostaria de falar com o atendimento comercial.`}
+              target="_blank"
+              rel="noreferrer"
+              className="bg-[#25D366] text-white hover:bg-[#20ba59] px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/10 flex items-center gap-2 transition-all duration-300"
+            >
+              <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+              Falar Comercial
+            </a>
+          </div>
+
+          {/* Mobile Menu Trigger */}
+          <button 
+            type="button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="lg:hidden text-white/80 p-2 hover:text-[var(--primary)]"
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
+        {/* Mobile Menu Drawer */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="absolute top-16 md:top-20 left-0 right-0 bg-[#07080e]/95 backdrop-blur-xl border-b border-white/10 px-6 py-8 flex flex-col gap-6 z-40 shadow-2xl lg:hidden font-jakarta"
+            >
+              <div className="flex flex-col gap-4 text-sm font-bold uppercase tracking-wider">
+                <a href="#destaque" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-[var(--primary)] py-2">⭐ Destaques</a>
+                {visibleFlyers.length > 0 && (
+                  <a href="#promocoes" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-[var(--primary)] py-2">🔥 Promoções</a>
+                )}
+                <a href="#filtro-empresas" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-[var(--primary)] py-2">🔍 Empresas</a>
+                <a href="#radio-tv" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-[var(--primary)] py-2">📻 Rádio & TV</a>
+                <a href="#servicos" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-[var(--primary)] py-2">🛠️ Serviços</a>
+                <a href="#depoimentos" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-[var(--primary)] py-2">💬 Depoimentos</a>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/5">
+                <a 
+                  href={`https://wa.me/${appData.pricing.waLink.replace(/[^0-9]/g, '')}?text=Olá! Quero anunciar no portal agora.`}
+                  target="_blank"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full text-center bg-[var(--primary)] text-black px-5 py-3 rounded-xl font-extrabold text-xs uppercase tracking-widest block"
+                >
+                  🚀 Anunciar Agora
+                </a>
+                <a 
+                  href={`https://wa.me/${appData.siteInfo.phone.replace(/[^0-9]/g, '')}?text=Olá! Gostaria de falar com o atendimento comercial.`}
+                  target="_blank"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full text-center bg-[#25D366] text-white px-5 py-3 rounded-xl font-extrabold text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                >
+                  💬 WhatsApp
+                </a>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </header>
+
+      {/* Hero Section */}
+      <section className="relative pt-24 md:pt-36 pb-16 overflow-hidden bg-black border-b border-white/5">
+        <div className="absolute inset-0 bg-gradient-to-tr from-[var(--primary)]/5 via-transparent to-transparent opacity-60 z-0 pointer-events-none" />
+        <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6 z-10 flex flex-col items-center text-center">
+          
+          {/* Live Badge indicator */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-flex items-center gap-2 bg-[#fbbf24]/10 border border-[#fbbf24]/20 px-3 py-1.5 rounded-full text-[10px] font-extrabold tracking-widest uppercase text-[#fbbf24] mb-6 md:mb-8 font-mono select-none"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#fbbf24] animate-ping" />
+            Portal Comercial {appData.siteInfo.suffix || 'Oficial'}
+          </motion.div>
+
+          {/* Beautiful Display Typography */}
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-tight max-w-4xl font-sans">
+            Divulgamos <span className="text-[var(--primary)] underline decoration-[#fbbf24]/30 decoration-wavy">empresas, marcas e negócios</span> para milhares de pessoas diariamente.
+          </h1>
+
+          <p className="text-sm sm:text-base md:text-lg text-white/70 font-medium max-w-2xl mt-6">
+            Portal de divulgação profissional completo com rádio online, TV online, anúncios comerciais interativos e atendimento automatizado por IA 24 horas.
+          </p>
+
+          {/* Dynamic Actions in Hero */}
+          <div className="flex flex-col sm:flex-row gap-4 mt-10 w-full sm:w-auto">
+            <a 
+              href="#anuncie" 
+              className="bg-[var(--primary)] text-black hover:scale-105 hover:shadow-2xl hover:shadow-[rgb(251,191,36)]/20 px-8 py-4 rounded-full font-extrabold text-sm uppercase tracking-wider text-center transition-all duration-300"
+            >
+              ANUNCIAR MEU NEGÓCIO AGORA
+            </a>
+            <a 
+              href="#filtro-empresas" 
+              className="bg-white/5 border border-white/10 hover:border-white/30 text-white hover:bg-white/10 px-8 py-4 rounded-full font-extrabold text-sm uppercase tracking-wider text-center transition-all duration-300 block"
+            >
+              Explorar Anunciantes
+            </a>
+          </div>
+
+          {/* Animated quick stats bar */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12 mt-16 md:mt-24 w-full max-w-5xl border-t border-white/5 pt-10 select-none">
+            <div className="text-center">
+              <div className="text-2xl md:text-3xl font-black text-white">{(universalConfig.totalVisits || 12000).toLocaleString()}+</div>
+              <div className="text-[10.5px] text-white/50 tracking-wider font-mono uppercase mt-1">Acessos Totais</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl md:text-3xl font-black text-emerald-400 flex items-center justify-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_#10b981]" />
+                {onlineCount}
+              </div>
+              <div className="text-[10.5px] text-white/50 tracking-wider font-mono uppercase mt-1">Online Agora</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl md:text-3xl font-black text-[#fbbf24]">100%</div>
+              <div className="text-[10.5px] text-white/50 tracking-wider font-mono uppercase mt-1">Atendimento IA</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl md:text-3xl font-black text-white">24h</div>
+              <div className="text-[10.5px] text-white/50 tracking-wider font-mono uppercase mt-1">Sinal Ativo</div>
             </div>
           </div>
-        </div>
-      </nav>
-
-      {/* Categories Section */}
-      <section className="container first-section">
-        <div className="section-header">
-          <h2 className="section-title">{appData.sections.categories.title}</h2>
-          <p style={{ color: 'var(--text-dim)', marginTop: '10px' }}>{appData.sections.categories.desc}</p>
-        </div>
-        
-        <div className="category-nav-wrapper">
-          <button className="category-nav-btn" onClick={() => scrollCats('left')}>❮</button>
-          <div className="category-nav-container" ref={catNavRef}>
-            <button 
-              className={`category-pill ${selectedCategory === null ? 'active' : ''}`}
-              onClick={() => handleCategoryClick(null)}
-            >
-              ⭐ TODOS
-            </button>
-            {appData.categories.map(cat => (
-              <button 
-                key={cat.name} 
-                className={`category-pill ${selectedCategory === cat.name ? 'active' : ''}`}
-                onClick={() => handleCategoryClick(cat.name)}
-              >
-                <span>{cat.icon}</span> {cat.name}
-              </button>
-            ))}
-          </div>
-          <button className="category-nav-btn" onClick={() => scrollCats('right')}>❯</button>
         </div>
       </section>
 
-      {/* TV Section */}
-      {showVideos && (
-        <section className="section-comerciais">
-          <div className="section-header">
-            <span className="section-tag">{appData.sections.tv.tag}</span>
-            <h2 className="section-title">{appData.sections.tv.title}</h2>
-            <div className="visitors-counter">
-              <div className="online-dot"></div>
-              <span>{visitorCount.toLocaleString()}</span>
-              <span>Visitantes Online</span>
+      {/* Interactive Promotional Flyers Section */}
+      {visibleFlyers.length > 0 && (
+        <section id="promocoes" className="w-full py-16 md:py-24 border-b border-white/5 bg-[#08080f]">
+          <div className="w-full max-w-7xl mx-auto px-4 md:px-6">
+            
+            {/* Section Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-16 gap-4">
+              <div>
+                <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase">Parcerias de Sucesso</span>
+                <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">
+                  🔥 Promoções Imperdíveis e Ofertas
+                </h2>
+              </div>
+              <p className="text-sm text-white/50 max-w-sm">
+                Confira as melhores ofertas exclusivas dos patrocinadores oficiais do nosso portal. Clique no anúncio para saber mais no WhatsApp!
+              </p>
             </div>
-          </div>
-          <div id="tv-comerciais">
-            <div className="live-badge"><div className="live-dot"></div>AO VIVO</div>
-            <AnimatePresence>
-              {isMuted && (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="tv-overlay" 
-                  onClick={() => setIsMuted(false)}
+
+            {/* Dynamic Slider Container */}
+            <div className="relative overflow-hidden bg-black/40 border border-white/10 rounded-3xl p-6 md:p-10 shadow-2xl flex flex-col md:flex-row items-center gap-8 md:gap-12">
+              
+              {/* Active Flyer Image Frame */}
+              <div className="relative w-full md:w-1/2 flex justify-center">
+                <div 
+                  className="relative w-full max-w-[320px] aspect-[3/4.5] rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl bg-black cursor-pointer"
+                  onClick={() => {
+                    const activeFlyer = visibleFlyers[activeFlyerIndex];
+                    if (typeof activeFlyer === 'object' && activeFlyer?.link) {
+                      window.open(getWaLinkWithReferral(activeFlyer.link), '_blank');
+                    }
+                  }}
                 >
-                  <div className="tv-overlay-icon">🔇</div>
-                  <div className="tv-overlay-text">Clique para Ativar o Som</div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <video 
-              ref={videoRef}
-              autoPlay 
-              playsInline 
-              muted={isMuted}
-              onEnded={handleVideoEnd}
-              onTimeUpdate={handleTimeUpdate}
-            />
-            <button className="tv-mute-btn" onClick={() => setIsMuted(!isMuted)}>
-              {isMuted ? '🔇' : '🔊'}
-            </button>
+                  <AnimatePresence mode="wait">
+                    <motion.img 
+                      key={activeFlyerIndex}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.4 }}
+                      src={typeof visibleFlyers[activeFlyerIndex] === 'string' ? visibleFlyers[activeFlyerIndex] : visibleFlyers[activeFlyerIndex]?.image} 
+                      alt="Promoção em Destaque" 
+                      className="w-full h-full object-cover select-none"
+                      referrerPolicy="no-referrer"
+                    />
+                  </AnimatePresence>
+                  
+                  {/* Highlight badge inside image */}
+                  <div className="absolute top-4 left-4 bg-red-600 text-white font-black text-[9px] tracking-widest uppercase px-3 py-1 rounded-full shadow-lg">
+                    Destaque Comercial
+                  </div>
+                </div>
+              </div>
+
+              {/* Description and Info block */}
+              <div className="w-full md:w-1/2 flex flex-col justify-center items-center md:items-start text-center md:text-left">
+                <span className="text-[10px] text-[var(--primary)] tracking-widest font-mono uppercase bg-[var(--primary)]/10 px-3 py-1 rounded-full mb-4">
+                  Promoção Nº {activeFlyerIndex + 1} de {visibleFlyers.length}
+                </span>
+                <h3 className="text-xl sm:text-2xl font-black text-white leading-snug">
+                  Aproveite esta oportunidade exclusiva
+                </h3>
+                <p className="text-xs sm:text-sm text-white/60 mt-4 leading-relaxed max-w-md">
+                  Entre em contato direto com o anunciante parceiro via link especial para obter descontos exclusivos oferecidos aos visitantes do nosso portal!
+                </p>
+
+                {/* Slider Action Button wrapper */}
+                {typeof visibleFlyers[activeFlyerIndex] === 'object' && visibleFlyers[activeFlyerIndex]?.link && (
+                  <a 
+                    href={getWaLinkWithReferral(visibleFlyers[activeFlyerIndex].link)} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-105 text-white font-extrabold text-xs uppercase tracking-wider px-6 py-3.5 rounded-xl shadow-lg mt-8 transition-all duration-300"
+                  >
+                    <Sparkles size={16} />
+                    Quero saber mais no WhatsApp
+                  </a>
+                )}
+
+                {/* Carousel navigation controls */}
+                <div className="flex items-center gap-4 mt-10">
+                  <button 
+                    type="button"
+                    onClick={() => setActiveFlyerIndex(prev => (prev - 1 + visibleFlyers.length) % visibleFlyers.length)}
+                    className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:border-[var(--primary)] text-white hover:text-[var(--primary)] hover:bg-white/10 flex items-center justify-center transition-all"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  
+                  {/* dots indicators */}
+                  <div className="flex gap-2">
+                    {visibleFlyers.map((_, i) => (
+                      <button 
+                        key={i} 
+                        type="button"
+                        onClick={() => setActiveFlyerIndex(i)}
+                        className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${activeFlyerIndex === i ? 'bg-[var(--primary)] w-6' : 'bg-white/25 hover:bg-white/55'}`}
+                      />
+                    ))}
+                  </div>
+
+                  <button 
+                    type="button"
+                    onClick={() => setActiveFlyerIndex(prev => (prev + 1) % visibleFlyers.length)}
+                    className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:border-[var(--primary)] text-white hover:text-[var(--primary)] hover:bg-white/10 flex items-center justify-center transition-all"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
           </div>
         </section>
       )}
 
-      {/* Companies Section */}
-      <section id="empresas-whatsapp">
-        <div className="container">
-          <div className="section-header">
-            <span className="section-tag">{appData.sections.companies.tag}</span>
-            <h2 className="section-title">{appData.sections.companies.title}</h2>
-            <p style={{ color: 'var(--text-dim)', marginTop: '10px', fontWeight: 500 }}>{appData.sections.companies.desc}</p>
+      {/* Filterable Businesses Directory */}
+      <section id="filtro-empresas" className="w-full py-16 md:py-24 bg-[#050508] border-b border-white/5">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6">
+          
+          {/* Search Input and Filters layout */}
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-12">
+            <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase">Diretório Comercial</span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">
+              Empresas e Negócios Recomendados
+            </h2>
+            <p className="text-sm text-white/50 mt-3">
+              Utilize o campo abaixo para buscar marcas por nome, atividade ou palavras-chave, ou navegue pelas abas de categorias.
+            </p>
+
+            {/* Dynamic Keywords Search Box */}
+            <div className="relative w-full max-w-lg mt-8">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-white/40">
+                <Search size={18} />
+              </div>
+              <input 
+                type="text" 
+                placeholder="Busque por Assai, Ordones, Refrigeração..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-[#11111a] border border-white/10 hover:border-white/20 focus:border-[var(--primary)] outline-none rounded-2xl pl-12 pr-4 py-4 text-sm text-white font-medium shadow-2xl transition-all duration-300"
+              />
+              {searchQuery && (
+                <button 
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-4 text-xs font-bold font-mono text-white/50 hover:text-white"
+                >
+                  LIMPAR
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-        <div className="carousel-wrapper">
-          <div className="carousel-track" style={{ animationDuration: `${universalConfig.companySpeed || 200}s` }}>
-            <div className="track-copy">
+
+          {/* Category Pills Slider */}
+          <div className="category-nav-wrapper">
+            <button type="button" className="category-nav-btn" onClick={() => scrollCats('left')}>❮</button>
+            <div className="category-nav-container" ref={catNavRef}>
+              <button 
+                type="button"
+                className={`category-pill ${selectedCategory === null ? 'active' : ''}`}
+                onClick={() => handleCategoryClick(null)}
+              >
+                ⭐ TODOS OS NEGÓCIOS
+              </button>
+              {appData.categories.map(cat => (
+                <button 
+                  key={cat.name} 
+                  type="button"
+                  className={`category-pill ${selectedCategory === cat.name ? 'active' : ''}`}
+                  onClick={() => handleCategoryClick(cat.name)}
+                >
+                  <span>{cat.icon}</span> {cat.name}
+                </button>
+              ))}
+            </div>
+            <button type="button" className="category-nav-btn" onClick={() => scrollCats('right')}>❯</button>
+          </div>
+
+          {/* Grid of Results */}
+          {filteredCompanies.length === 0 ? (
+            <div className="text-center py-16 bg-[#11111a]/40 border border-white/5 rounded-3xl mt-12 max-w-xl mx-auto">
+              <Info size={40} className="mx-auto text-white/35 mb-4" />
+              <p className="text-sm text-white/60 font-semibold text-center">Nenhum anunciante encontrado para a sua busca</p>
+              <button 
+                type="button"
+                onClick={() => { setSearchQuery(''); handleCategoryClick(null); }}
+                className="text-xs text-[var(--primary)] font-extrabold uppercase mt-3 tracking-widest hover:underline"
+              >
+                Resetar Filtros
+              </button>
+            </div>
+          ) : (
+            <div id="destaque" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-12">
               {filteredCompanies.map(company => (
-                <div key={company.id} className="company-card">
-                  <div className={`card-inner ${company.featured ? 'featured-company' : ''}`}>
-                    {company.featured && <div className="featured-badge">Destaque</div>}
-                    <div className="logo-wrapper">
-                      <img src={company.logo} alt={company.name} className="company-logo" referrerPolicy="no-referrer" />
+                <div 
+                  key={company.id} 
+                  className={`bg-[#0f1016] border transition-all duration-300 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1.5 shadow-xl hover:shadow-2xl relative select-none ${company.featured ? 'border-[var(--primary)] shadow-[var(--primary)]/5 hover:shadow-[rgb(251,191,36)]/10' : 'border-white/5 hover:border-white/20'}`}
+                >
+                  {company.featured && (
+                    <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-black text-[8px] tracking-widest uppercase px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1 z-10">
+                      <Award size={10} /> Destaque
                     </div>
-                    <h3 className="company-name">{company.name}</h3>
-                    <span className="company-category">{company.category}</span>
-                    <p className="company-desc">{company.desc}</p>
-                    <div className="card-actions" style={{ flexDirection: 'column' }}>
-                      <a 
-                        href={`https://wa.me/${company.wa}?text=${encodeURIComponent(`Olá, vi seu anúncio no portal ${appData.siteInfo.name}.${sessionStorage.getItem(`ref_${slugify(tenantId || '')}`) ? ` Fui indicado pelo parceiro: ${sessionStorage.getItem(`ref_${slugify(tenantId || '')}`)}` : ''}`)}`} 
-                        target="_blank" 
-                        className="wa-button"
-                      >
-                        WhatsApp
-                      </a>
-                      <div style={{ display: 'flex', gap: '10px' }}>
-                        {company.ig && company.ig !== '#' && company.ig !== '' && (
-                          <a href={company.ig} target="_blank" className="btn-view" style={{ flex: 1 }}>Instagram</a>
-                        )}
-                        {company.website && company.website !== '' && (
-                          <a href={company.website} target="_blank" className="btn-view" style={{ flex: 1, background: 'var(--primary)', color: 'black' }}>Site</a>
-                        )}
-                      </div>
+                  )}
+                  
+                  <div>
+                    {/* Logo Frame */}
+                    <div className="w-20 h-20 rounded-2xl bg-white border border-white/15 overflow-hidden flex items-center justify-center shadow-lg p-1.5 mb-5 mt-2">
+                      <img src={company.logo} alt={company.name} className="max-w-full max-h-full object-contain" referrerPolicy="no-referrer" />
+                    </div>
+
+                    <span className="text-[10px] text-[var(--primary)] font-extrabold uppercase tracking-widest bg-[var(--primary)]/10 px-2.5 py-1 rounded-full select-none">
+                      {company.category}
+                    </span>
+
+                    <h3 className="text-base font-extrabold text-white mt-4 line-clamp-1">{company.name}</h3>
+                    <p className="text-xs text-white/50 mt-2 line-clamp-3 leading-relaxed min-h-[3.5rem]">{company.desc || 'Anunciante comercial verificado de alta qualidade e atendimento dedicado.'}</p>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col gap-2.5 mt-6 border-t border-white/5 pt-5">
+                    <a 
+                      href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu anúncio no portal ${appData.siteInfo.name}.${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`) ? ` Fui indicado pelo parceiro: ${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`)}` : ''}`)}`} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
+                    >
+                      <Smartphone size={14} /> Falar no WhatsApp
+                    </a>
+
+                    <div className="flex gap-2">
+                      {company.ig && company.ig !== '#' && company.ig !== '' && (
+                        <a 
+                          href={company.ig} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center transition-all duration-200"
+                        >
+                          Instagram
+                        </a>
+                      )}
+                      {company.website && company.website !== '' && (
+                        <a 
+                          href={company.website} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="flex-1 bg-[var(--primary)] hover:brightness-110 text-black py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center transition-all duration-200"
+                        >
+                          Website
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="track-copy duplicate">
-              {filteredCompanies.map(company => (
-                <div key={`${company.id}-dup`} className="company-card">
-                  <div className={`card-inner ${company.featured ? 'featured-company' : ''}`}>
-                    {company.featured && <div className="featured-badge">Destaque</div>}
-                    <div className="logo-wrapper">
-                      <img src={company.logo} alt={company.name} className="company-logo" referrerPolicy="no-referrer" />
-                    </div>
-                    <h3 className="company-name">{company.name}</h3>
-                    <span className="company-category">{company.category}</span>
-                    <p className="company-desc">{company.desc}</p>
-                    <div className="card-actions" style={{ flexDirection: 'column' }}>
-                      <a 
-                        href={`https://wa.me/${company.wa}?text=${encodeURIComponent(`Olá, vi seu anúncio no portal ${appData.siteInfo.name}.${sessionStorage.getItem(`ref_${slugify(tenantId || '')}`) ? ` Fui indicado pelo parceiro: ${sessionStorage.getItem(`ref_${slugify(tenantId || '')}`)}` : ''}`)}`} 
-                        target="_blank" 
-                        className="wa-button"
-                      >
-                        WhatsApp
-                      </a>
-                      <div style={{ display: 'flex', gap: '10px' }}>
-                        {company.ig && company.ig !== '#' && company.ig !== '' && (
-                          <a href={company.ig} target="_blank" className="btn-view" style={{ flex: 1 }}>Instagram</a>
-                        )}
-                        {company.website && company.website !== '' && (
-                          <a href={company.website} target="_blank" className="btn-view" style={{ flex: 1, background: 'var(--primary)', color: 'black' }}>Site</a>
-                        )}
+          )}
+
+        </div>
+      </section>
+
+      {/* Live Radio & TV Streaming Broadcast */}
+      <section id="radio-tv" className="relative w-full py-16 md:py-24 bg-[#0a0a10] border-b border-white/5 overflow-hidden">
+        
+        {/* Background graphics */}
+        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[150px] pointer-events-none" />
+        <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[400px] h-[400px] bg-[var(--primary)]/5 rounded-full blur-[150px] pointer-events-none" />
+
+        <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6">
+          
+          {/* Section Header */}
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16">
+            <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase">Transmissões Digitais</span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">
+              Rádio & TV Online Ao Vivo
+            </h2>
+            <p className="text-sm text-white/50 mt-3">
+              Acompanhe nossa programação musical completa em áudio de alta definição e assista aos melhores spots de anúncios na nossa TV interativa.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            {/* CUSTOM RADIO CONTAINER - Left Column */}
+            <div className="lg:col-span-5 bg-black/40 border border-white/10 rounded-3xl p-6 md:p-8 flex flex-col items-center shadow-2xl">
+              
+              <div className="w-full flex justify-between items-center mb-6">
+                <span className="text-[10px] text-white/50 tracking-widest font-mono uppercase bg-white/5 px-2.5 py-1 rounded-full">
+                  Sinal Digital HD
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${radioPlaying ? 'bg-red-500 animate-pulse' : 'bg-white/20'}`} />
+                  <span className="text-[10px] text-white/80 font-bold uppercase tracking-widest">RÁDIO AO VIVO</span>
+                </div>
+              </div>
+
+              {/* Golden Vinyl Disk sleeve */}
+              <div className="relative w-44 h-44 my-4 flex items-center justify-center">
+                {/* Spinning Golden Vinyl Disk */}
+                <div 
+                  className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-500 via-yellow-600 to-amber-400 p-0.5 shadow-2xl"
+                  style={{ 
+                    animation: 'spin 15s linear infinite',
+                    animationPlayState: radioPlaying ? 'running' : 'paused',
+                    boxShadow: radioPlaying ? '0 0 30px rgba(251, 191, 36, 0.25)' : 'none'
+                  }}
+                >
+                  <div className="w-full h-full rounded-full bg-neutral-950 flex items-center justify-center border border-white/10 relative">
+                    <div className="absolute inset-4 rounded-full border border-white/5" />
+                    <div className="absolute inset-8 rounded-full border border-white/5" />
+                    <div className="absolute inset-12 rounded-full border border-white/10" />
+                    
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-400 p-1 flex items-center justify-center">
+                      <div className="w-full h-full rounded-full bg-black flex items-center justify-center font-black text-[8px] text-[var(--primary)] font-mono">
+                        MD FM
                       </div>
                     </div>
                   </div>
                 </div>
-              ))}
+
+                <div className={`absolute inset-10 rounded-full bg-[var(--primary)]/25 blur-xl pointer-events-none transition-opacity duration-500 ${radioPlaying ? 'opacity-100' : 'opacity-0'}`} />
+              </div>
+
+              <p className="text-xs text-[var(--primary)] font-extrabold tracking-widest uppercase mt-4 mb-1">
+                Minha Divulgação Rádio
+              </p>
+              <span className="text-[10px] text-white/50 tracking-wider font-mono uppercase text-center">
+                Ouça nossa programação ao vivo.
+              </span>
+
+              {/* Custom controls wrapper */}
+              <div className="w-full mt-8 border-t border-white/5 pt-6 flex flex-col items-center">
+                
+                {/* Play Button */}
+                <button 
+                  type="button"
+                  onClick={handleRadioTogglePlay}
+                  className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ${radioPlaying ? 'bg-red-600 text-white hover:bg-red-500 shadow-red-500/10' : 'bg-[var(--primary)] text-black hover:scale-105 shadow-[rgb(251,191,36)]/10'} shadow-xl`}
+                >
+                  {radioPlaying ? <Pause size={28} /> : <Play size={28} className="translate-x-0.5" />}
+                </button>
+
+                {/* Custom volume controller */}
+                <div className="w-full flex items-center gap-3 mt-6 px-4">
+                  <button 
+                    type="button"
+                    onClick={() => setRadioVolume(prev => prev === 0 ? 0.8 : 0)}
+                    className="text-white/60 hover:text-white"
+                  >
+                    {radioVolume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                  </button>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="1" 
+                    step="0.01"
+                    value={radioVolume}
+                    onChange={(e) => setRadioVolume(parseFloat(e.target.value))}
+                    className="flex-1 accent-[var(--primary)] opacity-70 hover:opacity-100 h-1 rounded-full cursor-pointer bg-neutral-800"
+                  />
+                  <span className="text-[10px] font-mono text-white/40">{Math.round(radioVolume * 100)}%</span>
+                </div>
+
+                <audio 
+                  ref={radioAudioRef}
+                  src={universalConfig.radioLink || appData.siteInfo.radioLink}
+                  onPlay={() => setRadioPlaying(true)}
+                  onPause={() => setRadioPlaying(false)}
+                />
+
+                <div className="flex items-end gap-1 h-6 mt-6 select-none">
+                  {[0.1, 0.3, 0.2, 0.5, 0.4, 0.6, 0.3, 0.5, 0.2, 0.1, 0.4].map((delay, i) => (
+                    <div 
+                      key={i} 
+                      className={`w-1 bg-[#fbbf24]/60 rounded-full ${radioPlaying ? 'animate-pulse' : 'h-1'}`}
+                      style={{ 
+                        animationDuration: radioPlaying ? '0.8s' : undefined,
+                        animationDelay: radioPlaying ? `${delay}s` : undefined,
+                        height: radioPlaying ? '100%' : '4px'
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
+
+            {/* TV ONLINE STREAMING Broadcast - Right Column */}
+            {showVideos && (
+              <div className="lg:col-span-7 flex flex-col items-center">
+                
+                {/* TV Showcase framing */}
+                <div className="w-full max-w-[340px] aspect-[9/16] rounded-[40px] overflow-hidden border-[12px] border-[#1d1d26] bg-black shadow-2xl relative">
+                  
+                  {/* live indicator badge overlay */}
+                  <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1.5 rounded-full text-[9px] font-black tracking-widest uppercase z-20 flex items-center gap-1.5 shadow-lg shadow-black/25 select-none">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                    TV Online Ao Vivo
+                  </div>
+
+                  {/* simulated online users count indicator overlay */}
+                  <div className="absolute bottom-4 left-4 bg-emerald-950/90 backdrop-blur-md border border-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-[9px] font-bold tracking-widest uppercase z-10 flex items-center gap-1 leading-none select-none">
+                    <Users size={10} /> {visitorCount} online
+                  </div>
+
+                  {/* TV playoverlay trigger */}
+                  <AnimatePresence>
+                    {isMuted && (
+                      <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-black/75 backdrop-blur-sm flex flex-col items-center justify-center z-20 cursor-pointer p-6 text-center select-none" 
+                        onClick={() => setIsMuted(false)}
+                      >
+                        <div className="w-16 h-16 rounded-full bg-[var(--primary)] text-black flex items-center justify-center text-xl shadow-lg mb-4">
+                          🔇
+                        </div>
+                        <span className="text-white font-extrabold text-xs uppercase tracking-wider">Clique para Ativar Som da TV</span>
+                        <span className="text-white/40 text-[9px] tracking-widest font-mono uppercase mt-2">Transmissão comercial ativa</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Video Player */}
+                  <video 
+                    ref={videoRef}
+                    autoPlay 
+                    playsInline 
+                    muted={isMuted}
+                    onEnded={handleVideoEnd}
+                    onTimeUpdate={handleTimeUpdate}
+                    className="w-full h-full object-cover"
+                  />
+
+                  {/* Floating Mute Trigger controls */}
+                  <button 
+                    type="button"
+                    className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-black/60 border border-white/10 hover:border-white/30 text-white flex items-center justify-center cursor-pointer z-10 transition-all text-xs" 
+                    onClick={() => setIsMuted(!isMuted)}
+                  >
+                    {isMuted ? '🔇' : '🔊'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Logo Carousel */}
-      <section style={{ background: '#080808' }}>
-        <div className="container"><div className="section-header"><span className="section-tag">{appData.sections.companies.tag}</span></div></div>
-        <div className="carousel-wrapper">
-          <div className="carousel-track" style={{ animationDuration: `${universalConfig.logoSpeed || 100}s` }}>
-            <div className="track-copy">
-              {appData.companies.map(c => (
-                <div key={c.id} className="logo-item">
-                  <img src={c.logo} alt={c.name} className="carousel-logo" referrerPolicy="no-referrer" />
-                </div>
-              ))}
-            </div>
-            <div className="track-copy duplicate">
-              {appData.companies.map(c => (
-                <div key={`${c.id}-dup`} className="logo-item">
-                  <img src={c.logo} alt={c.name} className="carousel-logo" referrerPolicy="no-referrer" />
-                </div>
-              ))}
-            </div>
+      {/* Professional Services Presentation */}
+      <section id="servicos" className="w-full py-16 md:py-24 bg-[#050508] border-b border-white/5">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6">
+          
+          {/* Section Header */}
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16">
+            <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase">Soluções Comerciais</span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">
+              Nossas Áreas de Divulgação
+            </h2>
+            <p className="text-sm text-white/50 mt-3">
+              Oferecemos uma variedade de formatos digitais para conectar o seu negócio com milhares de clientes dispostos a comprar.
+            </p>
           </div>
+
+          {/* Grid List */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {SERVICES_DATA.map((service, idx) => {
+              const ServiceIcon = service.icon;
+              return (
+                <motion.div 
+                  key={idx}
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="bg-[#0f1016] border border-white/5 hover:border-[var(--primary)]/30 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1 transition-all duration-300 select-none group"
+                >
+                  <div>
+                    {/* Icon Wrapper */}
+                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${service.color} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300 shadow-md`}>
+                      <ServiceIcon size={22} className="stroke-[2.5]" />
+                    </div>
+
+                    <h4 className="text-base font-extrabold text-white group-hover:text-[var(--primary)] transition-colors duration-200">{service.title}</h4>
+                    <p className="text-xs text-white/55 mt-2 leading-relaxed font-semibold">{service.desc}</p>
+                  </div>
+
+                  {/* Action query indicator */}
+                  <div className="w-full border-t border-white/5 mt-5 pt-4 text-left">
+                    <span className="text-[9.5px] text-[var(--primary)] font-extrabold uppercase tracking-widest inline-flex items-center gap-1 group-hover:gap-1.5 transition-all">
+                      Verificar Disponibilidade <ChevronRight size={10} />
+                    </span>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Section footer info */}
+          <div className="mt-16 bg-gradient-to-r from-amber-500/5 to-transparent border border-white/5 rounded-3xl p-6 md:p-10 flex flex-col md:flex-row justify-between items-center gap-6 max-w-5xl mx-auto select-none">
+            <div className="text-center md:text-left">
+              <h4 className="text-lg font-black text-white">Pronto para dar visibilidade à sua empresa?</h4>
+              <p className="text-xs text-white/60 mt-1 max-w-md">Os resultados começam a aparecer no mesmo dia da contratação. Fale com um de nossos consultores comerciais!</p>
+            </div>
+            <a 
+              href={`https://wa.me/${appData.pricing.waLink.replace(/[^0-9]/g, '')}?text=Olá! Quero saber mais sobre os planos de divulgação do portal.`}
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[var(--primary)] text-black hover:scale-105 px-6 py-3.5 rounded-full font-extrabold text-xs uppercase tracking-wider text-center transition-all duration-300 flex items-center gap-2"
+            >
+              <Smartphone size={14} /> Falar no WhatsApp
+            </a>
+          </div>
+
         </div>
       </section>
 
-      {/* Audio Player Bar */}
-      <div className="player-bar">
-        <div className="container">
-          <div className="player-flex">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ color: 'var(--primary)', fontWeight: 900, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Rádio Ao Vivo</span>
-              <span style={{ fontSize: '0.6rem', color: 'var(--text-dim)', fontWeight: 700, textTransform: 'uppercase' }}>Programação Exclusiva 24h</span>
-            </div>
-            <div className="vu-container">
-              <div className="vu-meter">
-                {[0.1, 0.3, 0.2, 0.5, 0.4, 0.6].map((delay, i) => (
-                  <div key={i} className="vu-bar" style={{ animationDelay: `${delay}s` }}></div>
+      {/* Scout Pricing & Scarce Category Vacancy List */}
+      <section id="anuncie" className="w-full py-16 md:py-24 bg-[#0a0a10] border-b border-white/5 relative">
+        <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6 z-10">
+          
+          {/* Grid container */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start mt-8">
+            
+            {/* Scarcity Category Status - Left Column */}
+            <div className="lg:col-span-7 select-none">
+              <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase mb-2 block">Vagas de Segmentos</span>
+              <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                Categorias Oficiais e Vagas
+              </h2>
+              <p className="text-sm text-white/65 mt-3 leading-relaxed max-w-xl">
+                {appData.sections.segments.highlight} Garantimos exclusividade categórica em algumas categorias para parceiros masters, confira o andamento:
+              </p>
+
+              {/* Table display segments */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
+                {appData.segmentsList.map(seg => (
+                  <div 
+                    key={seg.name} 
+                    className="bg-[#0f1016]/40 border border-white/5 rounded-2xl p-4 flex justify-between items-center hover:bg-black/50 transition-all duration-200"
+                  >
+                    <div>
+                      <h4 className="text-sm font-extrabold text-white">{seg.name}</h4>
+                      <p className="text-[10px] text-white/45 mt-1 uppercase font-mono font-bold">{seg.status === "Ocupado" ? "Sponsor Exclusivo" : "Categoria Livre"}</p>
+                    </div>
+                    <span className={`text-[9px] font-black tracking-widest uppercase px-2.5 py-1 rounded-full ${seg.status === "Ocupado" ? 'bg-amber-950/80 text-amber-500 border border-amber-500/20' : 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/20'}`}>
+                      {seg.status}
+                    </span>
+                  </div>
                 ))}
               </div>
-              <audio key={universalConfig.radioLink || appData.siteInfo.radioLink} controls style={{ height: '35px', filter: 'invert(1) brightness(1.5)', opacity: 0.8 }}>
-                <source src={universalConfig.radioLink || appData.siteInfo.radioLink} type="audio/mpeg" />
-              </audio>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Flyers Carousel */}
-      <section>
-        <div className="container"><div className="section-header"><span className="section-tag">{appData.sections.flyers.tag}</span></div></div>
-        <div className="carousel-wrapper">
-          <div className="carousel-track" style={{ animationDuration: `${universalConfig.flyerSpeed || 180}s` }}>
-            <div className="track-copy">
-              {visibleFlyers.map((flyer: any, i: number) => (
-                <div key={i} className="flyer-item">
-                  <div className="flyer-inner">
-                    <img src={typeof flyer === 'string' ? flyer : flyer?.image} alt="Flyer" className="flyer-img" referrerPolicy="no-referrer" />
-                  </div>
-                  {(typeof flyer === 'object' && flyer?.link) && (
-                    <a href={getWaLinkWithReferral(flyer.link)} target="_blank" rel="noreferrer" className="flyer-action-btn">
-                      MAIS INFORMAÇÕES
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="track-copy duplicate">
-              {visibleFlyers.map((flyer: any, i: number) => (
-                <div key={`${i}-dup`} className="flyer-item">
-                  <div className="flyer-inner">
-                    <img src={typeof flyer === 'string' ? flyer : flyer?.image} alt="Flyer" className="flyer-img" referrerPolicy="no-referrer" />
-                  </div>
-                  {(typeof flyer === 'object' && flyer?.link) && (
-                    <a href={getWaLinkWithReferral(flyer.link)} target="_blank" rel="noreferrer" className="flyer-action-btn">
-                      MAIS INFORMAÇÕES
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How to Advertise */}
-      <section className="container" id="anuncie">
-        <div className="how-to-section">
-          <div className="section-header">
-            <span className="section-tag">{appData.sections.howTo.tag}</span>
-            <h2 className="section-title">{appData.sections.howTo.title}</h2>
-          </div>
-          <div className="steps-grid">
-            <div className="step-card">
-              <div className="step-number">1</div>
-              <p className="step-text">Envie seus dados pelo WhatsApp</p>
-            </div>
-            <div className="step-card">
-              <div className="step-number">2</div>
-              <p className="step-text">Sua empresa é divulgada no mesmo dia em nossa plataforma e redes sociais</p>
-            </div>
-            <div className="step-card">
-              <div className="step-number">3</div>
-              <p className="step-text">Divulgação 24 horas, 7 dias por semana em nossa plataforma</p>
-            </div>
-          </div>
-          <div style={{ textAlign: 'center', marginTop: '60px' }}>
-            <a href={getWaLinkWithReferral(appData.pricing.waLink)} target="_blank" className="cta-button">ANUNCIAR AGORA</a>
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits */}
-      <section className="container" style={{ background: 'rgba(255,255,255,0.02)', padding: '100px 0' }}>
-        <div className="section-header">
-          <span className="section-tag">{appData.sections.benefits.tag}</span>
-          <h2 className="section-title">{appData.sections.benefits.title}</h2>
-        </div>
-        <div className="benefits-grid">
-          <div className="benefit-card">
-            <div className="benefit-icon">📺</div>
-            <h4 className="benefit-title">TV Online 24h</h4>
-            <p className="benefit-desc">Sua marca em exibição contínua na nossa TV de comerciais.</p>
-          </div>
-          <div className="benefit-card">
-            <div className="benefit-icon">📻</div>
-            <h4 className="benefit-title">Rádio Online</h4>
-            <p className="benefit-desc">Divulgação em áudio na rádio oficial da plataforma.</p>
-          </div>
-          <div className="benefit-card">
-            <div className="benefit-icon">📱</div>
-            <h4 className="benefit-title">Card no Site</h4>
-            <p className="benefit-desc">Página exclusiva com todas as informações da sua empresa.</p>
-          </div>
-          <div className="benefit-card">
-            <div className="benefit-icon">🔍</div>
-            <h4 className="benefit-title">Buscas Internas</h4>
-            <p className="benefit-desc">Sua empresa encontrada facilmente pelos visitantes.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Segments */}
-      <section className="container">
-        <div className="section-header">
-          <span className="section-tag">{appData.sections.segments.tag}</span>
-          <h2 className="section-title" style={{ marginBottom: '20px' }}>{appData.sections.segments.title}</h2>
-          <div style={{ maxWidth: '700px', margin: '0 auto 40px' }}>
-            <p style={{ color: '#fbbf24', opacity: 0.8, fontWeight: 700, fontSize: '1.1rem', marginBottom: '10px' }}>{appData.sections.segments.highlight}</p>
-            <p style={{ color: '#fbbf24', fontWeight: 900, fontSize: '1.3rem', textTransform: 'uppercase' }}>{appData.sections.segments.callToAction}</p>
-          </div>
-        </div>
-        <div className="segmentos-grid">
-          {appData.segmentsList.map(seg => (
-            <div key={seg.name} className="segmento-card">
-              <div className="segmento-info">
-                <h4>{seg.name}</h4>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>{seg.status === "Ocupado" ? "Empresa oficial da categoria" : "Vaga em aberto"}</p>
-              </div>
-              <div className={`status-badge ${seg.status === "Ocupado" ? "status-ocupado" : "status-disponivel"}`}>
-                {seg.status}
+              <div className="mt-8 bg-black/40 border border-white/5 rounded-2xl p-4.5">
+                <span className="text-xs text-[var(--primary)] font-black uppercase tracking-widest font-mono">
+                  ⚡ {appData.sections.segments.callToAction || 'Anuncie para dominar seu segmento comercial!'}
+                </span>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
 
-      {/* Pricing */}
-      <section className="container" id="anuncie">
-        <div className="pricing-card">
-          <div className="pricing-badge">{appData.pricing.badge}</div>
-          <h3 style={{ fontSize: '1.8rem', fontWeight: 900 }}>{appData.pricing.title}</h3>
-          <div className="price-tag">R$ {appData.pricing.price}<span>{appData.pricing.period}</span></div>
-          <ul className="pricing-list">
-            {appData.pricing.features.map((f, i) => <li key={i}>{f}</li>)}
-          </ul>
-          <a href={getWaLinkWithReferral(appData.pricing.waLink)} target="_blank" className="cta-button" style={{ width: '100%' }}>{appData.pricing.cta}</a>
-        </div>
-      </section>
+            {/* Highlight Pricing Card - Right Column */}
+            <div className="lg:col-span-5">
+              <div className="relative bg-gradient-to-b from-[#11111a] to-[#04050a] border-2 border-[var(--primary)] rounded-3xl p-8 md:p-10 shadow-2xl relative mt-4 lg:mt-0">
+                
+                {/* badge */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[var(--primary)] text-black px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase shadow-lg shadow-black/25 select-none font-sans">
+                  {appData.pricing.badge || 'Plano de Alta Conversão'}
+                </div>
 
-      {/* Testimonials */}
-      <section style={{ background: '#080808' }}>
-        <div className="container"><div className="section-header"><span className="section-tag">Depoimentos</span><h2 className="section-title" style={{ marginTop: '10px' }}>O QUE DIZEM NOSSOS PARCEIROS</h2></div></div>
-        <div className="carousel-wrapper">
-          <div className="carousel-track" style={{ animationDuration: `${universalConfig.testimonialSpeed || 120}s` }}>
-            <div className="track-copy">
-              {appData.testimonials.map((t, i) => (
-                <div key={i} className="testimonial-card">
-                  <p className="testimonial-content">"{t.content}"</p>
-                  <div className="testimonial-author">
-                    <img src={t.avatar} alt={t.author} className="author-avatar" referrerPolicy="no-referrer" />
-                    <div className="author-info">
-                      <h5>{t.author}</h5>
-                      <p>{t.role}</p>
-                    </div>
-                  </div>
+                <span className="text-[9px] text-white/50 tracking-widest font-mono uppercase text-center block mb-3 select-none">
+                  Pacote de Mídia Integrada
+                </span>
+                <h3 className="text-xl md:text-2xl font-black text-white text-center select-none">{appData.pricing.title}</h3>
+                
+                {/* Price tag */}
+                <div className="flex items-baseline justify-center gap-1 text-[#fbbf24] mt-6 select-none font-sans">
+                  <span className="text-2xl font-bold font-mono">R$</span>
+                  <span className="text-5xl md:text-6xl font-black tracking-tight">{appData.pricing.price}</span>
+                  <span className="text-xs font-bold text-white/50 uppercase ml-1">/ {appData.pricing.period}</span>
                 </div>
-              ))}
-            </div>
-            <div className="track-copy duplicate">
-              {appData.testimonials.map((t, i) => (
-                <div key={`${i}-dup`} className="testimonial-card">
-                  <p className="testimonial-content">"{t.content}"</p>
-                  <div className="testimonial-author">
-                    <img src={t.avatar} alt={t.author} className="author-avatar" referrerPolicy="no-referrer" />
-                    <div className="author-info">
-                      <h5>{t.author}</h5>
-                      <p>{t.role}</p>
-                    </div>
-                  </div>
+
+                {/* Feature List */}
+                <ul className="flex flex-col gap-3.5 mt-8 border-t border-white/5 pt-8 select-none">
+                  {appData.pricing.features.map((feat: string, i: number) => (
+                    <li key={i} className="flex items-start gap-2 text-xs font-semibold text-white/70">
+                      <span className="text-emerald-400 mt-0.5"><Check size={14} /></span>
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* CTA action */}
+                <a 
+                  href={getWaLinkWithReferral(appData.pricing.waLink)} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="w-full block text-center bg-[var(--primary)] hover:brightness-110 text-black py-4 rounded-2xl font-extrabold text-xs uppercase tracking-widest shadow-xl shadow-[rgb(251,191,36)]/10 mt-8 transition-all duration-300"
+                >
+                  {appData.pricing.cta}
+                </a>
+
+                {/* Moneyback indicator secure */}
+                <div className="flex items-center justify-center gap-2 mt-5 text-[10px] text-white/40 tracking-wider font-semibold select-none">
+                  <span>🚀 Liberação e ativação no mesmo dia</span>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* WhatsApp Print Testimonials Marquee/Carousel */}
-        {visibleWhatsappTestimonials && visibleWhatsappTestimonials.length > 0 && (
-          <div className="carousel-wrapper" style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px dashed rgba(255,255,255,0.08)' }}>
-            <div className="container" style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#25D366' }}></span>
-              <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#25D366', letterSpacing: '1px', textTransform: 'uppercase', fontFamily: 'monospace' }}>
-                DEPOIMENTOS DOS PARCEIROS NO WHATSAPP (CLIQUE PARA VER MAIOR)
-              </span>
-            </div>
-            <div className="carousel-track" style={{ animationDuration: `${universalConfig.whatsappTestimonialSpeed || 80}s`, display: 'flex' }}>
-              <div className="track-copy" style={{ display: 'flex', gap: '25px', alignItems: 'center' }}>
+      {/* Partner Outcomes and Reviews */}
+      <section id="depoimentos" className="w-full py-16 md:py-24 bg-[#050508] border-b border-white/5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-radial-gradient from-emerald-500/5 via-transparent to-transparent opacity-40 pointer-events-none" />
+        <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6">
+          
+          {/* Section Header */}
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16 select-none">
+            <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase">Resultados Reais</span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">
+              O que nossos clientes dizem
+            </h2>
+            <p className="text-sm text-white/50 mt-3">
+              Confira os depoimentos e satisfação de quem já divulga sua marca no nosso portal comercial diariamente.
+            </p>
+          </div>
+
+          {/* Written reviews carousel track / grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 select-none">
+            {appData.testimonials.map((t, idx) => (
+              <div 
+                key={idx}
+                className="bg-[#0f1016] border border-white/5 rounded-3xl p-6 flex flex-col justify-between hover:border-white/10 transition-colors"
+              >
+                <div>
+                  {/* Stars indicator rating */}
+                  <div className="flex gap-1 text-amber-400 mb-5">
+                    {[...Array(5)].map((_, i) => <Star key={i} size={14} fill="currentColor" />)}
+                  </div>
+                  <p className="text-xs sm:text-sm text-white/70 italic leading-relaxed font-semibold">"{t.content}"</p>
+                </div>
+
+                {/* Author details card */}
+                <div className="flex items-center gap-3.5 mt-6 border-t border-white/5 pt-5">
+                  <img src={t.avatar} alt={t.author} className="w-10 h-10 rounded-full object-cover border border-white/10" referrerPolicy="no-referrer" />
+                  <div>
+                    <h5 className="text-xs font-extrabold text-white">{t.author}</h5>
+                    <p className="text-[10px] text-white/40 tracking-wider uppercase font-bold mt-0.5">{t.role || 'Parceiro'}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* WhatsApp Screenshots gallery */}
+          {visibleWhatsappTestimonials && visibleWhatsappTestimonials.length > 0 && (
+            <div className="mt-14 pt-12 border-t border-white/5 select-none">
+              <div className="flex items-center gap-2 mb-8 justify-center sm:justify-start">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#25D366] animate-pulse" />
+                <h4 className="text-xs font-black text-[#25D366] tracking-widest uppercase font-mono text-center sm:text-left">
+                  Comprovações do WhatsApp (Clique para ampliar)
+                </h4>
+              </div>
+
+              <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-white/10">
                 {visibleWhatsappTestimonials.map((wt: any, idx: number) => {
                   const imgUrl = typeof wt === 'string' ? wt : wt?.image;
                   if (!imgUrl) return null;
                   return (
                     <div 
                       key={idx} 
-                      className="whatsapp-testimonial-card" 
-                      style={{ flexShrink: 0, cursor: 'zoom-in', transition: 'all 0.3s ease' }}
+                      className="flex-shrink-0 cursor-zoom-in group" 
                       onClick={() => setSelectedTestimonialImage(imgUrl)}
                     >
                       <img 
                         src={imgUrl} 
                         alt="Depoimento WhatsApp" 
-                        style={{ 
-                          height: '240px', 
-                          borderRadius: '12px', 
-                          border: '2px solid rgba(255,255,255,0.1)',
-                          boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
-                          objectFit: 'contain',
-                          background: '#111'
-                        }} 
-                        referrerPolicy="no-referrer" 
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="track-copy duplicate" style={{ display: 'flex', gap: '25px', alignItems: 'center' }}>
-                {visibleWhatsappTestimonials.map((wt: any, idx: number) => {
-                  const imgUrl = typeof wt === 'string' ? wt : wt?.image;
-                  if (!imgUrl) return null;
-                  return (
-                    <div 
-                      key={`${idx}-dup`} 
-                      className="whatsapp-testimonial-card" 
-                      style={{ flexShrink: 0, cursor: 'zoom-in', transition: 'all 0.3s ease' }}
-                      onClick={() => setSelectedTestimonialImage(imgUrl)}
-                    >
-                      <img 
-                        src={imgUrl} 
-                        alt="Depoimento WhatsApp" 
-                        style={{ 
-                          height: '240px', 
-                          borderRadius: '12px', 
-                          border: '2px solid rgba(255,255,255,0.1)',
-                          boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
-                          objectFit: 'contain',
-                          background: '#111'
-                        }} 
+                        className="h-56 sm:h-64 rounded-2xl border border-white/10 group-hover:border-[#25D366]/40 transition-all duration-300 shadow-xl object-contain bg-[#111116] p-1.5"
                         referrerPolicy="no-referrer" 
                       />
                     </div>
@@ -2029,113 +2566,92 @@ function AppContent() {
                 })}
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Lightbox Zoom Modal */}
-        {selectedTestimonialImage && (
-          <div 
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              width: '100vw',
-              height: '100vh',
-              background: 'rgba(0, 0, 0, 0.92)',
-              zIndex: 100000,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'zoom-out'
-            }}
-            onClick={() => setSelectedTestimonialImage(null)}
-          >
-            <button 
+          {/* Testimonial Zoom lightbox overlay */}
+          {selectedTestimonialImage && (
+            <div 
               style={{
-                position: 'absolute',
-                top: '20px',
-                right: '25px',
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: 'none',
-                color: '#fff',
-                fontSize: '24px',
-                width: '50px',
-                height: '50px',
-                borderRadius: '50%',
-                cursor: 'pointer',
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                background: 'rgba(0, 0, 0, 0.95)',
+                zIndex: 100000,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-                fontWeight: 'bold',
-                zIndex: 100002
+                cursor: 'zoom-out'
               }}
               onClick={() => setSelectedTestimonialImage(null)}
             >
-              ✕
-            </button>
-            <img 
-              src={selectedTestimonialImage} 
-              alt="Depoimento WhatsApp Ampliado" 
-              style={{
-                maxWidth: '90%',
-                maxHeight: '85%',
-                border: '3px solid rgba(255, 255, 255, 0.15)',
-                borderRadius: '16px',
-                boxShadow: '0 12px 48px rgba(0,0,0,0.9)',
-                objectFit: 'contain'
-              }}
-              referrerPolicy="no-referrer"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-        )}
+              <button 
+                type="button"
+                className="absolute top-6 right-6 bg-white/10 hover:bg-white/20 text-white font-bold w-12 h-12 rounded-full flex items-center justify-center border-none cursor-pointer text-lg z-50 animate-pulse"
+                onClick={() => setSelectedTestimonialImage(null)}
+              >
+                ✕
+              </button>
+              <img 
+                src={selectedTestimonialImage} 
+                alt="Depoimento WhatsApp Ampliado" 
+                className="max-w-[90%] max-h-[80%] rounded-2xl border border-white/15 shadow-2xl object-contain bg-black"
+                onClick={(e) => e.stopPropagation()}
+                referrerPolicy="no-referrer"
+              />
+            </div>
+          )}
+
+        </div>
       </section>
 
-      {/* Footer */}
-      <footer>
-        <div className="container">
-          <div className="footer-grid">
-            <div className="footer-col" style={{ gridColumn: 'span 2' }}>
-               <h4 style={{ color: 'var(--primary)', fontWeight: 900 }}>{appData.siteInfo.name} {appData.siteInfo.suffix}</h4>
-               <p>{appData.siteInfo.description}</p>
-               
-               <div style={{ marginTop: '25px', display: 'flex', gap: '30px', alignItems: 'center', padding: '15px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', width: 'fit-content', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: '0.65rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px', fontWeight: 700 }}>Total de Acessos</div>
-                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--primary)', fontFamily: 'monospace' }}>{(universalConfig.totalVisits || 1200).toLocaleString()}</div>
-                  </div>
-                  <div style={{ width: '1px', height: '30px', background: 'rgba(255,255,255,0.1)' }}></div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: '0.65rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px', fontWeight: 700 }}>Online Agora</div>
-                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#25D366', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'monospace' }}>
-                        <motion.div 
-                          animate={{ opacity: [1, 0.4, 1] }} 
-                          transition={{ repeat: Infinity, duration: 2 }}
-                          style={{ width: '8px', height: '8px', background: '#25D366', borderRadius: '50%', boxShadow: '0 0 10px rgba(37, 211, 102, 0.6)' }} 
-                        />
-                        {onlineCount}
-                    </div>
-                  </div>
-               </div>
+      {/* Footer Section design */}
+      <footer className="bg-black border-t border-white/5 pt-16 pb-24 text-white select-none">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+            
+            {/* About column */}
+            <div className="md:col-span-6 flex flex-col gap-4">
+              <img 
+                src="https://i.postimg.cc/nVdYndYd" 
+                alt="Minha Divulgação" 
+                className="h-10 md:h-12 w-auto object-contain self-start" 
+                referrerPolicy="no-referrer"
+                onError={(e) => { e.currentTarget.src = "https://i.postimg.cc/nVdYndN2/minha-divulgacao-png.png" }}
+              />
+              <p className="text-xs text-white/50 max-w-sm leading-relaxed mt-2">
+                {appData.siteInfo.description || 'O melhor canal de divulgação comercial e entretenimento da região.'}
+              </p>
 
-               <div className="social-links" style={{ marginTop: '20px' }}>
-                <a href={appData.siteInfo.social.fb} target="_blank" className="social-icon fb">FB</a>
-                <a href={appData.siteInfo.social.ig} target="_blank" className="social-icon ig">IG</a>
-                <a href={getWaLinkWithReferral(appData.siteInfo.social.wa)} target="_blank" className="social-icon wa">WA</a>
+              {/* Social icons */}
+              <div className="flex gap-3.5 mt-4">
+                <a href={appData.siteInfo.social.fb} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 hover:border-blue-500 hover:text-blue-500 flex items-center justify-center transition-all text-xs font-black font-mono">FB</a>
+                <a href={appData.siteInfo.social.ig} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 hover:border-pink-500 hover:text-pink-500 flex items-center justify-center transition-all text-xs font-black font-mono">IG</a>
+                <a href={getWaLinkWithReferral(appData.siteInfo.social.wa)} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-xl bg-[#25D366] hover:brightness-110 flex items-center justify-center transition-all text-xs font-black font-mono text-white">WA</a>
               </div>
             </div>
-            <div className="footer-col">
-              <h4>CONTATO</h4>
-              <p>{appData.siteInfo.phone}</p>
-              <p>{appData.siteInfo.address}</p>
+
+            {/* Contact column */}
+            <div className="md:col-span-3 flex flex-col gap-3 text-xs text-white/70">
+              <h4 className="text-sm font-extrabold text-white uppercase tracking-wider mb-2">Comercial</h4>
+              <p className="font-semibold">{appData.siteInfo.phone}</p>
+              <p className="leading-relaxed leading-5 mt-1">{appData.siteInfo.address}</p>
             </div>
-            <div className="footer-col">
-              <h4>LEGAL</h4>
-              <p>CNPJ: {appData.siteInfo.cnpj}</p>
+
+            {/* Legal info column */}
+            <div className="md:col-span-3 flex flex-col gap-3 text-xs text-white/70">
+              <h4 className="text-sm font-extrabold text-white uppercase tracking-wider mb-2">Informações</h4>
+              <p className="font-semibold">CNPJ: {appData.siteInfo.cnpj}</p>
+              <p className="leading-relaxed leading-5 mt-1">Desenvolvido por Bossa Infor. Todos os direitos reservados.</p>
             </div>
+
           </div>
-          <p style={{ textAlign: 'center', marginTop: '40px', color: '#444', fontSize: '0.8rem' }}>&copy; 2026 Desenvolvido por Bossa Infor. Todos os direitos reservados.</p>
+
+          <div className="w-full border-t border-white/5 mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-white/40">
+            <span>&copy; {new Date().getFullYear()} {appData.siteInfo.name} - Todos os direitos reservados.</span>
+            <span>Estúdio Comercial Integrado</span>
+          </div>
         </div>
       </footer>
 
@@ -3209,12 +3725,8 @@ function AppContent() {
                           const codeInput = prompt("Código/Slug do Link (ex: joao)?");
                           
                           if (!nameInput || !codeInput) return;
-                          if (!tenantId) {
-                            alert("Erro: ID da cidade não detectado.");
-                            return;
-                          }
 
-                          const tid = slugify(tenantId);
+                          const tid = slugify(tenantId || 'fortaleza');
                           const slug = slugify(codeInput);
                           const affDoc = doc(db, 'tenants', tid, 'affiliates', slug);
                           
@@ -3256,118 +3768,125 @@ function AppContent() {
                         {!affiliates || affiliates.length === 0 ? (
                           <p style={{ color: '#555', fontSize: '0.8rem' }}>Nenhum divulgador cadastrado ainda.</p>
                         ) : (
-                          affiliates.map((aff, i) => (
-                              <div key={aff.code} className="dev-item-card">
-                                <button className="dev-remove-btn" onClick={async () => {
-                                  if (confirm(`Excluir divulgador ${aff.name}?`)) {
-                                    try {
-                                      const tid = slugify(tenantId!);
-                                      const pass = localStorage.getItem('tenantPass');
-                                      const docRef = doc(db, 'tenants', tid, 'affiliates', aff.id || aff.code);
-                                      
-                                      // Tenta deletar. Se falhar por ser cadastro antigo (sem campo _auth), 
-                                      // a gente "conserta" o doc com a senha e deleta de novo.
+                          affiliates.map((aff, i) => {
+                              const cleanTenantId = tenantId || 'fortaleza';
+                              const affLink = cleanTenantId === 'fortaleza' 
+                                ? `${window.location.origin}/?ref=${aff.code}` 
+                                : `${window.location.origin}/#/${cleanTenantId}?ref=${aff.code}`;
+
+                              return (
+                                <div key={aff.code} className="dev-item-card">
+                                  <button className="dev-remove-btn" onClick={async () => {
+                                    if (confirm(`Excluir divulgador ${aff.name}?`)) {
                                       try {
-                                        await deleteDoc(docRef);
-                                      } catch (e) {
-                                        if (pass) {
-                                          await updateDoc(docRef, { _auth: pass });
+                                        const tid = slugify(tenantId || 'fortaleza');
+                                        const pass = localStorage.getItem('tenantPass');
+                                        const docRef = doc(db, 'tenants', tid, 'affiliates', aff.id || aff.code);
+                                        
+                                        // Tenta deletar. Se falhar por ser cadastro antigo (sem campo _auth), 
+                                        // a gente "conserta" o doc com a senha e deleta de novo.
+                                        try {
                                           await deleteDoc(docRef);
-                                        } else {
-                                          throw e;
+                                        } catch (e) {
+                                          if (pass) {
+                                            await updateDoc(docRef, { _auth: pass });
+                                            await deleteDoc(docRef);
+                                          } else {
+                                            throw e;
+                                          }
                                         }
+                                        
+                                        setAffiliates(prev => prev.filter(item => (item.id || item.code) !== (aff.id || aff.code)));
+                                      } catch (err: any) {
+                                        console.error("Erro ao excluir:", err);
+                                        alert("Erro ao excluir: " + err.message);
                                       }
-                                      
-                                      setAffiliates(prev => prev.filter(item => (item.id || item.code) !== (aff.id || aff.code)));
-                                    } catch (err: any) {
-                                      console.error("Erro ao excluir:", err);
-                                      alert("Erro ao excluir: " + err.message);
                                     }
-                                  }
-                                }}>✕</button>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
-                                  <div>
-                                    <h4 style={{ color: 'var(--primary)', margin: 0 }}>{aff.name}</h4>
-                                    <code style={{ fontSize: '10px', color: '#888' }}>Código: {aff.code}</code>
+                                  }}>✕</button>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
+                                    <div>
+                                      <h4 style={{ color: 'var(--primary)', margin: 0 }}>{aff.name}</h4>
+                                      <code style={{ fontSize: '10px', color: '#888' }}>Código: {aff.code}</code>
+                                    </div>
+                                    <div style={{ background: 'rgba(37, 211, 102, 0.1)', color: '#25D366', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 900 }}>
+                                      {aff.commission} de Comissão
+                                    </div>
                                   </div>
-                                  <div style={{ background: 'rgba(37, 211, 102, 0.1)', color: '#25D366', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 900 }}>
-                                    {aff.commission} de Comissão
+     
+                                  <div style={{ background: '#080808', padding: '10px', borderRadius: '8px', border: '1px solid #222', marginBottom: '15px' }}>
+                                     <div style={{ fontSize: '10px', color: '#555', marginBottom: '5px' }}>Link para Divulgar:</div>
+                                     <div style={{ fontSize: '11px', color: '#4285F4', wordBreak: 'break-all' }}>
+                                       {affLink}
+                                     </div>
+                                     <button 
+                                       className="dev-btn" 
+                                       style={{ marginTop: '10px', width: '100%', fontSize: '11px', padding: '6px' }}
+                                       onClick={() => {
+                                         navigator.clipboard.writeText(affLink);
+                                         alert("Link copiado!");
+                                       }}
+                                     >
+                                       Copiar Link
+                                     </button>
                                   </div>
-                                </div>
-    
-                                <div style={{ background: '#080808', padding: '10px', borderRadius: '8px', border: '1px solid #222', marginBottom: '15px' }}>
-                                   <div style={{ fontSize: '10px', color: '#555', marginBottom: '5px' }}>Link para Divulgar:</div>
-                                   <div style={{ fontSize: '11px', color: '#4285F4', wordBreak: 'break-all' }}>
-                                     {window.location.origin}/#/{tenantId}?ref={aff.code}
-                                   </div>
-                                   <button 
-                                     className="dev-btn" 
-                                     style={{ marginTop: '10px', width: '100%', fontSize: '11px', padding: '6px' }}
-                                     onClick={() => {
-                                       navigator.clipboard.writeText(`${window.location.origin}/#/${tenantId}?ref=${aff.code}`);
-                                       alert("Link copiado!");
-                                     }}
-                                   >
-                                     Copiar Link
-                                   </button>
-                                </div>
-    
-                                <div className="dev-grid-2" style={{ gap: '10px' }}>
-                                   <div style={{ background: '#111', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
-                                      <div style={{ fontSize: '10px', color: '#666' }}>CLIQUES</div>
-                                      <div style={{ fontWeight: 900, color: '#fff' }}>{aff.clicks || 0}</div>
-                                   </div>
-                                   <div style={{ background: '#111', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
-                                      <div style={{ fontSize: '10px', color: '#666' }}>VENDAS</div>
-                                      <div style={{ fontWeight: 900, color: '#fbbf24' }}>{aff.sales || 0}</div>
-                                   </div>
-                                </div>
-    
-                                <div className="dev-form-group" style={{ marginTop: '15px' }}>
-                                  <label>Ajustar Comissão / WhatsApp</label>
+     
                                   <div className="dev-grid-2" style={{ gap: '10px' }}>
-                                    <input 
-                                      type="text" 
-                                      className="dev-input" 
-                                      value={aff.commission} 
-                                      placeholder="20%"
-                                      onChange={async (e) => {
-                                        const val = e.target.value;
-                                        const tid = slugify(tenantId!);
-                                        setAffiliates(prev => {
-                                          const newList = [...prev];
-                                          newList[i] = { ...newList[i], commission: val };
-                                          return newList;
-                                        });
-                                        await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
-                                          commission: val,
-                                          _auth: localStorage.getItem('tenantPass')
-                                        });
-                                      }}
-                                    />
-                                    <input 
-                                      type="text" 
-                                      className="dev-input" 
-                                      value={aff.whatsapp || ''} 
-                                      placeholder="WhatsApp"
-                                      onChange={async (e) => {
-                                        const val = e.target.value;
-                                        const tid = slugify(tenantId!);
-                                        setAffiliates(prev => {
-                                          const newList = [...prev];
-                                          newList[i] = { ...newList[i], whatsapp: val };
-                                          return newList;
-                                        });
-                                        await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
-                                          whatsapp: val,
-                                          _auth: localStorage.getItem('tenantPass')
-                                        });
-                                      }}
-                                    />
+                                     <div style={{ background: '#111', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
+                                        <div style={{ fontSize: '10px', color: '#666' }}>CLIQUES</div>
+                                        <div style={{ fontWeight: 900, color: '#fff' }}>{aff.clicks || 0}</div>
+                                     </div>
+                                     <div style={{ background: '#111', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
+                                        <div style={{ fontSize: '10px', color: '#666' }}>VENDAS</div>
+                                        <div style={{ fontWeight: 900, color: '#fbbf24' }}>{aff.sales || 0}</div>
+                                     </div>
+                                  </div>
+     
+                                  <div className="dev-form-group" style={{ marginTop: '15px' }}>
+                                    <label>Ajustar Comissão / WhatsApp</label>
+                                    <div className="dev-grid-2" style={{ gap: '10px' }}>
+                                      <input 
+                                        type="text" 
+                                        className="dev-input" 
+                                        value={aff.commission} 
+                                        placeholder="20%"
+                                        onChange={async (e) => {
+                                          const val = e.target.value;
+                                          const tid = slugify(tenantId || 'fortaleza');
+                                          setAffiliates(prev => {
+                                            const newList = [...prev];
+                                            newList[i] = { ...newList[i], commission: val };
+                                            return newList;
+                                          });
+                                          await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
+                                            commission: val,
+                                            _auth: localStorage.getItem('tenantPass')
+                                          });
+                                        }}
+                                      />
+                                      <input 
+                                        type="text" 
+                                        className="dev-input" 
+                                        value={aff.whatsapp || ''} 
+                                        placeholder="WhatsApp"
+                                        onChange={async (e) => {
+                                          const val = e.target.value;
+                                          const tid = slugify(tenantId || 'fortaleza');
+                                          setAffiliates(prev => {
+                                            const newList = [...prev];
+                                            newList[i] = { ...newList[i], whatsapp: val };
+                                            return newList;
+                                          });
+                                          await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
+                                            whatsapp: val,
+                                            _auth: localStorage.getItem('tenantPass')
+                                          });
+                                        }}
+                                      />
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            ))
+                              );
+                          })
                           )}
                         </div>
                       )}
