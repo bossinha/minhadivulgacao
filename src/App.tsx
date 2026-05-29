@@ -880,6 +880,44 @@ function AppContent() {
     }
   };
 
+  const latestAnunciantesRef = useRef<HTMLDivElement>(null);
+
+  const scrollLatest = (direction: 'left' | 'right') => {
+    if (latestAnunciantesRef.current) {
+      const scrollAmount = 340;
+      latestAnunciantesRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  useEffect(() => {
+    const container = latestAnunciantesRef.current;
+    if (!container) return;
+
+    let isHovering = false;
+
+    const handleMouseEnter = () => { isHovering = true; };
+    const handleMouseLeave = () => { isHovering = false; };
+
+    container.addEventListener('mouseenter', handleMouseEnter);
+    container.addEventListener('mouseleave', handleMouseLeave);
+
+    const interval = setInterval(() => {
+      if (isHovering) return;
+      const { scrollLeft, scrollWidth, clientWidth } = container;
+      if (scrollLeft + clientWidth >= scrollWidth - 15) {
+        container.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        container.scrollBy({ left: 340, behavior: 'smooth' });
+      }
+    }, 4500);
+
+    return () => {
+      container.removeEventListener('mouseenter', handleMouseEnter);
+      container.removeEventListener('mouseleave', handleMouseLeave);
+      clearInterval(interval);
+    };
+  }, [appData?.companies]);
+
   const handleCategoryClick = (categoryName: string | null) => {
     setSelectedCategory(categoryName);
     // Smooth scroll to results
@@ -2252,26 +2290,48 @@ function AppContent() {
               </div>
             </div>
 
-            {/* 4. SEÇÃO: ÚLTIMOS ANUNCIANTES */}
+            {/* 4. SEÇÃO: ÚLTIMOS ANUNCIANTES (CARROSSEL EM MOVIMENTO) */}
             <div>
               <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 gap-4">
                 <div>
-                  <span className="text-emerald-400 text-xs font-black font-mono tracking-[0.2em] uppercase">NOVOS MEMBROS</span>
-                  <h3 className="text-2xl sm:text-3.5xl font-sans font-extrabold text-white tracking-tight mt-1">
+                  <span className="text-emerald-400 text-xs font-black font-mono tracking-[0.2em] uppercase">PLATAFORMA EM CONSTANTE CRESCIMENTO</span>
+                  <h3 className="text-2xl sm:text-3.5xl font-sans font-extrabold text-white tracking-tight mt-1 flex items-center gap-2">
                     🆕 Últimos Anunciantes Integrados
                   </h3>
                 </div>
-                <p className="text-xs sm:text-sm text-white/50 max-w-sm">
-                  As mais recentes marcas locais de alta relevância a iniciarem sua campanha de mídia em nosso portal de anúncios.
-                </p>
+                <div className="flex items-center gap-4 justify-between md:justify-end w-full md:w-auto">
+                  <p className="text-xs sm:text-sm text-white/50 max-w-sm hidden sm:block">
+                    Iniciando a sua campanha de mídia inteligente semanal em nosso portal.
+                  </p>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => scrollLatest('left')} 
+                      className="p-2.5 rounded-full bg-white/5 border border-white/5 hover:border-[var(--primary)] text-white hover:text-[var(--primary)] transition-all duration-300 active:scale-95"
+                      aria-label="Voltar"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <button 
+                      onClick={() => scrollLatest('right')} 
+                      className="p-2.5 rounded-full bg-white/5 border border-white/5 hover:border-[var(--primary)] text-white hover:text-[var(--primary)] transition-all duration-300 active:scale-95"
+                      aria-label="Avançar"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              {/* Grid of latest companies */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {(appData.companies || []).slice(0, 4).map((company: any) => (
+              {/* Responsive Carousel Track with Snap Alignment */}
+              <div 
+                ref={latestAnunciantesRef}
+                className="flex gap-6 overflow-x-auto pb-6 scrollbar-hide snap-x snap-mandatory scroll-smooth"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {(appData.companies || []).map((company: any) => (
                   <div 
                     key={company.id} 
-                    className="relative bg-gradient-to-b from-[#0f1016]/80 to-[#07070b] border border-white/5 hover:border-white/20 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1.5 transition-all duration-300 shadow-xl select-none group"
+                    className="flex-shrink-0 w-[280px] sm:w-[315px] snap-start relative bg-gradient-to-b from-[#0f1016]/80 to-[#07070b] border border-white/5 hover:border-[var(--primary)]/20 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1.5 transition-all duration-300 shadow-xl select-none group"
                   >
                     <div>
                       {/* Logo Frame */}
@@ -2283,7 +2343,7 @@ function AppContent() {
                         {company.category}
                       </span>
 
-                      <h4 className="text-sm font-extrabold text-white mt-4">{company.name}</h4>
+                      <h4 className="text-sm font-extrabold text-white mt-4 group-hover:text-[var(--primary)] transition-colors duration-200">{company.name}</h4>
                       <p className="text-[11px] text-white/45 mt-1.5 leading-relaxed min-h-[2.5rem] line-clamp-2">{company.desc || 'Parceiro local ativo na rede de anúncios.'}</p>
                     </div>
 
@@ -2291,7 +2351,7 @@ function AppContent() {
                       href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu comércio no portal ${appData.siteInfo.name}!`)}`} 
                       target="_blank" 
                       rel="noreferrer"
-                      className="w-full mt-6 bg-white/5 hover:bg-white/10 text-white border border-white/10 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300"
+                      className="w-full mt-6 bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-[var(--primary)] py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300"
                     >
                       <Smartphone size={12} /> WhatsApp Comercial
                     </a>
