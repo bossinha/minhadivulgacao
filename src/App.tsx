@@ -1984,7 +1984,7 @@ function AppContent() {
                   </span>
 
                   <div 
-                    className="relative w-full max-w-[320px] aspect-[3/4.2] rounded-3xl overflow-hidden border-2 border-white/10 shadow-[0_15px_45px_rgba(0,0,0,0.8)] bg-black cursor-pointer group"
+                    className="relative w-full max-w-[320px] aspect-[3/4.2] rounded-3xl overflow-hidden border-2 border-white/10 shadow-[0_15px_45px_rgba(0,0,0,0.8)] bg-[#11111a] cursor-pointer group"
                     onClick={() => {
                       const activeFlyer = visibleFlyers[activeFlyerIndex];
                       if (typeof activeFlyer === 'object' && activeFlyer?.link) {
@@ -2001,7 +2001,7 @@ function AppContent() {
                         transition={{ duration: 0.4, ease: "easeInOut" }}
                         src={typeof visibleFlyers[activeFlyerIndex] === 'string' ? visibleFlyers[activeFlyerIndex] : visibleFlyers[activeFlyerIndex]?.image} 
                         alt="Promoção em Destaque" 
-                        className="w-full h-full object-cover select-none group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-contain select-none bg-[#0a0a0f] group-hover:scale-105 transition-transform duration-500"
                         referrerPolicy="no-referrer"
                       />
                     </AnimatePresence>
@@ -2093,9 +2093,9 @@ function AppContent() {
                      🔥 DESTAQUE
                   </div>
 
-                  {/* Banner Slot (3:1 aspect ratio on desktop, perfectly fluid on tablets/mobile) */}
+                  {/* Banner Slot (Fully responsive, never cuts off content across viewports) */}
                   <div 
-                    className="relative w-full aspect-[2.1/1] sm:aspect-[2.6/1] md:aspect-[3/1] rounded-2xl md:rounded-3xl overflow-hidden border border-white/5 bg-black cursor-pointer group"
+                    className="relative w-full rounded-2xl md:rounded-3xl overflow-hidden border border-white/5 bg-[#08080d] cursor-pointer group"
                     onClick={() => {
                       const activeBanner = visibleHorizontalBanners[activeHorizontalBannerIndex];
                       if (activeBanner?.link) {
@@ -2112,13 +2112,13 @@ function AppContent() {
                         transition={{ duration: 0.45, ease: "easeInOut" }}
                         src={visibleHorizontalBanners[activeHorizontalBannerIndex]?.image} 
                         alt={visibleHorizontalBanners[activeHorizontalBannerIndex]?.title || "Banner Destaque"} 
-                        className="w-full h-full object-cover select-none group-hover:scale-[1.012] transition-transform duration-700"
+                        className="w-full h-auto max-h-[380px] object-contain block mx-auto select-none group-hover:scale-[1.012] transition-transform duration-700"
                         referrerPolicy="no-referrer"
                       />
                     </AnimatePresence>
 
                     {/* Dark aesthetic overlay for readability of elements */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
 
                     {/* Smooth gloss reflection hover trigger */}
                     <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
