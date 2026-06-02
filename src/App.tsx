@@ -2265,8 +2265,8 @@ function AppContent() {
                     
                     <div>
                       {/* Logo Frame */}
-                      <div className="w-16 h-16 rounded-2xl bg-white border border-white/10 overflow-hidden flex items-center justify-center shadow-lg p-1.5 mb-5 mt-2 group-hover:scale-105 transition-transform duration-300">
-                        <img src={company.logo} alt={company.name} className="max-w-full max-h-full object-contain" referrerPolicy="no-referrer" />
+                      <div className="w-16 h-16 rounded-full bg-white border border-white/10 overflow-hidden flex items-center justify-center shadow-lg p-0 mb-5 mt-2 group-hover:scale-105 transition-transform duration-300">
+                        <img src={company.logo} alt={company.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       </div>
 
                       <span className="text-[9px] text-[var(--primary)] font-black uppercase tracking-widest bg-[var(--primary)]/10 px-2.5 py-1 rounded-full select-none">
@@ -2335,8 +2335,8 @@ function AppContent() {
                   >
                     <div>
                       {/* Logo Frame */}
-                      <div className="w-16 h-16 rounded-2xl bg-white border border-white/5 overflow-hidden flex items-center justify-center shadow-lg p-1.5 mb-5 mt-2 group-hover:scale-105 transition-transform duration-300">
-                        <img src={company.logo} alt={company.name} className="max-w-full max-h-full object-contain" referrerPolicy="no-referrer" />
+                      <div className="w-16 h-16 rounded-full bg-white border border-white/5 overflow-hidden flex items-center justify-center shadow-lg p-0 mb-5 mt-2 group-hover:scale-105 transition-transform duration-300">
+                        <img src={company.logo} alt={company.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       </div>
 
                       <span className="text-[9px] text-white/55 font-bold uppercase tracking-widest bg-white/5 px-2.5 py-1 rounded-full select-none">
@@ -2455,8 +2455,8 @@ function AppContent() {
                   
                   <div>
                     {/* Logo Frame */}
-                    <div className="w-20 h-20 rounded-2xl bg-white border border-white/15 overflow-hidden flex items-center justify-center shadow-lg p-1.5 mb-5 mt-2">
-                      <img src={company.logo} alt={company.name} className="max-w-full max-h-full object-contain" referrerPolicy="no-referrer" />
+                    <div className="w-20 h-20 rounded-full bg-white border border-white/15 overflow-hidden flex items-center justify-center shadow-lg p-0 mb-5 mt-2">
+                      <img src={company.logo} alt={company.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     </div>
 
                     <span className="text-[10px] text-[var(--primary)] font-extrabold uppercase tracking-widest bg-[var(--primary)]/10 px-2.5 py-1 rounded-full select-none">
