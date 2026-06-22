@@ -77,50 +77,50 @@ const calculateDaysLeft = (expiresAt: string | undefined) => {
 
 const SERVICES_DATA = [
   {
-    title: "Divulgação em Grupos",
-    desc: "Alcance milhares de pessoas interessadas em grupos focados e segmentados no WhatsApp.",
+    title: "Invasão no WhatsApp",
+    desc: "Disparamos o seu negócio para grupos ultra-segmentados, atraindo dezenas de novos contatos interessados em comprar seu produto agora.",
     icon: Users,
     color: "from-blue-500/20 to-cyan-500/20 text-cyan-400"
   },
   {
-    title: "Divulgação Empresarial",
-    desc: "Destaque sua marca para tomadores de decisão e empresas locais, alavancando vendas B2B.",
+    title: "Domínio Comercial",
+    desc: "Destacamos sua marca diretamente para clientes de alto poder aquisitivo e parcerias empresariais, multiplicando seu faturamento local.",
     icon: Target,
     color: "from-purple-500/20 to-pink-500/20 text-pink-400"
   },
   {
-    title: "Criação de Artes",
-    desc: "Design de banners, flyers e posts profissionais adaptados para as suas redes sociais.",
+    title: "Design de Alto Impacto",
+    desc: "Criamos artes sofisticadas, profissionais e desenhadas com técnicas de persuasão visual para prender a atenção e converter vendas na hora.",
     icon: Palette,
     color: "from-amber-500/20 to-red-500/20 text-amber-400"
   },
   {
-    title: "Vídeos Comerciais",
-    desc: "Produção de comerciais envolventes em áudio e vídeo sob medida para a TV online e Reels.",
+    title: "Vídeos Altamente Virais",
+    desc: "Produção de comerciais altamente estratégicos com roteiro de alta conversão para dominar o Instagram Reels e o YouTube do seu cliente.",
     icon: Video,
     color: "from-green-500/20 to-emerald-500/20 text-emerald-400"
   },
   {
-    title: "Rádio Online",
-    desc: "Inserções de spot comercial de áudio em nossa programação oficial ativa 24 horas por dia.",
+    title: "Anúncios em Áudio 24h",
+    desc: "Sua marca anunciada na nossa rádio digital com spot comercial gravado por locutor profissional para fixar sua empresa na mente de todos.",
     icon: Radio,
     color: "from-orange-500/20 to-yellow-500/20 text-orange-400"
   },
   {
-    title: "TV Online",
-    desc: "Seu comercial em vídeo rodando continuamente no telão principal do nosso portal de mídia.",
+    title: "Exposição Infinita na TV",
+    desc: "Seu comercial em vídeo exibido 24 horas por dia no telão de mídias principal do nosso portal de alta audiência. É impossível não te ver!",
     icon: Tv,
     color: "from-red-500/20 to-orange-500/20 text-red-500"
   },
   {
-    title: "Tráfego Pago",
-    desc: "Campanhas otimizadas de anúncios no Meta Ads e Google Ads com foco em vendas diretas.",
+    title: "Clientes Prontos das Redes",
+    desc: "Otimização e direcionamento de anúncios patrocinados focados em encher seu caixa e mandar clientes que passam cartão no seu negócio.",
     icon: TrendingUp,
     color: "from-indigo-500/20 to-violet-500/20 text-indigo-400"
   },
   {
-    title: "Redes Sociais",
-    desc: "Publicações estratégicas em nossos canais oficiais de alta audiência no Instagram e Facebook.",
+    title: "Atração Digital Explosiva",
+    desc: "Campanhas contínuas e impulsionamentos nos canais oficiais do nosso portal para dar visibilidade massiva e autoridade ao seu perfil.",
     icon: Sparkles,
     color: "from-rose-500/20 to-pink-500/20 text-rose-400"
   }
@@ -214,8 +214,8 @@ const NOTIFICATION_ACTIONS = [
 const DEFAULT_DATA = {
   theme: { primary: "#fbbf24", bg: "#000000", text: "#ffffff", textDim: "#a0a0a0" },
   siteInfo: {
-    name: "Minha", suffix: "Divulgação", description: "A maior vitrine digital para o seu negócio a nível nacional.",
-    cnpj: "62.133.196/0001-40", phone: "85 99290-8713", address: "Anúncios a Nível Brasil",
+    name: "Minha", suffix: "Divulgação", description: "A máquina de vendas definitiva para o seu negócio vender todos os dias na internet.",
+    cnpj: "62.133.196/0001-40", phone: "85 99290-8713", address: "Anúncios em Todo o Brasil",
     radioLink: "https://stream.zeno.fm/gsstolze3mjtv",
     social: {
       fb: "https://www.facebook.com/profile.php?id=61586484977147",
@@ -224,26 +224,26 @@ const DEFAULT_DATA = {
     }
   },
   sections: {
-    categories: { title: "ENCONTRE EMPRESAS E SERVIÇOS EM TODO O BRASIL", desc: "Escolha uma categoria e veja empresas anunciando na plataforma." },
-    tv: { tag: "TV Digital", title: "COMERCIAIS" },
-    companies: { tag: "Atendimento via WhatsApp", title: "FALE DIRETO COM A EMPRESA", desc: "Deslize para ver todas as empresas ou escolha uma categoria acima." },
-    flyers: { tag: "Promoções em Destaque" },
-    howTo: { tag: "Como Anunciar", title: "DIVULGUE SEU NEGÓCIO" },
-    benefits: { tag: "Benefícios", title: "SEU ANÚNCIO APARECE EM VÁRIOS LUGARES" },
-    segments: { tag: "Oportunidades", title: "SEGMENTOS DISPONÍVEIS", highlight: "Empresas já estão ocupando categorias na plataforma.", callToAction: "Garanta exclusividade no seu segmento antes que outro concorrente ocupe." }
+    categories: { title: "QUER LOTAR SEU CORRESPONDENTE OU NEGÓCIO DE CLIENTES?", desc: "Selecione uma categoria e veja quem já está faturando alto anunciando na plataforma." },
+    tv: { tag: "TV de Sucessos", title: "COMERCIAIS ATIVOS" },
+    companies: { tag: "Atraindo Clientes no WhatsApp", title: "FALE DIRETAMENTE COM OS LÍDERES", desc: "Sua empresa pode aparecer aqui e capturar contatos quentes e prontos para comprar todos os dias." },
+    flyers: { tag: "Ofertas Imperdíveis e Promoções" },
+    howTo: { tag: "Como Multiplicar Suas Vendas", title: "A FÓRMULA DE RELEVÂNCIA DIGITAL" },
+    benefits: { tag: "Por que nos escolher", title: "SUA LOJA EXPOSTA ONDE O CLIENTE REALMENTE OLHA" },
+    segments: { tag: "Exclusividade categórica", title: "RESERVE SEU SETOR ANTES QUE SEU CONCORRENTE FAÇA", highlight: "Atenção: Apenas 1 empresa é permitida por categoria de destaque! Não seja deixado para trás.", callToAction: "👉 CLIQUE AQUI AGORA E BLOQUEIE SEU SEGMENTO ANTES QUE SEU MAIOR RIVAL COLOQUE A MARCA DELE PRIMEIRO" }
   },
   pricing: {
-    badge: "Exclusividade por categoria", title: "Plano Divulgação Nacional", price: "147", period: "/mês",
+    badge: "Exclusividade máxima garantida", title: "Plano Máquina de Clientes VIP", price: "147", period: "/mês",
     features: [
-      "Comercial exibido na TV Online da plataforma 24h por dia",
-      "Divulgação contínua na Rádio Digital da plataforma",
-      "Card empresarial em destaque na página principal",
-      "Presença nas buscas internas do guia digital",
-      "Botão de contato direto via WhatsApp",
-      "Distribuição automática em canais digitais e redes parceiras",
-      "Produção do vídeo e áudio comercial inclusos"
+      "Seu comercial rodando 24h por dia na TV Online do portal",
+      "Spot de áudio profissional criado e veiculado na Rádio Digital",
+      "Card empresarial interativo VIP posicionado estrategicamente",
+      "SEO Otimizado: Seu negócio listado no topo de buscas do Google",
+      "Botão de clique único para abrir conversas direto no seu WhatsApp",
+      "Envio automatizado de leads qualificados da região para seu chat",
+      "Produção de áudio profissional e vídeo comercial inclusos sem taxas extras"
     ],
-    cta: "QUERO DIVULGAR AGORA", waLink: "https://wa.me/5585992908713"
+    cta: "🚀 QUERO DEIXAR MEU CONCORRENTE NO CHINELO", waLink: "https://wa.me/5585992908713"
   },
   segmentsList: [
     { name: "Internet", status: "Disponível" }, { name: "Pizzaria", status: "Disponível" }, { name: "Oficina", status: "Ocupado" },
@@ -2029,11 +2029,11 @@ function AppContent() {
  
           {/* Premium Headline & Subtitle */}
           <h1 className="text-4xl sm:text-6xl md:text-8xl font-sans font-extrabold text-white tracking-tight leading-[1.05] max-w-6xl select-none">
-            Sua empresa sendo vista por <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--primary)] via-amber-400 to-yellow-500 font-extrabold">milhares de pessoas</span> todos os dias.
+            Pare de perder vendas para o concorrente. Apareça para <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--primary)] via-amber-400 to-yellow-500 font-extrabold">milhares de clientes</span> todos os dias!
           </h1>
  
           <p className="text-sm sm:text-lg md:text-2xl text-white/75 font-medium max-w-4xl mt-8 leading-relaxed select-none">
-            Divulgação profissional com WhatsApp, rádio online, TV online, banners digitais e atendimento inteligente.
+            Coloque seu negócio na vitrine digital mais acessada do país: com comerciais em vídeo 24h, rádio digital ativa, ofertas exclusivas e botão de vendas diretas pelo WhatsApp.
           </p>
  
           {/* Action Buttons */}
@@ -2043,7 +2043,7 @@ function AppContent() {
               onClick={(e) => { e.preventDefault(); scrollToSection('anuncie'); }}
               className="group bg-[var(--primary)] hover:bg-[#ffe066] text-black hover:scale-105 hover:shadow-[0_0_35px_rgba(251,191,36,0.45)] px-12 py-5.5 rounded-full font-black text-xs sm:text-sm uppercase tracking-[0.15em] text-center transition-all duration-300 shadow-2xl flex items-center justify-center gap-2"
             >
-              🚀 QUERO ANUNCIAR
+              🚀 QUERO CLIENTES TODOS OS DIAS
             </a>
             <a 
               href={`https://wa.me/${appData.siteInfo.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Olá! Acessei o portal de divulgação e gostaria de receber mais informações sobre como destacar minha empresa de forma profissional.')}`} 
@@ -2135,11 +2135,11 @@ function AppContent() {
                 <div>
                   <span className="text-[var(--primary)] text-xs font-black font-mono tracking-[0.2em] uppercase">CURADORIA DIGITAL</span>
                   <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mt-2">
-                    📢 Promoções da Semana
+                    🔥 Ofertas Irrecusáveis da Semana
                   </h2>
                 </div>
                 <p className="text-sm text-white/50 max-w-sm leading-relaxed">
-                  Confira as melhores ofertas exclusivas dos patrocinadores oficiais do nosso portal. Clique no anúncio para falar diretamente no WhatsApp!
+                  Apenas ofertas reais e com descontos exclusivos de marcas verificadas no portal. Toque no card e garanta o seu benefício no WhatsApp antes que esgote!
                 </p>
               </div>
 
@@ -2412,19 +2412,21 @@ function AppContent() {
                     </div>
 
                     <div className="flex flex-col gap-2 mt-5">
-                      <button 
-                        onClick={() => {
-                          setActiveMiniSiteCompany(company);
-                          const url = new URL(window.location.href);
-                          url.searchParams.set('id', company.id || slugify(company.name));
-                          window.history.pushState({}, '', url.toString());
-                        }}
-                        className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
-                      >
-                        <ShoppingBag size={12} /> 
-                        {company.type === 'loja' ? "Abrir Loja Virtual" : 
-                         company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site"}
-                      </button>
+                      {!company.hideMiniSite && (
+                        <button 
+                          onClick={() => {
+                            setActiveMiniSiteCompany(company);
+                            const url = new URL(window.location.href);
+                            url.searchParams.set('id', company.id || slugify(company.name));
+                            window.history.pushState({}, '', url.toString());
+                          }}
+                          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
+                        >
+                          <ShoppingBag size={12} /> 
+                          {company.type === 'loja' ? "Abrir Loja Virtual" : 
+                           company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site"}
+                        </button>
+                      )}
 
                       <a 
                         href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu anúncio em destaque no portal ${appData.siteInfo.name}!`)}`} 
@@ -2498,19 +2500,21 @@ function AppContent() {
                     </div>
 
                     <div className="flex flex-col gap-2 mt-5">
-                      <button 
-                        onClick={() => {
-                          setActiveMiniSiteCompany(company);
-                          const url = new URL(window.location.href);
-                          url.searchParams.set('id', company.id || slugify(company.name));
-                          window.history.pushState({}, '', url.toString());
-                        }}
-                        className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
-                      >
-                        <ShoppingBag size={12} /> 
-                        {company.type === 'loja' ? "Abrir Loja" : 
-                         company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site"}
-                      </button>
+                      {!company.hideMiniSite && (
+                        <button 
+                          onClick={() => {
+                            setActiveMiniSiteCompany(company);
+                            const url = new URL(window.location.href);
+                            url.searchParams.set('id', company.id || slugify(company.name));
+                            window.history.pushState({}, '', url.toString());
+                          }}
+                          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
+                        >
+                          <ShoppingBag size={12} /> 
+                          {company.type === 'loja' ? "Abrir Loja" : 
+                           company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site"}
+                        </button>
+                      )}
 
                       <a 
                         href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu comércio no portal ${appData.siteInfo.name}!`)}`} 
@@ -2538,10 +2542,10 @@ function AppContent() {
           <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-12">
             <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase">Diretório Comercial</span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">
-              Empresas e Negócios Recomendados
+              Encontre Empresas Verificadas ou Divulgue a Sua
             </h2>
             <p className="text-sm text-white/50 mt-3">
-              Utilize o campo abaixo para buscar marcas por nome, atividade ou palavras-chave, ou navegue pelas abas de categorias.
+              Busque abaixo as melhores empresas ativas conectadas via WhatsApp, ou cadastre seu negócio hoje mesmo para começar a receber pedidos diretos de novos clientes em minutos!
             </p>
 
             {/* Dynamic Keywords Search Box */}
@@ -2635,19 +2639,21 @@ function AppContent() {
 
                   {/* Action Buttons */}
                   <div className="flex flex-col gap-2.5 mt-6 border-t border-white/5 pt-5">
-                    <button 
-                      onClick={() => {
-                        setActiveMiniSiteCompany(company);
-                        const url = new URL(window.location.href);
-                        url.searchParams.set('id', company.id || slugify(company.name));
-                        window.history.pushState({}, '', url.toString());
-                      }}
-                      className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-305 shadow-md cursor-pointer"
-                    >
-                      <ShoppingBag size={14} /> 
-                      {company.type === 'loja' ? "Abrir Loja Virtual" : 
-                       company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site / Catálogo"}
-                    </button>
+                    {!company.hideMiniSite && (
+                      <button 
+                        onClick={() => {
+                          setActiveMiniSiteCompany(company);
+                          const url = new URL(window.location.href);
+                          url.searchParams.set('id', company.id || slugify(company.name));
+                          window.history.pushState({}, '', url.toString());
+                        }}
+                        className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-305 shadow-md cursor-pointer"
+                      >
+                        <ShoppingBag size={14} /> 
+                        {company.type === 'loja' ? "Abrir Loja Virtual" : 
+                         company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site / Catálogo"}
+                      </button>
+                    )}
 
                     <a 
                       href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu anúncio no portal ${appData.siteInfo.name}.${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`) ? ` Fui indicado pelo parceiro: ${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`)}` : ''}`)}`} 
@@ -3840,6 +3846,29 @@ function AppContent() {
                                       <option value="sim">Sim</option>
                                       <option value="nao">Não</option>
                                     </select>
+                                  </div>
+                                </div>
+
+                                <div className="dev-grid-2" style={{ marginTop: '15px' }}>
+                                  <div className="dev-form-group">
+                                    <label>Botão Mini-Site / Catálogo</label>
+                                    <select className="dev-input" value={c.hideMiniSite ? 'sim' : 'nao'} onChange={(e) => {
+                                      const newList = [...appData.companies];
+                                      newList[idx].hideMiniSite = e.target.value === 'sim';
+                                      updateData('companies', newList);
+                                    }}>
+                                      <option value="nao">Exibir Botão (Padrão) 👁️</option>
+                                      <option value="sim">Ocultar Botão 🙈</option>
+                                    </select>
+                                    <small style={{ color: '#aaa', fontSize: '0.7rem' }}>Escolha "Ocultar Botão" caso a empresa não possua um mini-site configurado no portal.</small>
+                                  </div>
+                                  <div className="dev-form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'rgba(251, 191, 36, 0.05)', border: '1px dashed rgba(251, 191, 36, 0.15)', borderRadius: '12px', padding: '12px', marginTop: '12px' }}>
+                                    <span style={{ fontSize: '11px', color: '#fbbf24', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px' }}>
+                                      💡 Conversão Máxima
+                                    </span>
+                                    <p style={{ color: '#aaa', fontSize: '10.5px', lineHeight: '1.4', margin: 0 }}>
+                                      Dica: Ocultando o mini-site, toda a atenção do visitante do portal será voltada para mandar mensagem direta e fechar negócio no WhatsApp!
+                                    </p>
                                   </div>
                                 </div>
                               </div>
