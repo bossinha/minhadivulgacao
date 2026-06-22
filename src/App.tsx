@@ -373,6 +373,8 @@ function AppContent() {
   const [advertiserCompanies, setAdvertiserCompanies] = useState<any[]>([]);
   const [isAdLoading, setIsAdLoading] = useState(false);
   const [activeMiniSiteCompany, setActiveMiniSiteCompany] = useState<any | null>(null);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [pixCopied, setPixCopied] = useState(false);
   const [shoppingCart, setShoppingCart] = useState<{ [key: string]: { item: any, count: number } }>({});
   const [cartCustomerName, setCartCustomerName] = useState('');
   const [cartCustomerDetails, setCartCustomerDetails] = useState('');
@@ -3006,7 +3008,10 @@ function AppContent() {
                 ))}
               </div>
 
-              <div className="mt-8 bg-black/40 border border-white/5 rounded-2xl p-4.5">
+              <div 
+                onClick={() => setIsCheckoutOpen(true)}
+                className="mt-8 bg-black/40 hover:bg-black/60 border border-white/5 hover:border-[var(--primary)]/30 rounded-2xl p-4.5 cursor-pointer transition-all duration-300"
+              >
                 <span className="text-xs text-[var(--primary)] font-black uppercase tracking-widest font-mono">
                   ⚡ {appData.sections.segments.callToAction || 'Anuncie para dominar seu segmento comercial!'}
                 </span>
@@ -3045,14 +3050,12 @@ function AppContent() {
                 </ul>
 
                 {/* CTA action */}
-                <a 
-                  href={getWaLinkWithReferral(appData.pricing.waLink)} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="w-full block text-center bg-[var(--primary)] hover:brightness-110 text-black py-4 rounded-2xl font-extrabold text-xs uppercase tracking-widest shadow-xl shadow-[rgb(251,191,36)]/10 mt-8 transition-all duration-300"
+                <button 
+                  onClick={() => setIsCheckoutOpen(true)}
+                  className="w-full block text-center bg-[var(--primary)] hover:brightness-110 text-black py-4 rounded-2xl font-extrabold text-xs uppercase tracking-widest shadow-xl shadow-[rgb(251,191,36)]/10 mt-8 transition-all duration-300 cursor-pointer"
                 >
                   {appData.pricing.cta}
-                </a>
+                </button>
 
                 {/* Moneyback indicator secure */}
                 <div className="flex items-center justify-center gap-2 mt-5 text-[10px] text-white/40 tracking-wider font-semibold select-none">
@@ -3293,7 +3296,7 @@ function AppContent() {
               </div>
 
               <div className="dev-tabs">
-                {['geral', 'seções', 'categorias', 'empresas', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'banners-horizontais', 'depoimentos-whats', 'preços', 'segmentos', 'chat', (hasAffiliateSystem || user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'divulgadores' : null].filter(Boolean).map(tab => (
+                {['geral', 'seções', 'categorias', 'empresas', 'anunciantes', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'banners-horizontais', 'depoimentos-whats', 'preços', 'segmentos', 'chat', (hasAffiliateSystem || user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'divulgadores' : null].filter(Boolean).map(tab => (
                   <button 
                     key={tab} 
                     className={`dev-tab ${activeTab === tab ? 'active' : ''}`}
@@ -3903,6 +3906,168 @@ function AppContent() {
                   </div>
                 )}
 
+                {activeTab === 'anunciantes' && (
+                  <div className="dev-forms-container">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', gap: '10px', flexWrap: 'wrap' }}>
+                      <h3 style={{ margin: 0 }}>Gerenciamento de Anunciantes Cadastrados</h3>
+                      <button 
+                        className="dev-btn" 
+                        style={{ background: 'var(--primary)', color: 'black', border: 'none', padding: '8px 14px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px' }}
+                        onClick={async () => {
+                          setIsAdLoading(true);
+                          await fetchAdvertisers(tenantId || 'fortaleza');
+                          setIsAdLoading(false);
+                          alert("Lista de anunciantes atualizada!");
+                        }}
+                      >
+                        🔄 Atualizar Lista
+                      </button>
+                    </div>
+                    <p style={{ color: '#aaa', fontSize: '12px', marginBottom: '20px' }}>
+                      Aqui você controla quais anunciantes criaram conta no portal e ativa o <strong>Destaque</strong> ou <strong>Plano VIP</strong> (que concede produtos ilimitados) para eles.
+                    </p>
+                    
+                    {isAdLoading ? (
+                      <div style={{ padding: '20px', textAlign: 'center', color: 'var(--primary)' }}>Carregando anunciantes...</div>
+                    ) : advertiserCompanies.length === 0 ? (
+                      <div className="text-center py-8" style={{ border: '1px dashed rgba(255,255,255,0.15)', borderRadius: '15px', color: '#999', padding: '30px' }}>
+                        Nenhum anunciante cadastrado por conta própria nesta cidade ainda.
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {advertiserCompanies.map((ad: any, idx: number) => {
+                          const itemsCount = ad.items?.length || 0;
+                          return (
+                            <div key={ad.id || idx} style={{ background: '#11111a', padding: '18px', borderRadius: '16px', border: ad.hasPlan ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                                <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                                  <div style={{ width: '48px', height: '48px', borderRadius: '10px', overflow: 'hidden', background: '#222', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                    <img src={ad.logo || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150'} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  </div>
+                                  <div>
+                                    <h4 style={{ margin: 0, fontWeight: 900, fontSize: '14px', color: '#fff' }}>{ad.name}</h4>
+                                    <small style={{ color: '#aaa', fontSize: '11px', display: 'block', marginTop: '2px' }}>
+                                      Email: <span style={{ color: '#fff' }}>{ad.email}</span> | Celular / WhatsApp: <span style={{ color: '#fff' }}>{ad.wa}</span>
+                                    </small>
+                                    <span style={{ color: 'var(--primary)', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', background: 'rgba(251,191,36,0.1)', padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginTop: '4px' }}>
+                                      {ad.category} | {ad.type || 'Geral'}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  <button 
+                                    className="dev-btn"
+                                    style={{ background: '#ff4444', border: 'none', color: '#fff', fontSize: '11px', padding: '6px 12px', cursor: 'pointer' }}
+                                    onClick={async () => {
+                                      if (confirm(`Tem certeza que deseja EXCLUIR o anunciante "${ad.name}" permanentemente? This will clear all their items too.`)) {
+                                        setIsAdLoading(true);
+                                        try {
+                                          await deleteDoc(doc(db, 'advertisers', ad.id));
+                                          await fetchAdvertisers(tenantId || 'fortaleza');
+                                          alert("Anunciante excluído com sucesso!");
+                                        } catch(e) {
+                                          console.error("Erro deletando anunciante:", e);
+                                          alert("Erro ao excluir.");
+                                        } finally {
+                                          setIsAdLoading(false);
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    🗑️ Excluir Conta
+                                  </button>
+                                </div>
+                              </div>
+                              
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '15px', marginTop: '15px', paddingTop: '15px', borderTop: '1px dashed rgba(255, 255, 255, 0.05)' }}>
+                                <div className="dev-form-group" style={{ margin: 0 }}>
+                                  <label style={{ fontSize: '11px', color: '#bbb', display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Status do Plano:</label>
+                                  <select 
+                                    className="dev-input" 
+                                    style={{ padding: '8px', fontSize: '12px', background: '#12131a', border: '1px solid rgba(255,255,255,0.1)' }}
+                                    value={ad.hasPlan ? 'sim' : 'nao'} 
+                                    onChange={async (e) => {
+                                      const hasPlanVal = e.target.value === 'sim';
+                                      setIsAdLoading(true);
+                                      try {
+                                        const docRef = doc(db, 'advertisers', ad.id);
+                                        await setDoc(docRef, {
+                                          email: ad.email,
+                                          password: ad.password || '123456',
+                                          tenantId: slugify(tenantId || 'fortaleza'),
+                                          company: {
+                                            ...ad,
+                                            hasPlan: hasPlanVal,
+                                            featured: ad.featured || hasPlanVal
+                                          }
+                                        });
+                                        await fetchAdvertisers(tenantId || 'fortaleza');
+                                        alert(`Plano do anunciante "${ad.name}" atualizado com sucesso!`);
+                                      } catch(ee) {
+                                        console.error(ee);
+                                        alert("Falha ao salvar status.");
+                                      } finally {
+                                        setIsAdLoading(false);
+                                      }
+                                    }}
+                                  >
+                                    <option value="nao">Plano Grátis (Máx 6 produtos, sem destaque automático) 🛑</option>
+                                    <option value="sim">Plano Adquirido / VIP (Produtos Ilimitados) ✅</option>
+                                  </select>
+                                </div>
+                                
+                                <div className="dev-form-group" style={{ margin: 0 }}>
+                                  <label style={{ fontSize: '11px', color: '#bbb', display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Destaque Especial no Topo:</label>
+                                  <select 
+                                    className="dev-input" 
+                                    style={{ padding: '8px', fontSize: '12px', background: '#12131a', border: '1px solid rgba(255,255,255,0.1)' }}
+                                    value={ad.featured ? 'sim' : 'nao'} 
+                                    onChange={async (e) => {
+                                      const featuredVal = e.target.value === 'sim';
+                                      setIsAdLoading(true);
+                                      try {
+                                        const docRef = doc(db, 'advertisers', ad.id);
+                                        await setDoc(docRef, {
+                                          email: ad.email,
+                                          password: ad.password || '123456',
+                                          tenantId: slugify(tenantId || 'fortaleza'),
+                                          company: {
+                                            ...ad,
+                                            featured: featuredVal
+                                          }
+                                        });
+                                        await fetchAdvertisers(tenantId || 'fortaleza');
+                                        alert(`Destaque do anunciante "${ad.name}" atualizado com sucesso!`);
+                                      } catch(ee) {
+                                        console.error(ee);
+                                        alert("Falha ao salvar destaque.");
+                                      } finally {
+                                        setIsAdLoading(false);
+                                      }
+                                    }}
+                                  >
+                                    <option value="nao">Sem Destaque (Lista normal) 👎</option>
+                                    <option value="sim">Com Destaque (Destaque VIP do portal) ⭐</option>
+                                  </select>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: '5px' }}>
+                                  <span style={{ fontSize: '12px', color: '#fff' }}>
+                                    Produtos: <strong style={{ color: ad.hasPlan ? 'var(--primary)' : '#25D366' }}>{itemsCount}</strong> {(!ad.hasPlan && itemsCount >= 6) ? '⚠️' : '✅'}
+                                  </span>
+                                  <small style={{ color: (!ad.hasPlan && itemsCount >= 6) ? '#ff4444' : '#888', fontSize: '10.5px', marginTop: '2px' }}>
+                                    {(!ad.hasPlan && itemsCount >= 6) ? 'Status: Esgotado de fotos (limite 6)' : ad.hasPlan ? 'Liberado ilimitado (Premium)' : 'Grátis (limite 6)'}
+                                  </small>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {activeTab === 'vídeos' && (
                   <div className="dev-forms-container">
                     <div style={{ background: 'rgba(251, 191, 36, 0.1)', border: '1px solid rgba(251, 191, 36, 0.2)', padding: '15px', borderRadius: '12px', marginBottom: '20px' }}>
@@ -4357,6 +4522,31 @@ function AppContent() {
                       <div className="dev-form-group">
                         <label>Link do WhatsApp de Venda (URL Completa)</label>
                         <input type="text" className="dev-input" value={appData.pricing.waLink} onChange={(e) => updateData('pricing', { ...appData.pricing, waLink: e.target.value })} />
+                      </div>
+                    </div>
+
+                    <div className="dev-grid-2" style={{ marginTop: '15px', borderTop: '1px dashed rgba(255, 255, 255, 0.1)', paddingTop: '15px' }}>
+                      <div className="dev-form-group">
+                        <label>QR Code de Pagamento PIX (Link de Imagem)</label>
+                        <input 
+                          type="text" 
+                          className="dev-input" 
+                          placeholder="https://exemplo.com/qrcode.png" 
+                          value={appData.pricing.pixQrCodeLink || ''} 
+                          onChange={(e) => updateData('pricing', { ...appData.pricing, pixQrCodeLink: e.target.value })} 
+                        />
+                        <small style={{ color: '#aaa', fontSize: '11px', marginTop: '4px', display: 'block' }}>Insira o link de imagem direta (ex: do Postimages ou do seu próprio site/servidor) para exibir o QR Code no checkout.</small>
+                      </div>
+                      <div className="dev-form-group">
+                        <label>Chave PIX Copia e Cola / Chave Aleatória</label>
+                        <textarea 
+                          className="dev-input" 
+                          placeholder="00020126360014BR.GOV.BCB.PIX..." 
+                          style={{ minHeight: '80px', fontFamily: 'monospace', fontSize: '11px', background: '#12131a', border: '1px solid rgba(255,255,255,0.1)' }}
+                          value={appData.pricing.pixCopiaCola || ''} 
+                          onChange={(e) => updateData('pricing', { ...appData.pricing, pixCopiaCola: e.target.value })} 
+                        />
+                        <small style={{ color: '#aaa', fontSize: '11px', marginTop: '4px', display: 'block' }}>O código PIX Copia e Cola completo para que os anunciantes possam copiar e efetuar o pagamento facilmente.</small>
                       </div>
                     </div>
 
@@ -5984,6 +6174,16 @@ function AppContent() {
                                   return;
                                 }
 
+                                if (editingItemIndex === -1) {
+                                  const currentCount = currentAdvertiser.company.items?.length || 0;
+                                  const hasPaidPlan = currentAdvertiser.company.hasPlan || currentAdvertiser.company.featured || false;
+                                  if (currentCount >= 6 && !hasPaidPlan) {
+                                    alert("Oops! Você atingiu o limite de 6 produtos/fotos do Plano Gratuito. Adquira o Plano para ter acesso ilimitado a produtos e ganhar destaque preferencial no portal!");
+                                    setIsCheckoutOpen(true);
+                                    return;
+                                  }
+                                }
+
                                 const newItem = {
                                   id: editingItemIndex === -1 ? `item_${Date.now()}` : (currentAdvertiser.company.items[editingItemIndex]?.id || `item_${Date.now()}`),
                                   name: name.trim(),
@@ -6128,6 +6328,107 @@ function AppContent() {
                   )}
                 </div>
               )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isCheckoutOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/95 backdrop-blur-md z-[2000] overflow-y-auto flex items-center justify-center p-4 font-sans"
+          >
+            <div className="bg-[#0b0c10] border border-white/10 rounded-3xl w-full max-w-md shadow-2xl p-6 sm:p-8 flex flex-col relative">
+              {/* Close Button */}
+              <button 
+                onClick={() => setIsCheckoutOpen(false)}
+                className="absolute top-5 right-5 text-white/50 hover:text-white hover:scale-105 transition-all p-2 bg-white/5 hover:bg-white/10 rounded-full cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+
+              <div className="text-center">
+                <span className="text-[10px] text-[var(--primary)] font-black uppercase tracking-widest bg-[var(--primary)]/10 px-3 py-1 rounded-full inline-block mb-3">
+                  ⭐ Adquirir Plano VIP
+                </span>
+                <h3 className="text-xl font-black text-white">Checkout do Plano</h3>
+                <p className="text-xs text-white/50 mt-1">Liberar Cadastro Ilimitado e Destaque no Portal</p>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mt-6 text-center select-none">
+                <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Valor do Plano</span>
+                <div className="text-2xl font-black text-[#fbbf24] mt-1">
+                  R$ {appData?.pricing.price || '147,00'} <span className="text-xs text-white/40">/ {appData?.pricing.period || 'mês'}</span>
+                </div>
+              </div>
+
+              {/* QR Code */}
+              <div className="mt-6 flex flex-col items-center">
+                <div className="w-48 h-48 bg-white border-4 border-white/10 rounded-2xl overflow-hidden flex items-center justify-center shadow-lg p-2">
+                  {appData?.pricing.pixQrCodeLink ? (
+                    <img 
+                      src={appData.pricing.pixQrCodeLink} 
+                      alt="QR Code Pix" 
+                      className="w-full h-full object-contain"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="text-center text-xs text-black flex flex-col items-center justify-center p-3">
+                      <span className="text-2xl">⚡</span>
+                      <span className="mt-2 font-black font-sans text-gray-800">QR Code PIX</span>
+                      <span className="text-[10px] leading-tight text-gray-500 mt-1">O administrador ainda não cadastrou o link da imagem do QR Code. Peça a chave copia e cola abaixo.</span>
+                    </div>
+                  )}
+                </div>
+                <span className="text-[10px] text-white/45 font-bold uppercase tracking-widest mt-2 font-mono">QR Code Pix</span>
+              </div>
+
+              {/* Copy and Paste Box */}
+              <div className="mt-5">
+                <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest block mb-2 text-center">Pix Copia e Cola</span>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    readOnly 
+                    value={appData?.pricing.pixCopiaCola || 'Chave PIX não configurada no painel.'} 
+                    className="flex-1 bg-[#12131a] border border-white/10 rounded-xl px-4 py-3 text-xs text-white font-mono outline-none text-ellipsis"
+                  />
+                  <button 
+                    onClick={() => {
+                      if (appData?.pricing.pixCopiaCola) {
+                        navigator.clipboard.writeText(appData.pricing.pixCopiaCola);
+                        setPixCopied(true);
+                        setTimeout(() => setPixCopied(false), 2000);
+                      } else {
+                        alert("Chave PIX não configurada pelo administrador.");
+                      }
+                    }}
+                    className={`px-4 rounded-xl font-bold text-xs uppercase tracking-wider cursor-pointer transition-all ${pixCopied ? 'bg-emerald-500 text-white' : 'bg-white/10 hover:bg-white/15 text-white'}`}
+                  >
+                    {pixCopied ? 'Copiado!' : 'Copiar'}
+                  </button>
+                </div>
+              </div>
+
+              {/* JÁ EFETUEI O PAGAMENTO CTA */}
+              <a 
+                href={`https://wa.me/${(appData?.pricing.waLink || '5585992862177').replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Olá! Já efetuei o pagamento do plano de anúncios via PIX, aqui está o comprovante! Desejo ativar meu perfil premium.')}`}
+                target="_blank" 
+                rel="noreferrer"
+                onClick={() => setIsCheckoutOpen(false)}
+                className="w-full text-center bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest block mt-6 shadow-xl shadow-emerald-500/10 cursor-pointer transition-all"
+              >
+                🚀 Já Efetuei o Pagamento
+              </a>
+
+              <div className="text-center mt-3">
+                <small style={{ fontSize: '11px', color: '#ff4444', fontWeight: 'bold' }}>
+                  ⚠️ Envie o comprovante pelo botão acima para ativar imediatamente!
+                </small>
+              </div>
             </div>
           </motion.div>
         )}
