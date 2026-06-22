@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { HashRouter, Routes, Route, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -30,11 +30,29 @@ import {
   TrendingUp, 
   Sparkles, 
   Plus, 
+  Minus,
   Award, 
   Clock, 
   Info,
   Calendar,
-  DollarSign
+  DollarSign,
+  ShoppingBag,
+  ShoppingCart,
+  Trash2,
+  LogOut,
+  Key,
+  Save,
+  PlusCircle,
+  Image as ImageIcon,
+  CheckCircle2,
+  AlertCircle,
+  HelpCircle,
+  FileText,
+  Briefcase,
+  Store,
+  ChevronDown,
+  ChevronUp,
+  User
 } from 'lucide-react';
 
 import { auth, db, googleProvider } from './lib/firebase';
@@ -196,8 +214,8 @@ const NOTIFICATION_ACTIONS = [
 const DEFAULT_DATA = {
   theme: { primary: "#fbbf24", bg: "#000000", text: "#ffffff", textDim: "#a0a0a0" },
   siteInfo: {
-    name: "Minha", suffix: "Divulgação", description: "A maior vitrine digital para o seu negócio na Grande Fortaleza.",
-    cnpj: "62.133.196/0001-40", phone: "85 99290-8713", address: "Fortaleza - Ceará - Brasil",
+    name: "Minha", suffix: "Divulgação", description: "A maior vitrine digital para o seu negócio a nível nacional.",
+    cnpj: "62.133.196/0001-40", phone: "85 99290-8713", address: "Anúncios a Nível Brasil",
     radioLink: "https://stream.zeno.fm/gsstolze3mjtv",
     social: {
       fb: "https://www.facebook.com/profile.php?id=61586484977147",
@@ -206,7 +224,7 @@ const DEFAULT_DATA = {
     }
   },
   sections: {
-    categories: { title: "ENCONTRE EMPRESAS E SERVIÇOS EM FORTALEZA", desc: "Escolha uma categoria e veja empresas anunciando na plataforma." },
+    categories: { title: "ENCONTRE EMPRESAS E SERVIÇOS EM TODO O BRASIL", desc: "Escolha uma categoria e veja empresas anunciando na plataforma." },
     tv: { tag: "TV Digital", title: "COMERCIAIS" },
     companies: { tag: "Atendimento via WhatsApp", title: "FALE DIRETO COM A EMPRESA", desc: "Deslize para ver todas as empresas ou escolha uma categoria acima." },
     flyers: { tag: "Promoções em Destaque" },
@@ -215,7 +233,7 @@ const DEFAULT_DATA = {
     segments: { tag: "Oportunidades", title: "SEGMENTOS DISPONÍVEIS", highlight: "Empresas já estão ocupando categorias na plataforma.", callToAction: "Garanta exclusividade no seu segmento antes que outro concorrente ocupe." }
   },
   pricing: {
-    badge: "Exclusividade por categoria", title: "Plano Divulgação Fortaleza", price: "147", period: "/mês",
+    badge: "Exclusividade por categoria", title: "Plano Divulgação Nacional", price: "147", period: "/mês",
     features: [
       "Comercial exibido na TV Online da plataforma 24h por dia",
       "Divulgação contínua na Rádio Digital da plataforma",
@@ -299,10 +317,45 @@ function AppContent() {
       el.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  const fetchAdvertisers = useCallback(async (tId: string) => {
+    setIsAdLoading(true);
+    try {
+      const tid = slugify(tId);
+      const q = query(collection(db, 'advertisers'), where('tenantId', '==', tid));
+      const snap = await getDocs(q);
+      const ads: any[] = [];
+      snap.forEach((docDoc) => {
+        const d = docDoc.data();
+        if (d.company) {
+          ads.push({
+            ...d.company,
+            id: d.company.id || docDoc.id,
+            email: d.email,
+            isAdvertiserCreated: true
+          });
+        }
+      });
+      setAdvertiserCompanies(ads);
+    } catch (err) {
+      console.error("Error loading advertisers", err);
+    } finally {
+      setIsAdLoading(false);
+    }
+  }, []);
   const [user, setUser] = useState<{ uid: string; email: string | null; username: string; city: string; isAdmin?: boolean } | null>(null);
   const [loginForm, setLoginForm] = useState({ username: '', password: '', city: '' });
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [universalConfig, setUniversalConfig] = useState({ radioLink: '', logoSpeed: 100, flyerSpeed: 180, testimonialSpeed: 120, companySpeed: 200, totalVisits: 0 });
+  const [universalConfig, setUniversalConfig] = useState<any>({ 
+    radioLink: '', 
+    logoSpeed: 100, 
+    flyerSpeed: 180, 
+    testimonialSpeed: 120, 
+    companySpeed: 200, 
+    totalVisits: 0,
+    uploadImageHelpUrl: 'https://postimages.org/',
+    uploadVideoHelpUrl: 'https://streamable.com/'
+  });
   const [onlineCount, setOnlineCount] = useState(Math.floor(Math.random() * (22 - 12 + 1)) + 12);
   const [allUsers, setAllUsers] = useState<any>(null);
   const [editingVideosFor, setEditingVideosFor] = useState<{id: string, city: string, videos: string[]} | null>(null);
@@ -316,6 +369,37 @@ function AppContent() {
   const [affiliates, setAffiliates] = useState<any[]>([]);
   const [isAffLoading, setIsAffLoading] = useState(false);
 
+  // --- Advertiser & Mini-Site States ---
+  const [advertiserCompanies, setAdvertiserCompanies] = useState<any[]>([]);
+  const [isAdLoading, setIsAdLoading] = useState(false);
+  const [activeMiniSiteCompany, setActiveMiniSiteCompany] = useState<any | null>(null);
+  const [shoppingCart, setShoppingCart] = useState<{ [key: string]: { item: any, count: number } }>({});
+  const [cartCustomerName, setCartCustomerName] = useState('');
+  const [cartCustomerDetails, setCartCustomerDetails] = useState('');
+  const [isAdPortalOpen, setIsAdPortalOpen] = useState(false);
+  const [currentAdvertiser, setCurrentAdvertiser] = useState<any | null>(null);
+  const [adLoginMode, setAdLoginMode] = useState<'login' | 'register'>('login');
+  const [adLoginForm, setAdLoginForm] = useState({ email: '', password: '' });
+  const [adRegisterForm, setAdRegisterForm] = useState({
+    email: '',
+    password: '',
+    name: '',
+    wa: '5585',
+    category: 'Supermercado',
+    type: 'loja',
+    desc: '',
+    logo: '',
+    ig: ''
+  });
+  const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
+  const [itemForm, setItemForm] = useState({
+    name: '',
+    desc: '',
+    price: '',
+    photo: ''
+  });
+  const [adDashboardTab, setAdDashboardTab] = useState<'perfil' | 'catalogo'>('perfil');
+
   // --- Initial Firebase Data Load ---
   useEffect(() => {
     if (location.pathname !== '/login') {
@@ -328,6 +412,7 @@ function AppContent() {
           if (snap.exists()) {
             const tData = snap.data();
             setAppData(tData.data || DEFAULT_DATA);
+            fetchAdvertisers(targetTenantId);
             
             // Check Expiration
             let blockedFlag = tData.isBlocked || false;
@@ -470,7 +555,9 @@ function AppContent() {
           flyerSpeed: data.flyerSpeed || 180,
           testimonialSpeed: data.testimonialSpeed || 120,
           companySpeed: data.companySpeed || 200,
-          totalVisits: data.totalVisits || 1200
+          totalVisits: data.totalVisits || 1200,
+          uploadImageHelpUrl: data.uploadImageHelpUrl || 'https://postimages.org/',
+          uploadVideoHelpUrl: data.uploadVideoHelpUrl || 'https://streamable.com/'
         });
       }
     }, (error) => {
@@ -737,7 +824,7 @@ function AppContent() {
   // Live platform activity states (sensação de plataforma ativa e movimentada)
   const [activePlatformActivityIndex, setActivePlatformActivityIndex] = useState(0);
   const platformActivitiesList = [
-    { time: "Há 2 minutos", text: "🔥 Novo Anunciante de Fortaleza ativado na categoria Restaurante & bar!" },
+    { time: "Há 2 minutos", text: "🔥 Novo Anunciante de destaque ativado na categoria Restaurante & bar!" },
     { time: "Há 12 minutos", text: "📢 Campanha Promocional Especial lançada por Supermercado Destaque!" },
     { time: "Há 30 minutos", text: "💬 WhatsApp de atendimento recebeu um novo lead comercial qualificado!" },
     { time: "Há 41 minutos", text: "📻 Rádio Online transmitindo SPOT promocional de patrocinador oficial!" },
@@ -775,8 +862,42 @@ function AppContent() {
     }
   };
 
+  const displayedCompanies = useMemo(() => {
+    if (!appData) return [];
+    const baseCompanies = appData.companies || [];
+    const merged = [...baseCompanies];
+    
+    advertiserCompanies.forEach((ad: any) => {
+      const idx = merged.findIndex((c: any) => slugify(c.name) === slugify(ad.name) || String(c.id) === String(ad.id));
+      if (idx !== -1) {
+        merged[idx] = { ...merged[idx], ...ad };
+      } else {
+        merged.push(ad);
+      }
+    });
+    
+    return merged;
+  }, [appData, advertiserCompanies]);
+
+  // --- Deep-linking URL check for specific company ID ---
+  useEffect(() => {
+    if (displayedCompanies.length > 0) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlId = urlParams.get('id');
+      if (urlId) {
+        const found = displayedCompanies.find((c: any) => 
+          String(c.id) === urlId || 
+          slugify(c.name) === urlId
+        );
+        if (found) {
+          setActiveMiniSiteCompany(found);
+        }
+      }
+    }
+  }, [displayedCompanies]);
+
   const filteredCompaniesRaw = appData
-    ? appData.companies.filter(c => {
+    ? displayedCompanies.filter(c => {
         const matchesCategory = selectedCategory ? c.category === selectedCategory : true;
         const matchesSearch = searchQuery 
           ? normalize(c.name).includes(normalize(searchQuery)) || 
@@ -1156,6 +1277,28 @@ function AppContent() {
                   value={universalConfig.radioLink} 
                   onChange={e => setUniversalConfig({ ...universalConfig, radioLink: e.target.value })}
                 />
+              </div>
+              <div className="dev-form-group">
+                <label>Link Externo para Hospedar Imagens (Ícone Câmera 📷)</label>
+                <input 
+                  type="text" 
+                  className="dev-input" 
+                  placeholder="Ex: https://postimages.org/"
+                  value={universalConfig.uploadImageHelpUrl || ''} 
+                  onChange={e => setUniversalConfig({ ...universalConfig, uploadImageHelpUrl: e.target.value })}
+                />
+                <small style={{ color: '#666' }}>Direciona o anunciante para esta URL ao clicar no ícone de câmera para upar fotos.</small>
+              </div>
+              <div className="dev-form-group">
+                <label>Link Externo para Hospedar Vídeos (Ícone Vídeo 🎥)</label>
+                <input 
+                  type="text" 
+                  className="dev-input" 
+                  placeholder="Ex: https://streamable.com/ ou https://youtube.com/"
+                  value={universalConfig.uploadVideoHelpUrl || ''} 
+                  onChange={e => setUniversalConfig({ ...universalConfig, uploadVideoHelpUrl: e.target.value })}
+                />
+                <small style={{ color: '#666' }}>Direciona o anunciante para esta URL ao clicar no ícone de vídeo para upar mídias.</small>
               </div>
               <div className="dev-form-group">
                 <label>Contador de Visitas (Total)</label>
@@ -1612,7 +1755,7 @@ function AppContent() {
                 className="dev-input" 
                 value={loginForm.city} 
                 onChange={e => setLoginForm({...loginForm, city: e.target.value})} 
-                placeholder="Ex: Fortaleza"
+                placeholder="Ex: São Paulo"
               />
             </div>
           )}
@@ -1801,23 +1944,18 @@ function AppContent() {
 
           {/* Action Buttons - Desktop */}
           <div className="hidden lg:flex items-center gap-3 font-jakarta">
-            <a 
-              href={`https://wa.me/${appData.pricing.waLink.replace(/[^0-9]/g, '')}?text=Olá! Quero anunciar no portal agora.`}
-              target="_blank"
-              rel="noreferrer"
-              className="bg-transparent border border-white/20 text-white hover:border-[var(--primary)] hover:text-[var(--primary)] px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300"
+            <button 
+              onClick={() => { setAuthMode('login'); setIsAdPortalOpen(true); }}
+              className="bg-neutral-950 hover:bg-neutral-900 border border-white/20 text-white/90 hover:text-white px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 flex items-center gap-1.5 cursor-pointer"
             >
-              Anunciar Agora
-            </a>
-            <a 
-              href={`https://wa.me/${appData.siteInfo.phone.replace(/[^0-9]/g, '')}?text=Olá! Gostaria de falar com o atendimento comercial.`}
-              target="_blank"
-              rel="noreferrer"
-              className="bg-[#25D366] text-white hover:bg-[#20ba59] px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/10 flex items-center gap-2 transition-all duration-300"
+              <User size={13} /> Entrar (Login)
+            </button>
+            <button 
+              onClick={() => { setAuthMode('register'); setIsAdPortalOpen(true); }}
+              className="bg-[var(--primary)] hover:brightness-110 text-black px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-300 shadow shadow-[var(--primary)]/20 cursor-pointer flex items-center gap-1.5"
             >
-              <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-              Falar Comercial
-            </a>
+              🚀 Cadastre-se (Criar Conta)
+            </button>
           </div>
 
           {/* Mobile Menu Trigger */}
@@ -1849,23 +1987,19 @@ function AppContent() {
                 <a href="#servicos" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('servicos'); }} className="text-white hover:text-[var(--primary)] py-2">🛠️ Serviços</a>
                 <a href="#depoimentos" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('depoimentos'); }} className="text-white hover:text-[var(--primary)] py-2">💬 Depoimentos</a>
               </div>
-              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/5">
-                <a 
-                  href={`https://wa.me/${appData.pricing.waLink.replace(/[^0-9]/g, '')}?text=Olá! Quero anunciar no portal agora.`}
-                  target="_blank"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full text-center bg-[var(--primary)] text-black px-5 py-3 rounded-xl font-extrabold text-xs uppercase tracking-widest block"
+              <div className="flex flex-col gap-3 pt-4 border-t border-white/5">
+                <button 
+                  onClick={() => { setIsMobileMenuOpen(false); setAuthMode('login'); setIsAdPortalOpen(true); }}
+                  className="w-full text-center bg-neutral-950 border border-white/10 text-white px-5 py-3 rounded-xl font-extrabold text-xs uppercase tracking-widest block cursor-pointer"
                 >
-                  🚀 Anunciar Agora
-                </a>
-                <a 
-                  href={`https://wa.me/${appData.siteInfo.phone.replace(/[^0-9]/g, '')}?text=Olá! Gostaria de falar com o atendimento comercial.`}
-                  target="_blank"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full text-center bg-[#25D366] text-white px-5 py-3 rounded-xl font-extrabold text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                  🔑 Entrar (Login)
+                </button>
+                <button 
+                  onClick={() => { setIsMobileMenuOpen(false); setAuthMode('register'); setIsAdPortalOpen(true); }}
+                  className="w-full text-center bg-[var(--primary)] text-black px-5 py-3 rounded-xl font-extrabold text-xs uppercase tracking-widest block cursor-pointer"
                 >
-                  💬 WhatsApp
-                </a>
+                  🚀 Cadastre-se (Criar Conta)
+                </button>
               </div>
             </motion.div>
           )}
@@ -1923,7 +2057,7 @@ function AppContent() {
           </div>
  
           {/* Animated quick stats bar - SEÇÃO DE AUTORIDADE E NÚMEROS */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-14 mt-24 md:mt-32 w-full max-w-5xl border-t border-white/5 pt-12 select-none">
+          <div className="grid grid-cols-1 min-[340px]:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 md:gap-14 mt-24 md:mt-32 w-full max-w-5xl border-t border-white/5 pt-12 select-none">
             <div className="text-center group-hover:scale-105 transition-transform duration-300">
               <div className="text-3xl md:text-5xl font-sans font-black text-white tracking-tight">{(universalConfig.totalVisits || 12000).toLocaleString()}+</div>
               <div className="text-[11px] sm:text-[12px] text-[var(--primary)] font-bold tracking-widest font-mono uppercase mt-2">Acessos Totais</div>
@@ -2254,7 +2388,7 @@ function AppContent() {
 
               {/* Grid Layout of Featured Companies */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {(appData.companies || []).filter((c: any) => c.featured === true).slice(0, 4).map((company: any) => (
+                {(displayedCompanies || []).filter((c: any) => c.featured === true).slice(0, 4).map((company: any) => (
                   <div 
                     key={company.id} 
                     className="relative bg-gradient-to-b from-[#111119] to-[#08080f] border border-[var(--primary)]/30 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1.5 transition-all duration-300 shadow-[0_10px_30px_rgba(251,191,36,0.03)] hover:shadow-[0_15px_45px_rgba(251,191,36,0.08)] select-none group"
@@ -2277,14 +2411,30 @@ function AppContent() {
                       <p className="text-[11px] text-white/50 mt-1.5 leading-relaxed min-h-[2.5rem] line-clamp-2">{company.desc || 'Anunciante comercial verificado na plataforma.'}</p>
                     </div>
 
-                    <a 
-                      href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu anúncio em destaque no portal ${appData.siteInfo.name}!`)}`} 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="w-full mt-6 bg-[#25D366] hover:bg-[#20ba59] text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
-                    >
-                      <Smartphone size={12} /> Contactar Anunciante
-                    </a>
+                    <div className="flex flex-col gap-2 mt-5">
+                      <button 
+                        onClick={() => {
+                          setActiveMiniSiteCompany(company);
+                          const url = new URL(window.location.href);
+                          url.searchParams.set('id', company.id || slugify(company.name));
+                          window.history.pushState({}, '', url.toString());
+                        }}
+                        className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
+                      >
+                        <ShoppingBag size={12} /> 
+                        {company.type === 'loja' ? "Abrir Loja Virtual" : 
+                         company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site"}
+                      </button>
+
+                      <a 
+                        href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu anúncio em destaque no portal ${appData.siteInfo.name}!`)}`} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
+                      >
+                        <Smartphone size={12} /> Falar no WhatsApp
+                      </a>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -2328,7 +2478,7 @@ function AppContent() {
                 className="flex gap-6 overflow-x-auto pb-6 scrollbar-hide snap-x snap-mandatory scroll-smooth"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
-                {(appData.companies || []).map((company: any) => (
+                {(displayedCompanies || []).map((company: any) => (
                   <div 
                     key={company.id} 
                     className="flex-shrink-0 w-[280px] sm:w-[315px] snap-start relative bg-gradient-to-b from-[#0f1016]/80 to-[#07070b] border border-white/5 hover:border-[var(--primary)]/20 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1.5 transition-all duration-300 shadow-xl select-none group"
@@ -2347,14 +2497,30 @@ function AppContent() {
                       <p className="text-[11px] text-white/45 mt-1.5 leading-relaxed min-h-[2.5rem] line-clamp-2">{company.desc || 'Parceiro local ativo na rede de anúncios.'}</p>
                     </div>
 
-                    <a 
-                      href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu comércio no portal ${appData.siteInfo.name}!`)}`} 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="w-full mt-6 bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-[var(--primary)] py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300"
-                    >
-                      <Smartphone size={12} /> WhatsApp Comercial
-                    </a>
+                    <div className="flex flex-col gap-2 mt-5">
+                      <button 
+                        onClick={() => {
+                          setActiveMiniSiteCompany(company);
+                          const url = new URL(window.location.href);
+                          url.searchParams.set('id', company.id || slugify(company.name));
+                          window.history.pushState({}, '', url.toString());
+                        }}
+                        className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
+                      >
+                        <ShoppingBag size={12} /> 
+                        {company.type === 'loja' ? "Abrir Loja" : 
+                         company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site"}
+                      </button>
+
+                      <a 
+                        href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu comércio no portal ${appData.siteInfo.name}!`)}`} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-[var(--primary)] py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300"
+                      >
+                        <Smartphone size={12} /> WhatsApp Comercial
+                      </a>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -2469,6 +2635,20 @@ function AppContent() {
 
                   {/* Action Buttons */}
                   <div className="flex flex-col gap-2.5 mt-6 border-t border-white/5 pt-5">
+                    <button 
+                      onClick={() => {
+                        setActiveMiniSiteCompany(company);
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('id', company.id || slugify(company.name));
+                        window.history.pushState({}, '', url.toString());
+                      }}
+                      className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-305 shadow-md cursor-pointer"
+                    >
+                      <ShoppingBag size={14} /> 
+                      {company.type === 'loja' ? "Abrir Loja Virtual" : 
+                       company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site / Catálogo"}
+                    </button>
+
                     <a 
                       href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu anúncio no portal ${appData.siteInfo.name}.${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`) ? ` Fui indicado pelo parceiro: ${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`)}` : ''}`)}`} 
                       target="_blank" 
@@ -2877,7 +3057,7 @@ function AppContent() {
           </div>
 
           {/* Premium Animated Credibility Metrics Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-16 select-none">
+          <div className="grid grid-cols-1 min-[340px]:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-16 select-none">
             <div className="bg-[#0f1016]/60 border border-white/5 hover:border-[var(--primary)]/20 rounded-3xl p-6 flex flex-col justify-between hover:bg-black/40 transition-all duration-300">
               <span className="text-3xl sm:text-4xl font-mono font-black text-[var(--primary)]">98.2%</span>
               <div>
@@ -4567,6 +4747,1334 @@ function AppContent() {
           {!isChatOpen && chatMessages.length === 0 && <div className="chat-badge">1</div>}
         </button>
       </div>
+
+      {/* =========================================================================
+          INTERACTIVE SCREEN: MINI-SITE / LOJA VIRTUAL / CARDÁPIO DIGITAL
+          ========================================================================= */}
+      <AnimatePresence>
+        {activeMiniSiteCompany && (() => {
+          const company = activeMiniSiteCompany;
+          const siteType = company.type || (
+            ['servicos', 'saude', 'clinica', 'oficina', 'educacao', 'advocacia', 'publicidade', 'construcao', 'financas', 'academia'].some(c => company.category.toLowerCase().includes(c)) ? 'servico' : 'loja'
+          );
+          
+          const items = company.items || [];
+          
+          return (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/90 backdrop-blur-md z-[1200] overflow-y-auto font-jakarta flex flex-col"
+            >
+              {/* Top Banner Header */}
+              <div className="relative w-full h-44 sm:h-64 bg-neutral-950 flex-shrink-0">
+                <div className="absolute inset-0 bg-[radial-gradient(120%_120%_at_50%_0%,rgba(251,191,36,0.15)_0%,transparent_100%)]" />
+                <button 
+                  onClick={() => {
+                    setActiveMiniSiteCompany(null);
+                    // Clear search ID parameter
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('id');
+                    window.history.pushState({}, '', url.toString());
+                    setShoppingCart({});
+                  }}
+                  className="absolute top-5 right-5 bg-black/60 hover:bg-black/90 border border-white/20 text-white p-3 rounded-full hover:scale-105 transition-all duration-200 z-30"
+                  aria-label="Voltar ao portal"
+                >
+                  <X size={20} />
+                </button>
+                
+                {/* Profile Floating Elements */}
+                <div className="absolute bottom-[-40px] left-6 sm:left-12 flex items-end gap-4 sm:gap-6 z-20">
+                  <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-white border-2 border-[var(--primary)] overflow-hidden flex items-center justify-center shadow-2xl p-0">
+                    <img src={company.logo} alt={company.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  </div>
+                  <div className="mb-2">
+                    <span className="bg-[var(--primary)] text-black text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow">
+                      {company.category}
+                    </span>
+                    <h2 className="text-xl sm:text-3.5xl font-extrabold text-white tracking-tight mt-1 ml-1 select-none">
+                      {company.name}
+                    </h2>
+                  </div>
+                </div>
+              </div>
+
+              {/* Body Content */}
+              <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 pt-16 pb-28 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 mt-4">
+                
+                {/* Details column (left) */}
+                <div className="lg:col-span-8 flex flex-col gap-6">
+                  {/* Bio Description / Social Info */}
+                  <div className="bg-[#0b0c10] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-xl">
+                    <h3 className="text-sm font-black font-mono uppercase tracking-[0.2em] text-[var(--primary)]">SOBRE NÓS</h3>
+                    <p className="text-white/70 text-sm mt-3 leading-relaxed">
+                      {company.desc || 'Anunciante comercial oficial com atendimento dedicado e garantia de qualidade.'}
+                    </p>
+                    
+                    <div className="flex flex-wrap gap-3 mt-6 pt-5 border-t border-white/5">
+                      <a 
+                        href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}`} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 hover:text-white hover:bg-emerald-600 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-200"
+                      >
+                        <Smartphone size={14} /> WhatsApp Comercial
+                      </a>
+                      {company.ig && company.ig !== '#' && company.ig !== '' && (
+                        <a 
+                          href={company.ig} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-2 bg-pink-600/10 border border-pink-500/20 text-pink-400 hover:text-white hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-200"
+                        >
+                          Instagram Oficial
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Render Catalog Items (if Shop or Menu) */}
+                  {(siteType === 'loja' || siteType === 'cardapio') && (
+                    <div className="bg-[#0b0c10] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-xl flex-1 flex flex-col">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-5">
+                        <div>
+                          <h3 className="text-lg font-extrabold text-white tracking-tight">
+                            {siteType === 'loja' ? "🛍️ Catálogo de Produtos" : "🍽️ Cardápio Digital"}
+                          </h3>
+                          <p className="text-xs text-white/50 mt-1">Selecione e monte seus pedidos de forma simples e rápida.</p>
+                        </div>
+                      </div>
+
+                      {items.length === 0 ? (
+                        <div className="text-center py-16 flex-1 flex flex-col items-center justify-center">
+                          <span className="text-4xl">📦</span>
+                          <h4 className="text-white/80 font-bold mt-4">Nenhum produto cadastrado</h4>
+                          <p className="text-white/45 text-xs max-w-xs mt-1">Este comércio ainda não incluiu itens em seu portfólio digital, mas você pode chamá-los no WhatsApp!</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-6">
+                          {items.map((item: any, idx: number) => {
+                            const cartQty = shoppingCart[item.id]?.count || 0;
+                            return (
+                              <div key={item.id || idx} className="bg-neutral-900/60 hover:bg-neutral-900 border border-white/5 hover:border-white/10 rounded-2xl p-4 flex gap-4 transition-all duration-200">
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-neutral-950 overflow-hidden flex-shrink-0 flex items-center justify-center border border-white/10">
+                                  {item.photo ? (
+                                    <img src={item.photo} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                  ) : (
+                                    <ImageIcon className="text-white/20" size={24} />
+                                  )}
+                                </div>
+                                <div className="flex-1 flex flex-col justify-between">
+                                  <div>
+                                    <h4 className="text-sm font-extrabold text-white">{item.name}</h4>
+                                    <p className="text-[11px] text-white/50 leading-relaxed mt-0.5 line-clamp-2">{item.desc || 'Sem descrição adicional.'}</p>
+                                  </div>
+                                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
+                                    <span className="text-xs font-black text-[var(--primary)] font-mono">
+                                      {item.price ? `R$ ${parseFloat(item.price).toFixed(2).replace('.', ',')}` : 'Sob Consulta'}
+                                    </span>
+                                    
+                                    {/* Cart Controls */}
+                                    <div className="flex items-center gap-2.5">
+                                      {cartQty > 0 ? (
+                                        <>
+                                          <button 
+                                            onClick={() => {
+                                              setShoppingCart(prev => {
+                                                const existing = prev[item.id];
+                                                if (!existing) return prev;
+                                                if (existing.count <= 1) {
+                                                  const copy = { ...prev };
+                                                  delete copy[item.id];
+                                                  return copy;
+                                                }
+                                                return {
+                                                  ...prev,
+                                                  [item.id]: { ...existing, count: existing.count - 1 }
+                                                };
+                                              });
+                                            }}
+                                            className="p-1 rounded bg-white/10 hover:bg-[var(--primary)] hover:text-black transition-colors duration-150"
+                                          >
+                                            <Minus size={12} />
+                                          </button>
+                                          <span className="text-xs font-black text-white">{cartQty}</span>
+                                          <button 
+                                            onClick={() => {
+                                              setShoppingCart(prev => ({
+                                                ...prev,
+                                                [item.id]: { item, count: (prev[item.id]?.count || 0) + 1 }
+                                              }));
+                                            }}
+                                            className="p-1 rounded bg-white/10 hover:bg-[var(--primary)] hover:text-black transition-colors duration-150"
+                                          >
+                                            <Plus size={12} />
+                                          </button>
+                                        </>
+                                      ) : (
+                                        <button 
+                                          onClick={() => {
+                                            setShoppingCart(prev => ({
+                                              ...prev,
+                                              [item.id]: { item, count: 1 }
+                                            }));
+                                          }}
+                                          className="px-2.5 py-1 rounded bg-[var(--primary)] hover:bg-[#ffe066] text-black text-[10px] font-black uppercase tracking-wider transition-colors duration-150"
+                                        >
+                                          + Add
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Render Landing Page Services (if Service Type) */}
+                  {siteType === 'servico' && (
+                    <div className="bg-[#0b0c10] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-xl flex-1 flex flex-col">
+                      <div className="border-b border-white/5 pb-5">
+                        <h3 className="text-lg font-extrabold text-white tracking-tight">
+                          🛠️ Serviços Disponíveis & Portfólio
+                        </h3>
+                        <p className="text-xs text-white/50 mt-1">Conheça nossa carteira de serviços profissionais e solicite orçamento direto.</p>
+                      </div>
+
+                      {items.length === 0 ? (
+                        <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
+                          <span className="text-4xl">💼</span>
+                          <h4 className="text-white/80 font-bold mt-4">Nenhum serviço listado</h4>
+                          <p className="text-white/45 text-xs max-w-xs mt-1">Você pode solicitar um atendimento personalizado clicando em Contactar WhatsApp.</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 gap-4 mt-6">
+                          {items.map((item: any, idx: number) => (
+                            <div key={item.id || idx} className="bg-neutral-900/60 hover:bg-neutral-900 border border-white/5 hover:border-white/10 rounded-2xl p-5 flex flex-col sm:flex-row gap-4 transition-all duration-200">
+                              <div className="w-20 h-20 rounded-xl bg-neutral-950 overflow-hidden flex-shrink-0 flex items-center justify-center border border-white/10">
+                                {item.photo ? (
+                                  <img src={item.photo} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                ) : (
+                                  <Briefcase className="text-white/20" size={24} />
+                                )}
+                              </div>
+                              <div className="flex-1 flex flex-col justify-between">
+                                <div>
+                                  <h4 className="text-base font-extrabold text-white">{item.name}</h4>
+                                  <p className="text-xs text-white/55 leading-relaxed mt-1">{item.desc || 'Atendimento comercial dedicado.'}</p>
+                                </div>
+                                <div className="flex items-center justify-between mt-4 sm:mt-1 pt-2 border-t border-white/5">
+                                  <span className="text-xs font-black text-[var(--primary)] font-mono">
+                                    {item.price ? `R$ ${parseFloat(item.price).toFixed(2).replace('.', ',')}` : 'Sob Consulta'}
+                                  </span>
+                                  <button 
+                                    onClick={() => {
+                                      const textMsg = `Olá! Gostaria de fazer um orçamento para o serviço comercial: *${item.name}* no portal ${appData.siteInfo.name}`;
+                                      window.open(`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
+                                    }}
+                                    className="px-4 py-2 rounded-xl bg-transparent hover:bg-amber-400/10 border border-[var(--primary)]/30 hover:border-[var(--primary)] text-[var(--primary)] text-[10px] font-black uppercase tracking-widest transition-all duration-200"
+                                  >
+                                    Pedir Orçamento
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Interactive Box: Shopping Cart or Custom Quote Panel */}
+                <div className="lg:col-span-4 flex flex-col gap-6">
+                  
+                  {/* Option A: Shopping Cart (for store & menu) */}
+                  {(siteType === 'loja' || siteType === 'cardapio') && (
+                    <div className="bg-[#0b0c10] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-xl relative flex flex-col sticky top-6">
+                      <h3 className="text-sm font-black font-mono uppercase tracking-[0.2em] text-[var(--primary)] flex items-center gap-2">
+                        <ShoppingCart size={16} /> SACOLA DE PEDIDOS
+                      </h3>
+                      
+                      {Object.keys(shoppingCart).length === 0 ? (
+                        <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
+                          <span className="text-2xl text-white/20">🛒</span>
+                          <p className="text-xs text-white/40 mt-3 max-w-[200px] leading-relaxed">Sua sacola está vazia. Adicione produtos acima para enviar o seu pedido.</p>
+                        </div>
+                      ) : (() => {
+                        const cartItemsArr = Object.values(shoppingCart) as any[];
+                        const subtotal = cartItemsArr.reduce((total: number, car: any) => {
+                          const val = car.item.price ? parseFloat(car.item.price) : 0;
+                          return total + (val * car.count);
+                        }, 0);
+                        
+                        return (
+                          <div className="mt-4 flex flex-col gap-4 flex-1">
+                            {/* Items List */}
+                            <div className="flex flex-col gap-3 max-h-56 overflow-y-auto pr-1">
+                              {cartItemsArr.map((car: any) => (
+                                <div key={car.item.id} className="bg-neutral-900 border border-white/5 rounded-xl p-3 flex justify-between items-center">
+                                  <div className="flex-1 min-w-0 pr-2">
+                                    <h4 className="text-xs font-bold text-white truncate">{car.item.name}</h4>
+                                    <p className="text-[10px] text-white/50 font-mono mt-0.5">{car.count}x • {car.item.price ? `R$ ${parseFloat(car.item.price).toFixed(2).replace('.', ',')}` : 'Grátis'}</p>
+                                  </div>
+                                  <span className="text-xs font-black text-white font-mono flex-shrink-0">
+                                    {car.item.price ? `R$ ${(parseFloat(car.item.price) * car.count).toFixed(2).replace('.', ',')}` : 'Consulta'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Divider line */}
+                            <div className="border-t border-white/5 pt-3">
+                              <div className="flex justify-between items-center text-sm">
+                                <span className="font-bold text-white">Total do Pedido:</span>
+                                <span className="text-base font-black text-[var(--primary)] font-mono">
+                                  R$ {subtotal.toFixed(2).replace('.', ',')}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Client Details Form */}
+                            <div className="flex flex-col gap-2.5 mt-2">
+                              <label className="text-[10px] text-white/50 uppercase tracking-wider font-extrabold">Seu Nome *</label>
+                              <input 
+                                type="text"
+                                placeholder="Informe seu nome"
+                                value={cartCustomerName}
+                                onChange={(e) => setCartCustomerName(e.target.value)}
+                                className="w-full bg-[#11111a] border border-white/10 hover:border-white/20 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+
+                              <label className="text-[10px] text-white/50 uppercase tracking-wider font-extrabold mt-1">Endereço de Entrega ou Mesa / Observações *</label>
+                              <textarea 
+                                placeholder="Bairro, Rua, Nº / Observações como ponto de referência"
+                                value={cartCustomerDetails}
+                                onChange={(e) => setCartCustomerDetails(e.target.value)}
+                                rows={2}
+                                className="w-full bg-[#11111a] border border-white/10 hover:border-white/20 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white resize-none"
+                              />
+                            </div>
+
+                            {/* WhatsApp Submit */}
+                            <button 
+                              onClick={() => {
+                                if (!cartCustomerName || !cartCustomerDetails) {
+                                  alert("Por favor, preencha seu nome e endereço/observações.");
+                                  return;
+                                }
+                                
+                                // Format perfect whatsapp message
+                                let textMsg = `*🛒 NOVO PEDIDO - ${company.name.toUpperCase()}*\n`;
+                                textMsg += `------------------------------------\n`;
+                                textMsg += `*Cliente:* ${cartCustomerName}\n`;
+                                textMsg += `*Entrega/Local:* ${cartCustomerDetails}\n`;
+                                textMsg += `------------------------------------\n`;
+                                textMsg += `*Itens Pedidos:*\n`;
+                                
+                                cartItemsArr.forEach((c: any) => {
+                                  textMsg += `- ${c.count}x ${c.item.name} (${c.item.price ? `R$ ${parseFloat(c.item.price).toFixed(2).replace('.', ',')}` : 'Consulta'})\n`;
+                                });
+                                
+                                textMsg += `------------------------------------\n`;
+                                textMsg += `*Total Geral:* R$ ${subtotal.toFixed(2).replace('.', ',')}\n\n`;
+                                textMsg += `Vi seu catálogo e fecho via WhatsApp através do portal *${appData.siteInfo.name}*!`;
+                                
+                                window.open(`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
+                              }}
+                              className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-lg mt-2 cursor-pointer shadow-emerald-500/10"
+                            >
+                              <Smartphone size={14} /> Finalizar via WhatsApp
+                            </button>
+                            <p className="text-[10px] text-white/30 text-center leading-relaxed">
+                              O checkout é finalizado de forma rápida e segura direto no WhatsApp do estabelecimento comercial, sem taxas na plataforma!
+                            </p>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+
+                  {/* Option B: Landing Quote form (for service-landing pages) */}
+                  {siteType === 'servico' && (
+                    <div className="bg-[#0b0c10] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-xl relative sticky top-6">
+                      <h3 className="text-sm font-black font-mono uppercase tracking-[0.2em] text-[var(--primary)]">SOLICITAR ORÇAMENTO</h3>
+                      <p className="text-xs text-white/45 mt-2 leading-relaxed">Envie sua dúvida ou descreva o serviço que você precisa receber diretamente para o nosso suporte oficial!</p>
+                      
+                      <div className="flex flex-col gap-4 mt-6">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase tracking-widest font-extrabold">Seu Nome Completo</label>
+                          <input 
+                            type="text"
+                            placeholder="Informe seu nome"
+                            id="quote-sender-name"
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase tracking-widest font-extrabold">Qual serviço/atividade você deseja?</label>
+                          <select 
+                            id="quote-service-select"
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                          >
+                            <option value="Geral">Consulta Geral</option>
+                            {items.map((it: any) => (
+                              <option key={it.id || it.name} value={it.name}>{it.name}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase tracking-widest font-extrabold">Descreva as Necessidades / Detalhes</label>
+                          <textarea 
+                            placeholder="Descreva o que você precisa ou suas dúvidas..."
+                            id="quote-sender-details"
+                            rows={3}
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white resize-none"
+                          />
+                        </div>
+
+                        <button 
+                          onClick={() => {
+                            const clientName = (document.getElementById('quote-sender-name') as HTMLInputElement)?.value;
+                            const serv = (document.getElementById('quote-service-select') as HTMLSelectElement)?.value;
+                            const notes = (document.getElementById('quote-sender-details') as HTMLTextAreaElement)?.value;
+                            
+                            if (!clientName || !notes) {
+                              alert("Por favor, informe seu nome e descreva os detalhes do seu pedido de orçamento.");
+                              return;
+                            }
+                            
+                            let textMsg = `*📋 PEDIDO DE ORÇAMENTO COMERCIAL - ${company.name.toUpperCase()}*\n`;
+                            textMsg += `------------------------------------\n`;
+                            textMsg += `*Cliente:* ${clientName}\n`;
+                            textMsg += `*Serviço Requerido:* ${serv}\n`;
+                            textMsg += `------------------------------------\n`;
+                            textMsg += `*Mensagem/Detalhes:*\n${notes}\n\n`;
+                            textMsg += `Solicitação realizada via atendimento digital no portal *${appData.siteInfo.name}*!`;
+                            
+                            window.open(`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
+                          }}
+                          className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md cursor-pointer mt-2"
+                        >
+                          <Smartphone size={14} /> Enviar no WhatsApp
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
+
+      {/* =========================================================================
+          INTERACTIVE SCREEN: PAINEL DO ANUNCIANTE (AUTH / DASHBOARD)
+          ========================================================================= */}
+      <AnimatePresence>
+        {isAdPortalOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 backdrop-blur-md z-[1250] overflow-y-auto font-jakarta flex items-center justify-center p-4"
+          >
+            {/* Modal Box */}
+            <div className="bg-[#0b0c10] border border-white/10 rounded-3xl w-full max-w-5xl shadow-2xl p-6 sm:p-8 flex flex-col relative max-h-[90vh] overflow-y-auto">
+              
+              {/* Close Panel Button */}
+              <button 
+                onClick={() => {
+                  setIsAdPortalOpen(false);
+                  setEditingItemIndex(null);
+                }}
+                className="absolute top-5 right-5 text-white/50 hover:text-white hover:scale-105 transition-all p-2 bg-white/5 hover:bg-white/10 rounded-full"
+              >
+                <X size={18} />
+              </button>
+
+              {/* SECTION A: IF NOT LOGGED IN SHOW AUTH LOGIN / REGISTER */}
+              {!currentAdvertiser ? (
+                <div className="w-full max-w-md mx-auto py-8">
+                  {/* Mode Selector */}
+                  <div className="flex gap-4 p-1 bg-white/5 rounded-2xl mb-8">
+                    <button 
+                      onClick={() => setAdLoginMode('login')}
+                      className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-200 ${adLoginMode === 'login' ? 'bg-[var(--primary)] text-black' : 'text-white hover:bg-white/5'}`}
+                    >
+                      Acessar Meu Painel
+                    </button>
+                    <button 
+                      onClick={() => setAdLoginMode('register')}
+                      className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-200 ${adLoginMode === 'register' ? 'bg-[var(--primary)] text-black' : 'text-white hover:bg-white/5'}`}
+                    >
+                      Cadastrar Negócio
+                    </button>
+                  </div>
+
+                  {/* Mode 1: Advertiser Login Form */}
+                  {adLoginMode === 'login' ? (
+                    <div className="flex flex-col gap-4">
+                      <div>
+                        <h2 className="text-xl font-extrabold text-white tracking-tight flex items-center gap-2">
+                          🗝️ Login do Anunciante
+                        </h2>
+                        <p className="text-xs text-white/50 mt-1">Gerencie seu perfil, catálogo e pedidos de forma profissional.</p>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5 mt-2">
+                        <label className="text-[10px] text-white/50 uppercase tracking-widest font-black">E-mail Cadastrado</label>
+                        <input 
+                          type="email"
+                          placeholder="Informe seu email"
+                          value={adLoginForm.email}
+                          onChange={(e) => setAdLoginForm(prev => ({ ...prev, email: e.target.value }))}
+                          className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3.5 text-xs text-white"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] text-white/50 uppercase tracking-widest font-black">Senha</label>
+                        <input 
+                          type="password"
+                          placeholder="Digite sua senha cadastrada"
+                          value={adLoginForm.password}
+                          onChange={(e) => setAdLoginForm(prev => ({ ...prev, password: e.target.value }))}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter') {
+                              // Trigger login
+                              const email = adLoginForm.email.toLowerCase().trim();
+                              const pass = adLoginForm.password;
+                              if (!email || !pass) return;
+                              setIsAdLoading(true);
+                              try {
+                                const q = query(collection(db, 'advertisers'), where('email', '==', email));
+                                const snap = await getDocs(q);
+                                if (snap.empty) {
+                                  alert("Nenhum anunciante cadastrado com este e-mail.");
+                                  return;
+                                }
+                                const adDoc = snap.docs[0];
+                                const docData = adDoc.data();
+                                if (docData.password === pass) {
+                                  localStorage.setItem('ad_email', email);
+                                  localStorage.setItem('ad_password', pass);
+                                  setCurrentAdvertiser({
+                                    id: adDoc.id,
+                                    ...docData
+                                  });
+                                  alert("Login realizado com sucesso! Bem-vindo!");
+                                } else {
+                                  alert("Senha incorreta. Tente novamente.");
+                                }
+                              } catch (err) {
+                                console.error(err);
+                                alert("Erro ao tentar fazer login.");
+                              } finally {
+                                setIsAdLoading(false);
+                              }
+                            }
+                          }}
+                          className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3.5 text-xs text-white"
+                        />
+                      </div>
+
+                      <button 
+                        onClick={async () => {
+                          const email = adLoginForm.email.toLowerCase().trim();
+                          const pass = adLoginForm.password;
+                          if (!email || !pass) {
+                            alert("Preencha todos os campos.");
+                            return;
+                          }
+                          setIsAdLoading(true);
+                          try {
+                            const q = query(collection(db, 'advertisers'), where('email', '==', email));
+                            const snap = await getDocs(q);
+                            if (snap.empty) {
+                              alert("Nenhum anunciante cadastrado com este e-mail.");
+                              return;
+                            }
+                            const adDoc = snap.docs[0];
+                            const docData = adDoc.data();
+                            if (docData.password === pass) {
+                              localStorage.setItem('ad_email', email);
+                              localStorage.setItem('ad_password', pass);
+                              setCurrentAdvertiser({
+                                id: adDoc.id,
+                                ...docData
+                              });
+                              alert("Login realizado com sucesso! Bem-vindo!");
+                            } else {
+                              alert("Senha incorreta. Tente novamente.");
+                            }
+                          } catch (err) {
+                            console.error(err);
+                            alert("Erro ao tentar fazer login.");
+                          } finally {
+                            setIsAdLoading(false);
+                          }
+                        }}
+                        disabled={isAdLoading}
+                        className="w-full bg-[var(--primary)] hover:brightness-110 text-black py-4 rounded-xl font-bold text-xs uppercase tracking-widest text-center transition-all duration-200 mt-2 flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:shadow-yellow-500/10"
+                      >
+                        {isAdLoading ? "Carregando..." : "Entrar no Meu Painel"}
+                      </button>
+                    </div>
+                  ) : (
+                    // Mode 2: Advertiser Registration Form
+                    <div className="flex flex-col gap-4">
+                      <div>
+                        <h2 className="text-xl font-extrabold text-white tracking-tight flex items-center gap-2">
+                          🚀 Cadastre Seu Negócio no Portal
+                        </h2>
+                        <p className="text-xs text-white/50 mt-1">Sua empresa será listada automaticamente de forma profissional e interativa.</p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase font-black">Seu E-mail de Usuário</label>
+                          <input 
+                            type="email"
+                            placeholder="email@link.com"
+                            value={adRegisterForm.email}
+                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, email: e.target.value }))}
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase font-black">Sua Senha de Acesso</label>
+                          <input 
+                            type="password"
+                            placeholder="Crie uma senha forte"
+                            value={adRegisterForm.password}
+                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, password: e.target.value }))}
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase font-black">Nome do Estabelecimento / Comercial</label>
+                          <input 
+                            type="text"
+                            placeholder="Ex: Mercadinho Brasil"
+                            value={adRegisterForm.name}
+                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, name: e.target.value }))}
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase font-black">WhatsApp Comercial (com DDD)</label>
+                          <input 
+                            type="text"
+                            placeholder="5585992900000"
+                            value={adRegisterForm.wa}
+                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, wa: e.target.value }))}
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase font-black">Categoria Comercial</label>
+                          <select 
+                            value={adRegisterForm.category}
+                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, category: e.target.value }))}
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                          >
+                            {(appData?.categories || []).map((cat: any) => (
+                              <option key={cat.name} value={cat.name}>{cat.name}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase font-black">Estilo do seu Mini-Site</label>
+                          <select 
+                            value={adRegisterForm.type}
+                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, type: e.target.value }))}
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                          >
+                            <option value="loja">🛍️ Loja Virtual (Produtos com preço e carrinho)</option>
+                            <option value="cardapio">🍔 Cardápio / Lanchonete (Itens alimentícios e pedidos)</option>
+                            <option value="servico">🛠️ Prestador de Serviços (Listado de serviços, fotos, botão orçamentos)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex justify-between items-center">
+                            <label className="text-[10px] text-white/50 uppercase font-black">Link da Logo (Opcional)</label>
+                            <div className="flex gap-1.5">
+                              <a 
+                                href={universalConfig.uploadImageHelpUrl || 'https://postimages.org/'} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="text-[9px] text-[var(--primary)] hover:underline flex items-center gap-1 bg-[var(--primary)]/10 px-1.5 py-0.5 rounded border border-[var(--primary)]/10 decoration-transparent"
+                              >
+                                📷 Imagem
+                              </a>
+                              <a 
+                                href={universalConfig.uploadVideoHelpUrl || 'https://streamable.com/'} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="text-[9px] text-emerald-400 hover:underline flex items-center gap-1 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/10 decoration-transparent"
+                              >
+                                🎥 Vídeo
+                              </a>
+                            </div>
+                          </div>
+                          <input 
+                            type="text"
+                            placeholder="https://suaimagem.com/foto.jpg"
+                            value={adRegisterForm.logo}
+                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, logo: e.target.value }))}
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase font-black">Perfil do Instagram (Opcional)</label>
+                          <input 
+                            type="text"
+                            placeholder="https://instagram.com/seu_perfil"
+                            value={adRegisterForm.ig}
+                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, ig: e.target.value }))}
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] text-white/50 uppercase font-black">Descrição Curta do Negócio</label>
+                        <textarea 
+                          placeholder="Ex: Oferecemos o melhor da moda e confecções na região com descontos exclusivos e promoções todos os dias."
+                          rows={2}
+                          value={adRegisterForm.desc}
+                          onChange={(e) => setAdRegisterForm(prev => ({ ...prev, desc: e.target.value }))}
+                          className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white resize-none"
+                        />
+                      </div>
+
+                      <button 
+                        onClick={async () => {
+                          const { email, password, name, wa, category, type, logo, ig, desc } = adRegisterForm;
+                          if (!email || !password || !name || !wa) {
+                            alert("Por favor, preencha todos os campos obrigatórios (E-mail, Senha, Nome da Empresa e WhatsApp).");
+                            return;
+                          }
+                          
+                          setIsAdLoading(true);
+                          try {
+                            const activeSlug = slugify(name);
+                            const advertiserRef = doc(db, 'advertisers', activeSlug);
+                            
+                            // Check uniqueness
+                            const checkRef = await getDoc(advertiserRef);
+                            if (checkRef.exists()) {
+                              alert("Já existe uma empresa cadastrada com este nome comercial. Escolha um nome exclusivo.");
+                              setIsAdLoading(false);
+                              return;
+                            }
+                            
+                            const newCompany = {
+                              id: activeSlug,
+                              name: name.trim(),
+                              category: category,
+                              desc: desc.trim() || 'Sem descrição cadastrada.',
+                              logo: logo.trim() || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150',
+                              wa: wa.replace(/[^0-9]/g, ''),
+                              ig: ig.trim() || '#',
+                              type: type,
+                              items: [],
+                              featured: false,
+                              active: true
+                            };
+                            
+                            // Save to collection
+                            await setDoc(advertiserRef, {
+                              email: email.toLowerCase().trim(),
+                              password: password,
+                              tenantId: slugify(tenantId || 'fortaleza'),
+                              company: newCompany
+                            });
+                            
+                            localStorage.setItem('ad_email', email);
+                            localStorage.setItem('ad_password', password);
+                            
+                            // Load to active advertiser
+                            setCurrentAdvertiser({
+                              id: activeSlug,
+                              email: email.toLowerCase().trim(),
+                              password: password,
+                              tenantId: slugify(tenantId || 'fortaleza'),
+                              company: newCompany
+                            });
+                            
+                            // Refresh dynamic list
+                            await fetchAdvertisers(tenantId || 'fortaleza');
+                            alert("Sua empresa foi cadastrada com total sucesso e já está publicada online no portal!");
+                          } catch (err) {
+                            console.error("Cadastro falhou:", err);
+                            alert("Erro ao tentar cadastrar seu negócio. Verifique os campos e tente novamente.");
+                          } finally {
+                            setIsAdLoading(false);
+                          }
+                        }}
+                        disabled={isAdLoading}
+                        className="w-full bg-[#25D366] hover:brightness-110 text-white py-4 rounded-xl font-bold text-xs uppercase tracking-widest text-center transition-all duration-200 mt-2 cursor-pointer shadow-lg shadow-emerald-500/10"
+                      >
+                        {isAdLoading ? "Salvando informações..." : "Completar Cadastro & Publicar"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // SECTION B: IF AUTHENTICATED SHOW ADVERTISER DASHBOARD
+                <div className="flex flex-col gap-6">
+                  {/* Dashboard Header Bar */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-5 mt-4">
+                    <div>
+                      <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-1.5">
+                        ⚙️ Painel de Controle • {currentAdvertiser.company.name}
+                      </h2>
+                      <p className="text-xs text-white/50">Edite seu perfil e seus serviços de forma independente, as atualizações são automáticas!</p>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        localStorage.removeItem('ad_email');
+                        localStorage.removeItem('ad_password');
+                        setCurrentAdvertiser(null);
+                        setEditingItemIndex(null);
+                        alert("Sessão finalizada.");
+                      }}
+                      className="inline-flex items-center gap-1.5 self-start bg-red-600/10 border border-red-500/20 text-red-400 hover:bg-red-600 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150"
+                    >
+                      <LogOut size={13} /> Sair do Painel
+                    </button>
+                  </div>
+
+                  {/* Tabs Nav */}
+                  <div className="flex gap-3 border-b border-white/5 pb-1">
+                    <button 
+                      onClick={() => {
+                        setAdDashboardTab('perfil');
+                        setEditingItemIndex(null);
+                      }}
+                      className={`text-xs font-black uppercase tracking-wider pb-3 px-1 transition-all border-b-2 hover:text-white ${adDashboardTab === 'perfil' ? 'border-[var(--primary)] text-white' : 'border-transparent text-white/40'}`}
+                    >
+                      Perfil & Dados Gerais
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setAdDashboardTab('catalogo');
+                        setEditingItemIndex(null);
+                      }}
+                      className={`text-xs font-black uppercase tracking-wider pb-3 px-1 transition-all border-b-2 hover:text-white ${adDashboardTab === 'catalogo' ? 'border-[var(--primary)] text-white' : 'border-transparent text-white/40'}`}
+                    >
+                      Gerenciar Itens ({currentAdvertiser.company.items?.length || 0})
+                    </button>
+                  </div>
+
+                  {/* Sub-Tab 1: Profile Edits */}
+                  {adDashboardTab === 'perfil' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                      {/* Form area */}
+                      <div className="lg:col-span-2 flex flex-col gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Nome da Empresa</label>
+                            <input 
+                              type="text"
+                              value={currentAdvertiser.company.name}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, name: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            />
+                          </div>
+                          
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">WhatsApp Comercial (com DDD)</label>
+                            <input 
+                              type="text"
+                              value={currentAdvertiser.company.wa}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/[^0-9]/g, '');
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, wa: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Categoria</label>
+                            <select 
+                              value={currentAdvertiser.company.category}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, category: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            >
+                              {(appData?.categories || []).map((cat: any) => (
+                                <option key={cat.name} value={cat.name}>{cat.name}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Estilo de Atendimento / Funcionalidade</label>
+                            <select 
+                              value={currentAdvertiser.company.type || 'loja'}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, type: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            >
+                              <option value="loja">🛍️ Loja Virtual (Produtos com carrinho e WhatsApp)</option>
+                              <option value="cardapio">🍔 Cardápio / Lanchonete (Itens alimentícios e pedidos)</option>
+                              <option value="servico">🛠️ Prestador de Serviços (Landing page de portfólio)</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex justify-between items-center">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Link da Foto Logo (URL)</label>
+                              <div className="flex gap-2">
+                                <a 
+                                  href={universalConfig.uploadImageHelpUrl || 'https://postimages.org/'} 
+                                  target="_blank" 
+                                  rel="noreferrer"
+                                  className="text-[10px] text-[var(--primary)] hover:underline flex items-center gap-1 bg-[var(--primary)]/10 px-2 py-0.5 rounded border border-[var(--primary)]/20 decoration-transparent"
+                                >
+                                  📷 Imagem
+                                </a>
+                                <a 
+                                  href={universalConfig.uploadVideoHelpUrl || 'https://streamable.com/'} 
+                                  target="_blank" 
+                                  rel="noreferrer"
+                                  className="text-[10px] text-emerald-400 hover:underline flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 decoration-transparent"
+                                >
+                                  🎥 Vídeo
+                                </a>
+                              </div>
+                            </div>
+                            <input 
+                              type="text"
+                              value={currentAdvertiser.company.logo}
+                              placeholder="https://..."
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, logo: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            />
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Link do Instagram (instagram.com/...)</label>
+                            <input 
+                              type="text"
+                              value={currentAdvertiser.company.ig}
+                              placeholder="https://..."
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, ig: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase font-bold">Apresentação / Quem Somos</label>
+                          <textarea 
+                            value={currentAdvertiser.company.desc}
+                            rows={3}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, desc: val }
+                              }));
+                            }}
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white resize-none"
+                          />
+                        </div>
+
+                        <button 
+                          onClick={async () => {
+                            setIsAdLoading(true);
+                            try {
+                              const docRef = doc(db, 'advertisers', currentAdvertiser.id);
+                              
+                              // Save exact state with proof of credentials matching security rules
+                              await setDoc(docRef, {
+                                email: currentAdvertiser.email,
+                                password: currentAdvertiser.password,
+                                tenantId: currentAdvertiser.tenantId,
+                                company: {
+                                  ...currentAdvertiser.company,
+                                  name: currentAdvertiser.company.name.trim(),
+                                  desc: currentAdvertiser.company.desc.trim()
+                                }
+                              });
+                              
+                              // sync local state list
+                              await fetchAdvertisers(tenantId || 'fortaleza');
+                              alert("Perfil do Anunciante salvo e atualizado online com total sucesso!");
+                            } catch (err) {
+                              console.error("Failed to update profile:", err);
+                              alert("Erro ao tentar atualizar os dados do seu negócio.");
+                            } finally {
+                              setIsAdLoading(false);
+                            }
+                          }}
+                          disabled={isAdLoading}
+                          className="w-full sm:w-auto self-start px-8 py-3.5 bg-[var(--primary)] hover:brightness-110 text-black rounded-xl font-bold text-xs uppercase tracking-widest cursor-pointer shadow-lg"
+                        >
+                          {isAdLoading ? "Salvando..." : "💾 Salvar Alterações"}
+                        </button>
+                      </div>
+
+                      {/* Card preview area (right) */}
+                      <div className="bg-neutral-900/40 border border-white/5 rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-center text-center">
+                        <span className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider mb-5">Visualização Prévia do Cartão</span>
+                        
+                        <div className="bg-[#0f1016] border border-white/10 rounded-3xl p-6 w-full max-w-[280px] flex flex-col justify-between shadow-xl relative select-none">
+                          <div>
+                            <div className="w-16 h-16 rounded-full bg-white border border-white/15 overflow-hidden flex items-center justify-center shadow-lg mx-auto mb-4 p-0">
+                              <img 
+                                src={currentAdvertiser.company.logo || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150'} 
+                                alt="Previa" 
+                                className="w-full h-full object-cover" 
+                                onError={(e) => { (e.target as any).src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150' }}
+                                referrerPolicy="no-referrer" 
+                              />
+                            </div>
+                            <span className="text-[9px] text-[var(--primary)] font-black uppercase tracking-widest bg-[var(--primary)]/10 px-2 rounded-full mb-2 inline-block">
+                              {currentAdvertiser.company.category}
+                            </span>
+                            <h4 className="text-sm font-extrabold text-white mt-1 line-clamp-1">{currentAdvertiser.company.name || 'Nova Empresa'}</h4>
+                            <p className="text-[10px] text-white/50 mt-1.5 leading-relaxed line-clamp-2 min-h-[2.5rem]">{currentAdvertiser.company.desc || 'Parceiro comercial ativo na rede.'}</p>
+                          </div>
+                          
+                          <div className="mt-4 pt-4 border-t border-white/5 flex flex-col gap-1.5">
+                            <span className="w-full bg-amber-500/10 text-amber-400 text-[8px] font-black uppercase tracking-widest py-2 rounded-xl text-center">
+                              Ativo no Portal
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sub-Tab 2: Catalog Management list */}
+                  {adDashboardTab === 'catalogo' && (
+                    <div className="flex flex-col gap-6">
+                      
+                      {/* Add Button and Title */}
+                      <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl">
+                        <div>
+                          <h3 className="text-sm font-bold text-white uppercase tracking-wider">Itens do Catálogo Virtual</h3>
+                          <p className="text-[11px] text-white/50">Inclua seus produtos, serviços ou opções de cardápio.</p>
+                        </div>
+                        {editingItemIndex === null && (
+                          <button 
+                            onClick={() => {
+                              setItemForm({ name: '', desc: '', price: '', photo: '' });
+                              setEditingItemIndex(-1); // -1 triggers add new form
+                            }}
+                            className="inline-flex items-center gap-1.5 bg-[var(--primary)] hover:brightness-110 text-black px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest cursor-pointer shadow"
+                          >
+                            <Plus size={14} /> Adicionar Item
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Editing Item Form Inline Overlay */}
+                      {editingItemIndex !== null && (
+                        <div className="bg-neutral-900 border border-[var(--primary)]/20 rounded-3xl p-6 flex flex-col gap-4">
+                          <h4 className="text-sm font-black text-white uppercase tracking-wider border-b border-white/5 pb-2">
+                            {editingItemIndex === -1 ? '➕ Cadastrar Novo Item' : '✍️ Editar Item'}
+                          </h4>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Nome do Produto / Serviço / Prato *</label>
+                              <input 
+                                type="text"
+                                value={itemForm.name}
+                                onChange={(e) => setItemForm(prev => ({ ...prev, name: e.target.value }))}
+                                placeholder="Feijoada Completa, Camiseta Slim, Consulta..."
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Valor (R$) *</label>
+                              <input 
+                                type="text"
+                                value={itemForm.price}
+                                onChange={(e) => setItemForm(prev => ({ ...prev, price: e.target.value }))}
+                                placeholder="59.90 (Apenas números e ponto)"
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white font-mono"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Descrição Curta</label>
+                              <input 
+                                type="text"
+                                value={itemForm.desc}
+                                onChange={(e) => setItemForm(prev => ({ ...prev, desc: e.target.value }))}
+                                placeholder="Ingredientes, tamanhos disponíveis, etc"
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                              <div className="flex justify-between items-center">
+                                <label className="text-[10px] text-white/50 uppercase font-bold">Link da Foto URL (Opcional)</label>
+                                <div className="flex gap-2">
+                                  <a 
+                                    href={universalConfig.uploadImageHelpUrl || 'https://postimages.org/'} 
+                                    target="_blank" 
+                                    rel="noreferrer"
+                                    className="text-[10px] text-[var(--primary)] hover:underline flex items-center gap-1 bg-[var(--primary)]/10 px-2 py-0.5 rounded border border-[var(--primary)]/20 decoration-transparent"
+                                  >
+                                    📷 Imagem
+                                  </a>
+                                  <a 
+                                    href={universalConfig.uploadVideoHelpUrl || 'https://streamable.com/'} 
+                                    target="_blank" 
+                                    rel="noreferrer"
+                                    className="text-[10px] text-emerald-400 hover:underline flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 decoration-transparent"
+                                  >
+                                    🎥 Vídeo
+                                  </a>
+                                </div>
+                              </div>
+                              <input 
+                                type="text"
+                                value={itemForm.photo}
+                                onChange={(e) => setItemForm(prev => ({ ...prev, photo: e.target.value }))}
+                                placeholder="https://..."
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2.5 justify-end mt-4">
+                            <button 
+                              onClick={() => setEditingItemIndex(null)}
+                              className="px-5 py-2.5 bg-neutral-950 border border-white/10 hover:bg-neutral-900 text-white rounded-xl text-xs font-bold uppercase tracking-wider cursor-pointer"
+                            >
+                              Cancelar
+                            </button>
+                            
+                            <button 
+                              onClick={async () => {
+                                const { name, price, desc, photo } = itemForm;
+                                if (!name || !price) {
+                                  alert("Preencha ao menos o Nome e o Preço do item.");
+                                  return;
+                                }
+
+                                if (isNaN(Number(price))) {
+                                  alert("O valor deve ser um número decimal, use ponto no centavo (ex: 39.90)");
+                                  return;
+                                }
+
+                                const newItem = {
+                                  id: editingItemIndex === -1 ? `item_${Date.now()}` : (currentAdvertiser.company.items[editingItemIndex]?.id || `item_${Date.now()}`),
+                                  name: name.trim(),
+                                  price: Number(price).toString(),
+                                  desc: desc.trim(),
+                                  photo: photo.trim()
+                                };
+
+                                let updatedItems = [...(currentAdvertiser.company.items || [])];
+                                if (editingItemIndex === -1) {
+                                  updatedItems.push(newItem);
+                                } else {
+                                  updatedItems[editingItemIndex] = newItem;
+                                }
+
+                                const updatedAdvertiser = {
+                                  ...currentAdvertiser,
+                                  company: {
+                                    ...currentAdvertiser.company,
+                                    items: updatedItems
+                                  }
+                                };
+
+                                setIsAdLoading(true);
+                                try {
+                                  const docRef = doc(db, 'advertisers', currentAdvertiser.id);
+                                  await setDoc(docRef, {
+                                    email: currentAdvertiser.email,
+                                    password: currentAdvertiser.password,
+                                    tenantId: currentAdvertiser.tenantId,
+                                    company: updatedAdvertiser.company
+                                  });
+                                  
+                                  setCurrentAdvertiser(updatedAdvertiser);
+                                  await fetchAdvertisers(tenantId || 'fortaleza');
+                                  setEditingItemIndex(null);
+                                  alert("Item salvo e publicado online de forma automática!");
+                                } catch (err) {
+                                  console.error("Save item failed", err);
+                                  alert("Ocorreu um erro ao tentar salvar o item.");
+                                } finally {
+                                  setIsAdLoading(false);
+                                }
+                              }}
+                              disabled={isAdLoading}
+                              className="px-6 py-2.5 bg-[#25D366] hover:bg-[#20ba59] text-white rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer"
+                            >
+                              {isAdLoading ? "Salvando..." : "✅ Salvar Item"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Items Grid List */}
+                      {editingItemIndex === null && (
+                        currentAdvertiser.company.items?.length === 0 ? (
+                          <div className="text-center py-16 bg-neutral-900/20 rounded-2xl border border-dashed border-white/5 flex flex-col items-center justify-center">
+                            <span className="text-3xl">📭</span>
+                            <h4 className="text-sm font-bold text-white mt-3">Você ainda não possui nenhum produto ou serviço</h4>
+                            <p className="text-xs text-white/40 max-w-xs mt-1">Adicione itens digitais para ativar seu catálogo interativo com shopping-cart do portal.</p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {currentAdvertiser.company.items.map((it: any, i: number) => (
+                              <div key={it.id || i} className="bg-[#12131a] border border-white/5 rounded-2xl p-4 flex gap-4 items-center justify-between">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className="w-12 h-12 bg-neutral-950 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center border border-white/10">
+                                    {it.photo ? (
+                                      <img src={it.photo} alt={it.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                    ) : (
+                                      <ImageIcon className="text-white/20" size={18} />
+                                    )}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <h4 className="text-xs font-bold text-white truncate">{it.name}</h4>
+                                    <span className="text-[10px] font-black text-[var(--primary)] font-mono">
+                                      R$ {parseFloat(it.price).toFixed(2).replace('.', ',')}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex gap-2 flex-shrink-0">
+                                  <button 
+                                    onClick={() => {
+                                      setItemForm({
+                                        name: it.name,
+                                        desc: it.desc || '',
+                                        price: it.price,
+                                        photo: it.photo || ''
+                                      });
+                                      setEditingItemIndex(i);
+                                    }}
+                                    className="p-2 rounded bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+                                  >
+                                    Editar
+                                  </button>
+                                  
+                                  <button 
+                                    onClick={async () => {
+                                      if (!confirm("Tem certeza que deseja excluir este item?")) return;
+                                      
+                                      const updatedItems = currentAdvertiser.company.items.filter((_: any, idx: number) => idx !== i);
+                                      const updatedAdvertiser = {
+                                        ...currentAdvertiser,
+                                        company: {
+                                          ...currentAdvertiser.company,
+                                          items: updatedItems
+                                        }
+                                      };
+
+                                      setIsAdLoading(true);
+                                      try {
+                                        const docRef = doc(db, 'advertisers', currentAdvertiser.id);
+                                        await setDoc(docRef, {
+                                          email: currentAdvertiser.email,
+                                          password: currentAdvertiser.password,
+                                          tenantId: currentAdvertiser.tenantId,
+                                          company: updatedAdvertiser.company
+                                        });
+                                        
+                                        setCurrentAdvertiser(updatedAdvertiser);
+                                        await fetchAdvertisers(tenantId || 'fortaleza');
+                                        alert("Item excluído com sucesso.");
+                                      } catch (err) {
+                                        console.error("Delete failed", err);
+                                        alert("Falha ao tentar excluir o item.");
+                                      } finally {
+                                        setIsAdLoading(false);
+                                      }
+                                    }}
+                                    className="p-2 rounded bg-red-600/10 hover:bg-red-600 hover:text-white text-red-400 transition-colors"
+                                  >
+                                    Excluir
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

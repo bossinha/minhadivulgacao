@@ -37,7 +37,7 @@ service cloud.firestore {
       allow update: if isValidId(tenantId) && (
         request.resource.data.password == resource.data.password &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['data'])
-      );
+       );
 
       // Affiliates Sub-collection
       match /affiliates/{affiliateId} {
@@ -55,6 +55,17 @@ service cloud.firestore {
           (request.resource.data._auth == get(/databases/$(database)/documents/tenants/$(tenantId)).data.password) ||
           (resource != null && resource.data._auth == get(/databases/$(database)/documents/tenants/$(tenantId)).data.password);
       }
+    }
+
+    // Advertisers Collection (Individual Virtual Shops)
+    match /advertisers/{advertiserId} {
+      allow get, list: if true;
+      allow create: if isValidId(advertiserId) && 
+                      !exists(/databases/$(database)/documents/advertisers/$(advertiserId));
+      allow update, delete: if isValidId(advertiserId) && (
+        // Creator/modifier must prove knowledge of the profile password
+        request.resource.data.password == resource.data.password
+      );
     }
 
     // Dynamic Settings
