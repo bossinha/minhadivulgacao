@@ -2415,16 +2415,22 @@ function AppContent() {
                       {!company.hideMiniSite && (
                         <button 
                           onClick={() => {
-                            setActiveMiniSiteCompany(company);
-                            const url = new URL(window.location.href);
-                            url.searchParams.set('id', company.id || slugify(company.name));
-                            window.history.pushState({}, '', url.toString());
+                            if (company.website && company.website.trim() !== '') {
+                              const targetUrl = company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`;
+                              window.open(targetUrl, '_blank');
+                            } else {
+                              setActiveMiniSiteCompany(company);
+                              const url = new URL(window.location.href);
+                              url.searchParams.set('id', company.id || slugify(company.name));
+                              window.history.pushState({}, '', url.toString());
+                            }
                           }}
                           className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
                         >
                           <ShoppingBag size={12} /> 
-                          {company.type === 'loja' ? "Abrir Loja Virtual" : 
-                           company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site"}
+                          {company.website && company.website.trim() !== '' ? "Visitar Site Oficial" : 
+                           (company.type === 'loja' ? "Abrir Loja Virtual" : 
+                            company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site")}
                         </button>
                       )}
 
@@ -2503,16 +2509,22 @@ function AppContent() {
                       {!company.hideMiniSite && (
                         <button 
                           onClick={() => {
-                            setActiveMiniSiteCompany(company);
-                            const url = new URL(window.location.href);
-                            url.searchParams.set('id', company.id || slugify(company.name));
-                            window.history.pushState({}, '', url.toString());
+                            if (company.website && company.website.trim() !== '') {
+                              const targetUrl = company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`;
+                              window.open(targetUrl, '_blank');
+                            } else {
+                              setActiveMiniSiteCompany(company);
+                              const url = new URL(window.location.href);
+                              url.searchParams.set('id', company.id || slugify(company.name));
+                              window.history.pushState({}, '', url.toString());
+                            }
                           }}
                           className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
                         >
                           <ShoppingBag size={12} /> 
-                          {company.type === 'loja' ? "Abrir Loja" : 
-                           company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site"}
+                          {company.website && company.website.trim() !== '' ? "Visitar Site Oficial" : 
+                           (company.type === 'loja' ? "Abrir Loja" : 
+                            company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site")}
                         </button>
                       )}
 
@@ -2642,16 +2654,22 @@ function AppContent() {
                     {!company.hideMiniSite && (
                       <button 
                         onClick={() => {
-                          setActiveMiniSiteCompany(company);
-                          const url = new URL(window.location.href);
-                          url.searchParams.set('id', company.id || slugify(company.name));
-                          window.history.pushState({}, '', url.toString());
+                          if (company.website && company.website.trim() !== '') {
+                            const targetUrl = company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`;
+                            window.open(targetUrl, '_blank');
+                          } else {
+                            setActiveMiniSiteCompany(company);
+                            const url = new URL(window.location.href);
+                            url.searchParams.set('id', company.id || slugify(company.name));
+                            window.history.pushState({}, '', url.toString());
+                          }
                         }}
                         className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-305 shadow-md cursor-pointer"
                       >
                         <ShoppingBag size={14} /> 
-                        {company.type === 'loja' ? "Abrir Loja Virtual" : 
-                         company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site / Catálogo"}
+                        {company.website && company.website.trim() !== '' ? "Visitar Site Oficial" : 
+                         (company.type === 'loja' ? "Abrir Loja Virtual" : 
+                          company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site / Catálogo")}
                       </button>
                     )}
 
@@ -3851,16 +3869,16 @@ function AppContent() {
 
                                 <div className="dev-grid-2" style={{ marginTop: '15px' }}>
                                   <div className="dev-form-group">
-                                    <label>Botão Mini-Site / Catálogo</label>
+                                    <label>Exibir Botão de Site / Mini-Site / Catálogo?</label>
                                     <select className="dev-input" value={c.hideMiniSite ? 'sim' : 'nao'} onChange={(e) => {
                                       const newList = [...appData.companies];
                                       newList[idx].hideMiniSite = e.target.value === 'sim';
                                       updateData('companies', newList);
                                     }}>
-                                      <option value="nao">Exibir Botão (Padrão) 👁️</option>
-                                      <option value="sim">Ocultar Botão 🙈</option>
+                                      <option value="nao">Exibir Botão (Se tiver site ou catálogo) 👁️</option>
+                                      <option value="sim">Ocultar Botão (Apenas Botão de WhatsApp) 🙈</option>
                                     </select>
-                                    <small style={{ color: '#aaa', fontSize: '0.7rem' }}>Escolha "Ocultar Botão" caso a empresa não possua um mini-site configurado no portal.</small>
+                                    <small style={{ color: '#aaa', fontSize: '0.7rem' }}>Se escolher ocultar, os botões "Ver Mini-site" ou "Visitar Site" sumirão no card, mantendo foco puro no WhatsApp.</small>
                                   </div>
                                   <div className="dev-form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'rgba(251, 191, 36, 0.05)', border: '1px dashed rgba(251, 191, 36, 0.15)', borderRadius: '12px', padding: '12px', marginTop: '12px' }}>
                                     <span style={{ fontSize: '11px', color: '#fbbf24', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px' }}>
@@ -4859,6 +4877,16 @@ function AppContent() {
                           className="inline-flex items-center gap-2 bg-pink-600/10 border border-pink-500/20 text-pink-400 hover:text-white hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-200"
                         >
                           Instagram Oficial
+                        </a>
+                      )}
+                      {company.website && company.website !== '' && (
+                        <a 
+                          href={company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:text-black hover:bg-gradient-to-r hover:from-amber-400 hover:to-amber-500 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-200"
+                        >
+                          <ExternalLink size={14} /> Website Oficial
                         </a>
                       )}
                     </div>
