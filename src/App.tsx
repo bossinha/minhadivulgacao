@@ -961,6 +961,48 @@ function AppContent() {
     return merged;
   }, [appData, advertiserCompanies]);
 
+  const displayedCategories = useMemo(() => {
+    if (!appData) return [];
+    const manualCats = appData.categories || CATEGORIES || [];
+    const merged = [...manualCats];
+
+    // Extract all unique, non-empty, and valid categories from active companies
+    const activeCats = Array.from(new Set(
+      displayedCompanies
+        .map((c: any) => c.category?.trim())
+        .filter(Boolean)
+    ));
+
+    activeCats.forEach((catName: string) => {
+      const exists = merged.some(c => c.name.trim().toLowerCase() === catName.trim().toLowerCase());
+      if (!exists) {
+        // Dynamically choose a beautiful, relevant emoji/icon
+        let icon = "💼";
+        const lowerName = catName.toLowerCase();
+        if (lowerName.includes("refriger") || lowerName.includes("ar condicionado") || lowerName.includes("climatiz")) icon = "❄️";
+        else if (lowerName.includes("pizz")) icon = "🍕";
+        else if (lowerName.includes("hamburg") || lowerName.includes("lanche")) icon = "🍔";
+        else if (lowerName.includes("restaurante") || lowerName.includes("comida") || lowerName.includes("gastronom")) icon = "🍽️";
+        else if (lowerName.includes("oficina") || lowerName.includes("mecanica") || lowerName.includes("carro") || lowerName.includes("rolamento")) icon = "🔧";
+        else if (lowerName.includes("mercado") || lowerName.includes("supermercado") || lowerName.includes("atacad")) icon = "🏭";
+        else if (lowerName.includes("saude") || lowerName.includes("clinica") || lowerName.includes("medico") || lowerName.includes("remedio")) icon = "💊";
+        else if (lowerName.includes("finan") || lowerName.includes("dinheiro") || lowerName.includes("banco") || lowerName.includes("cred")) icon = "💸";
+        else if (lowerName.includes("publicidade") || lowerName.includes("propaganda") || lowerName.includes("som") || lowerName.includes("audio")) icon = "🎧";
+        else if (lowerName.includes("lazer") || lowerName.includes("show") || lowerName.includes("shopping")) icon = "🎭";
+        else if (lowerName.includes("informatic") || lowerName.includes("computador") || lowerName.includes("internet") || lowerName.includes("site") || lowerName.includes("tecnolog")) icon = "💻";
+        else if (lowerName.includes("frete") || lowerName.includes("mudanc") || lowerName.includes("transport")) icon = "🚚";
+        else if (lowerName.includes("servi")) icon = "🛠️";
+
+        merged.push({
+          name: catName,
+          icon: icon
+        });
+      }
+    });
+
+    return merged;
+  }, [appData, displayedCompanies]);
+
   // --- Deep-linking URL check for specific company ID ---
   useEffect(() => {
     if (displayedCompanies.length > 0) {
@@ -2722,30 +2764,30 @@ function AppContent() {
             </div>
           </div>
 
-          {/* Category Pills Slider */}
-          <div className="category-nav-wrapper">
-            <button type="button" className="category-nav-btn" onClick={() => scrollCats('left')}>❮</button>
-            <div className="category-nav-container" ref={catNavRef}>
-              <button 
-                type="button"
-                className={`category-pill ${selectedCategory === null ? 'active' : ''}`}
-                onClick={() => handleCategoryClick(null)}
-              >
-                ⭐ TODOS OS NEGÓCIOS
-              </button>
-              {appData.categories.map(cat => (
-                <button 
-                  key={cat.name} 
-                  type="button"
-                  className={`category-pill ${selectedCategory === cat.name ? 'active' : ''}`}
-                  onClick={() => handleCategoryClick(cat.name)}
-                >
-                  <span>{cat.icon}</span> {cat.name}
-                </button>
-              ))}
+          {/* Category Pills Auto-Scrolling Marquee (Non-clickable Carousel) */}
+          {displayedCategories && displayedCategories.length > 0 && (
+            <div className="category-marquee-container">
+              <div className="category-marquee-track">
+                {(() => {
+                  const doubledCats = [
+                    ...displayedCategories, 
+                    ...displayedCategories, 
+                    ...displayedCategories, 
+                    ...displayedCategories
+                  ];
+                  return doubledCats.map((cat, idx) => (
+                    <div 
+                      key={`${cat.name}-${idx}`} 
+                      className="category-marquee-item"
+                    >
+                      <span className="text-base">{cat.icon}</span> 
+                      <span>{cat.name}</span>
+                    </div>
+                  ));
+                })()}
+              </div>
             </div>
-            <button type="button" className="category-nav-btn" onClick={() => scrollCats('right')}>❯</button>
-          </div>
+          )}
 
           {/* Grid of Results */}
           {filteredCompanies.length === 0 ? (
@@ -3913,20 +3955,45 @@ function AppContent() {
                                   </div>
                                   <div className="dev-form-group">
                                     <label>Categoria</label>
-                                    <select className="dev-input" value={c.category} onChange={(e) => {
-                                      const val = e.target.value;
-                                      setAppData(prev => {
-                                        if (!prev) return prev;
-                                        const newList = [...prev.companies];
-                                        newList[idx] = { ...newList[idx], category: val };
-                                        return { ...prev, companies: newList };
-                                      });
-                                    }}>
-                                      <option value="">Selecione uma categoria</option>
+                                    <select 
+                                      className="dev-input" 
+                                      value={appData?.categories.some((cat: any) => cat.name === c.category) ? c.category : "__custom__"} 
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        setAppData(prev => {
+                                          if (!prev) return prev;
+                                          const newList = [...prev.companies];
+                                          newList[idx] = { ...newList[idx], category: val === "__custom__" ? "" : val };
+                                          return { ...prev, companies: newList };
+                                        });
+                                      }}
+                                    >
                                       {appData.categories.map(cat => (
                                         <option key={cat.name} value={cat.name}>{cat.name}</option>
                                       ))}
+                                      <option value="__custom__">✍️ Outro (Digitar nicho personalizado...)</option>
                                     </select>
+
+                                    {!appData?.categories.some((cat: any) => cat.name === c.category) && (
+                                      <div className="dev-form-group" style={{ marginTop: '8px' }}>
+                                        <label style={{ color: 'var(--primary)', fontSize: '11px' }}>Escreva o Nome do Nicho *</label>
+                                        <input 
+                                          type="text" 
+                                          className="dev-input" 
+                                          value={c.category} 
+                                          onChange={(e) => {
+                                            const val = e.target.value;
+                                            setAppData(prev => {
+                                              if (!prev) return prev;
+                                              const newList = [...prev.companies];
+                                              newList[idx] = { ...newList[idx], category: val };
+                                              return { ...prev, companies: newList };
+                                            });
+                                          }} 
+                                          placeholder="Ex: Pizzaria, Fretes..."
+                                        />
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                                 <div className="dev-form-group">
@@ -6219,14 +6286,36 @@ function AppContent() {
                         <div className="flex flex-col gap-1.5">
                           <label className="text-[10px] text-white/50 uppercase font-black">Categoria Comercial</label>
                           <select 
-                            value={adRegisterForm.category}
-                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, category: e.target.value }))}
+                            value={appData?.categories.some((cat: any) => cat.name === adRegisterForm.category) ? adRegisterForm.category : "__custom__"}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === "__custom__") {
+                                setAdRegisterForm(prev => ({ ...prev, category: '' }));
+                              } else {
+                                setAdRegisterForm(prev => ({ ...prev, category: val }));
+                              }
+                            }}
                             className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
                           >
                             {(appData?.categories || []).map((cat: any) => (
                               <option key={cat.name} value={cat.name}>{cat.name}</option>
                             ))}
+                            <option value="__custom__">✍️ Outro (Digitar nicho personalizado...)</option>
                           </select>
+                          
+                          {!appData?.categories.some((cat: any) => cat.name === adRegisterForm.category) && (
+                            <div className="flex flex-col gap-1.5 mt-2">
+                              <label className="text-[9px] text-[var(--primary)] uppercase font-black">Escreva o Nome do seu Nicho *</label>
+                              <input 
+                                type="text"
+                                value={adRegisterForm.category}
+                                onChange={(e) => setAdRegisterForm(prev => ({ ...prev, category: e.target.value }))}
+                                placeholder="Ex: Pizzaria, Fretes, Ar Condicionado, Informática..."
+                                className="w-full bg-[#11111a] border border-[var(--primary)]/50 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                                required
+                              />
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex flex-col gap-1.5">
@@ -6509,20 +6598,48 @@ function AppContent() {
                           <div className="flex flex-col gap-1.5">
                             <label className="text-[10px] text-white/50 uppercase font-bold">Categoria</label>
                             <select 
-                              value={currentAdvertiser.company.category}
+                              value={appData?.categories.some((cat: any) => cat.name === currentAdvertiser.company.category) ? currentAdvertiser.company.category : "__custom__"}
                               onChange={(e) => {
                                 const val = e.target.value;
-                                setCurrentAdvertiser((prev: any) => ({
-                                  ...prev,
-                                  company: { ...prev.company, category: val }
-                                }));
+                                if (val === "__custom__") {
+                                  setCurrentAdvertiser((prev: any) => ({
+                                    ...prev,
+                                    company: { ...prev.company, category: '' }
+                                  }));
+                                } else {
+                                  setCurrentAdvertiser((prev: any) => ({
+                                    ...prev,
+                                    company: { ...prev.company, category: val }
+                                  }));
+                                }
                               }}
                               className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
                             >
                               {(appData?.categories || []).map((cat: any) => (
                                 <option key={cat.name} value={cat.name}>{cat.name}</option>
                               ))}
+                              <option value="__custom__">✍️ Outro (Digitar nicho personalizado...)</option>
                             </select>
+
+                            {!appData?.categories.some((cat: any) => cat.name === currentAdvertiser.company.category) && (
+                              <div className="flex flex-col gap-1.5 mt-2">
+                                <label className="text-[9px] text-[var(--primary)] uppercase font-black">Escreva o Nome do seu Nicho *</label>
+                                <input 
+                                  type="text"
+                                  value={currentAdvertiser.company.category}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setCurrentAdvertiser((prev: any) => ({
+                                      ...prev,
+                                      company: { ...prev.company, category: val }
+                                    }));
+                                  }}
+                                  placeholder="Ex: Pizzaria, Fretes, Ar Condicionado, Informática..."
+                                  className="w-full bg-[#11111a] border border-[var(--primary)]/50 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                                  required
+                                />
+                              </div>
+                            )}
                           </div>
 
                           <div className="flex flex-col gap-1.5">

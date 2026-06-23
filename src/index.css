@@ -1987,3 +1987,51 @@
     transform: translate3d(-50%, 0, 0);
   }
 }
+
+/* Premium hardware-accelerated categories marquee */
+.category-marquee-container {
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  display: flex;
+  background: var(--primary);
+  padding: 14px 0;
+  margin-top: 30px;
+  margin-bottom: 30px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(255, 138, 0, 0.15);
+}
+
+.category-marquee-track {
+  display: flex;
+  gap: 2.5rem;
+  width: max-content;
+  animation: categoryMarqueeScroll 28s linear infinite;
+  will-change: transform;
+}
+
+.category-marquee-item {
+  white-space: nowrap;
+  padding: 8px 20px;
+  background: #111111;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 100px;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  user-select: none;
+}
+
+@keyframes categoryMarqueeScroll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
