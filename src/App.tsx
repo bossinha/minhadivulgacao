@@ -55,6 +55,7 @@ import {
   User,
   Truck,
   Copy,
+  Share2,
   Heart
 } from 'lucide-react';
 
@@ -421,6 +422,44 @@ function AppContent() {
     photo: ''
   });
   const [adDashboardTab, setAdDashboardTab] = useState<'perfil' | 'catalogo'>('perfil');
+
+  // --- Item Detail & Reviews States ---
+  const [selectedItemForDetail, setSelectedItemForDetail] = useState<any | null>(null);
+  const [detailModalTab, setDetailModalTab] = useState<'detalhes' | 'avaliacoes'>('detalhes');
+  const [itemReviews, setItemReviews] = useState<any[]>([]);
+  const [newReviewForm, setNewReviewForm] = useState({ rating: 5, author: '', comment: '' });
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+
+  // Load reviews for selectedItemForDetail
+  useEffect(() => {
+    if (!selectedItemForDetail || !activeMiniSiteCompany) {
+      setItemReviews([]);
+      return;
+    }
+    const q = query(
+      collection(db, 'reviews'),
+      where('companyId', '==', activeMiniSiteCompany.id || ''),
+      where('itemId', '==', selectedItemForDetail.id)
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const list: any[] = [];
+      snapshot.forEach((doc) => {
+        list.push({ id: doc.id, ...doc.data() });
+      });
+      // Sort by date descending
+      list.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
+      setItemReviews(list);
+    }, (error) => {
+      console.error("Error loading reviews:", error);
+    });
+    return () => unsubscribe();
+  }, [selectedItemForDetail, activeMiniSiteCompany]);
 
   const isAdExpired = useMemo(() => {
     if (!currentAdvertiser) return false;
@@ -934,6 +973,14 @@ function AppContent() {
         );
         if (found) {
           setActiveMiniSiteCompany(found);
+          const urlItemId = urlParams.get('item');
+          if (urlItemId && found.items) {
+            const foundItem = found.items.find((it: any) => String(it.id) === urlItemId);
+            if (foundItem) {
+              setSelectedItemForDetail(foundItem);
+              setDetailModalTab('detalhes');
+            }
+          }
         }
       }
     }
@@ -5149,6 +5196,7 @@ function AppContent() {
                     // Clear search ID parameter
                     const url = new URL(window.location.href);
                     url.searchParams.delete('id');
+                    url.searchParams.delete('item');
                     window.history.pushState({}, '', url.toString());
                     setShoppingCart({});
                   }}
@@ -5241,7 +5289,16 @@ function AppContent() {
                           {items.map((item: any, idx: number) => {
                             const cartQty = shoppingCart[item.id]?.count || 0;
                             return (
-                              <div key={item.id || idx} className="bg-neutral-900/60 hover:bg-neutral-900 border border-white/5 hover:border-white/10 rounded-2xl p-4 flex gap-4 transition-all duration-200">
+                              <div 
+                                key={item.id || idx} 
+                                onClick={() => {
+                                  setSelectedItemForDetail(item);
+                                  setDetailModalTab('detalhes');
+                                  setIsReviewFormOpen(false);
+                                  setNewReviewForm({ rating: 5, author: '', comment: '' });
+                                }}
+                                className="bg-neutral-900/60 hover:bg-neutral-900 border border-white/5 hover:border-white/10 rounded-2xl p-4 flex gap-4 transition-all duration-200 cursor-pointer"
+                              >
                                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-neutral-950 overflow-hidden flex-shrink-0 flex items-center justify-center border border-white/10">
                                   {item.photo ? (
                                     <img src={item.photo} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -5264,7 +5321,8 @@ function AppContent() {
                                       {cartQty > 0 ? (
                                         <>
                                           <button 
-                                            onClick={() => {
+                                            onClick={(e) => {
+                                              e.stopPropagation();
                                               setShoppingCart(prev => {
                                                 const existing = prev[item.id];
                                                 if (!existing) return prev;
@@ -5285,7 +5343,8 @@ function AppContent() {
                                           </button>
                                           <span className="text-xs font-black text-white">{cartQty}</span>
                                           <button 
-                                            onClick={() => {
+                                            onClick={(e) => {
+                                              e.stopPropagation();
                                               setShoppingCart(prev => ({
                                                 ...prev,
                                                 [item.id]: { item, count: (prev[item.id]?.count || 0) + 1 }
@@ -5298,7 +5357,8 @@ function AppContent() {
                                         </>
                                       ) : (
                                         <button 
-                                          onClick={() => {
+                                          onClick={(e) => {
+                                            e.stopPropagation();
                                             setShoppingCart(prev => ({
                                               ...prev,
                                               [item.id]: { item, count: 1 }
@@ -5339,7 +5399,16 @@ function AppContent() {
                       ) : (
                         <div className="grid grid-cols-1 gap-4 mt-6">
                           {items.map((item: any, idx: number) => (
-                            <div key={item.id || idx} className="bg-neutral-900/60 hover:bg-neutral-900 border border-white/5 hover:border-white/10 rounded-2xl p-5 flex flex-col sm:flex-row gap-4 transition-all duration-200">
+                            <div 
+                              key={item.id || idx} 
+                              onClick={() => {
+                                setSelectedItemForDetail(item);
+                                setDetailModalTab('detalhes');
+                                setIsReviewFormOpen(false);
+                                setNewReviewForm({ rating: 5, author: '', comment: '' });
+                              }}
+                              className="bg-neutral-900/60 hover:bg-neutral-900 border border-white/5 hover:border-white/10 rounded-2xl p-5 flex flex-col sm:flex-row gap-4 transition-all duration-200 cursor-pointer"
+                            >
                               <div className="w-20 h-20 rounded-xl bg-neutral-950 overflow-hidden flex-shrink-0 flex items-center justify-center border border-white/10">
                                 {item.photo ? (
                                   <img src={item.photo} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -5357,7 +5426,8 @@ function AppContent() {
                                     {item.price ? `R$ ${parseFloat(item.price).toFixed(2).replace('.', ',')}` : 'Sob Consulta'}
                                   </span>
                                   <button 
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                      e.stopPropagation();
                                       const textMsg = `Olá! Gostaria de fazer um orçamento para o serviço comercial: *${item.name}* no portal ${appData.siteInfo.name}`;
                                       window.open(`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
                                     }}
@@ -7018,6 +7088,358 @@ function AppContent() {
             </div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {selectedItemForDetail && (() => {
+          const avgRating = itemReviews.length > 0 
+            ? (itemReviews.reduce((sum, r) => sum + r.rating, 0) / itemReviews.length).toFixed(1)
+            : '0.0';
+          const siteType = activeMiniSiteCompany.type || (
+            ['servicos', 'saude', 'clinica', 'oficina', 'educacao', 'advocacia', 'publicidade', 'construcao', 'financas', 'academia'].some(c => activeMiniSiteCompany.category.toLowerCase().includes(c)) ? 'servico' : 'loja'
+          );
+          
+          return (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/90 backdrop-blur-md z-[2100] overflow-y-auto flex items-center justify-center p-4 font-sans"
+            >
+              <div className="bg-[#0b0c10] border border-white/10 rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden relative flex flex-col md:flex-row md:h-[550px]">
+                
+                {/* Product Image Panel (Left/Top) */}
+                <div className="w-full md:w-[280px] h-48 sm:h-64 md:h-full bg-neutral-950 flex-shrink-0 relative overflow-hidden flex items-center justify-center border-b md:border-b-0 md:border-r border-white/10">
+                  {selectedItemForDetail.photo ? (
+                    <img 
+                      src={selectedItemForDetail.photo} 
+                      alt={selectedItemForDetail.name} 
+                      className="w-full h-full object-cover" 
+                      referrerPolicy="no-referrer" 
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-2 text-white/20">
+                      <ShoppingBag size={48} />
+                      <span className="text-[10px] uppercase tracking-wider font-bold">Sem imagem</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0b0c10] via-transparent to-transparent md:hidden" />
+                </div>
+
+                {/* Content Panel (Right/Bottom) */}
+                <div className="flex-1 p-6 sm:p-8 flex flex-col h-full overflow-hidden justify-between">
+                  
+                  {/* Top Header - Tabs & Control Buttons */}
+                  <div className="flex flex-col gap-4 flex-shrink-0">
+                     <div className="flex justify-between items-center">
+                      {/* Tabs Selector */}
+                      <div className="flex gap-2 bg-white/5 p-1 rounded-full">
+                        <button
+                          onClick={() => {
+                            setDetailModalTab('detalhes');
+                            setIsReviewFormOpen(false);
+                          }}
+                          className={`px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all duration-150 ${detailModalTab === 'detalhes' ? 'bg-[var(--primary)] text-black' : 'text-white/60 hover:text-white'}`}
+                        >
+                          Detalhes
+                        </button>
+                        <button
+                          onClick={() => setDetailModalTab('avaliacoes')}
+                          className={`px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all duration-150 ${detailModalTab === 'avaliacoes' ? 'bg-[var(--primary)] text-black' : 'text-white/60 hover:text-white'}`}
+                        >
+                          Avaliações ({itemReviews.length})
+                        </button>
+                      </div>
+
+                      {/* Action Controls */}
+                      <div className="flex items-center gap-2">
+                        {/* Share Link Button */}
+                        <button
+                          onClick={() => {
+                            const url = new URL(window.location.origin + window.location.pathname);
+                            if (activeMiniSiteCompany) {
+                              url.searchParams.set('id', activeMiniSiteCompany.id);
+                            }
+                            url.searchParams.set('item', selectedItemForDetail.id);
+                            navigator.clipboard.writeText(url.toString());
+                            setShareCopied(true);
+                            setTimeout(() => setShareCopied(false), 2000);
+                          }}
+                          className="p-2.5 bg-white/5 hover:bg-white/10 hover:scale-105 border border-white/10 text-white rounded-full transition-all flex items-center justify-center cursor-pointer relative"
+                          title="Compartilhar link"
+                        >
+                          {shareCopied ? (
+                            <span className="text-[9px] font-black text-[var(--primary)] absolute -top-8 bg-black/90 px-2 py-1 rounded border border-white/10 whitespace-nowrap">Link Copiado!</span>
+                          ) : null}
+                          <Share2 size={14} />
+                        </button>
+
+                        {/* Close Button */}
+                        <button
+                          onClick={() => setSelectedItemForDetail(null)}
+                          className="p-2.5 bg-white/5 hover:bg-white/10 hover:scale-105 border border-white/10 text-white rounded-full transition-all flex items-center justify-center cursor-pointer"
+                          aria-label="Fechar"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Scrollable Center Body */}
+                  <div className="flex-1 overflow-y-auto my-4 pr-1 min-h-[180px]">
+                    
+                    {/* TAB A: DETALHES */}
+                    {detailModalTab === 'detalhes' && (
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-[8px] sm:text-[9px] font-black tracking-widest uppercase bg-[var(--primary)]/10 text-[var(--primary)] px-2.5 py-1 rounded border border-[var(--primary)]/20">
+                            {activeMiniSiteCompany?.company?.name || 'Item do Catálogo'}
+                          </span>
+                          {itemReviews.length > 0 && (
+                            <div className="flex items-center gap-1 bg-amber-500/10 text-amber-400 px-2 py-1 rounded border border-amber-500/25">
+                              <Star size={10} className="fill-amber-400" />
+                              <span className="text-[10px] font-bold">{avgRating}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <h3 className="text-xl sm:text-2xl font-black text-white leading-tight">
+                          {selectedItemForDetail.name}
+                        </h3>
+
+                        <p className="text-xs sm:text-sm text-white/60 leading-relaxed font-normal whitespace-pre-line">
+                          {selectedItemForDetail.desc || 'Nenhuma descrição detalhada disponível para este item comercial.'}
+                        </p>
+
+                        <div className="mt-4 bg-white/5 border border-white/5 rounded-2xl p-4">
+                          <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest block">Preço de Tabela</span>
+                          <span className="text-2xl font-black text-[var(--primary)] font-mono mt-1 block">
+                            {selectedItemForDetail.price ? `R$ ${parseFloat(selectedItemForDetail.price).toFixed(2).replace('.', ',')}` : 'Sob Consulta'}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* TAB B: AVALIAÇÕES */}
+                    {detailModalTab === 'avaliacoes' && (
+                      <div className="flex flex-col h-full">
+                        
+                        {/* Rating Aggregation Info Header */}
+                        <div className="bg-white/5 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                          <div>
+                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest">Avaliação Média</span>
+                            <div className="flex items-baseline gap-2 mt-1">
+                              <span className="text-3xl font-black text-white">{avgRating}</span>
+                              <span className="text-[11px] text-white/45">/ 5.0</span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-1 sm:items-end">
+                            <div className="flex gap-0.5">
+                              {[1, 2, 3, 4, 5].map((s) => {
+                                const numVal = parseFloat(avgRating);
+                                const isFilled = s <= Math.round(numVal);
+                                return (
+                                  <Star 
+                                    key={s} 
+                                    size={14} 
+                                    className={isFilled ? "text-amber-400 fill-amber-400" : "text-white/10"} 
+                                  />
+                                );
+                              })}
+                            </div>
+                            <span className="text-[11px] text-white/50">{itemReviews.length} avaliações publicadas</span>
+                          </div>
+                        </div>
+
+                        {/* Form or Review List */}
+                        {!isReviewFormOpen ? (
+                          <div className="flex flex-col flex-1 mt-4">
+                            {itemReviews.length === 0 ? (
+                              <div className="text-center py-8 flex flex-col items-center justify-center flex-1 bg-white/[0.02] rounded-2xl border border-dashed border-white/5">
+                                <span className="text-2xl">⭐</span>
+                                <h4 className="text-white/70 font-bold text-xs mt-3">Nenhuma avaliação cadastrada ainda</h4>
+                                <p className="text-white/40 text-[11px] mt-1">Seja você o primeiro a deixar a sua opinião sobre este item!</p>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col gap-3 mt-1 max-h-[190px] overflow-y-auto pr-1">
+                                {itemReviews.map((rev) => (
+                                  <div key={rev.id} className="bg-white/5 border border-white/5 rounded-2xl p-4 flex flex-col gap-2">
+                                    <div className="flex justify-between items-start gap-3">
+                                      <div>
+                                        <span className="text-xs font-black text-white block">{rev.author}</span>
+                                        <span className="text-[9px] text-white/40 block mt-0.5">
+                                          {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString('pt-BR') : ''}
+                                        </span>
+                                      </div>
+                                      <div className="flex gap-0.5">
+                                        {[1, 2, 3, 4, 5].map((s) => (
+                                          <Star 
+                                            key={s} 
+                                            size={11} 
+                                            className={s <= rev.rating ? "text-amber-400 fill-amber-400" : "text-white/25"} 
+                                          />
+                                        ))}
+                                      </div>
+                                    </div>
+                                    {rev.comment && (
+                                      <p className="text-xs text-white/80 leading-relaxed italic border-l-2 border-[var(--primary)]/20 pl-2.5 mt-1 bg-white/[0.01] py-1 rounded">
+                                        "{rev.comment}"
+                                      </p>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Button to open form */}
+                            <button 
+                              onClick={() => setIsReviewFormOpen(true)}
+                              className="mt-4 text-xs font-black text-[var(--primary)] hover:brightness-110 flex items-center gap-1.5 bg-[var(--primary)]/10 px-4 py-2.5 rounded-xl border border-[var(--primary)]/20 w-fit self-center uppercase tracking-wider cursor-pointer"
+                            >
+                              + Deixar avaliação
+                            </button>
+                          </div>
+                        ) : (
+                          /* Add Review Form Overlay inside reviews tab */
+                          <div className="bg-white/5 border border-white/5 rounded-2xl p-4 sm:p-5 mt-4 flex flex-col gap-3">
+                            <h4 className="text-xs font-black text-white uppercase tracking-wider">✍️ Escrever Avaliação</h4>
+                            
+                            {/* Star selector */}
+                            <div className="flex flex-col items-center py-1">
+                              <span className="text-[10px] text-white/40 uppercase font-bold tracking-wider">Sua Nota</span>
+                              <div className="flex gap-2 mt-1">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <button 
+                                    key={s} 
+                                    onClick={() => setNewReviewForm(prev => ({ ...prev, rating: s }))}
+                                    className="hover:scale-125 transition-transform p-1 cursor-pointer"
+                                    type="button"
+                                  >
+                                    <Star 
+                                      size={24} 
+                                      className={s <= newReviewForm.rating ? "text-amber-400 fill-amber-400" : "text-white/10"} 
+                                    />
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Inputs */}
+                            <div className="flex flex-col gap-3">
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] text-white/40 uppercase font-bold tracking-wider">Seu Nome *</label>
+                                <input 
+                                  type="text" 
+                                  placeholder="Como você gostaria de aparecer" 
+                                  value={newReviewForm.author} 
+                                  onChange={(e) => setNewReviewForm(prev => ({ ...prev, author: e.target.value }))} 
+                                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--primary)]" 
+                                />
+                              </div>
+
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] text-white/40 uppercase font-bold tracking-wider">Comentário (Opcional)</label>
+                                <textarea 
+                                  placeholder="O que você achou deste produto / serviço?" 
+                                  value={newReviewForm.comment} 
+                                  onChange={(e) => setNewReviewForm(prev => ({ ...prev, comment: e.target.value }))} 
+                                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--primary)] h-16 resize-none" 
+                                />
+                              </div>
+                            </div>
+
+                            {/* Action buttons */}
+                            <div className="flex gap-2 justify-end mt-2">
+                              <button 
+                                onClick={() => setIsReviewFormOpen(false)} 
+                                className="px-4 py-2 bg-transparent hover:bg-white/5 text-white/60 hover:text-white rounded-xl text-[10px] uppercase tracking-wider font-bold cursor-pointer"
+                              >
+                                Cancelar
+                              </button>
+                              <button 
+                                onClick={async () => {
+                                  if (!newReviewForm.author.trim()) {
+                                    alert("Por favor, preencha o seu nome.");
+                                    return;
+                                  }
+                                  setIsSubmittingReview(true);
+                                  try {
+                                    const reviewId = `review_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                                    const docRef = doc(db, 'reviews', reviewId);
+                                    await setDoc(docRef, {
+                                      companyId: activeMiniSiteCompany.id || '',
+                                      itemId: selectedItemForDetail.id,
+                                      rating: newReviewForm.rating,
+                                      author: newReviewForm.author.trim(),
+                                      comment: newReviewForm.comment.trim(),
+                                      createdAt: new Date().toISOString()
+                                    });
+                                    setIsReviewFormOpen(false);
+                                    setNewReviewForm({ rating: 5, author: '', comment: '' });
+                                    alert("Avaliação registrada com sucesso!");
+                                  } catch (e) {
+                                    console.error("Failed to save review", e);
+                                    alert("Ocorreu um erro ao tentar salvar sua avaliação.");
+                                  } finally {
+                                    setIsSubmittingReview(false);
+                                  }
+                                }}
+                                disabled={isSubmittingReview}
+                                className="px-4 py-2 bg-[var(--primary)] hover:brightness-110 text-black rounded-xl text-[10px] uppercase tracking-widest font-black cursor-pointer"
+                              >
+                                {isSubmittingReview ? "Gravando..." : "✅ Publicar"}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* Footer Panel - Sticky Actions */}
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/5 flex-shrink-0">
+                    {/* WhatsApp Button (Green) */}
+                    <button
+                      onClick={() => {
+                        const priceText = selectedItemForDetail.price 
+                          ? `R$ ${parseFloat(selectedItemForDetail.price).toFixed(2).replace('.', ',')}` 
+                          : 'Sob Consulta';
+                        const textMsg = `Olá! Tenho interesse no item listado no portal ${appData.siteInfo.name}: *${selectedItemForDetail.name}* (Valor: ${priceText}). Gostaria de mais informações ou solicitar o pedido.`;
+                        window.open(`https://wa.me/${activeMiniSiteCompany.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
+                      }}
+                      className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-[1.02] text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/10 cursor-pointer transition-all duration-200"
+                    >
+                      <MessageSquare size={14} /> Pedir pelo WhatsApp
+                    </button>
+
+                    {/* Cart Add Button (Orange) - only shown for stores/menus */}
+                    {(siteType === 'loja' || siteType === 'cardapio') && (
+                      <button
+                        onClick={() => {
+                          setShoppingCart(prev => ({
+                            ...prev,
+                            [selectedItemForDetail.id]: { item: selectedItemForDetail, count: (prev[selectedItemForDetail.id]?.count || 0) + 1 }
+                          }));
+                          setSelectedItemForDetail(null);
+                          alert("Item adicionado ao carrinho!");
+                        }}
+                        className="flex-1 inline-flex items-center justify-center gap-2 bg-[var(--primary)] hover:bg-[#ffe066] hover:scale-[1.02] text-black py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-[var(--primary)]/10 cursor-pointer transition-all duration-200"
+                      >
+                        <ShoppingCart size={14} /> Adicionar {selectedItemForDetail.price ? `R$ ${parseFloat(selectedItemForDetail.price).toFixed(2).replace('.', ',')}` : ''}
+                      </button>
+                    )}
+                  </div>
+
+                </div>
+
+              </div>
+            </motion.div>
+          );
+        })()}
       </AnimatePresence>
 
       <AnimatePresence>

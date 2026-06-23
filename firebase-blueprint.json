@@ -42,6 +42,20 @@
         "companySpeed": { "type": "number" },
         "totalVisits": { "type": "number" }
       }
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Reviews for products or services of advertisers",
+      "type": "object",
+      "properties": {
+        "companyId": { "type": "string" },
+        "itemId": { "type": "string" },
+        "rating": { "type": "number" },
+        "author": { "type": "string" },
+        "comment": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["companyId", "itemId", "rating", "author"]
     }
   },
   "firestore": {
@@ -56,6 +70,10 @@
     "/settings/universal": {
       "schema": "GlobalConfig",
       "description": "Global radio link"
+    },
+    "/reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Reviews on advertiser items"
     }
   }
 }
