@@ -189,6 +189,36 @@ const TESTIMONIALS = [
   { content: "Excelente custo-benefício. O investimento se pagou na primeira semana com os novos serviços que fechamos.", author: "Marcos Souza", role: "Proprietário da Auto Mecânica", avatar: "https://i.postimg.cc/kGTBfpNH/4.png" }
 ];
 
+const BRAZIL_STATES = [
+  { uf: "AC", name: "Acre" },
+  { uf: "AL", name: "Alagoas" },
+  { uf: "AP", name: "Amapá" },
+  { uf: "AM", name: "Amazonas" },
+  { uf: "BA", name: "Bahia" },
+  { uf: "CE", name: "Ceará" },
+  { uf: "DF", name: "Distrito Federal" },
+  { uf: "ES", name: "Espírito Santo" },
+  { uf: "GO", name: "Goiás" },
+  { uf: "MA", name: "Maranhão" },
+  { uf: "MT", name: "Mato Grosso" },
+  { uf: "MS", name: "Mato Grosso do Sul" },
+  { uf: "MG", name: "Minas Gerais" },
+  { uf: "PA", name: "Pará" },
+  { uf: "PB", name: "Paraíba" },
+  { uf: "PR", name: "Paraná" },
+  { uf: "PE", name: "Pernambuco" },
+  { uf: "PI", name: "Piauí" },
+  { uf: "RJ", name: "Rio de Janeiro" },
+  { uf: "RN", name: "Rio Grande do Norte" },
+  { uf: "RS", name: "Rio Grande do Sul" },
+  { uf: "RO", name: "Rondônia" },
+  { uf: "RR", name: "Roraima" },
+  { uf: "SC", name: "Santa Catarina" },
+  { uf: "SP", name: "São Paulo" },
+  { uf: "SE", name: "Sergipe" },
+  { uf: "TO", name: "Tocantins" }
+];
+
 const CATEGORIES = [
   { name: "Supermercado", icon: "🏭" },
   { name: "Saúde", icon: "💊" },
@@ -892,6 +922,8 @@ function AppContent() {
   
   // Custom public portal states
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStateFilter, setSelectedStateFilter] = useState('');
+  const [selectedTypeFilter, setSelectedTypeFilter] = useState<'all' | 'loja' | 'servico'>('all');
   const [radioPlaying, setRadioPlaying] = useState(false);
   const [radioVolume, setRadioVolume] = useState(0.8);
   const radioAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -1036,7 +1068,31 @@ function AppContent() {
             normalize(c.desc).includes(normalize(searchQuery)) || 
             normalize(c.category).includes(normalize(searchQuery))
           : true;
-        return matchesCategory && matchesSearch;
+        
+        // Match state filter
+        let matchesState = true;
+        if (selectedStateFilter) {
+          const companyState = (c.state || c.uf || '').trim().toLowerCase();
+          const filterState = selectedStateFilter.trim().toLowerCase();
+          
+          if (companyState) {
+            matchesState = (companyState === filterState);
+          } else {
+            // Default backward compatibility fallback: assume 'fortaleza' belongs to Ceará (CE)
+            const isCeara = filterState === 'ce';
+            const belongsToFortaleza = c.tenantId === 'fortaleza' || !c.tenantId;
+            matchesState = isCeara && belongsToFortaleza;
+          }
+        }
+        
+        // Match type filter ('loja' vs 'servico')
+        let matchesType = true;
+        if (selectedTypeFilter !== 'all') {
+          const type = c.type || (['servicos', 'servi', 'saude', 'clinica', 'oficina', 'educacao', 'advocacia', 'publicidade', 'construcao', 'financas', 'academia', 'refrigera', 'ar condicionado', 'conserto', 'mecanica'].some(keyword => (c.category || '').toLowerCase().includes(keyword)) ? 'servico' : 'loja');
+          matchesType = (type === selectedTypeFilter);
+        }
+
+        return matchesCategory && matchesSearch && matchesState && matchesType;
       })
     : [];
   
@@ -2160,7 +2216,7 @@ function AppContent() {
         {/* Subtle Ambient Pulsing Lights */}
         <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-[var(--primary)]/5 rounded-full blur-[150px] animate-pulse pointer-events-none" />
         <div className="absolute top-1/3 right-1/4 w-[355px] h-[355px] bg-emerald-500/5 rounded-full blur-[130px] animate-pulse pointer-events-none" />
-        
+
         <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6 z-10 flex flex-col items-center text-center">
           
           {/* Live Badge indicator */}
@@ -2172,25 +2228,49 @@ function AppContent() {
             <span className="w-2.5 h-2.5 rounded-full bg-[var(--primary)] animate-ping" />
             Portal de Mídia Digital & Divulgação Empresarial • Ativo
           </motion.div>
- 
+  
           {/* Premium Headline & Subtitle */}
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-sans font-extrabold text-white tracking-tight leading-[1.05] max-w-6xl select-none">
             A maior vitrine digital para seu negócio no <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--primary)] via-amber-400 to-yellow-500 font-extrabold">Brasil</span>!
           </h1>
- 
-          <p className="text-sm sm:text-lg md:text-xl text-white/75 font-medium max-w-4xl mt-8 leading-relaxed select-none">
+  
+          <p className="text-sm sm:text-lg md:text-xl text-white/75 font-medium max-w-4xl mt-6 leading-relaxed select-none">
             Coloque seu negócio na maior vitrine digital do país: com rádio digital ativa, cardápio interativo e botão de vendas diretas pelo WhatsApp.
           </p>
- 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 mt-8 md:mt-10 w-full sm:w-auto relative z-20">
+
+          {/* HIGH IMPACT TRIAL BANNER - GIGANTE, COM LETRAS GROSSAS E SEM CONFLITOS */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mt-10 max-w-4xl w-full bg-[#0d0e15] border-2 border-amber-500 rounded-3xl p-6 md:p-8 text-center shadow-[0_0_40px_rgba(245,158,11,0.25)] relative z-20 overflow-hidden"
+          >
+            {/* Glowing background accent */}
+            <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-transparent to-orange-500/5 pointer-events-none" />
+            
+            <div className="flex flex-col sm:flex-row items-center gap-6 text-left relative z-10">
+              <div className="bg-amber-500 text-black p-4 rounded-2xl text-3xl font-black flex-shrink-0 animate-bounce shadow-lg shadow-amber-500/20">
+                🎁
+              </div>
+              <div>
+                <h4 className="text-xl sm:text-2xl md:text-3xl font-black text-amber-400 tracking-tight uppercase leading-snug">
+                  Experimente Grátis por 20 Dias! 🎁
+                </h4>
+                <p className="text-sm sm:text-base text-white font-extrabold mt-3 leading-relaxed">
+                  Todos os novos cadastros ganham automaticamente <span className="text-amber-400 font-black underline decoration-2 underline-offset-2">20 dias de teste completo e gratuito</span> para criar seu mini-site, cadastrar até 6 produtos ou serviços e receber pedidos direto no seu WhatsApp! Sem compromisso e sem taxas iniciais.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Main Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 mt-8 w-full sm:w-auto relative z-20">
             <button 
               onClick={() => { 
                 setAuthMode('register'); 
                 setAdRegisterForm(prev => ({ ...prev, type: 'loja' })); 
                 setIsAdPortalOpen(true); 
               }}
-              className="group bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-black hover:scale-105 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] px-6 py-3 md:px-7 md:py-3.5 rounded-full font-black text-xs uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto shrink-0"
+              className="group bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-black hover:scale-105 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] px-6 py-3.5 md:px-7 md:py-4 rounded-full font-black text-xs sm:text-sm uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto shrink-0"
             >
               🛍️ Cadastrar Loja Grátis
             </button>
@@ -2200,7 +2280,7 @@ function AppContent() {
                 setAdRegisterForm(prev => ({ ...prev, type: 'servico' })); 
                 setIsAdPortalOpen(true); 
               }}
-              className="group bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white hover:scale-105 hover:shadow-[0_0_20px_rgba(37,99,235,0.3)] px-6 py-3 md:px-7 md:py-3.5 rounded-full font-black text-xs uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto shrink-0"
+              className="group bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white hover:scale-105 hover:shadow-[0_0_20px_rgba(37,99,235,0.3)] px-6 py-3.5 md:px-7 md:py-4 rounded-full font-black text-xs sm:text-sm uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto shrink-0"
             >
               🛠️ Cadastrar Serviço Grátis
             </button>
@@ -2208,33 +2288,154 @@ function AppContent() {
               href={`https://wa.me/${appData.siteInfo.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Olá! Acessei o portal de divulgação e gostaria de receber mais informações sobre como destacar minha empresa na vitrine do Brasil.')}`} 
               target="_blank"
               rel="noreferrer"
-              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white hover:scale-105 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] px-6 py-3 md:px-7 md:py-3.5 rounded-full font-black text-xs uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2 w-full sm:w-auto shrink-0 decoration-transparent"
+              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white hover:scale-105 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] px-6 py-3.5 md:px-7 md:py-4 rounded-full font-black text-xs sm:text-sm uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2 w-full sm:w-auto shrink-0 decoration-transparent"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="inline-block"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
               Contato WhatsApp
             </a>
           </div>
 
-          {/* Trial Period Informative Banner */}
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-10 max-w-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/5 border border-amber-500/20 rounded-2xl p-5 md:p-6 text-center shadow-xl backdrop-blur-sm"
-          >
-            <div className="flex flex-col sm:flex-row items-center gap-4 text-left">
-              <div className="bg-amber-500/20 p-3 rounded-full text-amber-400 text-xl flex-shrink-0">
-                ⏳
-              </div>
-              <div>
-                <h4 className="text-sm md:text-base font-black text-white tracking-tight uppercase">
-                  Experimente Grátis por 20 Dias! 🎁
-                </h4>
-                <p className="text-xs text-white/70 mt-1 leading-relaxed">
-                  Todos os novos cadastros ganham automaticamente <strong className="text-amber-400">20 dias de teste completo e gratuito</strong> para criar seu mini-site, cadastrar até 6 produtos ou serviços e receber pedidos direto no seu WhatsApp! Sem compromisso e sem taxas iniciais.
-                </p>
+          {/* DUAL COLUMN WORK: INTERACTIVE SELECTION + NATIONAL STATS WIDGET (FROM IMAGE 2) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 mt-16 w-full max-w-6xl text-left select-none relative z-20">
+            
+            {/* Left Column: Search & Interactive Filter */}
+            <div className="lg:col-span-7 flex flex-col justify-center">
+              <div className="bg-neutral-900/95 border border-white/10 rounded-3xl p-5 sm:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.6)] backdrop-blur-md relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-500" />
+                
+                <span className="text-[10px] sm:text-xs font-black text-amber-500 tracking-[0.2em] uppercase block mb-2 font-mono">🔍 SISTEMA DE BUSCA NACIONAL</span>
+                <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-snug mb-5">
+                  Selecione sua Região e Encontre Negócios
+                </h3>
+
+                {/* Tab selectors exactly like the image tabs */}
+                <div className="flex bg-black/40 border border-white/5 rounded-2xl p-1 mb-5">
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setSelectedTypeFilter('loja');
+                    }}
+                    className={`flex-1 py-3 px-4 rounded-xl text-xs font-extrabold tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${selectedTypeFilter === 'loja' ? 'bg-amber-500 text-black shadow-lg font-black' : 'text-white/55 hover:text-white/80 font-bold'}`}
+                  >
+                    🏪 LOJAS COMERCIAIS
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setSelectedTypeFilter('servico');
+                    }}
+                    className={`flex-1 py-3 px-4 rounded-xl text-xs font-extrabold tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${selectedTypeFilter === 'servico' ? 'bg-blue-600 text-white shadow-lg font-black' : 'text-white/55 hover:text-white/80 font-bold'}`}
+                  >
+                    🛠️ PRESTADORES DE SERVIÇOS
+                  </button>
+                </div>
+
+                {/* Custom input fields */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex-1 relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 text-base">📍</span>
+                    <select
+                      value={selectedStateFilter}
+                      onChange={(e) => setSelectedStateFilter(e.target.value)}
+                      className="w-full bg-[#111116] border border-white/10 hover:border-white/20 focus:border-amber-500 outline-none rounded-xl pl-11 pr-8 py-3.5 text-xs sm:text-sm text-white font-extrabold appearance-none cursor-pointer transition-all"
+                    >
+                      <option value="">Selecione seu estado</option>
+                      {BRAZIL_STATES.map(st => (
+                        <option key={st.uf} value={st.uf}>{st.name} ({st.uf})</option>
+                      ))}
+                    </select>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none text-[10px]">▼</span>
+                  </div>
+                  
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById('filtro-empresas');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-black text-xs sm:text-sm uppercase tracking-wider px-6 py-3.5 rounded-xl transition-all duration-200 shrink-0 flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:shadow-orange-500/20"
+                  >
+                    🔍 Buscar
+                  </button>
+                </div>
+
+                {/* Action button triggers for direct smooth scroll */}
+                <div className="grid grid-cols-2 gap-3 mt-5 pt-4 border-t border-white/5">
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setSelectedTypeFilter('loja');
+                      const el = document.getElementById('filtro-empresas');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider text-white bg-gradient-to-r from-amber-600 to-orange-600 hover:scale-[1.02] transition-all cursor-pointer shadow-md"
+                  >
+                    🏪 Encontrar Lojas
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setSelectedTypeFilter('servico');
+                      const el = document.getElementById('filtro-empresas');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:scale-[1.02] transition-all cursor-pointer shadow-md"
+                  >
+                    🛠️ Encontrar Serviços
+                  </button>
+                </div>
               </div>
             </div>
-          </motion.div>
+
+            {/* Right Column: Dynamic National Statistics Block (From Image 2) */}
+            <div className="lg:col-span-5 flex flex-col gap-4 justify-center">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-[#0c0d12]/90 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 shadow-lg hover:border-amber-500/30 transition-all duration-200">
+                  <span className="text-white/40 text-[9px] uppercase font-black tracking-widest font-mono">🏢 Empresas</span>
+                  <span className="text-xl sm:text-2xl font-black text-white font-sans">500+</span>
+                  <span className="text-[10px] text-white/50 mt-0.5 font-sans leading-tight">Lojas físicas e virtuais registradas</span>
+                </div>
+                <div className="bg-[#0c0d12]/90 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 shadow-lg hover:border-blue-500/30 transition-all duration-200">
+                  <span className="text-white/40 text-[9px] uppercase font-black tracking-widest font-mono">🛠️ Prestadores</span>
+                  <span className="text-xl sm:text-2xl font-black text-white font-sans">200+</span>
+                  <span className="text-[10px] text-white/50 mt-0.5 font-sans leading-tight">Profissionais autônomos ativos</span>
+                </div>
+                <div className="bg-[#0c0d12]/90 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 shadow-lg transition-all duration-200">
+                  <span className="text-white/40 text-[9px] uppercase font-black tracking-widest font-mono">📦 Produtos</span>
+                  <span className="text-xl sm:text-2xl font-black text-white font-sans">10K+</span>
+                  <span className="text-[10px] text-white/50 mt-0.5 font-sans leading-tight">Artigos cadastrados nos cardápios</span>
+                </div>
+                <div className="bg-[#0c0d12]/90 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 shadow-lg transition-all duration-200">
+                  <span className="text-white/40 text-[9px] uppercase font-black tracking-widest font-mono">🛒 Pedidos</span>
+                  <span className="text-xl sm:text-2xl font-black text-white font-sans">12K+</span>
+                  <span className="text-[10px] text-white/50 mt-0.5 font-sans leading-tight">Mensagens enviadas via WhatsApp</span>
+                </div>
+                <div className="bg-[#0c0d12]/90 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 shadow-lg transition-all duration-200">
+                  <span className="text-white/40 text-[9px] uppercase font-black tracking-widest font-mono">🇧🇷 Estados</span>
+                  <span className="text-xl sm:text-2xl font-black text-white font-sans">BR 27</span>
+                  <span className="text-[10px] text-white/50 mt-0.5 font-sans leading-tight">Estados de cobertura da plataforma</span>
+                </div>
+                <div className="bg-[#0c0d12]/90 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 shadow-lg transition-all duration-200">
+                  <span className="text-white/40 text-[9px] uppercase font-black tracking-widest font-mono">🟢 Conexão</span>
+                  <span className="text-xl sm:text-2xl font-black text-emerald-400 font-sans flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_#10b981]" />
+                    100%
+                  </span>
+                  <span className="text-[10px] text-white/50 mt-0.5 font-sans leading-tight">Servidores e sinal ativo agora</span>
+                </div>
+              </div>
+
+              {/* Verified Badge */}
+              <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl p-3 text-xs font-bold flex items-center gap-2 uppercase select-none shadow-md">
+                <span className="text-sm">🛡️</span>
+                Presente em todo o Brasil! Seguro, confiável e 100% online
+              </div>
+            </div>
+
+          </div>
+
+          {/* Spacer */}
+          <div className="w-full h-1 bg-white/5 my-12" />
 
           {/* Animated quick stats bar - SEÇÃO DE AUTORIDADE E NÚMEROS */}
           <div className="grid grid-cols-1 min-[340px]:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 md:gap-14 mt-24 md:mt-32 w-full max-w-5xl border-t border-white/5 pt-12 select-none">
@@ -2762,6 +2963,48 @@ function AppContent() {
                 </button>
               )}
             </div>
+
+            {/* Dynamic Active Filters Badges */}
+            {(selectedStateFilter || selectedTypeFilter !== 'all' || selectedCategory || searchQuery) && (
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
+                {selectedStateFilter && (
+                  <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-mono uppercase">
+                    📍 {selectedStateFilter}
+                    <button type="button" onClick={() => setSelectedStateFilter('')} className="hover:text-white text-[12px] font-extrabold cursor-pointer ml-1">✕</button>
+                  </span>
+                )}
+                {selectedTypeFilter !== 'all' && (
+                  <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-mono uppercase">
+                    📁 {selectedTypeFilter === 'loja' ? 'Lojas' : 'Serviços'}
+                    <button type="button" onClick={() => setSelectedTypeFilter('all')} className="hover:text-white text-[12px] font-extrabold cursor-pointer ml-1">✕</button>
+                  </span>
+                )}
+                {selectedCategory && (
+                  <span className="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-mono uppercase">
+                    🏷️ {selectedCategory}
+                    <button type="button" onClick={() => setSelectedCategory(null)} className="hover:text-white text-[12px] font-extrabold cursor-pointer ml-1">✕</button>
+                  </span>
+                )}
+                {searchQuery && (
+                  <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-mono uppercase">
+                    🔍 "{searchQuery}"
+                    <button type="button" onClick={() => setSearchQuery('')} className="hover:text-white text-[12px] font-extrabold cursor-pointer ml-1">✕</button>
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedStateFilter('');
+                    setSelectedTypeFilter('all');
+                    setSelectedCategory(null);
+                    setSearchQuery('');
+                  }}
+                  className="bg-neutral-900 border border-white/5 hover:bg-white/5 text-white/70 hover:text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all cursor-pointer font-mono"
+                >
+                  🧹 LIMPAR FILTROS
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Category Pills Auto-Scrolling Marquee (Non-clickable Carousel) */}
