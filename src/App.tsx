@@ -52,7 +52,10 @@ import {
   Store,
   ChevronDown,
   ChevronUp,
-  User
+  User,
+  Truck,
+  Copy,
+  Heart
 } from 'lucide-react';
 
 import { auth, db, googleProvider } from './lib/firebase';
@@ -77,50 +80,50 @@ const calculateDaysLeft = (expiresAt: string | undefined) => {
 
 const SERVICES_DATA = [
   {
-    title: "Invasão no WhatsApp",
-    desc: "Disparamos o seu negócio para grupos ultra-segmentados, atraindo dezenas de novos contatos interessados em comprar seu produto agora.",
+    title: "Seu WhatsApp Apitando de Clientes",
+    desc: "Direcionamos dezenas de novos clientes prontos para comprar direto para o seu WhatsApp comercial. Sem complicação: você só precisa atender e fechar a venda!",
     icon: Users,
     color: "from-blue-500/20 to-cyan-500/20 text-cyan-400"
   },
   {
-    title: "Domínio Comercial",
-    desc: "Destacamos sua marca diretamente para clientes de alto poder aquisitivo e parcerias empresariais, multiplicando seu faturamento local.",
+    title: "Destaque Premium Exclusivo",
+    desc: "Sua marca posicionada no topo da sua cidade, garantindo exclusividade absoluta no seu segmento. Bloqueie seus concorrentes e seja a escolha número 1.",
     icon: Target,
     color: "from-purple-500/20 to-pink-500/20 text-pink-400"
   },
   {
-    title: "Design de Alto Impacto",
-    desc: "Criamos artes sofisticadas, profissionais e desenhadas com técnicas de persuasão visual para prender a atenção e converter vendas na hora.",
-    icon: Palette,
+    title: "Sua Vitrine Virtual Interativa",
+    desc: "Seu catálogo ou cardápio online extremamente leve e rápido, criado de forma simples para qualquer cliente navegar, escolher e pedir sem complicação.",
+    icon: Store,
     color: "from-amber-500/20 to-red-500/20 text-amber-400"
   },
   {
-    title: "Vídeos Altamente Virais",
-    desc: "Produção de comerciais altamente estratégicos com roteiro de alta conversão para dominar o Instagram Reels e o YouTube do seu cliente.",
-    icon: Video,
+    title: "Fidelização e Retorno Rápido",
+    desc: "Facilitamos para que o cliente salve o seu contato e crie o hábito de comprar diretamente com você, gerando faturamento constante e previsível.",
+    icon: Heart,
     color: "from-green-500/20 to-emerald-500/20 text-emerald-400"
   },
   {
-    title: "Anúncios em Áudio 24h",
-    desc: "Sua marca anunciada na nossa rádio digital com spot comercial gravado por locutor profissional para fixar sua empresa na mente de todos.",
+    title: "Sua Marca na Rádio do Portal",
+    desc: "Gravamos um Spot de áudio profissional com locutor de estúdio para veicular a propaganda da sua empresa na nossa rádio digital conectada 24h por dia.",
     icon: Radio,
     color: "from-orange-500/20 to-yellow-500/20 text-orange-400"
   },
   {
-    title: "Exposição Infinita na TV",
-    desc: "Seu comercial em vídeo exibido 24 horas por dia no telão de mídias principal do nosso portal de alta audiência. É impossível não te ver!",
+    title: "Exposição Infinita na TV Online",
+    desc: "Exibição contínua do seu comercial no telão de alta audiência do portal principal. Quem é visto é lembrado e vende muito mais todos os dias.",
     icon: Tv,
     color: "from-red-500/20 to-orange-500/20 text-red-500"
   },
   {
     title: "Clientes Prontos das Redes",
-    desc: "Otimização e direcionamento de anúncios patrocinados focados em encher seu caixa e mandar clientes que passam cartão no seu negócio.",
+    desc: "Atraímos e filtramos o público qualificado que já está buscando os seus serviços ou produtos nas redes e enviamos direto para a sua vitrine virtual.",
     icon: TrendingUp,
     color: "from-indigo-500/20 to-violet-500/20 text-indigo-400"
   },
   {
-    title: "Atração Digital Explosiva",
-    desc: "Campanhas contínuas e impulsionamentos nos canais oficiais do nosso portal para dar visibilidade massiva e autoridade ao seu perfil.",
+    title: "Divulgação Massiva nas Redes",
+    desc: "Sua marca recomendada e impulsionada de forma estratégica em todas as nossas mídias e grupos parceiros locais, gerando autoridade máxima para você.",
     icon: Sparkles,
     color: "from-rose-500/20 to-pink-500/20 text-rose-400"
   }
@@ -130,7 +133,7 @@ const COMPANIES_DATA = [
   { id: 1, name: "Bossa Infor", category: "Publicidade", desc: "Soluções em Áudio & Vídeo", logo: "https://i.postimg.cc/Gpykbbz5/nova_logo_bossa_infor_png.png", wa: "5585992862177", ig: "https://www.instagram.com/bossainfor/", website: "", featured: true },
   { id: 2, name: "Belém Rolamentos", category: "Oficina", desc: "Manutenção preventiva e corretiva.", logo: "https://i.postimg.cc/Y2mTTF1h/1.png", wa: "5591980342025", ig: "https://cutt.ly/belemrolamentoss", website: "", featured: true },
   { id: 3, name: "Assai Atacadista", category: "Supermercado", desc: "Preço Baixo Todo dia", logo: "https://i.postimg.cc/LX4fh1rh/assai.jpg", wa: "558535334476", ig: "https://www.assai.com.br/", website: "", featured: true },
-  { id: 4, name: "Carneiro do Ordones", category: "Restaurante & bar", desc: "Restaurante Pioneiro em Fortaleza", logo: "https://i.postimg.cc/C1KwKkhv/images.jpg", wa: "558532815959", ig: "https://www.instagram.com/carneirodoordonesoriginal/", website: "", featured: true },
+  { id: 4, name: "Carneiro do Ordones", category: "Restaurante & bar", desc: "Restaurante Pioneiro no Brasil", logo: "https://i.postimg.cc/C1KwKkhv/images.jpg", wa: "558532815959", ig: "https://www.instagram.com/carneirodoordonesoriginal/", website: "", featured: true },
   { id: 6, name: "Atacadão", category: "Supermercado", desc: "Preço baixo de verdade", logo: "https://i.postimg.cc/8PfPWRR8/atacadao-square-Logo-1758223460501.webp", wa: "558532159868", ig: "https://www.atacadao.com.br/", website: "", featured: true },
   { id: 7, name: "North Shopping", category: "Lazer", desc: "O Shopping mais completo para você", logo: "https://i.postimg.cc/mZ5m083x/images.png", wa: "558534043073", ig: "https://www.northshoppingfortaleza.com.br/", website: "", featured: true },
   { id: 8, name: "Gih Cred", category: "Financeiro", desc: "Crédito Rápido e Seguro", logo: "https://i.postimg.cc/QCby11tL/GIH_CRED.jpg", wa: "5585981502984", ig: "https://www.gihcred.com.br/", website: "", featured: false },
@@ -212,7 +215,7 @@ const NOTIFICATION_ACTIONS = [
 ];
 
 const DEFAULT_DATA = {
-  theme: { primary: "#fbbf24", bg: "#000000", text: "#ffffff", textDim: "#a0a0a0" },
+  theme: { primary: "#ff8a00", bg: "#090d16", text: "#ffffff", textDim: "#a0a0a0" },
   siteInfo: {
     name: "Minha", suffix: "Divulgação", description: "A máquina de vendas definitiva para o seu negócio vender todos os dias na internet.",
     cnpj: "62.133.196/0001-40", phone: "85 99290-8713", address: "Anúncios em Todo o Brasil",
@@ -378,6 +381,20 @@ function AppContent() {
   const [shoppingCart, setShoppingCart] = useState<{ [key: string]: { item: any, count: number } }>({});
   const [cartCustomerName, setCartCustomerName] = useState('');
   const [cartCustomerDetails, setCartCustomerDetails] = useState('');
+  const [deliveryMethod, setDeliveryMethod] = useState<'entrega' | 'retirada'>('entrega');
+  const [paymentMethod, setPaymentMethod] = useState<'pix_chave' | 'pix_qrcode' | 'cartao_entrega' | 'cartao_retirada' | 'dinheiro'>('pix_chave');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerStreet, setCustomerStreet] = useState('');
+  const [customerNumber, setCustomerNumber] = useState('');
+  const [customerNeighborhood, setCustomerNeighborhood] = useState('');
+  const [customerCity, setCustomerCity] = useState('');
+  const [customerState, setCustomerState] = useState('');
+  const [customerCep, setCustomerCep] = useState('');
+  const [customerComplement, setCustomerComplement] = useState('');
+  const [customerReference, setCustomerReference] = useState('');
+  const [cashChangeNeeded, setCashChangeNeeded] = useState(false);
+  const [cashChangeFor, setCashChangeFor] = useState('');
+  const [attachedProofName, setAttachedProofName] = useState('');
   const [isAdPortalOpen, setIsAdPortalOpen] = useState(false);
   const [currentAdvertiser, setCurrentAdvertiser] = useState<any | null>(null);
   const [adLoginMode, setAdLoginMode] = useState<'login' | 'register'>('login');
@@ -1467,7 +1484,7 @@ function AppContent() {
                     </button>
                      <button 
                        className="dev-btn" 
-                       style={{ height: '36px', background: '#fbbf24', borderColor: '#fbbf24', color: '#000' }}
+                       style={{ height: '36px', background: '#ff8a00', borderColor: '#ff8a00', color: '#000' }}
                        onClick={async () => {
                          const daysToAdd = parseInt(prompt("Quantos dias deseja adicionar?", "30") || "0");
                          if (daysToAdd > 0) {
@@ -1542,7 +1559,7 @@ function AppContent() {
                    </button>
                    <button 
                      className="dev-btn" 
-                     style={{ height: '36px', background: 'rgba(251, 191, 36, 0.1)', borderColor: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24' }}
+                     style={{ height: '36px', background: 'rgba(255, 138, 0, 0.1)', borderColor: 'rgba(255, 138, 0, 0.2)', color: '#ff8a00' }}
                      onClick={async () => {
                        if(confirm(`ATENÇÃO: Excluir permanentemente ${udata.city} e todos os seus dados?`)) {
                           await deleteDoc(doc(db, 'tenants', uname));
@@ -1590,7 +1607,7 @@ function AppContent() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
                   <div>
                     <h2 style={{ margin: 0, color: '#fff' }}>Gerenciar Vídeos</h2>
-                    <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '13px' }}>Editando vídeos de: <strong style={{ color: '#fbbf24' }}>{editingVideosFor.city}</strong></p>
+                    <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '13px' }}>Editando vídeos de: <strong style={{ color: '#ff8a00' }}>{editingVideosFor.city}</strong></p>
                   </div>
                   <button onClick={() => setEditingVideosFor(null)} style={{ background: '#222', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer' }}>✕</button>
                 </div>
@@ -1814,8 +1831,8 @@ function AppContent() {
             🔑 Entrar como Admin Master (Google)
           </button>
 
-          <div style={{ padding: '10px', background: 'rgba(251, 191, 36, 0.05)', border: '1px solid rgba(251, 191, 36, 0.15)', borderRadius: '12px', marginTop: '10px', marginBottom: '10px' }}>
-            <p style={{ color: '#fbbf24', fontSize: '11px', margin: 0, textAlign: 'center', lineHeight: '1.4' }}>
+          <div style={{ padding: '10px', background: 'rgba(255, 138, 0, 0.05)', border: '1px solid rgba(255, 138, 0, 0.15)', borderRadius: '12px', marginTop: '10px', marginBottom: '10px' }}>
+            <p style={{ color: '#ff8a00', fontSize: '11px', margin: 0, textAlign: 'center', lineHeight: '1.4' }}>
               💡 <strong>Dica de Acesso:</strong> Se o login por Google falhar ou se você estiver usando um domínio próprio, você também pode acessar digitando o usuário do seu portal (ex: <strong>"master"</strong> para administrador geral) e a senha cadastrada nos campos acima.
             </p>
           </div>
@@ -1869,8 +1886,8 @@ function AppContent() {
       className="min-h-screen bg-bg text-text font-jakarta"
       style={{
         // @ts-ignore
-        '--primary': appData?.theme?.primary || '#fbbf24',
-        '--bg': appData?.theme?.bg || '#000000',
+        '--primary': appData?.theme?.primary || '#ff8a00',
+        '--bg': (appData?.theme?.bg && appData.theme.bg !== '#000000' && appData.theme.bg !== '#050505') ? appData.theme.bg : '#090d16',
         '--text': appData?.theme?.text || '#ffffff',
         '--text-dim': appData?.theme?.textDim || '#a0a0a0'
       }}
@@ -1884,7 +1901,7 @@ function AppContent() {
             top: '20px',
             left: '20px',
             zIndex: 1100,
-            background: '#fbbf24',
+            background: '#ff8a00',
             color: '#000',
             border: 'none',
             padding: '10px 20px',
@@ -1960,14 +1977,28 @@ function AppContent() {
             </button>
           </div>
 
-          {/* Mobile Menu Trigger */}
-          <button 
-            type="button"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden text-white/80 p-2 hover:text-[var(--primary)]"
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          {/* Mobile Menu Trigger & Quick Actions */}
+          <div className="flex lg:hidden items-center gap-2">
+            <button 
+              onClick={() => { setAuthMode('login'); setIsAdPortalOpen(true); }}
+              className="bg-neutral-900 border border-white/10 text-white px-2.5 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wide cursor-pointer flex items-center gap-1 shrink-0"
+            >
+              <User size={11} /> Entrar
+            </button>
+            <button 
+              onClick={() => { setAuthMode('register'); setIsAdPortalOpen(true); }}
+              className="bg-[var(--primary)] text-black px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-wide cursor-pointer shrink-0"
+            >
+              🚀 Cadastrar
+            </button>
+            <button 
+              type="button"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="text-white/80 p-1.5 hover:text-[var(--primary)]"
+            >
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu Drawer */}
@@ -2030,31 +2061,44 @@ function AppContent() {
           </motion.div>
  
           {/* Premium Headline & Subtitle */}
-          <h1 className="text-4xl sm:text-6xl md:text-8xl font-sans font-extrabold text-white tracking-tight leading-[1.05] max-w-6xl select-none">
-            Pare de perder vendas para o concorrente. Apareça para <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--primary)] via-amber-400 to-yellow-500 font-extrabold">milhares de clientes</span> todos os dias!
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-sans font-extrabold text-white tracking-tight leading-[1.05] max-w-6xl select-none">
+            A maior vitrine digital para seu negócio no <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--primary)] via-amber-400 to-yellow-500 font-extrabold">Brasil</span>!
           </h1>
  
-          <p className="text-sm sm:text-lg md:text-2xl text-white/75 font-medium max-w-4xl mt-8 leading-relaxed select-none">
-            Coloque seu negócio na vitrine digital mais acessada do país: com comerciais em vídeo 24h, rádio digital ativa, ofertas exclusivas e botão de vendas diretas pelo WhatsApp.
+          <p className="text-sm sm:text-lg md:text-xl text-white/75 font-medium max-w-4xl mt-8 leading-relaxed select-none">
+            Coloque seu negócio na maior vitrine digital do país: com rádio digital ativa, cardápio interativo e botão de vendas diretas pelo WhatsApp.
           </p>
  
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-5 mt-14 w-full sm:w-auto relative z-20">
-            <a 
-              href="#anuncie" 
-              onClick={(e) => { e.preventDefault(); scrollToSection('anuncie'); }}
-              className="group bg-[var(--primary)] hover:bg-[#ffe066] text-black hover:scale-105 hover:shadow-[0_0_35px_rgba(251,191,36,0.45)] px-12 py-5.5 rounded-full font-black text-xs sm:text-sm uppercase tracking-[0.15em] text-center transition-all duration-300 shadow-2xl flex items-center justify-center gap-2"
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 mt-8 md:mt-10 w-full sm:w-auto relative z-20">
+            <button 
+              onClick={() => { 
+                setAuthMode('register'); 
+                setAdRegisterForm(prev => ({ ...prev, type: 'loja' })); 
+                setIsAdPortalOpen(true); 
+              }}
+              className="group bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-black hover:scale-105 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] px-6 py-3 md:px-7 md:py-3.5 rounded-full font-black text-xs uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto shrink-0"
             >
-              🚀 QUERO CLIENTES TODOS OS DIAS
-            </a>
+              🛍️ Cadastrar Loja Grátis
+            </button>
+            <button 
+              onClick={() => { 
+                setAuthMode('register'); 
+                setAdRegisterForm(prev => ({ ...prev, type: 'servico' })); 
+                setIsAdPortalOpen(true); 
+              }}
+              className="group bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white hover:scale-105 hover:shadow-[0_0_20px_rgba(37,99,235,0.3)] px-6 py-3 md:px-7 md:py-3.5 rounded-full font-black text-xs uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto shrink-0"
+            >
+              🛠️ Cadastrar Serviço Grátis
+            </button>
             <a 
-              href={`https://wa.me/${appData.siteInfo.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Olá! Acessei o portal de divulgação e gostaria de receber mais informações sobre como destacar minha empresa de forma profissional.')}`} 
+              href={`https://wa.me/${appData.siteInfo.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Olá! Acessei o portal de divulgação e gostaria de receber mais informações sobre como destacar minha empresa na vitrine do Brasil.')}`} 
               target="_blank"
               rel="noreferrer"
-              className="bg-emerald-600 hover:bg-emerald-500 text-white hover:scale-105 hover:shadow-[0_0_35px_rgba(16,185,129,0.35)] px-12 py-5.5 rounded-full font-black text-xs sm:text-sm uppercase tracking-[0.15em] text-center transition-all duration-300 shadow-2xl flex items-center justify-center gap-2"
+              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white hover:scale-105 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] px-6 py-3 md:px-7 md:py-3.5 rounded-full font-black text-xs uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2 w-full sm:w-auto shrink-0 decoration-transparent"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="inline-block"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              FALAR NO WHATSAPP
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="inline-block"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Contato WhatsApp
             </a>
           </div>
  
@@ -2828,7 +2872,7 @@ function AppContent() {
                   {[0.1, 0.3, 0.2, 0.5, 0.4, 0.6, 0.3, 0.5, 0.2, 0.1, 0.4].map((delay, i) => (
                     <div 
                       key={i} 
-                      className={`w-1 bg-[#fbbf24]/60 rounded-full ${radioPlaying ? 'animate-pulse' : 'h-1'}`}
+                      className={`w-1 bg-[#ff8a00]/60 rounded-full ${radioPlaying ? 'animate-pulse' : 'h-1'}`}
                       style={{ 
                         animationDuration: radioPlaying ? '0.8s' : undefined,
                         animationDelay: radioPlaying ? `${delay}s` : undefined,
@@ -3033,7 +3077,7 @@ function AppContent() {
                 <h3 className="text-xl md:text-2xl font-black text-white text-center select-none">{appData.pricing.title}</h3>
                 
                 {/* Price tag */}
-                <div className="flex items-baseline justify-center gap-1 text-[#fbbf24] mt-6 select-none font-sans">
+                <div className="flex items-baseline justify-center gap-1 text-[#ff8a00] mt-6 select-none font-sans">
                   <span className="text-2xl font-bold font-mono">R$</span>
                   <span className="text-5xl md:text-6xl font-black tracking-tight">{appData.pricing.price}</span>
                   <span className="text-xs font-bold text-white/50 uppercase ml-1">/ {appData.pricing.period}</span>
@@ -3237,7 +3281,7 @@ function AppContent() {
                 onError={(e) => { e.currentTarget.src = "https://i.postimg.cc/nVdYndN2/minha-divulgacao-png.png" }}
               />
               <p className="text-xs text-white/50 max-w-sm leading-relaxed mt-2">
-                {appData.siteInfo.description || 'O melhor canal de divulgação comercial e entretenimento da região.'}
+                {(appData.siteInfo.description || 'O melhor canal de divulgação comercial e entretenimento da região.').replace(/Grande Fortaleza/gi, 'todo o Brasil').replace(/Fortaleza/gi, 'Brasil')}
               </p>
 
               {/* Social icons */}
@@ -4070,8 +4114,8 @@ function AppContent() {
 
                 {activeTab === 'vídeos' && (
                   <div className="dev-forms-container">
-                    <div style={{ background: 'rgba(251, 191, 36, 0.1)', border: '1px solid rgba(251, 191, 36, 0.2)', padding: '15px', borderRadius: '12px', marginBottom: '20px' }}>
-                      <h4 style={{ color: '#fbbf24', margin: 0, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ background: 'rgba(255, 138, 0, 0.1)', border: '1px solid rgba(255, 138, 0, 0.2)', padding: '15px', borderRadius: '12px', marginBottom: '20px' }}>
+                      <h4 style={{ color: '#ff8a00', margin: 0, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         ⚠️ ÁREA EXCLUSIVA DO ADMINISTRADOR
                       </h4>
                       <p style={{ margin: '5px 0 0 0', fontSize: '11px', color: '#aaa' }}>
@@ -4085,7 +4129,7 @@ function AppContent() {
                         <div key={idx} className="dev-item-card" style={{ opacity: v.active !== false ? 1 : 0.6 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                              <span style={{ fontSize: '10px', fontWeight: 900, color: '#fbbf24' }}>VÍDEO #{idx + 1}</span>
+                              <span style={{ fontSize: '10px', fontWeight: 900, color: '#ff8a00' }}>VÍDEO #{idx + 1}</span>
                               <button 
                                 className="dev-btn" 
                                 style={{ 
@@ -4806,7 +4850,7 @@ function AppContent() {
                                      </div>
                                      <div style={{ background: '#111', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
                                         <div style={{ fontSize: '10px', color: '#666' }}>VENDAS</div>
-                                        <div style={{ fontWeight: 900, color: '#fbbf24' }}>{aff.sales || 0}</div>
+                                        <div style={{ fontWeight: 900, color: '#ff8a00' }}>{aff.sales || 0}</div>
                                      </div>
                                   </div>
      
@@ -5281,63 +5325,435 @@ function AppContent() {
                             {/* Divider line */}
                             <div className="border-t border-white/5 pt-3">
                               <div className="flex justify-between items-center text-sm">
-                                <span className="font-bold text-white">Total do Pedido:</span>
-                                <span className="text-base font-black text-[var(--primary)] font-mono">
+                                <span className="font-bold text-white">Subtotal:</span>
+                                <span className="text-sm font-black text-white/80 font-mono">
                                   R$ {subtotal.toFixed(2).replace('.', ',')}
+                                </span>
+                              </div>
+                              {deliveryMethod === 'entrega' && company.deliveryFee && parseFloat(company.deliveryFee) > 0 && (
+                                <div className="flex justify-between items-center text-xs mt-1 text-white/50">
+                                  <span>Taxa de Entrega:</span>
+                                  <span className="font-mono">R$ {parseFloat(company.deliveryFee).toFixed(2).replace('.', ',')}</span>
+                                </div>
+                              )}
+                              <div className="flex justify-between items-center text-sm mt-2 border-t border-white/5 pt-2">
+                                <span className="font-extrabold text-[var(--primary)] uppercase tracking-wider text-xs">Total Geral:</span>
+                                <span className="text-lg font-black text-[var(--primary)] font-mono">
+                                  R$ {(subtotal + (deliveryMethod === 'entrega' ? parseFloat(company.deliveryFee || '0') || 0 : 0)).toFixed(2).replace('.', ',')}
                                 </span>
                               </div>
                             </div>
 
-                            {/* Client Details Form */}
-                            <div className="flex flex-col gap-2.5 mt-2">
-                              <label className="text-[10px] text-white/50 uppercase tracking-wider font-extrabold">Seu Nome *</label>
-                              <input 
-                                type="text"
-                                placeholder="Informe seu nome"
-                                value={cartCustomerName}
-                                onChange={(e) => setCartCustomerName(e.target.value)}
-                                className="w-full bg-[#11111a] border border-white/10 hover:border-white/20 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
-                              />
+                            {/* Client Details Form with advanced options */}
+                            <div className="flex flex-col gap-4 mt-3">
+                              
+                              {/* Como quer receber? */}
+                              <div>
+                                <label className="text-[10px] text-white/50 uppercase tracking-wider font-extrabold block mb-2">Como deseja receber? *</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <button 
+                                    type="button"
+                                    onClick={() => setDeliveryMethod('entrega')}
+                                    className={`flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all border cursor-pointer ${deliveryMethod === 'entrega' ? 'bg-[var(--primary)] text-black border-[var(--primary)]' : 'bg-neutral-900 text-white/70 border-white/5 hover:border-white/10'}`}
+                                  >
+                                    <Truck size={14} /> Entrega
+                                  </button>
+                                  <button 
+                                    type="button"
+                                    onClick={() => setDeliveryMethod('retirada')}
+                                    className={`flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all border cursor-pointer ${deliveryMethod === 'retirada' ? 'bg-[var(--primary)] text-black border-[var(--primary)]' : 'bg-neutral-900 text-white/70 border-white/5 hover:border-white/10'}`}
+                                  >
+                                    <Store size={14} /> Retirada
+                                  </button>
+                                </div>
+                              </div>
 
-                              <label className="text-[10px] text-white/50 uppercase tracking-wider font-extrabold mt-1">Endereço de Entrega ou Mesa / Observações *</label>
-                              <textarea 
-                                placeholder="Bairro, Rua, Nº / Observações como ponto de referência"
-                                value={cartCustomerDetails}
-                                onChange={(e) => setCartCustomerDetails(e.target.value)}
-                                rows={2}
-                                className="w-full bg-[#11111a] border border-white/10 hover:border-white/20 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white resize-none"
-                              />
+                              {/* Customer Main Info */}
+                              <div className="grid grid-cols-1 gap-2.5">
+                                <div>
+                                  <label className="text-[10px] text-white/50 uppercase tracking-wider font-extrabold block mb-1">Seu Nome Completo *</label>
+                                  <input 
+                                    type="text"
+                                    placeholder="Informe seu nome"
+                                    value={cartCustomerName}
+                                    onChange={(e) => setCartCustomerName(e.target.value)}
+                                    className="w-full bg-[#11111a] border border-white/10 hover:border-white/20 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-[10px] text-white/50 uppercase tracking-wider font-extrabold block mb-1">Seu WhatsApp / Celular *</label>
+                                  <input 
+                                    type="text"
+                                    placeholder="(00) 00000-0000"
+                                    value={customerPhone}
+                                    onChange={(e) => setCustomerPhone(e.target.value)}
+                                    className="w-full bg-[#11111a] border border-white/10 hover:border-white/20 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white font-mono"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Address Fields (only if deliveryMethod === 'entrega') */}
+                              {deliveryMethod === 'entrega' && (
+                                <div className="bg-neutral-900/40 border border-white/5 rounded-2xl p-3.5 flex flex-col gap-2.5">
+                                  <span className="text-[10px] text-[var(--primary)] font-black uppercase tracking-wider block mb-1">📍 Endereço de Entrega</span>
+                                  
+                                  <div className="grid grid-cols-3 gap-2">
+                                    <div className="col-span-2">
+                                      <label className="text-[9px] text-white/40 uppercase font-bold block mb-1">Rua / Avenida *</label>
+                                      <input 
+                                        type="text"
+                                        placeholder="Ex: Av. Paulista"
+                                        value={customerStreet}
+                                        onChange={(e) => setCustomerStreet(e.target.value)}
+                                        className="w-full bg-[#11111a] border border-white/10 outline-none rounded-lg px-3 py-2 text-xs text-white"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[9px] text-white/40 uppercase font-bold block mb-1">Número *</label>
+                                      <input 
+                                        type="text"
+                                        placeholder="Nº"
+                                        value={customerNumber}
+                                        onChange={(e) => setCustomerNumber(e.target.value)}
+                                        className="w-full bg-[#11111a] border border-white/10 outline-none rounded-lg px-3 py-2 text-xs text-white"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <label className="text-[9px] text-white/40 uppercase font-bold block mb-1">Bairro *</label>
+                                    <input 
+                                      type="text"
+                                      placeholder="Seu bairro"
+                                      value={customerNeighborhood}
+                                      onChange={(e) => setCustomerNeighborhood(e.target.value)}
+                                      className="w-full bg-[#11111a] border border-white/10 outline-none rounded-lg px-3 py-2 text-xs text-white"
+                                    />
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                      <label className="text-[9px] text-white/40 uppercase font-bold block mb-1">Cidade *</label>
+                                      <input 
+                                        type="text"
+                                        placeholder="Sua cidade"
+                                        value={customerCity}
+                                        onChange={(e) => setCustomerCity(e.target.value)}
+                                        className="w-full bg-[#11111a] border border-white/10 outline-none rounded-lg px-3 py-2 text-xs text-white"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[9px] text-white/40 uppercase font-bold block mb-1">Estado (UF) *</label>
+                                      <input 
+                                        type="text"
+                                        maxLength={2}
+                                        placeholder="Ex: SP"
+                                        value={customerState}
+                                        onChange={(e) => setCustomerState(e.target.value)}
+                                        className="w-full bg-[#11111a] border border-white/10 outline-none rounded-lg px-3 py-2 text-xs text-white font-mono uppercase"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                      <label className="text-[9px] text-white/40 uppercase font-bold block mb-1">CEP (Opcional)</label>
+                                      <input 
+                                        type="text"
+                                        placeholder="00000-000"
+                                        value={customerCep}
+                                        onChange={(e) => setCustomerCep(e.target.value)}
+                                        className="w-full bg-[#11111a] border border-white/10 outline-none rounded-lg px-3 py-2 text-xs text-white font-mono"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[9px] text-white/40 uppercase font-bold block mb-1">Complemento</label>
+                                      <input 
+                                        type="text"
+                                        placeholder="Apt, bloco..."
+                                        value={customerComplement}
+                                        onChange={(e) => setCustomerComplement(e.target.value)}
+                                        className="w-full bg-[#11111a] border border-white/10 outline-none rounded-lg px-3 py-2 text-xs text-white"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <label className="text-[9px] text-white/40 uppercase font-bold block mb-1">Ponto de Referência (Opcional)</label>
+                                    <input 
+                                      type="text"
+                                      placeholder="Ex: Próximo à padaria"
+                                      value={customerReference}
+                                      onChange={(e) => setCustomerReference(e.target.value)}
+                                      className="w-full bg-[#11111a] border border-white/10 outline-none rounded-lg px-3 py-2 text-xs text-white"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="text-[9px] text-white/40 uppercase font-bold block mb-1">Instruções / Observações de Entrega</label>
+                                    <textarea 
+                                      placeholder="Deixe uma mensagem para o entregador ou observações do pedido"
+                                      value={cartCustomerDetails}
+                                      onChange={(e) => setCartCustomerDetails(e.target.value)}
+                                      rows={2}
+                                      className="w-full bg-[#11111a] border border-white/10 outline-none rounded-lg px-3 py-2 text-xs text-white resize-none"
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* If Retirada, show simple notes */}
+                              {deliveryMethod === 'retirada' && (
+                                <div>
+                                  <label className="text-[10px] text-white/50 uppercase tracking-wider font-extrabold block mb-1">Instruções / Observações do Pedido</label>
+                                  <textarea 
+                                    placeholder="Mesa, talheres ou ponto de referência se necessário"
+                                    value={cartCustomerDetails}
+                                    onChange={(e) => setCartCustomerDetails(e.target.value)}
+                                    rows={2}
+                                    className="w-full bg-[#11111a] border border-white/10 hover:border-white/20 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white resize-none"
+                                  />
+                                </div>
+                              )}
+
+                              {/* Forma de Pagamento */}
+                              <div>
+                                <label className="text-[10px] text-white/50 uppercase tracking-wider font-extrabold block mb-2">Forma de Pagamento *</label>
+                                <div className="flex flex-col gap-1.5">
+                                  <button 
+                                    type="button"
+                                    onClick={() => setPaymentMethod('pix_chave')}
+                                    className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all border cursor-pointer ${paymentMethod === 'pix_chave' ? 'bg-neutral-900 text-[var(--primary)] border-[var(--primary)]/30' : 'bg-[#11111a] text-white/60 border-white/5 hover:border-white/10'}`}
+                                  >
+                                    <span>⚡ PIX Chave</span>
+                                    <span className="text-[9px] font-mono text-white/40 uppercase">Direto</span>
+                                  </button>
+                                  <button 
+                                    type="button"
+                                    onClick={() => setPaymentMethod('pix_qrcode')}
+                                    className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all border cursor-pointer ${paymentMethod === 'pix_qrcode' ? 'bg-neutral-900 text-[var(--primary)] border-[var(--primary)]/30' : 'bg-[#11111a] text-white/60 border-white/5 hover:border-white/10'}`}
+                                  >
+                                    <span>📱 PIX QR Code</span>
+                                    <span className="text-[9px] font-mono text-white/40 uppercase">Escanear</span>
+                                  </button>
+                                  <button 
+                                    type="button"
+                                    onClick={() => setPaymentMethod('cartao_entrega')}
+                                    className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all border cursor-pointer ${paymentMethod === 'cartao_entrega' ? 'bg-neutral-900 text-[var(--primary)] border-[var(--primary)]/30' : 'bg-[#11111a] text-white/60 border-white/5 hover:border-white/10'}`}
+                                  >
+                                    <span>💳 Cartão na Entrega</span>
+                                    <span className="text-[9px] font-mono text-white/40 uppercase">Maquininha</span>
+                                  </button>
+                                  {deliveryMethod === 'retirada' && (
+                                    <button 
+                                      type="button"
+                                      onClick={() => setPaymentMethod('cartao_retirada')}
+                                      className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all border cursor-pointer ${paymentMethod === 'cartao_retirada' ? 'bg-neutral-900 text-[var(--primary)] border-[var(--primary)]/30' : 'bg-[#11111a] text-white/60 border-white/5 hover:border-white/10'}`}
+                                    >
+                                      <span>🏪 Cartão na Retirada</span>
+                                      <span className="text-[9px] font-mono text-white/40 uppercase">No balcão</span>
+                                    </button>
+                                  )}
+                                  <button 
+                                    type="button"
+                                    onClick={() => setPaymentMethod('dinheiro')}
+                                    className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all border cursor-pointer ${paymentMethod === 'dinheiro' ? 'bg-neutral-900 text-[var(--primary)] border-[var(--primary)]/30' : 'bg-[#11111a] text-white/60 border-white/5 hover:border-white/10'}`}
+                                  >
+                                    <span>💵 Dinheiro</span>
+                                    <span className="text-[9px] font-mono text-white/40 uppercase">Cédulas</span>
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Conditional Payment Blocks */}
+                              {(paymentMethod === 'pix_chave' || paymentMethod === 'pix_qrcode') && (
+                                <div className="bg-neutral-900/60 border border-white/5 rounded-2xl p-4 flex flex-col gap-3">
+                                  <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                                    <span className="text-[10px] text-emerald-400 font-extrabold uppercase tracking-wider">Dados de Pagamento PIX</span>
+                                    <span className="text-[9px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-mono">Pague Direto</span>
+                                  </div>
+                                  
+                                  <div className="text-xs flex flex-col gap-2">
+                                    <div className="flex justify-between">
+                                      <span className="text-white/40">Chave PIX:</span>
+                                      <span className="font-mono font-bold text-white text-right break-all max-w-[200px] select-all">
+                                        {company.pixKey || "Chave não configurada"}
+                                      </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-white/40">Tipo:</span>
+                                      <span className="text-white font-bold">{company.pixType || "Celular"}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-white/40">Recebedor:</span>
+                                      <span className="text-white font-bold text-right">{company.pixName || company.name}</span>
+                                    </div>
+                                    {company.pixBank && (
+                                      <div className="flex justify-between">
+                                        <span className="text-white/40">Instituição:</span>
+                                        <span className="text-white font-bold">{company.pixBank}</span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Copy Pix Key Button */}
+                                  {company.pixKey && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(company.pixKey);
+                                        setPixCopied(true);
+                                        setTimeout(() => setPixCopied(false), 2000);
+                                      }}
+                                      className={`w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${pixCopied ? 'bg-emerald-500 text-white' : 'bg-white/10 hover:bg-white/15 text-white'}`}
+                                    >
+                                      {pixCopied ? <Check size={14} /> : <Copy size={14} />}
+                                      {pixCopied ? 'Chave Copiada!' : 'Copiar Chave PIX'}
+                                    </button>
+                                  )}
+
+                                  {/* File upload receipt block */}
+                                  <div className="mt-1 border-t border-white/5 pt-3">
+                                    <span className="text-[10px] text-white/50 block mb-1.5 font-bold">Comprovante do PIX (Opcional)</span>
+                                    <div className="flex gap-2 items-center">
+                                      <label className="flex-1 flex items-center justify-center gap-1.5 bg-[#11111a] border border-white/10 border-dashed hover:border-emerald-500/40 rounded-xl py-2 px-3 text-xs text-white/60 hover:text-white cursor-pointer transition-all">
+                                        <ImageIcon size={14} />
+                                        <span className="truncate max-w-[140px]">{attachedProofName || "Anexar Comprovante"}</span>
+                                        <input 
+                                          type="file" 
+                                          accept="image/*" 
+                                          className="hidden" 
+                                          onChange={(e) => {
+                                            if (e.target.files && e.target.files[0]) {
+                                              setAttachedProofName(e.target.files[0].name);
+                                            }
+                                          }}
+                                        />
+                                      </label>
+                                      {attachedProofName && (
+                                        <button 
+                                          type="button"
+                                          onClick={() => setAttachedProofName('')}
+                                          className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold"
+                                        >
+                                          Limpar
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {paymentMethod === 'dinheiro' && (
+                                <div className="bg-neutral-900/40 border border-white/5 rounded-2xl p-4 flex flex-col gap-3">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-white font-bold">Precisa de troco?</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setCashChangeNeeded(!cashChangeNeeded)}
+                                      className={`px-3 py-1 rounded-full text-[10px] font-black uppercase transition-all ${cashChangeNeeded ? 'bg-[var(--primary)] text-black' : 'bg-white/10 text-white/60'}`}
+                                    >
+                                      {cashChangeNeeded ? 'Sim' : 'Não'}
+                                    </button>
+                                  </div>
+                                  {cashChangeNeeded && (
+                                    <div className="flex flex-col gap-1.5">
+                                      <label className="text-[9px] text-white/40 uppercase font-bold">Troco para quanto?</label>
+                                      <input 
+                                        type="text"
+                                        placeholder="Ex: R$ 50,00 ou 100,00"
+                                        value={cashChangeFor}
+                                        onChange={(e) => setCashChangeFor(e.target.value)}
+                                        className="w-full bg-[#11111a] border border-white/10 outline-none rounded-xl px-4 py-3 text-xs text-white font-mono"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
                             </div>
 
-                            {/* WhatsApp Submit */}
+                            {/* WhatsApp Submit with structured summary data */}
                             <button 
                               onClick={() => {
-                                if (!cartCustomerName || !cartCustomerDetails) {
-                                  alert("Por favor, preencha seu nome e endereço/observações.");
+                                if (!cartCustomerName) {
+                                  alert("Por favor, informe seu nome completo.");
+                                  return;
+                                }
+                                if (!customerPhone) {
+                                  alert("Por favor, informe seu WhatsApp / Celular.");
+                                  return;
+                                }
+                                if (deliveryMethod === 'entrega' && (!customerStreet || !customerNumber || !customerNeighborhood || !customerCity || !customerState)) {
+                                  alert("Por favor, preencha todos os campos obrigatórios do endereço de entrega.");
                                   return;
                                 }
                                 
-                                // Format perfect whatsapp message
+                                const finalDeliveryFee = deliveryMethod === 'entrega' ? parseFloat(company.deliveryFee || '0') || 0 : 0;
+                                const finalTotal = subtotal + finalDeliveryFee;
+
+                                // Format perfect structured whatsapp message
                                 let textMsg = `*🛒 NOVO PEDIDO - ${company.name.toUpperCase()}*\n`;
-                                textMsg += `------------------------------------\n`;
-                                textMsg += `*Cliente:* ${cartCustomerName}\n`;
-                                textMsg += `*Entrega/Local:* ${cartCustomerDetails}\n`;
-                                textMsg += `------------------------------------\n`;
-                                textMsg += `*Itens Pedidos:*\n`;
+                                textMsg += `====================================\n`;
+                                textMsg += `*👤 CLIENTE:* ${cartCustomerName}\n`;
+                                textMsg += `*📱 WHATSAPP:* ${customerPhone}\n`;
+                                textMsg += `*🛵 FORMA:* ${deliveryMethod === 'entrega' ? "ENTREGA" : "RETIRADA NA LOJA"}\n`;
+                                
+                                if (deliveryMethod === 'entrega') {
+                                  textMsg += `------------------------------------\n`;
+                                  textMsg += `*📍 ENDEREÇO DE ENTREGA:*\n`;
+                                  textMsg += `*Rua/Av:* ${customerStreet}, Nº ${customerNumber}\n`;
+                                  textMsg += `*Bairro:* ${customerNeighborhood}\n`;
+                                  textMsg += `*Cidade/UF:* ${customerCity} - ${customerState.toUpperCase()}\n`;
+                                  if (customerCep) textMsg += `*CEP:* ${customerCep}\n`;
+                                  if (customerComplement) textMsg += `*Comp:* ${customerComplement}\n`;
+                                  if (customerReference) textMsg += `*Ref:* ${customerReference}\n`;
+                                }
+                                
+                                if (cartCustomerDetails) {
+                                  textMsg += `------------------------------------\n`;
+                                  textMsg += `*📝 OBSERVAÇÕES:*\n${cartCustomerDetails}\n`;
+                                }
+                                
+                                textMsg += `====================================\n`;
+                                textMsg += `*💳 PAGAMENTO:* `;
+                                if (paymentMethod === 'pix_chave') textMsg += `PIX CHAVE`;
+                                else if (paymentMethod === 'pix_qrcode') textMsg += `PIX QR CODE`;
+                                else if (paymentMethod === 'cartao_entrega') textMsg += `CARTÃO NA ENTREGA`;
+                                else if (paymentMethod === 'cartao_retirada') textMsg += `CARTÃO NA RETIRADA`;
+                                else if (paymentMethod === 'dinheiro') {
+                                  textMsg += `DINHEIRO`;
+                                  if (cashChangeNeeded && cashChangeFor) {
+                                    textMsg += ` (Troco para ${cashChangeFor})`;
+                                  }
+                                }
+                                textMsg += `\n`;
+                                
+                                if (attachedProofName) {
+                                  textMsg += `*📎 COMPROVANTE PIX:* Anexado (${attachedProofName})\n`;
+                                }
+                                
+                                textMsg += `====================================\n`;
+                                textMsg += `*📦 ITENS PEDIDOS:*\n`;
                                 
                                 cartItemsArr.forEach((c: any) => {
-                                  textMsg += `- ${c.count}x ${c.item.name} (${c.item.price ? `R$ ${parseFloat(c.item.price).toFixed(2).replace('.', ',')}` : 'Consulta'})\n`;
+                                  textMsg += `• ${c.count}x ${c.item.name} (${c.item.price ? `R$ ${parseFloat(c.item.price).toFixed(2).replace('.', ',')}` : 'Consulta'}) - R$ ${(parseFloat(c.item.price || '0') * c.count).toFixed(2).replace('.', ',')}\n`;
                                 });
                                 
-                                textMsg += `------------------------------------\n`;
-                                textMsg += `*Total Geral:* R$ ${subtotal.toFixed(2).replace('.', ',')}\n\n`;
-                                textMsg += `Vi seu catálogo e fecho via WhatsApp através do portal *${appData.siteInfo.name}*!`;
+                                textMsg += `====================================\n`;
+                                textMsg += `*Subtotal:* R$ ${subtotal.toFixed(2).replace('.', ',')}\n`;
+                                if (finalDeliveryFee > 0) {
+                                  textMsg += `*Taxa de Entrega:* R$ ${finalDeliveryFee.toFixed(2).replace('.', ',')}\n`;
+                                }
+                                textMsg += `*TOTAL GERAL:* R$ ${finalTotal.toFixed(2).replace('.', ',')}\n\n`;
+                                textMsg += `Enviado através do portal *${appData.siteInfo.name}*!\n`;
+                                textMsg += `Por favor, confirme meu pedido. Obrigado!`;
                                 
                                 window.open(`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
                               }}
                               className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-lg mt-2 cursor-pointer shadow-emerald-500/10"
                             >
-                              <Smartphone size={14} /> Finalizar via WhatsApp
+                              <Smartphone size={14} /> Confirmar Pedido (WhatsApp)
                             </button>
                             <p className="text-[10px] text-white/30 text-center leading-relaxed">
                               O checkout é finalizado de forma rápida e segura direto no WhatsApp do estabelecimento comercial, sem taxas na plataforma!
@@ -5988,6 +6404,105 @@ function AppContent() {
                           />
                         </div>
 
+                        <div className="border-t border-white/5 pt-5 mt-3">
+                          <h4 className="text-xs font-black text-[var(--primary)] uppercase tracking-wider mb-4">💳 Recebimento de Pedidos (Pix & Entrega)</h4>
+                          <p className="text-[11px] text-white/50 mb-4">Insira os dados do seu Pix para que seus clientes possam pagar direto pelo catálogo virtual (Mini-Site) ou cardápio digital.</p>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Chave PIX para Recebimento</label>
+                              <input 
+                                type="text"
+                                placeholder="Ex: seu_email@email.com, celular ou chave aleatória"
+                                value={currentAdvertiser.company.pixKey || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setCurrentAdvertiser((prev: any) => ({
+                                    ...prev,
+                                    company: { ...prev.company, pixKey: val }
+                                  }));
+                                }}
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+                            
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Nome do Titular (Recebedor)</label>
+                              <input 
+                                type="text"
+                                placeholder="Ex: Fulano de Tal da Silva"
+                                value={currentAdvertiser.company.pixName || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setCurrentAdvertiser((prev: any) => ({
+                                    ...prev,
+                                    company: { ...prev.company, pixName: val }
+                                  }));
+                                }}
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Tipo da Chave</label>
+                              <select 
+                                value={currentAdvertiser.company.pixType || 'Celular'}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setCurrentAdvertiser((prev: any) => ({
+                                    ...prev,
+                                    company: { ...prev.company, pixType: val }
+                                  }));
+                                }}
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              >
+                                <option value="Celular">Celular</option>
+                                <option value="E-mail">E-mail</option>
+                                <option value="CPF">CPF</option>
+                                <option value="CNPJ">CNPJ</option>
+                                <option value="Chave Aleatória">Chave Aleatória</option>
+                              </select>
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Instituição / Banco (Opcional)</label>
+                              <input 
+                                type="text"
+                                placeholder="Ex: Nubank, Itaú, BB..."
+                                value={currentAdvertiser.company.pixBank || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setCurrentAdvertiser((prev: any) => ({
+                                    ...prev,
+                                    company: { ...prev.company, pixBank: val }
+                                  }));
+                                }}
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Taxa de Entrega (R$ - Opcional)</label>
+                              <input 
+                                type="number"
+                                step="0.01"
+                                placeholder="Ex: 5.00 ou 0 para grátis"
+                                value={currentAdvertiser.company.deliveryFee || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setCurrentAdvertiser((prev: any) => ({
+                                    ...prev,
+                                    company: { ...prev.company, deliveryFee: val }
+                                  }));
+                                }}
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
                         <button 
                           onClick={async () => {
                             setIsAdLoading(true);
@@ -6360,7 +6875,7 @@ function AppContent() {
 
               <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mt-6 text-center select-none">
                 <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Valor do Plano</span>
-                <div className="text-2xl font-black text-[#fbbf24] mt-1">
+                <div className="text-2xl font-black text-[#ff8a00] mt-1">
                   R$ {appData?.pricing.price || '147,00'} <span className="text-xs text-white/40">/ {appData?.pricing.period || 'mês'}</span>
                 </div>
               </div>
