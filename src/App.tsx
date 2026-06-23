@@ -335,6 +335,9 @@ function AppContent() {
             ...d.company,
             id: d.company.id || docDoc.id,
             email: d.email,
+            password: d.password,
+            expiresAt: d.expiresAt || d.company.expiresAt || '',
+            createdAt: d.createdAt || d.company.createdAt || '',
             isAdvertiserCreated: true
           });
         }
@@ -418,6 +421,23 @@ function AppContent() {
     photo: ''
   });
   const [adDashboardTab, setAdDashboardTab] = useState<'perfil' | 'catalogo'>('perfil');
+
+  const isAdExpired = useMemo(() => {
+    if (!currentAdvertiser) return false;
+    if (currentAdvertiser.company?.hasPlan) return false;
+    if (!currentAdvertiser.expiresAt) return false;
+    const todayStr = new Date().toISOString().split('T')[0];
+    return currentAdvertiser.expiresAt < todayStr;
+  }, [currentAdvertiser]);
+
+  const getRemainingTrialDays = useCallback(() => {
+    if (!currentAdvertiser?.expiresAt) return 0;
+    const expiry = new Date(currentAdvertiser.expiresAt + 'T23:59:59');
+    const today = new Date();
+    const diffTime = expiry.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 ? diffDays : 0;
+  }, [currentAdvertiser]);
 
   // --- Initial Firebase Data Load ---
   useEffect(() => {
@@ -887,6 +907,10 @@ function AppContent() {
     const merged = [...baseCompanies];
     
     advertiserCompanies.forEach((ad: any) => {
+      // Check if advertiser trial has expired
+      const isExpired = ad.expiresAt && !ad.hasPlan && ad.expiresAt < new Date().toISOString().split('T')[0];
+      if (isExpired) return; // Skip showing expired advertisers in the public directory!
+
       const idx = merged.findIndex((c: any) => slugify(c.name) === slugify(ad.name) || String(c.id) === String(ad.id));
       if (idx !== -1) {
         merged[idx] = { ...merged[idx], ...ad };
@@ -2101,7 +2125,28 @@ function AppContent() {
               Contato WhatsApp
             </a>
           </div>
- 
+
+          {/* Trial Period Informative Banner */}
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-10 max-w-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/5 border border-amber-500/20 rounded-2xl p-5 md:p-6 text-center shadow-xl backdrop-blur-sm"
+          >
+            <div className="flex flex-col sm:flex-row items-center gap-4 text-left">
+              <div className="bg-amber-500/20 p-3 rounded-full text-amber-400 text-xl flex-shrink-0">
+                ⏳
+              </div>
+              <div>
+                <h4 className="text-sm md:text-base font-black text-white tracking-tight uppercase">
+                  Experimente Grátis por 20 Dias! 🎁
+                </h4>
+                <p className="text-xs text-white/70 mt-1 leading-relaxed">
+                  Todos os novos cadastros ganham automaticamente <strong className="text-amber-400">20 dias de teste completo e gratuito</strong> para criar seu mini-site, cadastrar até 6 produtos ou serviços e receber pedidos direto no seu WhatsApp! Sem compromisso e sem taxas iniciais.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
           {/* Animated quick stats bar - SEÇÃO DE AUTORIDADE E NÚMEROS */}
           <div className="grid grid-cols-1 min-[340px]:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 md:gap-14 mt-24 md:mt-32 w-full max-w-5xl border-t border-white/5 pt-12 select-none">
             <div className="text-center group-hover:scale-105 transition-transform duration-300">
@@ -4039,10 +4084,14 @@ function AppContent() {
                                           email: ad.email,
                                           password: ad.password || '123456',
                                           tenantId: slugify(tenantId || 'fortaleza'),
+                                          expiresAt: ad.expiresAt || '',
+                                          createdAt: ad.createdAt || '',
                                           company: {
                                             ...ad,
                                             hasPlan: hasPlanVal,
-                                            featured: ad.featured || hasPlanVal
+                                            featured: ad.featured || hasPlanVal,
+                                            expiresAt: ad.expiresAt || '',
+                                            createdAt: ad.createdAt || ''
                                           }
                                         });
                                         await fetchAdvertisers(tenantId || 'fortaleza');
@@ -4075,9 +4124,13 @@ function AppContent() {
                                           email: ad.email,
                                           password: ad.password || '123456',
                                           tenantId: slugify(tenantId || 'fortaleza'),
+                                          expiresAt: ad.expiresAt || '',
+                                          createdAt: ad.createdAt || '',
                                           company: {
                                             ...ad,
-                                            featured: featuredVal
+                                            featured: featuredVal,
+                                            expiresAt: ad.expiresAt || '',
+                                            createdAt: ad.createdAt || ''
                                           }
                                         });
                                         await fetchAdvertisers(tenantId || 'fortaleza');
@@ -4093,6 +4146,45 @@ function AppContent() {
                                     <option value="nao">Sem Destaque (Lista normal) 👎</option>
                                     <option value="sim">Com Destaque (Destaque VIP do portal) ⭐</option>
                                   </select>
+                                </div>
+
+                                <div className="dev-form-group" style={{ margin: 0 }}>
+                                  <label style={{ fontSize: '11px', color: '#bbb', display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Expiração do Teste / Assinatura:</label>
+                                  <input 
+                                    type="date" 
+                                    className="dev-input" 
+                                    style={{ padding: '7px 8px', fontSize: '12px', background: '#12131a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '4px', width: '100%', outline: 'none' }}
+                                    value={ad.expiresAt || ''}
+                                    onChange={async (e) => {
+                                      const newExpiryStr = e.target.value;
+                                      setIsAdLoading(true);
+                                      try {
+                                        const docRef = doc(db, 'advertisers', ad.id);
+                                        await setDoc(docRef, {
+                                          email: ad.email,
+                                          password: ad.password || '123456',
+                                          tenantId: slugify(tenantId || 'fortaleza'),
+                                          expiresAt: newExpiryStr,
+                                          createdAt: ad.createdAt || '',
+                                          company: {
+                                            ...ad,
+                                            expiresAt: newExpiryStr,
+                                            createdAt: ad.createdAt || ''
+                                          }
+                                        });
+                                        await fetchAdvertisers(tenantId || 'fortaleza');
+                                        alert(`Data de expiração de "${ad.name}" atualizada para ${newExpiryStr}!`);
+                                      } catch(ee) {
+                                        console.error(ee);
+                                        alert("Falha ao salvar data de expiração.");
+                                      } finally {
+                                        setIsAdLoading(false);
+                                      }
+                                    }}
+                                  />
+                                  <small style={{ color: (ad.expiresAt && ad.expiresAt < new Date().toISOString().split('T')[0] && !ad.hasPlan) ? '#ff4444' : '#888', fontSize: '10px', marginTop: '4px', display: 'block' }}>
+                                    {ad.hasPlan ? 'Plano Ativo (VIP)' : ad.expiresAt ? (ad.expiresAt < new Date().toISOString().split('T')[0] ? '❌ Expirado' : `⏱️ Expira em ${ad.expiresAt}`) : 'Sem data de expiração'}
+                                  </small>
                                 </div>
 
                                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: '5px' }}>
@@ -6000,6 +6092,9 @@ function AppContent() {
                           🚀 Cadastre Seu Negócio no Portal
                         </h2>
                         <p className="text-xs text-white/50 mt-1">Sua empresa será listada automaticamente de forma profissional e interativa.</p>
+                        <div className="bg-amber-500/10 border border-amber-500/25 rounded-xl p-3.5 text-[11px] text-amber-300 mt-3 font-medium leading-relaxed">
+                          🎁 <strong>Período de Teste Grátis Ativo:</strong> Você ganhará automaticamente <strong>20 dias completos</strong> para experimentar o portal, divulgar seus serviços/produtos e receber vendas! Sem taxas iniciais.
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
@@ -6154,6 +6249,12 @@ function AppContent() {
                               return;
                             }
                             
+                            const creationDate = new Date();
+                            const trialDays = 20;
+                            const expiryDate = new Date(creationDate.getTime() + (trialDays * 24 * 60 * 60 * 1000));
+                            const expiresAtStr = expiryDate.toISOString().split('T')[0];
+                            const createdAtStr = creationDate.toISOString();
+
                             const newCompany = {
                               id: activeSlug,
                               name: name.trim(),
@@ -6165,7 +6266,9 @@ function AppContent() {
                               type: type,
                               items: [],
                               featured: false,
-                              active: true
+                              active: true,
+                              expiresAt: expiresAtStr,
+                              createdAt: createdAtStr
                             };
                             
                             // Save to collection
@@ -6173,6 +6276,8 @@ function AppContent() {
                               email: email.toLowerCase().trim(),
                               password: password,
                               tenantId: slugify(tenantId || 'fortaleza'),
+                              expiresAt: expiresAtStr,
+                              createdAt: createdAtStr,
                               company: newCompany
                             });
                             
@@ -6185,6 +6290,8 @@ function AppContent() {
                               email: email.toLowerCase().trim(),
                               password: password,
                               tenantId: slugify(tenantId || 'fortaleza'),
+                              expiresAt: expiresAtStr,
+                              createdAt: createdAtStr,
                               company: newCompany
                             });
                             
@@ -6230,6 +6337,42 @@ function AppContent() {
                       <LogOut size={13} /> Sair do Painel
                     </button>
                   </div>
+
+                  {/* Trial Expiry Alert Box */}
+                  {isAdExpired ? (
+                    <div className="bg-red-500/15 border border-red-500/30 rounded-2xl p-5 md:p-6 text-center shadow-lg">
+                      <span className="text-3xl">⚠️</span>
+                      <h3 className="text-lg font-black text-white uppercase mt-2">Seu Período de Testes Expirou!</h3>
+                      <p className="text-xs text-white/70 mt-2 max-w-lg mx-auto leading-relaxed">
+                        Seus 20 dias de experimentação grátis terminaram em <strong className="text-red-400">{currentAdvertiser.expiresAt}</strong>. Para continuar gerenciando seus produtos e aparecer na vitrine oficial para receber vendas, converse com o nosso suporte para ativar o plano premium.
+                      </p>
+                      <a 
+                        href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá! Meu período de testes para o mini-site ${currentAdvertiser?.company?.name} expirou e gostaria de assinar o plano para continuar ativo no portal.`)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 mt-4 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-150 shadow decoration-transparent"
+                      >
+                        💬 Ativar Meu Plano no WhatsApp
+                      </a>
+                    </div>
+                  ) : currentAdvertiser?.expiresAt && !currentAdvertiser?.company?.hasPlan ? (
+                    <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="text-left">
+                        <span className="text-[10px] bg-amber-500/20 text-amber-400 px-2.5 py-1 rounded font-black uppercase tracking-widest">⏳ Período de Teste Grátis</span>
+                        <p className="text-xs text-white/80 mt-2.5">
+                          Você tem até <strong>{currentAdvertiser.expiresAt}</strong> ({getRemainingTrialDays()} dias restantes) para testar a plataforma gratuitamente!
+                        </p>
+                      </div>
+                      <a 
+                        href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá! Estou gostando muito do portal e gostaria de garantir a assinatura da minha empresa ${currentAdvertiser?.company?.name} de forma definitiva.`)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-black rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all duration-150 shrink-0 decoration-transparent"
+                      >
+                        💎 Ativar Plano VIP
+                      </a>
+                    </div>
+                  ) : null}
 
                   {/* Tabs Nav */}
                   <div className="flex gap-3 border-b border-white/5 pb-1">
@@ -6505,6 +6648,10 @@ function AppContent() {
 
                         <button 
                           onClick={async () => {
+                            if (isAdExpired) {
+                              alert("Seu período de teste expirou! Para continuar salvando alterações, ative o seu plano VIP.");
+                              return;
+                            }
                             setIsAdLoading(true);
                             try {
                               const docRef = doc(db, 'advertisers', currentAdvertiser.id);
@@ -6514,10 +6661,14 @@ function AppContent() {
                                 email: currentAdvertiser.email,
                                 password: currentAdvertiser.password,
                                 tenantId: currentAdvertiser.tenantId,
+                                expiresAt: currentAdvertiser.expiresAt || '',
+                                createdAt: currentAdvertiser.createdAt || '',
                                 company: {
                                   ...currentAdvertiser.company,
                                   name: currentAdvertiser.company.name.trim(),
-                                  desc: currentAdvertiser.company.desc.trim()
+                                  desc: currentAdvertiser.company.desc.trim(),
+                                  expiresAt: currentAdvertiser.expiresAt || '',
+                                  createdAt: currentAdvertiser.createdAt || ''
                                 }
                               });
                               
@@ -6583,10 +6734,15 @@ function AppContent() {
                         {editingItemIndex === null && (
                           <button 
                             onClick={() => {
+                              if (isAdExpired) {
+                                alert("Seu período de teste expirou! Ative o seu plano VIP para continuar adicionando novos itens.");
+                                return;
+                              }
                               setItemForm({ name: '', desc: '', price: '', photo: '' });
                               setEditingItemIndex(-1); // -1 triggers add new form
                             }}
-                            className="inline-flex items-center gap-1.5 bg-[var(--primary)] hover:brightness-110 text-black px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest cursor-pointer shadow"
+                            className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest cursor-pointer shadow transition-all duration-150 ${isAdExpired ? 'bg-neutral-800 text-white/30 border border-white/5 cursor-not-allowed' : 'bg-[var(--primary)] hover:brightness-110 text-black'}`}
+                            disabled={isAdExpired}
                           >
                             <Plus size={14} /> Adicionar Item
                           </button>
@@ -6678,6 +6834,10 @@ function AppContent() {
                             
                             <button 
                               onClick={async () => {
+                                if (isAdExpired) {
+                                  alert("Seu período de teste expirou! Para continuar salvando produtos, ative o seu plano VIP.");
+                                  return;
+                                }
                                 const { name, price, desc, photo } = itemForm;
                                 if (!name || !price) {
                                   alert("Preencha ao menos o Nome e o Preço do item.");
@@ -6729,7 +6889,13 @@ function AppContent() {
                                     email: currentAdvertiser.email,
                                     password: currentAdvertiser.password,
                                     tenantId: currentAdvertiser.tenantId,
-                                    company: updatedAdvertiser.company
+                                    expiresAt: currentAdvertiser.expiresAt || '',
+                                    createdAt: currentAdvertiser.createdAt || '',
+                                    company: {
+                                      ...updatedAdvertiser.company,
+                                      expiresAt: currentAdvertiser.expiresAt || '',
+                                      createdAt: currentAdvertiser.createdAt || ''
+                                    }
                                   });
                                   
                                   setCurrentAdvertiser(updatedAdvertiser);
@@ -6816,7 +6982,13 @@ function AppContent() {
                                           email: currentAdvertiser.email,
                                           password: currentAdvertiser.password,
                                           tenantId: currentAdvertiser.tenantId,
-                                          company: updatedAdvertiser.company
+                                          expiresAt: currentAdvertiser.expiresAt || '',
+                                          createdAt: currentAdvertiser.createdAt || '',
+                                          company: {
+                                            ...updatedAdvertiser.company,
+                                            expiresAt: currentAdvertiser.expiresAt || '',
+                                            createdAt: currentAdvertiser.createdAt || ''
+                                          }
                                         });
                                         
                                         setCurrentAdvertiser(updatedAdvertiser);
