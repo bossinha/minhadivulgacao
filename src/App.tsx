@@ -574,18 +574,28 @@ function AppContent() {
     name: '',
     desc: '',
     price: '',
-    photo: ''
+    photo: '',
+    photo2: '',
+    photo3: '',
+    photo4: '',
+    video: ''
   });
   const [adDashboardTab, setAdDashboardTab] = useState<'perfil' | 'catalogo'>('perfil');
 
   // --- Item Detail & Reviews States ---
   const [selectedItemForDetail, setSelectedItemForDetail] = useState<any | null>(null);
+  const [activeMediaIndex, setActiveMediaIndex] = useState<number>(0);
   const [detailModalTab, setDetailModalTab] = useState<'detalhes' | 'avaliacoes'>('detalhes');
   const [itemReviews, setItemReviews] = useState<any[]>([]);
   const [newReviewForm, setNewReviewForm] = useState({ rating: 5, author: '', comment: '' });
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+
+  // Reset activeMediaIndex when item changes
+  useEffect(() => {
+    setActiveMediaIndex(0);
+  }, [selectedItemForDetail]);
 
   // Load reviews for selectedItemForDetail
   useEffect(() => {
@@ -7694,7 +7704,7 @@ function AppContent() {
                                 alert("Seu período de teste expirou! Ative o seu plano VIP para continuar adicionando novos itens.");
                                 return;
                               }
-                              setItemForm({ name: '', desc: '', price: '', photo: '' });
+                              setItemForm({ name: '', desc: '', price: '', photo: '', photo2: '', photo3: '', photo4: '', video: '' });
                               setEditingItemIndex(-1); // -1 triggers add new form
                             }}
                             className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest cursor-pointer shadow transition-all duration-150 ${isAdExpired ? 'bg-neutral-800 text-white/30 border border-white/5 cursor-not-allowed' : 'bg-[var(--primary)] hover:brightness-110 text-black'}`}
@@ -7750,7 +7760,7 @@ function AppContent() {
 
                             <div className="flex flex-col gap-1.5">
                               <div className="flex justify-between items-center">
-                                <label className="text-[10px] text-white/50 uppercase font-bold">Link da Foto URL (Opcional)</label>
+                                <label className="text-[10px] text-white/50 uppercase font-bold">Foto Principal / Foto 1 (Opcional)</label>
                                 <div className="flex gap-2">
                                   <a 
                                     href={universalConfig.uploadImageHelpUrl || 'https://postimages.org/'} 
@@ -7760,14 +7770,6 @@ function AppContent() {
                                   >
                                     📷 Imagem
                                   </a>
-                                  <a 
-                                    href={universalConfig.uploadVideoHelpUrl || 'https://streamable.com/'} 
-                                    target="_blank" 
-                                    rel="noreferrer"
-                                    className="text-[10px] text-emerald-400 hover:underline flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 decoration-transparent"
-                                  >
-                                    🎥 Vídeo
-                                  </a>
                                 </div>
                               </div>
                               <input 
@@ -7775,6 +7777,60 @@ function AppContent() {
                                 value={itemForm.photo}
                                 onChange={(e) => setItemForm(prev => ({ ...prev, photo: e.target.value }))}
                                 placeholder="https://..."
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Additional Photos & Video */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 border-t border-white/5 pt-4">
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Foto 2 (Opcional)</label>
+                              <input 
+                                type="text"
+                                value={itemForm.photo2 || ''}
+                                onChange={(e) => setItemForm(prev => ({ ...prev, photo2: e.target.value }))}
+                                placeholder="https://..."
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Foto 3 (Opcional)</label>
+                              <input 
+                                type="text"
+                                value={itemForm.photo3 || ''}
+                                onChange={(e) => setItemForm(prev => ({ ...prev, photo3: e.target.value }))}
+                                placeholder="https://..."
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Foto 4 (Opcional)</label>
+                              <input 
+                                type="text"
+                                value={itemForm.photo4 || ''}
+                                onChange={(e) => setItemForm(prev => ({ ...prev, photo4: e.target.value }))}
+                                placeholder="https://..."
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                              <div className="flex justify-between items-center">
+                                <label className="text-[10px] text-white/50 uppercase font-bold">Link do Vídeo (Opcional)</label>
+                                <a 
+                                  href={universalConfig.uploadVideoHelpUrl || 'https://streamable.com/'} 
+                                  target="_blank" 
+                                  rel="noreferrer"
+                                  className="text-[10px] text-emerald-400 hover:underline flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 decoration-transparent"
+                                >
+                                  🎥 Vídeo
+                                </a>
+                              </div>
+                              <input 
+                                type="text"
+                                value={itemForm.video || ''}
+                                onChange={(e) => setItemForm(prev => ({ ...prev, video: e.target.value }))}
+                                placeholder="Ex: https://streamable.com/..."
                                 className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
                               />
                             </div>
@@ -7794,7 +7850,7 @@ function AppContent() {
                                   alert("Seu período de teste expirou! Para continuar salvando produtos, ative o seu plano VIP.");
                                   return;
                                 }
-                                const { name, price, desc, photo } = itemForm;
+                                const { name, price, desc, photo, photo2, photo3, photo4, video } = itemForm;
                                 if (!name || !price) {
                                   alert("Preencha ao menos o Nome e o Preço do item.");
                                   return;
@@ -7821,7 +7877,11 @@ function AppContent() {
                                   name: name.trim(),
                                   price: Number(price).toString(),
                                   desc: desc.trim(),
-                                  photo: photo.trim()
+                                  photo: photo.trim(),
+                                  photo2: (photo2 || '').trim(),
+                                  photo3: (photo3 || '').trim(),
+                                  photo4: (photo4 || '').trim(),
+                                  video: (video || '').trim()
                                 };
 
                                 let updatedItems = [...(currentAdvertiser.company.items || [])];
@@ -7910,7 +7970,11 @@ function AppContent() {
                                         name: it.name,
                                         desc: it.desc || '',
                                         price: it.price,
-                                        photo: it.photo || ''
+                                        photo: it.photo || '',
+                                        photo2: it.photo2 || '',
+                                        photo3: it.photo3 || '',
+                                        photo4: it.photo4 || '',
+                                        video: it.video || ''
                                       });
                                       setEditingItemIndex(i);
                                     }}
@@ -7986,6 +8050,45 @@ function AppContent() {
             ['servicos', 'saude', 'clinica', 'oficina', 'educacao', 'advocacia', 'publicidade', 'construcao', 'financas', 'academia'].some(c => activeMiniSiteCompany.category.toLowerCase().includes(c)) ? 'servico' : 'loja'
           );
           
+          // Build media array for 1-4 photos and 1 video
+          const mediaList: Array<{ type: 'image' | 'video'; url: string }> = [];
+          if (selectedItemForDetail.photo) mediaList.push({ type: 'image', url: selectedItemForDetail.photo });
+          if (selectedItemForDetail.photo2) mediaList.push({ type: 'image', url: selectedItemForDetail.photo2 });
+          if (selectedItemForDetail.photo3) mediaList.push({ type: 'image', url: selectedItemForDetail.photo3 });
+          if (selectedItemForDetail.photo4) mediaList.push({ type: 'image', url: selectedItemForDetail.photo4 });
+          if (selectedItemForDetail.video) mediaList.push({ type: 'video', url: selectedItemForDetail.video });
+
+          // Safe guard the active media index in case list length changed or item is empty
+          const currentMedia = mediaList[activeMediaIndex] || mediaList[0] || null;
+
+          const getVideoEmbedUrl = (url: string) => {
+            if (!url) return null;
+            if (url.includes('youtube.com') || url.includes('youtu.be')) {
+              let videoId = '';
+              if (url.includes('youtu.be/')) {
+                videoId = url.split('youtu.be/')[1]?.split(/[?#]/)[0];
+              } else {
+                try {
+                  const urlParts = url.split('?');
+                  if (urlParts[1]) {
+                    const urlParams = new URLSearchParams(urlParts[1]);
+                    videoId = urlParams.get('v') || '';
+                  }
+                } catch (e) {}
+              }
+              if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+            }
+            if (url.includes('streamable.com/')) {
+              const videoId = url.split('streamable.com/')[1]?.split(/[?#]/)[0];
+              if (videoId) return `https://streamable.com/e/${videoId}`;
+            }
+            if (url.includes('vimeo.com/')) {
+              const videoId = url.split('vimeo.com/')[1]?.split(/[?#]/)[0];
+              if (videoId) return `https://player.vimeo.com/video/${videoId}`;
+            }
+            return null;
+          };
+
           return (
             <motion.div 
               initial={{ opacity: 0 }}
@@ -7996,21 +8099,73 @@ function AppContent() {
               <div className="bg-[#0b0c10] border border-white/10 rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden relative flex flex-col md:flex-row md:h-[550px]">
                 
                 {/* Product Image Panel (Left/Top) */}
-                <div className="w-full md:w-[280px] h-48 sm:h-64 md:h-full bg-neutral-950 flex-shrink-0 relative overflow-hidden flex items-center justify-center border-b md:border-b-0 md:border-r border-white/10">
-                  {selectedItemForDetail.photo ? (
-                    <img 
-                      src={selectedItemForDetail.photo} 
-                      alt={selectedItemForDetail.name} 
-                      className="w-full h-full object-cover" 
-                      referrerPolicy="no-referrer" 
-                    />
+                <div className="w-full md:w-[280px] h-64 md:h-full bg-neutral-950 flex-shrink-0 relative overflow-hidden flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/10 pb-14 md:pb-16">
+                  {currentMedia ? (
+                    currentMedia.type === 'video' ? (
+                      (() => {
+                        const embedUrl = getVideoEmbedUrl(currentMedia.url);
+                        if (embedUrl) {
+                          return (
+                            <iframe
+                              src={embedUrl}
+                              className="w-full h-full border-0 absolute inset-0 pb-14 md:pb-16 animate-fade-in"
+                              allow="autoplay; fullscreen; picture-in-picture"
+                              allowFullScreen
+                            />
+                          );
+                        } else {
+                          return (
+                            <video
+                              src={currentMedia.url}
+                              controls
+                              className="w-full h-full object-contain absolute inset-0 bg-black pb-14 md:pb-16"
+                              playsInline
+                            />
+                          );
+                        }
+                      })()
+                    ) : (
+                      <img 
+                        src={currentMedia.url} 
+                        alt={selectedItemForDetail.name} 
+                        className="w-full h-full object-cover" 
+                        referrerPolicy="no-referrer" 
+                      />
+                    )
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-2 text-white/20">
                       <ShoppingBag size={48} />
                       <span className="text-[10px] uppercase tracking-wider font-bold">Sem imagem</span>
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0b0c10] via-transparent to-transparent md:hidden" />
+
+                  {/* Media Selector Overlay / Thumbnails */}
+                  {mediaList.length > 1 && (
+                    <div className="absolute bottom-0 left-0 right-0 h-14 md:h-16 flex items-center justify-center gap-1.5 z-20 px-2 bg-black/80 border-t border-white/5 overflow-x-auto">
+                      {mediaList.map((media, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setActiveMediaIndex(idx)}
+                          className={`w-10 h-10 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 relative flex items-center justify-center bg-black ${activeMediaIndex === idx ? 'border-[var(--primary)] scale-105' : 'border-white/10 hover:border-white/30'}`}
+                        >
+                          {media.type === 'video' ? (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-emerald-400 gap-0.5">
+                              <Play size={12} className="fill-emerald-400" />
+                              <span className="text-[6px] font-black uppercase tracking-widest leading-none">Vídeo</span>
+                            </div>
+                          ) : (
+                            <img 
+                              src={media.url} 
+                              alt={`Foto ${idx + 1}`} 
+                              className="w-full h-full object-cover" 
+                              referrerPolicy="no-referrer"
+                            />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-14 md:bottom-16 h-8 bg-gradient-to-t from-[#0b0c10]/40 to-transparent pointer-events-none" />
                 </div>
 
                 {/* Content Panel (Right/Bottom) */}
