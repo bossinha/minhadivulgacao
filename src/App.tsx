@@ -433,6 +433,7 @@ function AppContent() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [isCompanyReviewFormOpen, setIsCompanyReviewFormOpen] = useState(false);
   const [newCompanyReviewForm, setNewCompanyReviewForm] = useState({ rating: 5, author: '', comment: '' });
+  const [copiedAdLink, setCopiedAdLink] = useState(false);
 
   const fetchReviews = useCallback(async (tId: string) => {
     try {
@@ -5690,6 +5691,24 @@ function AppContent() {
                 <div className="absolute inset-0 bg-[radial-gradient(120%_120%_at_50%_0%,rgba(251,191,36,0.15)_0%,transparent_100%)]" />
                 <button 
                   onClick={() => {
+                    const shareUrl = `${window.location.origin}/#/${tenantId || 'fortaleza'}?id=${company.id || slugify(company.name)}`;
+                    navigator.clipboard.writeText(shareUrl);
+                    setShareCopied(true);
+                    setTimeout(() => setShareCopied(false), 2000);
+                  }}
+                  className="absolute top-5 right-20 bg-black/60 hover:bg-black/90 border border-white/20 text-white p-3 rounded-full hover:scale-105 transition-all duration-200 z-30 flex items-center justify-center relative"
+                  title="Compartilhar Link de Divulgação"
+                >
+                  {shareCopied && (
+                    <span className="text-[10px] font-black text-[var(--primary)] absolute -top-8 right-0 bg-black/95 border border-white/10 px-2.5 py-1 rounded shadow-lg whitespace-nowrap">
+                      Link Copiado!
+                    </span>
+                  )}
+                  <Share2 size={20} />
+                </button>
+
+                <button 
+                  onClick={() => {
                     setActiveMiniSiteCompany(null);
                     // Clear search ID parameter
                     const url = new URL(window.location.href);
@@ -7171,6 +7190,47 @@ function AppContent() {
                       </a>
                     </div>
                   ) : null}
+
+                  {/* Share Link Card */}
+                  <div className="bg-gradient-to-r from-neutral-900 via-neutral-950 to-neutral-900 border border-white/5 rounded-3xl p-5 md:p-6 shadow-xl flex flex-col gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-[var(--primary)]/10 border border-[var(--primary)]/20 flex items-center justify-center text-[var(--primary)] shrink-0">
+                        <Share2 size={18} />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-black font-mono uppercase tracking-[0.2em] text-[var(--primary)]">Link de Divulgação Oficial</h3>
+                        <p className="text-[11px] text-white/50 mt-0.5">Use este link exclusivo e bonito para divulgar sua empresa nas redes sociais!</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-stretch gap-2 bg-[#11111a] border border-white/10 rounded-2xl p-2.5">
+                      <input 
+                        type="text" 
+                        readOnly 
+                        value={`${window.location.origin}/#/${tenantId || 'fortaleza'}?id=${currentAdvertiser.id}`}
+                        className="flex-1 bg-transparent border-none outline-none text-xs text-white/90 font-mono px-2 py-1 select-all"
+                      />
+                      <button
+                        onClick={() => {
+                          const shareUrl = `${window.location.origin}/#/${tenantId || 'fortaleza'}?id=${currentAdvertiser.id}`;
+                          navigator.clipboard.writeText(shareUrl);
+                          setCopiedAdLink(true);
+                          setTimeout(() => setCopiedAdLink(false), 2500);
+                        }}
+                        className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer transition-all duration-200 flex items-center justify-center gap-1.5 shrink-0 select-none ${
+                          copiedAdLink 
+                            ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.2)]' 
+                            : 'bg-[var(--primary)] hover:bg-[#ffe066] text-black shadow-lg shadow-[var(--primary)]/10'
+                        }`}
+                      >
+                        {copiedAdLink ? (
+                          <>✅ Copiado!</>
+                        ) : (
+                          <>📋 Copiar Link</>
+                        )}
+                      </button>
+                    </div>
+                  </div>
 
                   {/* Tabs Nav */}
                   <div className="flex gap-3 border-b border-white/5 pb-1">
