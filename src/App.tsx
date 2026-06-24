@@ -552,7 +552,9 @@ function AppContent() {
   const [cashChangeNeeded, setCashChangeNeeded] = useState(false);
   const [cashChangeFor, setCashChangeFor] = useState('');
   const [attachedProofName, setAttachedProofName] = useState('');
-  const [isAdPortalOpen, setIsAdPortalOpen] = useState(false);
+  const [isAdPortalOpen, setIsAdPortalOpen] = useState<boolean>(() => {
+    return localStorage.getItem('isAdPortalOpen') === 'true';
+  });
   const [currentAdvertiser, setCurrentAdvertiser] = useState<any | null>(null);
   const [adLoginMode, setAdLoginMode] = useState<'login' | 'register'>('login');
   const [adLoginForm, setAdLoginForm] = useState({ email: '', password: '' });
@@ -580,7 +582,45 @@ function AppContent() {
     photo4: '',
     video: ''
   });
-  const [adDashboardTab, setAdDashboardTab] = useState<'perfil' | 'catalogo'>('perfil');
+  const [adDashboardTab, setAdDashboardTab] = useState<'perfil' | 'catalogo'>(() => {
+    return (localStorage.getItem('adDashboardTab') as 'perfil' | 'catalogo') || 'perfil';
+  });
+
+  // Persist advertiser portal open status and active dashboard tab to localStorage
+  useEffect(() => {
+    localStorage.setItem('isAdPortalOpen', isAdPortalOpen ? 'true' : 'false');
+  }, [isAdPortalOpen]);
+
+  useEffect(() => {
+    localStorage.setItem('adDashboardTab', adDashboardTab);
+  }, [adDashboardTab]);
+
+  // Auto login effect for advertisers on refresh
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('ad_email');
+    const savedPass = localStorage.getItem('ad_password');
+    if (savedEmail && savedPass && !currentAdvertiser) {
+      const autoLogin = async () => {
+        try {
+          const q = query(collection(db, 'advertisers'), where('email', '==', savedEmail.toLowerCase().trim()));
+          const snap = await getDocs(q);
+          if (!snap.empty) {
+            const adDoc = snap.docs[0];
+            const docData = adDoc.data();
+            if (docData.password === savedPass) {
+              setCurrentAdvertiser({
+                id: adDoc.id,
+                ...docData
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Auto-login failed:", err);
+        }
+      };
+      autoLogin();
+    }
+  }, []);
 
   // --- Item Detail & Reviews States ---
   const [selectedItemForDetail, setSelectedItemForDetail] = useState<any | null>(null);
@@ -6993,19 +7033,11 @@ function AppContent() {
                             <div className="flex gap-1.5">
                               <a 
                                 href={universalConfig.uploadImageHelpUrl || 'https://postimages.org/'} 
-                                target="_blank" 
+                                target="portal_upload_imagem" 
                                 rel="noreferrer"
                                 className="text-[9px] text-[var(--primary)] hover:underline flex items-center gap-1 bg-[var(--primary)]/10 px-1.5 py-0.5 rounded border border-[var(--primary)]/10 decoration-transparent"
                               >
                                 📷 Imagem
-                              </a>
-                              <a 
-                                href={universalConfig.uploadVideoHelpUrl || 'https://streamable.com/'} 
-                                target="_blank" 
-                                rel="noreferrer"
-                                className="text-[9px] text-emerald-400 hover:underline flex items-center gap-1 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/10 decoration-transparent"
-                              >
-                                🎥 Vídeo
                               </a>
                             </div>
                           </div>
@@ -7396,19 +7428,11 @@ function AppContent() {
                               <div className="flex gap-2">
                                 <a 
                                   href={universalConfig.uploadImageHelpUrl || 'https://postimages.org/'} 
-                                  target="_blank" 
+                                  target="portal_upload_imagem" 
                                   rel="noreferrer"
                                   className="text-[10px] text-[var(--primary)] hover:underline flex items-center gap-1 bg-[var(--primary)]/10 px-2 py-0.5 rounded border border-[var(--primary)]/20 decoration-transparent"
                                 >
                                   📷 Imagem
-                                </a>
-                                <a 
-                                  href={universalConfig.uploadVideoHelpUrl || 'https://streamable.com/'} 
-                                  target="_blank" 
-                                  rel="noreferrer"
-                                  className="text-[10px] text-emerald-400 hover:underline flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 decoration-transparent"
-                                >
-                                  🎥 Vídeo
                                 </a>
                               </div>
                             </div>
@@ -7764,7 +7788,7 @@ function AppContent() {
                                 <div className="flex gap-2">
                                   <a 
                                     href={universalConfig.uploadImageHelpUrl || 'https://postimages.org/'} 
-                                    target="_blank" 
+                                    target="portal_upload_imagem" 
                                     rel="noreferrer"
                                     className="text-[10px] text-[var(--primary)] hover:underline flex items-center gap-1 bg-[var(--primary)]/10 px-2 py-0.5 rounded border border-[var(--primary)]/20 decoration-transparent"
                                   >
@@ -7819,7 +7843,7 @@ function AppContent() {
                                 <label className="text-[10px] text-white/50 uppercase font-bold">Link do Vídeo (Opcional)</label>
                                 <a 
                                   href={universalConfig.uploadVideoHelpUrl || 'https://streamable.com/'} 
-                                  target="_blank" 
+                                  target="portal_upload_video" 
                                   rel="noreferrer"
                                   className="text-[10px] text-emerald-400 hover:underline flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 decoration-transparent"
                                 >
