@@ -586,6 +586,7 @@ function AppContent() {
     return (localStorage.getItem('adDashboardTab') as 'perfil' | 'catalogo') || 'perfil';
   });
 
+  // Persistence and State Preservation for the Advertiser Portal
   // Persist advertiser portal open status and active dashboard tab to localStorage
   useEffect(() => {
     localStorage.setItem('isAdPortalOpen', isAdPortalOpen ? 'true' : 'false');
