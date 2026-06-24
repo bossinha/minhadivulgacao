@@ -61,7 +61,7 @@ import {
 
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs, deleteDoc, query, where, limit, increment } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs, deleteDoc, query, where, limit, increment, addDoc } from 'firebase/firestore';
 
 // --- Constants ---
 const calculateDaysLeft = (expiresAt: string | undefined) => {
@@ -380,6 +380,128 @@ function AppContent() {
       setIsAdLoading(false);
     }
   }, []);
+
+  // --- Firestore Error Handlers ---
+  enum OperationType {
+    CREATE = 'create',
+    UPDATE = 'update',
+    DELETE = 'delete',
+    LIST = 'list',
+    GET = 'get',
+    WRITE = 'write',
+  }
+
+  interface FirestoreErrorInfo {
+    error: string;
+    operationType: OperationType;
+    path: string | null;
+    authInfo: {
+      userId?: string | null;
+      email?: string | null;
+      emailVerified?: boolean | null;
+      isAnonymous?: boolean | null;
+      tenantId?: string | null;
+      providerInfo?: {
+        providerId?: string | null;
+        email?: string | null;
+      }[];
+    }
+  }
+
+  const handleFirestoreError = (error: unknown, operationType: OperationType, path: string | null) => {
+    const errInfo: FirestoreErrorInfo = {
+      error: error instanceof Error ? error.message : String(error),
+      authInfo: {
+        userId: auth.currentUser?.uid || null,
+        email: auth.currentUser?.email || null,
+        emailVerified: auth.currentUser?.emailVerified || null,
+        isAnonymous: auth.currentUser?.isAnonymous || null,
+        tenantId: auth.currentUser?.tenantId || null,
+        providerInfo: auth.currentUser?.providerData?.map(provider => ({
+          providerId: provider.providerId,
+          email: provider.email,
+        })) || []
+      },
+      operationType,
+      path
+    };
+    console.error('Firestore Error: ', JSON.stringify(errInfo));
+    throw new Error(JSON.stringify(errInfo));
+  };
+
+  // --- Reviews State & Functions ---
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [isCompanyReviewFormOpen, setIsCompanyReviewFormOpen] = useState(false);
+  const [newCompanyReviewForm, setNewCompanyReviewForm] = useState({ rating: 5, author: '', comment: '' });
+
+  const fetchReviews = useCallback(async (tId: string) => {
+    try {
+      const tid = slugify(tId);
+      const q = query(collection(db, 'reviews'), where('tenantId', '==', tid));
+      const snap = await getDocs(q).catch((err) => {
+        handleFirestoreError(err, OperationType.LIST, 'reviews');
+      });
+      const revs: any[] = [];
+      if (snap) {
+        snap.forEach((docDoc) => {
+          revs.push({
+            id: docDoc.id,
+            ...docDoc.data()
+          });
+        });
+      }
+      setReviews(revs);
+    } catch (err) {
+      console.error("Error loading reviews", err);
+    }
+  }, []);
+
+  const addReview = async (companyId: string, rating: number, author: string, comment: string) => {
+    try {
+      const tid = slugify(tenantId || 'fortaleza');
+      const newReviewDoc = {
+        companyId: String(companyId),
+        tenantId: tid,
+        rating,
+        author: author.trim() || 'Anônimo',
+        comment: comment.trim(),
+        createdAt: new Date().toISOString()
+      };
+      const docRef = await addDoc(collection(db, 'reviews'), newReviewDoc).catch((err) => {
+        handleFirestoreError(err, OperationType.WRITE, 'reviews');
+      });
+      
+      if (!docRef) return false;
+
+      const savedReview = {
+        id: docRef.id,
+        ...newReviewDoc
+      };
+      // Update local state
+      setReviews(prev => [
+        ...prev,
+        savedReview
+      ]);
+      return true;
+    } catch (err) {
+      console.error("Error adding review", err);
+      return false;
+    }
+  };
+
+  const getCompanyReviewStats = (companyId: string) => {
+    const companyReviews = reviews.filter(r => String(r.companyId) === String(companyId));
+    if (companyReviews.length === 0) {
+      return { average: 0, count: 0, reviewsList: [] };
+    }
+    const sum = companyReviews.reduce((acc, r) => acc + r.rating, 0);
+    return {
+      average: Math.round((sum / companyReviews.length) * 10) / 10,
+      count: companyReviews.length,
+      reviewsList: companyReviews.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    };
+  };
+
   const [user, setUser] = useState<{ uid: string; email: string | null; username: string; city: string; isAdmin?: boolean } | null>(null);
   const [loginForm, setLoginForm] = useState({ username: '', password: '', city: '' });
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -523,6 +645,7 @@ function AppContent() {
             const tData = snap.data();
             setAppData(tData.data || DEFAULT_DATA);
             fetchAdvertisers(targetTenantId);
+            fetchReviews(targetTenantId);
             
             // Check Expiration
             let blockedFlag = tData.isBlocked || false;
@@ -3073,6 +3196,22 @@ function AppContent() {
                       <span className="text-[10px] text-[var(--primary)] font-extrabold uppercase tracking-widest bg-[var(--primary)]/10 px-2.5 py-1 rounded-full select-none">
                         {company.category}
                       </span>
+                      {(() => {
+                        const { average, count } = getCompanyReviewStats(company.id);
+                        if (count > 0) {
+                          return (
+                            <span className="text-[9px] text-amber-400 font-extrabold uppercase tracking-wide bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
+                              ⭐ {average.toFixed(1)} ({count})
+                            </span>
+                          );
+                        } else {
+                          return (
+                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-wide bg-white/5 border border-white/10 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
+                              ⭐ Novo
+                            </span>
+                          );
+                        }
+                      })()}
                       {(company.city || company.state || company.uf) && (
                         <span className="text-[9px] text-white/50 font-bold uppercase tracking-wide bg-white/5 border border-white/10 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
                           📍 {company.city || 'Fortaleza'}{company.state || company.uf ? ` - ${company.state || company.uf}` : ''}
@@ -4304,6 +4443,43 @@ function AppContent() {
                                     }} placeholder="Opcional" />
                                   </div>
                                 </div>
+
+                                <div className="dev-grid-2">
+                                  <div className="dev-form-group">
+                                    <label>Estado (UF)</label>
+                                    <select 
+                                      className="dev-input" 
+                                      value={c.state || c.uf || ''} 
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        const newList = [...appData.companies];
+                                        newList[idx] = { ...newList[idx], state: val.toUpperCase(), uf: val.toUpperCase() };
+                                        updateData('companies', newList);
+                                      }}
+                                    >
+                                      <option value="">Selecione o Estado</option>
+                                      {BRAZIL_STATES.map(st => (
+                                        <option key={st.uf} value={st.uf}>{st.uf} - {st.name}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div className="dev-form-group">
+                                    <label>Cidade</label>
+                                    <input 
+                                      type="text" 
+                                      className="dev-input" 
+                                      value={c.city || ''} 
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        const newList = [...appData.companies];
+                                        newList[idx] = { ...newList[idx], city: val };
+                                        updateData('companies', newList);
+                                      }} 
+                                      placeholder="Ex: Fortaleza, São Paulo..." 
+                                    />
+                                  </div>
+                                </div>
+
                                 <div className="dev-grid-2">
                                   <div className="dev-form-group">
                                     <label>WhatsApp (Contato)</label>
@@ -5537,9 +5713,27 @@ function AppContent() {
                     <span className="bg-[var(--primary)] text-black text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow">
                       {company.category}
                     </span>
-                    <h2 className="text-xl sm:text-3.5xl font-extrabold text-white tracking-tight mt-1 ml-1 select-none">
-                      {company.name}
-                    </h2>
+                    <div className="flex flex-wrap items-center gap-2 mt-1 ml-1">
+                      <h2 className="text-xl sm:text-3.5xl font-extrabold text-white tracking-tight select-none">
+                        {company.name}
+                      </h2>
+                      {(() => {
+                        const { average, count } = getCompanyReviewStats(company.id);
+                        if (count > 0) {
+                          return (
+                            <div className="flex items-center gap-1 bg-amber-400/10 border border-amber-400/20 text-amber-400 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full select-none font-mono">
+                              ⭐ {average.toFixed(1)} ({count})
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div className="flex items-center gap-1 bg-white/5 border border-white/10 text-white/40 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full select-none font-mono">
+                              ⭐ Novo
+                            </div>
+                          );
+                        }
+                      })()}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -5587,6 +5781,164 @@ function AppContent() {
                       )}
                     </div>
                   </div>
+
+                  {/* Reviews Section */}
+                  {(() => {
+                    const { average, count, reviewsList } = getCompanyReviewStats(company.id);
+                    return (
+                      <div className="bg-[#0b0c10] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-xl">
+                        <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                          <div>
+                            <h3 className="text-sm font-black font-mono uppercase tracking-[0.2em] text-[var(--primary)]">AVALIAÇÕES</h3>
+                            <p className="text-xs text-white/50 mt-1">O que os clientes dizem sobre {company.name}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {count > 0 ? (
+                              <div className="text-right">
+                                <div className="text-sm font-extrabold text-white flex items-center gap-1 justify-end">
+                                  <span className="text-amber-400">★</span> {average.toFixed(1)} / 5.0
+                                </div>
+                                <div className="text-[10px] text-white/40 font-bold">{count} {count === 1 ? 'avaliação' : 'avaliações'}</div>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-white/40 font-bold">Nenhuma avaliação ainda</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Reviews List */}
+                        {count === 0 ? (
+                          <div className="text-center py-8 text-white/45 text-xs">
+                            Seja o primeiro a avaliar esta empresa! Deixe sua opinião abaixo.
+                          </div>
+                        ) : (
+                          <div className="flex flex-col gap-4 mt-5 max-h-80 overflow-y-auto pr-1">
+                            {reviewsList.map((rev: any) => (
+                              <div key={rev.id} className="bg-neutral-900/40 border border-white/5 rounded-2xl p-4 flex flex-col gap-2">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-7 h-7 rounded-full bg-[var(--primary)]/10 border border-[var(--primary)]/20 flex items-center justify-center text-[var(--primary)] text-xs font-black uppercase font-mono">
+                                      {rev.author.charAt(0)}
+                                    </div>
+                                    <div>
+                                      <h4 className="text-xs font-extrabold text-white">{rev.author}</h4>
+                                      <span className="text-[9px] text-white/40 font-mono">
+                                        {new Date(rev.createdAt).toLocaleDateString('pt-BR')}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-0.5 text-[10px] text-amber-400">
+                                    {Array.from({ length: 5 }).map((_, i) => (
+                                      <span key={i} className={i < rev.rating ? "text-amber-400" : "text-white/10"}>
+                                        ★
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                                {rev.comment && (
+                                  <p className="text-xs text-white/70 leading-relaxed pl-1">
+                                    {rev.comment}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Leave a Review Form */}
+                        <div className="mt-6 pt-5 border-t border-white/5">
+                          {!isCompanyReviewFormOpen ? (
+                            <button
+                              onClick={() => {
+                                setIsCompanyReviewFormOpen(true);
+                                setNewCompanyReviewForm({ rating: 5, author: '', comment: '' });
+                              }}
+                              className="w-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+                            >
+                              ⭐ Deixar Avaliação
+                            </button>
+                          ) : (
+                            <div className="bg-neutral-900/60 border border-white/5 rounded-2xl p-5 flex flex-col gap-4">
+                              <h4 className="text-xs font-black text-[var(--primary)] uppercase tracking-wider">Nova Avaliação</h4>
+                              
+                              <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] text-white/50 uppercase font-extrabold">Sua Nota *</label>
+                                <div className="flex items-center gap-1.5">
+                                  {[1, 2, 3, 4, 5].map((num) => (
+                                    <button
+                                      key={num}
+                                      type="button"
+                                      onClick={() => setNewCompanyReviewForm(prev => ({ ...prev, rating: num }))}
+                                      className="text-2xl transition-all duration-150 hover:scale-110 cursor-pointer"
+                                    >
+                                      <span className={num <= newCompanyReviewForm.rating ? "text-amber-400" : "text-white/20"}>
+                                        ★
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] text-white/50 uppercase font-extrabold">Seu Nome *</label>
+                                <input
+                                  type="text"
+                                  placeholder="Ex: Carlos Silva"
+                                  value={newCompanyReviewForm.author}
+                                  onChange={(e) => setNewCompanyReviewForm(prev => ({ ...prev, author: e.target.value }))}
+                                  className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                                />
+                              </div>
+
+                              <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] text-white/50 uppercase font-extrabold">Seu Comentário *</label>
+                                <textarea
+                                  placeholder="Escreva sua opinião sincera sobre o atendimento, qualidade ou produtos..."
+                                  value={newCompanyReviewForm.comment}
+                                  onChange={(e) => setNewCompanyReviewForm(prev => ({ ...prev, comment: e.target.value }))}
+                                  rows={3}
+                                  className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white resize-none"
+                                />
+                              </div>
+
+                              <div className="flex gap-2 justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => setIsCompanyReviewFormOpen(false)}
+                                  className="px-4 py-2 bg-transparent hover:bg-white/5 text-white/50 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors duration-150"
+                                >
+                                  Cancelar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (!newCompanyReviewForm.author.trim()) {
+                                      alert("Por favor, preencha o seu nome.");
+                                      return;
+                                    }
+                                    if (!newCompanyReviewForm.comment.trim()) {
+                                      alert("Por favor, preencha o comentário.");
+                                      return;
+                                    }
+                                    const success = await addReview(company.id, newCompanyReviewForm.rating, newCompanyReviewForm.author, newCompanyReviewForm.comment);
+                                    if (success) {
+                                      alert("Avaliação registrada com sucesso! Muito obrigado.");
+                                      setIsCompanyReviewFormOpen(false);
+                                    } else {
+                                      alert("Desculpe, ocorreu um erro ao registrar sua avaliação.");
+                                    }
+                                  }}
+                                  className="px-5 py-2.5 bg-[var(--primary)] hover:bg-[#ffe066] text-black rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors duration-150 cursor-pointer"
+                                >
+                                  Enviar Avaliação
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Render Catalog Items (if Shop or Menu) */}
                   {(siteType === 'loja' || siteType === 'cardapio') && (
