@@ -442,7 +442,9 @@ function AppContent() {
     type: 'loja',
     desc: '',
     logo: '',
-    ig: ''
+    ig: '',
+    state: 'CE',
+    city: 'Fortaleza'
   });
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
   const [itemForm, setItemForm] = useState({
@@ -1066,7 +1068,10 @@ function AppContent() {
         const matchesSearch = searchQuery 
           ? normalize(c.name).includes(normalize(searchQuery)) || 
             normalize(c.desc).includes(normalize(searchQuery)) || 
-            normalize(c.category).includes(normalize(searchQuery))
+            normalize(c.category).includes(normalize(searchQuery)) ||
+            (c.city && normalize(c.city).includes(normalize(searchQuery))) ||
+            (c.state && normalize(c.state).includes(normalize(searchQuery))) ||
+            (c.uf && normalize(c.uf).includes(normalize(searchQuery)))
           : true;
         
         // Match state filter
@@ -3064,9 +3069,16 @@ function AppContent() {
                       <img src={company.logo} alt={company.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     </div>
 
-                    <span className="text-[10px] text-[var(--primary)] font-extrabold uppercase tracking-widest bg-[var(--primary)]/10 px-2.5 py-1 rounded-full select-none">
-                      {company.category}
-                    </span>
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      <span className="text-[10px] text-[var(--primary)] font-extrabold uppercase tracking-widest bg-[var(--primary)]/10 px-2.5 py-1 rounded-full select-none">
+                        {company.category}
+                      </span>
+                      {(company.city || company.state || company.uf) && (
+                        <span className="text-[9px] text-white/50 font-bold uppercase tracking-wide bg-white/5 border border-white/10 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
+                          📍 {company.city || 'Fortaleza'}{company.state || company.uf ? ` - ${company.state || company.uf}` : ''}
+                        </span>
+                      )}
+                    </div>
 
                     <h3 className="text-base font-extrabold text-white mt-4 line-clamp-1">{company.name}</h3>
                     <p className="text-xs text-white/50 mt-2 line-clamp-3 leading-relaxed min-h-[3.5rem]">{company.desc || 'Anunciante comercial verificado de alta qualidade e atendimento dedicado.'}</p>
@@ -6619,6 +6631,35 @@ function AppContent() {
                         </div>
                       </div>
 
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase font-black">Estado (UF) *</label>
+                          <select 
+                            value={adRegisterForm.state}
+                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, state: e.target.value }))}
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            required
+                          >
+                            <option value="">Selecione o Estado</option>
+                            {BRAZIL_STATES.map(st => (
+                              <option key={st.uf} value={st.uf}>{st.uf} - {st.name}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase font-black">Cidade *</label>
+                          <input 
+                            type="text"
+                            placeholder="Ex: Fortaleza, São Paulo..."
+                            value={adRegisterForm.city}
+                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, city: e.target.value }))}
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            required
+                          />
+                        </div>
+                      </div>
+
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[10px] text-white/50 uppercase font-black">Descrição Curta do Negócio</label>
                         <textarea 
@@ -6632,9 +6673,9 @@ function AppContent() {
 
                       <button 
                         onClick={async () => {
-                          const { email, password, name, wa, category, type, logo, ig, desc } = adRegisterForm;
-                          if (!email || !password || !name || !wa) {
-                            alert("Por favor, preencha todos os campos obrigatórios (E-mail, Senha, Nome da Empresa e WhatsApp).");
+                          const { email, password, name, wa, category, type, logo, ig, desc, state, city } = adRegisterForm;
+                          if (!email || !password || !name || !wa || !state || !city) {
+                            alert("Por favor, preencha todos os campos obrigatórios (E-mail, Senha, Nome da Empresa, WhatsApp, Estado e Cidade).");
                             return;
                           }
                           
@@ -6666,6 +6707,9 @@ function AppContent() {
                               wa: wa.replace(/[^0-9]/g, ''),
                               ig: ig.trim() || '#',
                               type: type,
+                              state: state.toUpperCase(),
+                              uf: state.toUpperCase(),
+                              city: city.trim(),
                               items: [],
                               featured: false,
                               active: true,
@@ -6961,6 +7005,51 @@ function AppContent() {
                           </div>
                         </div>
 
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Estado (UF) *</label>
+                            <select 
+                              value={currentAdvertiser.company.state || currentAdvertiser.company.uf || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { 
+                                    ...prev.company, 
+                                    state: val.toUpperCase(),
+                                    uf: val.toUpperCase() 
+                                  }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              required
+                            >
+                              <option value="">Selecione o Estado</option>
+                              {BRAZIL_STATES.map(st => (
+                                <option key={st.uf} value={st.uf}>{st.uf} - {st.name}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Cidade *</label>
+                            <input 
+                              type="text"
+                              value={currentAdvertiser.company.city || ''}
+                              placeholder="Ex: Fortaleza, São Paulo..."
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, city: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              required
+                            />
+                          </div>
+                        </div>
+
                         <div className="flex flex-col gap-1.5">
                           <label className="text-[10px] text-white/50 uppercase font-bold">Apresentação / Quem Somos</label>
                           <textarea 
@@ -7082,6 +7171,10 @@ function AppContent() {
                               alert("Seu período de teste expirou! Para continuar salvando alterações, ative o seu plano VIP.");
                               return;
                             }
+                            if (!currentAdvertiser.company.name.trim() || !currentAdvertiser.company.wa.trim() || !(currentAdvertiser.company.state || currentAdvertiser.company.uf) || !currentAdvertiser.company.city?.trim()) {
+                              alert("Por favor, preencha todos os campos obrigatórios (Nome, WhatsApp, Estado e Cidade).");
+                              return;
+                            }
                             setIsAdLoading(true);
                             try {
                               const docRef = doc(db, 'advertisers', currentAdvertiser.id);
@@ -7097,6 +7190,9 @@ function AppContent() {
                                   ...currentAdvertiser.company,
                                   name: currentAdvertiser.company.name.trim(),
                                   desc: currentAdvertiser.company.desc.trim(),
+                                  city: currentAdvertiser.company.city.trim(),
+                                  state: (currentAdvertiser.company.state || currentAdvertiser.company.uf).trim().toUpperCase(),
+                                  uf: (currentAdvertiser.company.state || currentAdvertiser.company.uf).trim().toUpperCase(),
                                   expiresAt: currentAdvertiser.expiresAt || '',
                                   createdAt: currentAdvertiser.createdAt || ''
                                 }
