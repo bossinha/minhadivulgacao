@@ -4735,10 +4735,17 @@ function AppContent() {
 
                                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: '5px' }}>
                                   <span style={{ fontSize: '12px', color: '#fff' }}>
-                                    Produtos: <strong style={{ color: ad.hasPlan ? 'var(--primary)' : '#25D366' }}>{itemsCount}</strong> {(!ad.hasPlan && itemsCount >= 6) ? '⚠️' : '✅'}
+                                    Produtos: <strong style={{ color: ad.hasPlan ? 'var(--primary)' : '#25D366' }}>{itemsCount}</strong> {(!ad.hasPlan && itemsCount >= 6 && (!ad.expiresAt || ad.expiresAt < new Date().toISOString().split('T')[0])) ? '⚠️' : '✅'}
                                   </span>
-                                  <small style={{ color: (!ad.hasPlan && itemsCount >= 6) ? '#ff4444' : '#888', fontSize: '10.5px', marginTop: '2px' }}>
-                                    {(!ad.hasPlan && itemsCount >= 6) ? 'Status: Esgotado de fotos (limite 6)' : ad.hasPlan ? 'Liberado ilimitado (Premium)' : 'Grátis (limite 6)'}
+                                  <small style={{ color: (ad.expiresAt && ad.expiresAt < new Date().toISOString().split('T')[0] && !ad.hasPlan && itemsCount >= 6) ? '#ff4444' : (ad.expiresAt && ad.expiresAt >= new Date().toISOString().split('T')[0] && !ad.hasPlan) ? '#25D366' : '#888', fontSize: '10.5px', marginTop: '2px' }}>
+                                    {ad.hasPlan 
+                                      ? 'Liberado ilimitado (Premium)' 
+                                      : (ad.expiresAt && ad.expiresAt >= new Date().toISOString().split('T')[0]) 
+                                        ? 'Teste Ativo (Ilimitado ⏳)' 
+                                        : (itemsCount >= 6) 
+                                          ? 'Status: Expirado / Limite 6 Excedido ❌' 
+                                          : 'Grátis (limite 6)'
+                                    }
                                   </small>
                                 </div>
                               </div>
@@ -7790,7 +7797,8 @@ function AppContent() {
                                 if (editingItemIndex === -1) {
                                   const currentCount = currentAdvertiser.company.items?.length || 0;
                                   const hasPaidPlan = currentAdvertiser.company.hasPlan || currentAdvertiser.company.featured || false;
-                                  if (currentCount >= 6 && !hasPaidPlan) {
+                                  const isInTrialPeriod = currentAdvertiser.expiresAt && !isAdExpired;
+                                  if (currentCount >= 6 && !hasPaidPlan && !isInTrialPeriod) {
                                     alert("Oops! Você atingiu o limite de 6 produtos/fotos do Plano Gratuito. Adquira o Plano para ter acesso ilimitado a produtos e ganhar destaque preferencial no portal!");
                                     setIsCheckoutOpen(true);
                                     return;
