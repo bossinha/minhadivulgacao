@@ -1164,7 +1164,9 @@ function AppContent() {
   // --- Deep-linking URL check for specific company ID ---
   useEffect(() => {
     if (displayedCompanies.length > 0) {
-      const urlParams = new URLSearchParams(window.location.search);
+      const fullUrl = window.location.href;
+      const searchPart = fullUrl.includes('?') ? fullUrl.split('?')[1] : '';
+      const urlParams = new URLSearchParams(searchPart);
       const urlId = urlParams.get('id');
       if (urlId) {
         const found = displayedCompanies.find((c: any) => 
@@ -2930,9 +2932,10 @@ function AppContent() {
                               window.open(targetUrl, '_blank');
                             } else {
                               setActiveMiniSiteCompany(company);
-                              const url = new URL(window.location.href);
-                              url.searchParams.set('id', company.id || slugify(company.name));
-                              window.history.pushState({}, '', url.toString());
+                              const currentUrl = window.location.href;
+                              const baseUrl = currentUrl.split('?')[0];
+                              const nextUrl = `${baseUrl}?id=${company.id || slugify(company.name)}`;
+                              window.history.pushState({}, '', nextUrl);
                             }
                           }}
                           className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
@@ -3024,9 +3027,10 @@ function AppContent() {
                               window.open(targetUrl, '_blank');
                             } else {
                               setActiveMiniSiteCompany(company);
-                              const url = new URL(window.location.href);
-                              url.searchParams.set('id', company.id || slugify(company.name));
-                              window.history.pushState({}, '', url.toString());
+                              const currentUrl = window.location.href;
+                              const baseUrl = currentUrl.split('?')[0];
+                              const nextUrl = `${baseUrl}?id=${company.id || slugify(company.name)}`;
+                              window.history.pushState({}, '', nextUrl);
                             }
                           }}
                           className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
@@ -3234,9 +3238,10 @@ function AppContent() {
                             window.open(targetUrl, '_blank');
                           } else {
                             setActiveMiniSiteCompany(company);
-                            const url = new URL(window.location.href);
-                            url.searchParams.set('id', company.id || slugify(company.name));
-                            window.history.pushState({}, '', url.toString());
+                            const currentUrl = window.location.href;
+                            const baseUrl = currentUrl.split('?')[0];
+                            const nextUrl = `${baseUrl}?id=${company.id || slugify(company.name)}`;
+                            window.history.pushState({}, '', nextUrl);
                           }
                         }}
                         className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-305 shadow-md cursor-pointer"
@@ -5717,11 +5722,17 @@ function AppContent() {
                 <button 
                   onClick={() => {
                     setActiveMiniSiteCompany(null);
-                    // Clear search ID parameter
-                    const url = new URL(window.location.href);
-                    url.searchParams.delete('id');
-                    url.searchParams.delete('item');
-                    window.history.pushState({}, '', url.toString());
+                    // Clear search ID parameter safely in hash URLs
+                    const currentUrl = window.location.href;
+                    if (currentUrl.includes('?')) {
+                      const [baseUrl, searchPart] = currentUrl.split('?');
+                      const params = new URLSearchParams(searchPart);
+                      params.delete('id');
+                      params.delete('item');
+                      const remaining = params.toString();
+                      const nextUrl = remaining ? `${baseUrl}?${remaining}` : baseUrl;
+                      window.history.pushState({}, '', nextUrl);
+                    }
                     setShoppingCart({});
                   }}
                   className="absolute top-5 right-5 bg-black/60 hover:bg-black/90 border border-white/20 text-white p-3 rounded-full hover:scale-105 transition-all duration-200 z-30"
@@ -8032,12 +8043,9 @@ function AppContent() {
                         {/* Share Link Button */}
                         <button
                           onClick={() => {
-                            const url = new URL(window.location.origin + window.location.pathname);
-                            if (activeMiniSiteCompany) {
-                              url.searchParams.set('id', activeMiniSiteCompany.id);
-                            }
-                            url.searchParams.set('item', selectedItemForDetail.id);
-                            navigator.clipboard.writeText(url.toString());
+                            const baseUrl = window.location.origin + window.location.pathname + window.location.hash.split('?')[0];
+                            const itemUrl = `${baseUrl}?id=${activeMiniSiteCompany?.id || ''}&item=${selectedItemForDetail.id}`;
+                            navigator.clipboard.writeText(itemUrl);
                             setShareCopied(true);
                             setTimeout(() => setShareCopied(false), 2000);
                           }}
