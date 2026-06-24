@@ -555,6 +555,11 @@ function AppContent() {
   const [isAdPortalOpen, setIsAdPortalOpen] = useState<boolean>(() => {
     return localStorage.getItem('isAdPortalOpen') === 'true';
   });
+  const [isAutoLoggingIn, setIsAutoLoggingIn] = useState<boolean>(() => {
+    const email = localStorage.getItem('ad_email');
+    const pass = localStorage.getItem('ad_password');
+    return !!(email && pass);
+  });
   const [currentAdvertiser, setCurrentAdvertiser] = useState<any | null>(null);
   const [adLoginMode, setAdLoginMode] = useState<'login' | 'register'>('login');
   const [adLoginForm, setAdLoginForm] = useState({ email: '', password: '' });
@@ -613,13 +618,23 @@ function AppContent() {
                 id: adDoc.id,
                 ...docData
               });
+            } else {
+              localStorage.removeItem('ad_email');
+              localStorage.removeItem('ad_password');
             }
+          } else {
+            localStorage.removeItem('ad_email');
+            localStorage.removeItem('ad_password');
           }
         } catch (err) {
           console.error("Auto-login failed:", err);
+        } finally {
+          setIsAutoLoggingIn(false);
         }
       };
       autoLogin();
+    } else {
+      setIsAutoLoggingIn(false);
     }
   }, []);
 
@@ -4463,7 +4478,7 @@ function AppContent() {
                                 <div className="dev-form-group">
                                   <div className="dev-label-row">
                                     <label>Link da Logo (URL)</label>
-                                    <a href="https://postimages.org/" target="_blank" rel="noreferrer" className="dev-helper-link">
+                                    <a href="https://postimages.org/" target="portal_upload_imagem" rel="noreferrer" className="dev-helper-link">
                                       📸 Abrir PostImages
                                     </a>
                                   </div>
@@ -4931,7 +4946,7 @@ function AppContent() {
                                 <label style={{ marginBottom: '0' }}>Link da Imagem Flyer</label>
                                 <a 
                                   href="https://postimages.org/" 
-                                  target="_blank" 
+                                  target="portal_upload_imagem" 
                                   rel="noreferrer" 
                                   className="dev-btn dev-btn-secondary"
                                   style={{ padding: '4px 10px', fontSize: '0.65rem', textDecoration: 'none', height: 'auto', display: 'flex', alignItems: 'center', gap: '5px' }}
@@ -5058,7 +5073,7 @@ function AppContent() {
                                 <label style={{ marginBottom: '0' }}>Link da Imagem Horizontal</label>
                                 <a 
                                   href="https://postimages.org/" 
-                                  target="_blank" 
+                                  target="portal_upload_imagem" 
                                   rel="noreferrer" 
                                   className="dev-btn dev-btn-secondary"
                                   style={{ padding: '4px 10px', fontSize: '0.65rem', textDecoration: 'none', height: 'auto', display: 'flex', alignItems: 'center', gap: '5px' }}
@@ -5193,7 +5208,7 @@ function AppContent() {
                               <label style={{ marginBottom: '0' }}>Link da Imagem do Print</label>
                               <a 
                                 href="https://postimages.org/" 
-                                target="_blank" 
+                                target="portal_upload_imagem" 
                                 rel="noreferrer" 
                                 className="dev-btn dev-btn-secondary"
                                 style={{ padding: '4px 10px', fontSize: '0.65rem', textDecoration: 'none', height: 'auto', display: 'flex', alignItems: 'center', gap: '5px' }}
@@ -6789,7 +6804,13 @@ function AppContent() {
               </button>
 
               {/* SECTION A: IF NOT LOGGED IN SHOW AUTH LOGIN / REGISTER */}
-              {!currentAdvertiser ? (
+              {isAutoLoggingIn ? (
+                <div className="flex flex-col items-center justify-center py-24 text-white mx-auto">
+                  <div className="w-10 h-10 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <p className="text-xs font-semibold tracking-widest text-white/70 uppercase">Verificando suas credenciais...</p>
+                  <p className="text-[10px] text-white/40 mt-1">Acessando seu painel de forma segura</p>
+                </div>
+              ) : !currentAdvertiser ? (
                 <div className="w-full max-w-md mx-auto py-8">
                   {/* Mode Selector */}
                   <div className="flex gap-4 p-1 bg-white/5 rounded-2xl mb-8">
