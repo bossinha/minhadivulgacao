@@ -4486,7 +4486,12 @@ function AppContent() {
                                 <div className="dev-form-group">
                                   <div className="dev-label-row">
                                     <label>Link da Logo (URL)</label>
-                                    <a href="https://postimages.org/" target="portal_upload_imagem" rel="noreferrer" className="dev-helper-link">
+                                    <a 
+                                      href="https://postimages.org/" 
+                                      onClick={(e) => handleOpenUploadHelper(e, 'https://postimages.org/')}
+                                      rel="noreferrer" 
+                                      className="dev-helper-link"
+                                    >
                                       📸 Abrir PostImages
                                     </a>
                                   </div>
@@ -4954,7 +4959,7 @@ function AppContent() {
                                 <label style={{ marginBottom: '0' }}>Link da Imagem Flyer</label>
                                 <a 
                                   href="https://postimages.org/" 
-                                  target="portal_upload_imagem" 
+                                  onClick={(e) => handleOpenUploadHelper(e, 'https://postimages.org/')}
                                   rel="noreferrer" 
                                   className="dev-btn dev-btn-secondary"
                                   style={{ padding: '4px 10px', fontSize: '0.65rem', textDecoration: 'none', height: 'auto', display: 'flex', alignItems: 'center', gap: '5px' }}
@@ -5081,7 +5086,7 @@ function AppContent() {
                                 <label style={{ marginBottom: '0' }}>Link da Imagem Horizontal</label>
                                 <a 
                                   href="https://postimages.org/" 
-                                  target="portal_upload_imagem" 
+                                  onClick={(e) => handleOpenUploadHelper(e, 'https://postimages.org/')}
                                   rel="noreferrer" 
                                   className="dev-btn dev-btn-secondary"
                                   style={{ padding: '4px 10px', fontSize: '0.65rem', textDecoration: 'none', height: 'auto', display: 'flex', alignItems: 'center', gap: '5px' }}
@@ -5216,7 +5221,7 @@ function AppContent() {
                               <label style={{ marginBottom: '0' }}>Link da Imagem do Print</label>
                               <a 
                                 href="https://postimages.org/" 
-                                target="portal_upload_imagem" 
+                                onClick={(e) => handleOpenUploadHelper(e, 'https://postimages.org/')} 
                                 rel="noreferrer" 
                                 className="dev-btn dev-btn-secondary"
                                 style={{ padding: '4px 10px', fontSize: '0.65rem', textDecoration: 'none', height: 'auto', display: 'flex', alignItems: 'center', gap: '5px' }}
