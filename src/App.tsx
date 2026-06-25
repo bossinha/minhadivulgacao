@@ -561,6 +561,14 @@ function AppContent() {
     return !!(email && pass);
   });
   const [currentAdvertiser, setCurrentAdvertiser] = useState<any | null>(null);
+
+  const handleOpenUploadHelper = (e: any, url: string, target = 'portal_upload_imagem') => {
+    e.preventDefault();
+    const win = window.open(url, target);
+    if (win) {
+      win.focus();
+    }
+  };
   const [adLoginMode, setAdLoginMode] = useState<'login' | 'register'>('login');
   const [adLoginForm, setAdLoginForm] = useState({ email: '', password: '' });
   const [adRegisterForm, setAdRegisterForm] = useState({
@@ -6948,6 +6956,27 @@ function AppContent() {
                         <div className="bg-amber-500/10 border border-amber-500/25 rounded-xl p-3.5 text-[11px] text-amber-300 mt-3 font-medium leading-relaxed">
                           🎁 <strong>Período de Teste Grátis Ativo:</strong> Você ganhará automaticamente <strong>20 dias completos</strong> para experimentar o portal, divulgar seus serviços/produtos e receber vendas! Sem taxas iniciais.
                         </div>
+
+                        {/* Video Tutorial Box */}
+                        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mt-4 overflow-hidden flex flex-col gap-3">
+                          <div className="flex items-center gap-2 text-white font-semibold text-xs tracking-wide uppercase">
+                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                            🎥 Vídeo Tutorial: Passo a Passo do Cadastro
+                          </div>
+                          <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black/60 border border-white/10">
+                            <iframe 
+                              className="absolute top-0 left-0 w-full h-full"
+                              src="https://www.youtube.com/embed/iJg2RtDqh-0" 
+                              title="Tutorial de Cadastro"
+                              frameBorder="0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                              allowFullScreen
+                            ></iframe>
+                          </div>
+                          <p className="text-[10px] text-white/40 leading-relaxed">
+                            Assista ao vídeo de 1 minuto acima para aprender a preencher corretamente o cadastro e publicar seu mini-site instantaneamente!
+                          </p>
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
@@ -7055,7 +7084,7 @@ function AppContent() {
                             <div className="flex gap-1.5">
                               <a 
                                 href={universalConfig.uploadImageHelpUrl || 'https://postimages.org/'} 
-                                target="portal_upload_imagem" 
+                                onClick={(e) => handleOpenUploadHelper(e, universalConfig.uploadImageHelpUrl || 'https://postimages.org/')}
                                 rel="noreferrer"
                                 className="text-[9px] text-[var(--primary)] hover:underline flex items-center gap-1 bg-[var(--primary)]/10 px-1.5 py-0.5 rounded border border-[var(--primary)]/10 decoration-transparent"
                               >
@@ -7450,7 +7479,7 @@ function AppContent() {
                               <div className="flex gap-2">
                                 <a 
                                   href={universalConfig.uploadImageHelpUrl || 'https://postimages.org/'} 
-                                  target="portal_upload_imagem" 
+                                  onClick={(e) => handleOpenUploadHelper(e, universalConfig.uploadImageHelpUrl || 'https://postimages.org/')}
                                   rel="noreferrer"
                                   className="text-[10px] text-[var(--primary)] hover:underline flex items-center gap-1 bg-[var(--primary)]/10 px-2 py-0.5 rounded border border-[var(--primary)]/20 decoration-transparent"
                                 >
@@ -7810,7 +7839,7 @@ function AppContent() {
                                 <div className="flex gap-2">
                                   <a 
                                     href={universalConfig.uploadImageHelpUrl || 'https://postimages.org/'} 
-                                    target="portal_upload_imagem" 
+                                    onClick={(e) => handleOpenUploadHelper(e, universalConfig.uploadImageHelpUrl || 'https://postimages.org/')}
                                     rel="noreferrer"
                                     className="text-[10px] text-[var(--primary)] hover:underline flex items-center gap-1 bg-[var(--primary)]/10 px-2 py-0.5 rounded border border-[var(--primary)]/20 decoration-transparent"
                                   >
@@ -7865,7 +7894,7 @@ function AppContent() {
                                 <label className="text-[10px] text-white/50 uppercase font-bold">Link do Vídeo (Opcional)</label>
                                 <a 
                                   href={universalConfig.uploadVideoHelpUrl || 'https://streamable.com/'} 
-                                  target="portal_upload_video" 
+                                  onClick={(e) => handleOpenUploadHelper(e, universalConfig.uploadVideoHelpUrl || 'https://streamable.com/', 'portal_upload_video')} 
                                   rel="noreferrer"
                                   className="text-[10px] text-emerald-400 hover:underline flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 decoration-transparent"
                                 >
