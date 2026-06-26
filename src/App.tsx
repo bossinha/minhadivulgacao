@@ -4320,7 +4320,7 @@ function AppContent() {
                       }}>+ Novo Nicho</button>
                     </div>
                     <div className="dev-items-grid">
-                      {appData.categories.map((cat, idx) => (
+                      {(appData?.categories || []).map((cat, idx) => (
                         <div key={idx} className="dev-item-card">
                           <button className="dev-remove-btn" onClick={() => {
                             setAppData(prev => {
@@ -4440,7 +4440,7 @@ function AppContent() {
                                     <label>Categoria</label>
                                     <select 
                                       className="dev-input" 
-                                      value={appData?.categories.some((cat: any) => cat.name === c.category) ? c.category : "__custom__"} 
+                                      value={(appData?.categories || []).some((cat: any) => cat.name === c.category) ? c.category : "__custom__"} 
                                       onChange={(e) => {
                                         const val = e.target.value;
                                         setAppData(prev => {
@@ -4451,13 +4451,13 @@ function AppContent() {
                                         });
                                       }}
                                     >
-                                      {appData.categories.map(cat => (
+                                      {(appData?.categories || []).map(cat => (
                                         <option key={cat.name} value={cat.name}>{cat.name}</option>
                                       ))}
                                       <option value="__custom__">✍️ Outro (Digitar nicho personalizado...)</option>
                                     </select>
 
-                                    {!appData?.categories.some((cat: any) => cat.name === c.category) && (
+                                    {! (appData?.categories || []).some((cat: any) => cat.name === c.category) && (
                                       <div className="dev-form-group" style={{ marginTop: '8px' }}>
                                         <label style={{ color: 'var(--primary)', fontSize: '11px' }}>Escreva o Nome do Nicho *</label>
                                         <input 
@@ -7174,7 +7174,7 @@ function AppContent() {
                         <div className="flex flex-col gap-1.5">
                           <label className="text-[10px] text-white/50 uppercase font-black">Categoria Comercial</label>
                           <select 
-                            value={appData?.categories.some((cat: any) => cat.name === adRegisterForm.category) ? adRegisterForm.category : "__custom__"}
+                            value={(appData?.categories || []).some((cat: any) => cat.name === adRegisterForm.category) ? adRegisterForm.category : "__custom__"}
                             onChange={(e) => {
                               const val = e.target.value;
                               if (val === "__custom__") {
@@ -7191,7 +7191,7 @@ function AppContent() {
                             <option value="__custom__">✍️ Outro (Digitar nicho personalizado...)</option>
                           </select>
                           
-                          {!appData?.categories.some((cat: any) => cat.name === adRegisterForm.category) && (
+                          {! (appData?.categories || []).some((cat: any) => cat.name === adRegisterForm.category) && (
                             <div className="flex flex-col gap-1.5 mt-2">
                               <label className="text-[9px] text-[var(--primary)] uppercase font-black">Escreva o Nome do seu Nicho *</label>
                               <input 
@@ -7551,7 +7551,7 @@ function AppContent() {
                           <div className="flex flex-col gap-1.5">
                             <label className="text-[10px] text-white/50 uppercase font-bold">Categoria</label>
                             <select 
-                              value={appData?.categories.some((cat: any) => cat.name === currentAdvertiser.company.category) ? currentAdvertiser.company.category : "__custom__"}
+                              value={(appData?.categories || []).some((cat: any) => cat.name === currentAdvertiser.company.category) ? currentAdvertiser.company.category : "__custom__"}
                               onChange={(e) => {
                                 const val = e.target.value;
                                 if (val === "__custom__") {
@@ -7574,7 +7574,7 @@ function AppContent() {
                               <option value="__custom__">✍️ Outro (Digitar nicho personalizado...)</option>
                             </select>
 
-                            {!appData?.categories.some((cat: any) => cat.name === currentAdvertiser.company.category) && (
+                            {! (appData?.categories || []).some((cat: any) => cat.name === currentAdvertiser.company.category) && (
                               <div className="flex flex-col gap-1.5 mt-2">
                                 <label className="text-[9px] text-[var(--primary)] uppercase font-black">Escreva o Nome do seu Nicho *</label>
                                 <input 
