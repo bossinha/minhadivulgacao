@@ -622,6 +622,12 @@ function AppContent() {
             const adDoc = snap.docs[0];
             const docData = adDoc.data();
             if (docData.password === savedPass) {
+              if (docData.isBlocked || docData.company?.isBlocked) {
+                localStorage.removeItem('ad_email');
+                localStorage.removeItem('ad_password');
+                alert("Sua conta foi bloqueada pelo administrador.");
+                return;
+              }
               setCurrentAdvertiser({
                 id: adDoc.id,
                 ...docData
@@ -1178,6 +1184,9 @@ function AppContent() {
     const merged = [...baseCompanies];
     
     advertiserCompanies.forEach((ad: any) => {
+      // Check if advertiser is blocked
+      if (ad.isBlocked) return;
+
       // Check if advertiser trial has expired
       const isExpired = ad.expiresAt && !ad.hasPlan && ad.expiresAt < new Date().toISOString().split('T')[0];
       if (isExpired) return; // Skip showing expired advertisers in the public directory!
@@ -4664,7 +4673,14 @@ function AppContent() {
                                     <img src={ad.logo || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150'} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                   </div>
                                   <div>
-                                    <h4 style={{ margin: 0, fontWeight: 900, fontSize: '14px', color: '#fff' }}>{ad.name}</h4>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                      <h4 style={{ margin: 0, fontWeight: 900, fontSize: '14px', color: '#fff' }}>{ad.name}</h4>
+                                      {ad.isBlocked && (
+                                        <span style={{ color: '#fff', background: '#ef4444', fontSize: '9px', fontWeight: 'bold', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                                          🚫 Bloqueado
+                                        </span>
+                                      )}
+                                    </div>
                                     <small style={{ color: '#aaa', fontSize: '11px', display: 'block', marginTop: '2px' }}>
                                       Email: <span style={{ color: '#fff' }}>{ad.email}</span> | Celular / WhatsApp: <span style={{ color: '#fff' }}>{ad.wa}</span>
                                     </small>
@@ -4673,7 +4689,56 @@ function AppContent() {
                                     </span>
                                   </div>
                                 </div>
-                                <div style={{ display: 'flex', gap: '8px' }}>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                  <button 
+                                    className="dev-btn"
+                                    style={{ background: 'var(--primary)', color: 'black', border: 'none', fontSize: '11px', padding: '6px 12px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                    onClick={() => {
+                                      setCurrentAdvertiser(ad);
+                                      setIsAdPortalOpen(true);
+                                      alert(`Entrando no painel de "${ad.name}" como Administrador. Você pode fazer alterações no perfil, catálogo e produtos!`);
+                                    }}
+                                  >
+                                    👁️ Ver / Editar Loja
+                                  </button>
+
+                                  <button 
+                                    className="dev-btn"
+                                    style={{ background: ad.isBlocked ? '#10b981' : '#f97316', border: 'none', color: '#fff', fontSize: '11px', padding: '6px 12px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                    onClick={async () => {
+                                      const newBlockedStatus = !ad.isBlocked;
+                                      if (confirm(`Deseja realmente ${newBlockedStatus ? 'BLOQUEAR' : 'DESBLOQUEAR'} o anunciante "${ad.name}"?`)) {
+                                        setIsAdLoading(true);
+                                        try {
+                                          const docRef = doc(db, 'advertisers', ad.id);
+                                          await setDoc(docRef, {
+                                            email: ad.email,
+                                            password: ad.password || '123456',
+                                            tenantId: slugify(tenantId || 'fortaleza'),
+                                            expiresAt: ad.expiresAt || '',
+                                            createdAt: ad.createdAt || '',
+                                            isBlocked: newBlockedStatus,
+                                            company: {
+                                              ...ad,
+                                              isBlocked: newBlockedStatus,
+                                              expiresAt: ad.expiresAt || '',
+                                              createdAt: ad.createdAt || ''
+                                            }
+                                          });
+                                          await fetchAdvertisers(tenantId || 'fortaleza');
+                                          alert(`Anunciante "${ad.name}" ${newBlockedStatus ? 'bloqueado' : 'desbloqueado'} com sucesso!`);
+                                        } catch(ee) {
+                                          console.error(ee);
+                                          alert("Falha ao alterar status de bloqueio.");
+                                        } finally {
+                                          setIsAdLoading(false);
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    {ad.isBlocked ? '🔓 Desbloquear' : '🚫 Bloquear'}
+                                  </button>
+
                                   <button 
                                     className="dev-btn"
                                     style={{ background: '#ff4444', border: 'none', color: '#fff', fontSize: '11px', padding: '6px 12px', cursor: 'pointer' }}
@@ -4815,6 +4880,55 @@ function AppContent() {
                                   <small style={{ color: (ad.expiresAt && ad.expiresAt < new Date().toISOString().split('T')[0] && !ad.hasPlan) ? '#ff4444' : '#888', fontSize: '10px', marginTop: '4px', display: 'block' }}>
                                     {ad.hasPlan ? 'Plano Ativo (VIP)' : ad.expiresAt ? (ad.expiresAt < new Date().toISOString().split('T')[0] ? '❌ Expirado' : `⏱️ Expira em ${ad.expiresAt}`) : 'Sem data de expiração'}
                                   </small>
+                                  <div style={{ marginTop: '6px' }}>
+                                    <button
+                                      type="button"
+                                      className="dev-btn"
+                                      style={{ background: 'rgba(37,211,102,0.15)', border: '1px solid #25D366', color: '#25D366', fontSize: '10px', padding: '5px 8px', borderRadius: '4px', cursor: 'pointer', width: '100%', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                                      onClick={async () => {
+                                        const calculateRenewalDate = (currentExpiry: string) => {
+                                          const today = new Date();
+                                          let baseDate = today;
+                                          if (currentExpiry) {
+                                            const parseExpiry = new Date(currentExpiry + 'T12:00:00');
+                                            if (parseExpiry > today) {
+                                              baseDate = parseExpiry;
+                                            }
+                                          }
+                                          baseDate.setDate(baseDate.getDate() + 30);
+                                          return baseDate.toISOString().split('T')[0];
+                                        };
+                                        const newExpiryStr = calculateRenewalDate(ad.expiresAt || '');
+                                        setIsAdLoading(true);
+                                        try {
+                                          const docRef = doc(db, 'advertisers', ad.id);
+                                          await setDoc(docRef, {
+                                            email: ad.email,
+                                            password: ad.password || '123456',
+                                            tenantId: slugify(tenantId || 'fortaleza'),
+                                            expiresAt: newExpiryStr,
+                                            createdAt: ad.createdAt || '',
+                                            isBlocked: ad.isBlocked || false,
+                                            company: {
+                                              ...ad,
+                                              expiresAt: newExpiryStr,
+                                              createdAt: ad.createdAt || '',
+                                              isBlocked: ad.isBlocked || false
+                                            }
+                                          });
+                                          await fetchAdvertisers(tenantId || 'fortaleza');
+                                          alert(`Plano de "${ad.name}" renovado por +30 dias! Nova expiração: ${newExpiryStr.split('-').reverse().join('/')}`);
+                                        } catch(ee) {
+                                          console.error(ee);
+                                          alert("Falha ao renovar o plano.");
+                                        } finally {
+                                          setIsAdLoading(false);
+                                        }
+                                      }}
+                                    >
+                                      ⚡ Renovar +30 Dias (Sem Data)
+                                    </button>
+                                  </div>
                                 </div>
 
                                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: '5px' }}>
@@ -6886,6 +7000,10 @@ function AppContent() {
                                 const adDoc = snap.docs[0];
                                 const docData = adDoc.data();
                                 if (docData.password === pass) {
+                                  if (docData.isBlocked || docData.company?.isBlocked) {
+                                    alert("Esta conta foi bloqueada pelo administrador.");
+                                    return;
+                                  }
                                   localStorage.setItem('ad_email', email);
                                   localStorage.setItem('ad_password', pass);
                                   setCurrentAdvertiser({
@@ -6927,6 +7045,10 @@ function AppContent() {
                             const adDoc = snap.docs[0];
                             const docData = adDoc.data();
                             if (docData.password === pass) {
+                              if (docData.isBlocked || docData.company?.isBlocked) {
+                                alert("Esta conta foi bloqueada pelo administrador.");
+                                return;
+                              }
                               localStorage.setItem('ad_email', email);
                               localStorage.setItem('ad_password', pass);
                               setCurrentAdvertiser({
