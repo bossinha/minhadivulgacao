@@ -4706,7 +4706,8 @@ function AppContent() {
                                         isAdvertiserCreated: isAdvertiserCreated,
                                         company: {
                                           ...companyData,
-                                          id: companyData.id || ad.id
+                                          id: companyData.id || ad.id,
+                                          items: companyData.items || []
                                         }
                                       };
                                       setCurrentAdvertiser(reconstructed);
@@ -8090,7 +8091,7 @@ function AppContent() {
                                 }
 
                                 const newItem = {
-                                  id: editingItemIndex === -1 ? `item_${Date.now()}` : (currentAdvertiser.company.items[editingItemIndex]?.id || `item_${Date.now()}`),
+                                  id: editingItemIndex === -1 ? `item_${Date.now()}` : ((currentAdvertiser.company.items || [])[editingItemIndex]?.id || `item_${Date.now()}`),
                                   name: name.trim(),
                                   price: Number(price).toString(),
                                   desc: desc.trim(),
@@ -8154,7 +8155,7 @@ function AppContent() {
 
                       {/* Items Grid List */}
                       {editingItemIndex === null && (
-                        currentAdvertiser.company.items?.length === 0 ? (
+                        (!currentAdvertiser.company.items || currentAdvertiser.company.items.length === 0) ? (
                           <div className="text-center py-16 bg-neutral-900/20 rounded-2xl border border-dashed border-white/5 flex flex-col items-center justify-center">
                             <span className="text-3xl">📭</span>
                             <h4 className="text-sm font-bold text-white mt-3">Você ainda não possui nenhum produto ou serviço</h4>
@@ -8162,7 +8163,7 @@ function AppContent() {
                           </div>
                         ) : (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {currentAdvertiser.company.items.map((it: any, i: number) => (
+                            {(currentAdvertiser.company.items || []).map((it: any, i: number) => (
                               <div key={it.id || i} className="bg-[#12131a] border border-white/5 rounded-2xl p-4 flex gap-4 items-center justify-between">
                                 <div className="flex items-center gap-3 min-w-0">
                                   <div className="w-12 h-12 bg-neutral-950 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center border border-white/10">
@@ -8204,7 +8205,7 @@ function AppContent() {
                                     onClick={async () => {
                                       if (!confirm("Tem certeza que deseja excluir este item?")) return;
                                       
-                                      const updatedItems = currentAdvertiser.company.items.filter((_: any, idx: number) => idx !== i);
+                                      const updatedItems = (currentAdvertiser.company.items || []).filter((_: any, idx: number) => idx !== i);
                                       const updatedAdvertiser = {
                                         ...currentAdvertiser,
                                         company: {
