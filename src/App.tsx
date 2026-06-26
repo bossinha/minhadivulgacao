@@ -4694,7 +4694,22 @@ function AppContent() {
                                     className="dev-btn"
                                     style={{ background: 'var(--primary)', color: 'black', border: 'none', fontSize: '11px', padding: '6px 12px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}
                                     onClick={() => {
-                                      setCurrentAdvertiser(ad);
+                                      const { email, password, expiresAt, createdAt, isBlocked, isAdvertiserCreated, ...companyData } = ad;
+                                      const reconstructed = {
+                                        id: ad.id,
+                                        email: email,
+                                        password: password || '123456',
+                                        tenantId: slugify(tenantId || 'fortaleza'),
+                                        expiresAt: expiresAt || '',
+                                        createdAt: createdAt || '',
+                                        isBlocked: isBlocked || false,
+                                        isAdvertiserCreated: isAdvertiserCreated,
+                                        company: {
+                                          ...companyData,
+                                          id: companyData.id || ad.id
+                                        }
+                                      };
+                                      setCurrentAdvertiser(reconstructed);
                                       setIsAdPortalOpen(true);
                                       alert(`Entrando no painel de "${ad.name}" como Administrador. Você pode fazer alterações no perfil, catálogo e produtos!`);
                                     }}
