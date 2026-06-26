@@ -7390,8 +7390,13 @@ function AppContent() {
                   {/* Dashboard Header Bar */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-5 mt-4">
                     <div>
-                      <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-1.5">
+                      <h2 className="text-2xl font-black text-white tracking-tight flex flex-wrap items-center gap-1.5">
                         ⚙️ Painel de Controle • {currentAdvertiser.company.name}
+                        {user?.isAdmin && (
+                          <span className="bg-amber-500 text-black text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md ml-2 animate-pulse">
+                            Modo Administrador
+                          </span>
+                        )}
                       </h2>
                       <p className="text-xs text-white/50">Edite seu perfil e seus serviços de forma independente, as atualizações são automáticas!</p>
                     </div>
@@ -7417,14 +7422,21 @@ function AppContent() {
                       <p className="text-xs text-white/70 mt-2 max-w-lg mx-auto leading-relaxed">
                         Seus 20 dias de experimentação grátis terminaram em <strong className="text-red-400">{currentAdvertiser.expiresAt}</strong>. Para continuar gerenciando seus produtos e aparecer na vitrine oficial para receber vendas, converse com o nosso suporte para ativar o plano premium.
                       </p>
-                      <a 
-                        href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá! Meu período de testes para o mini-site ${currentAdvertiser?.company?.name} expirou e gostaria de assinar o plano para continuar ativo no portal.`)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-2 mt-4 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-150 shadow decoration-transparent"
-                      >
-                        💬 Ativar Meu Plano no WhatsApp
-                      </a>
+                      {user?.isAdmin && (
+                        <div className="mt-3.5 bg-amber-500/10 border border-amber-500/20 text-amber-300 px-4 py-2.5 rounded-xl text-[11px] font-bold inline-block max-w-lg text-left">
+                          💡 <strong>Modo Administrador:</strong> Você tem permissão de nível Master para ignorar este bloqueio e gerenciar o perfil, adicionar ou remover itens e atualizar as informações do anunciante livremente!
+                        </div>
+                      )}
+                      <div className="mt-4 flex flex-wrap justify-center gap-2">
+                        <a 
+                          href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá! Meu período de testes para o mini-site ${currentAdvertiser?.company?.name} expirou e gostaria de assinar o plano para continuar ativo no portal.`)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-150 shadow decoration-transparent"
+                        >
+                          💬 Ativar Meu Plano no WhatsApp
+                        </a>
+                      </div>
                     </div>
                   ) : currentAdvertiser?.expiresAt && !currentAdvertiser?.company?.hasPlan ? (
                     <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -7825,7 +7837,7 @@ function AppContent() {
 
                         <button 
                           onClick={async () => {
-                            if (isAdExpired) {
+                            if (isAdExpired && !user?.isAdmin) {
                               alert("Seu período de teste expirou! Para continuar salvando alterações, ative o seu plano VIP.");
                               return;
                             }
@@ -7918,15 +7930,15 @@ function AppContent() {
                         {editingItemIndex === null && (
                           <button 
                             onClick={() => {
-                              if (isAdExpired) {
+                              if (isAdExpired && !user?.isAdmin) {
                                 alert("Seu período de teste expirou! Ative o seu plano VIP para continuar adicionando novos itens.");
                                 return;
                               }
                               setItemForm({ name: '', desc: '', price: '', photo: '', photo2: '', photo3: '', photo4: '', video: '' });
                               setEditingItemIndex(-1); // -1 triggers add new form
                             }}
-                            className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest cursor-pointer shadow transition-all duration-150 ${isAdExpired ? 'bg-neutral-800 text-white/30 border border-white/5 cursor-not-allowed' : 'bg-[var(--primary)] hover:brightness-110 text-black'}`}
-                            disabled={isAdExpired}
+                            className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest cursor-pointer shadow transition-all duration-150 ${(isAdExpired && !user?.isAdmin) ? 'bg-neutral-800 text-white/30 border border-white/5 cursor-not-allowed' : 'bg-[var(--primary)] hover:brightness-110 text-black'}`}
+                            disabled={isAdExpired && !user?.isAdmin}
                           >
                             <Plus size={14} /> Adicionar Item
                           </button>
@@ -8064,7 +8076,7 @@ function AppContent() {
                             
                             <button 
                               onClick={async () => {
-                                if (isAdExpired) {
+                                if (isAdExpired && !user?.isAdmin) {
                                   alert("Seu período de teste expirou! Para continuar salvando produtos, ative o seu plano VIP.");
                                   return;
                                 }
@@ -8082,8 +8094,8 @@ function AppContent() {
                                 if (editingItemIndex === -1) {
                                   const currentCount = currentAdvertiser.company.items?.length || 0;
                                   const hasPaidPlan = currentAdvertiser.company.hasPlan || currentAdvertiser.company.featured || false;
-                                  const isInTrialPeriod = currentAdvertiser.expiresAt && !isAdExpired;
-                                  if (currentCount >= 6 && !hasPaidPlan && !isInTrialPeriod) {
+                                  const isInTrialPeriod = (currentAdvertiser.expiresAt && !isAdExpired) || user?.isAdmin;
+                                  if (currentCount >= 6 && !hasPaidPlan && !isInTrialPeriod && !user?.isAdmin) {
                                     alert("Oops! Você atingiu o limite de 6 produtos/fotos do Plano Gratuito. Adquira o Plano para ter acesso ilimitado a produtos e ganhar destaque preferencial no portal!");
                                     setIsCheckoutOpen(true);
                                     return;
