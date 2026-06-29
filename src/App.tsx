@@ -517,6 +517,7 @@ function AppContent() {
     uploadVideoHelpUrl: 'https://streamable.com/'
   });
   const [onlineCount, setOnlineCount] = useState(Math.floor(Math.random() * (22 - 12 + 1)) + 12);
+  const [customRadioLink, setCustomRadioLink] = useState<string>('');
   const [allUsers, setAllUsers] = useState<any>(null);
   const [editingVideosFor, setEditingVideosFor] = useState<{id: string, city: string, videos: string[]} | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -725,6 +726,7 @@ function AppContent() {
           if (snap.exists()) {
             const tData = snap.data();
             setAppData(tData.data || DEFAULT_DATA);
+            setCustomRadioLink(tData.customRadioLink || '');
             fetchAdvertisers(targetTenantId);
             fetchReviews(targetTenantId);
             
@@ -846,6 +848,7 @@ function AppContent() {
                 isAdmin: data.isAdmin 
               });
               setAppData(data.data || DEFAULT_DATA);
+              setCustomRadioLink(data.customRadioLink || '');
               setShowVideos(data.showVideos === true);
               if ((!tenantId || tenantId === 'login') && savedId !== 'fortaleza') {
                 navigate('/' + savedId);
@@ -911,14 +914,15 @@ function AppContent() {
         }
         
         if (tenantData) {
-          setUser({ 
-            uid: firebaseUser.uid, 
-            email: firebaseUser.email,
-            username: tenantIdFromDb, // Use the slug/id from DB
-            city: tenantData.city, 
-            isAdmin: tenantData.isAdmin || firebaseUser.email === 'bossinhaa80@gmail.com'
-          });
+            setUser({ 
+              uid: firebaseUser.uid, 
+              email: firebaseUser.email,
+              username: tenantIdFromDb, // Use the slug/id from DB
+              city: tenantData.city, 
+              isAdmin: tenantData.isAdmin || firebaseUser.email === 'bossinhaa80@gmail.com'
+            });
             setAppData(tenantData.data || DEFAULT_DATA);
+            setCustomRadioLink(tenantData.customRadioLink || '');
             // Check Expiration
             let blockedFlag = tenantData.isBlocked || false;
             if (tenantData.expiresAt) {
@@ -1913,6 +1917,31 @@ function AppContent() {
                       title={udata.isBlocked ? "Portal Bloqueado (Clique para LIBERAR)" : "Portal Liberado (Clique para BLOQUEAR)"}
                     >
                       {udata.isBlocked ? '🔒' : '🔓'}
+                    </button>
+                    <button 
+                      className="dev-btn" 
+                      style={{ 
+                        height: '36px', 
+                        background: udata.customRadioLink ? '#d946ef' : '#333', 
+                        borderColor: udata.customRadioLink ? '#d946ef' : '#444',
+                        color: udata.customRadioLink ? '#fff' : '#aaa' 
+                      }}
+                      onClick={async () => {
+                        const currentLink = udata.customRadioLink || '';
+                        const newLink = prompt(`Link da rádio personalizada para ${udata.city} (deixe em branco para usar a rádio universal):`, currentLink);
+                        if (newLink !== null) {
+                          await updateDoc(doc(db, 'tenants', uname), { customRadioLink: newLink.trim() });
+                          alert("Link da rádio atualizado com sucesso!");
+                          // Refresh list
+                          const s = await getDocs(collection(db, 'tenants'));
+                          const u: any = {};
+                          s.forEach(d => u[d.id] = d.data());
+                          setAllUsers(u);
+                        }
+                      }}
+                      title={udata.customRadioLink ? `Rádio Personalizada: ${udata.customRadioLink} (Clique para alterar)` : "Usando Rádio Universal (Clique para definir rádio personalizada)"}
+                    >
+                      📻
                     </button>
                    <button 
                      className="dev-btn" 
@@ -3480,7 +3509,7 @@ function AppContent() {
 
                 <audio 
                   ref={radioAudioRef}
-                  src={universalConfig.radioLink || appData.siteInfo.radioLink}
+                  src={customRadioLink || universalConfig.radioLink || (appData && appData.siteInfo && appData.siteInfo.radioLink)}
                   onPlay={() => setRadioPlaying(true)}
                   onPause={() => setRadioPlaying(false)}
                 />
@@ -4074,9 +4103,13 @@ function AppContent() {
                       />
                     </div>
                     <div className="dev-form-group">
-                      <label>Link da Rádio (Universal - Apenas Visualização)</label>
-                      <input type="text" className="dev-input" value={universalConfig.radioLink} readOnly style={{ opacity: 0.6, cursor: 'not-allowed' }} />
-                      <p style={{ fontSize: '10px', color: 'var(--primary)' }}>A rádio é universal e controlada pelo administrador master.</p>
+                      <label>Link da Rádio ({customRadioLink ? "Personalizada" : "Universal"} - Apenas Visualização)</label>
+                      <input type="text" className="dev-input" value={customRadioLink || universalConfig.radioLink} readOnly style={{ opacity: 0.6, cursor: 'not-allowed' }} />
+                      <p style={{ fontSize: '10px', color: 'var(--primary)' }}>
+                        {customRadioLink 
+                          ? "Sua cidade possui um link de rádio personalizado cadastrado pelo Master." 
+                          : "A rádio é universal e controlada pelo administrador master."}
+                      </p>
                     </div>
                     <div className="dev-grid-2">
                       <div className="dev-form-group">

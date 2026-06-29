@@ -11,7 +11,8 @@
         "isAdmin": { "type": "boolean" },
         "ownerEmail": { "type": "string" },
         "showVideos": { "type": "boolean" },
-        "hasAffiliateSystem": { "type": "boolean" }
+        "hasAffiliateSystem": { "type": "boolean" },
+        "customRadioLink": { "type": "string" }
       },
       "required": ["city", "password"]
     },
