@@ -2522,28 +2522,30 @@ function AppContent() {
           </p>
 
           {/* HIGH IMPACT TRIAL BANNER - GIGANTE, COM LETRAS GROSSAS E SEM CONFLITOS */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="mt-10 max-w-4xl w-full bg-[#0d0e15] border-2 border-amber-500 rounded-3xl p-6 md:p-8 text-center shadow-[0_0_40px_rgba(245,158,11,0.25)] relative z-20 overflow-hidden"
-          >
-            {/* Glowing background accent */}
-            <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-transparent to-orange-500/5 pointer-events-none" />
-            
-            <div className="flex flex-col sm:flex-row items-center gap-6 text-left relative z-10">
-              <div className="bg-amber-500 text-black p-4 rounded-2xl text-3xl font-black flex-shrink-0 animate-bounce shadow-lg shadow-amber-500/20">
-                🎁
+          {!hideAdvertiserAuth && (!tenantId || tenantId.toLowerCase() === 'fortaleza') && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mt-10 max-w-4xl w-full bg-[#0d0e15] border-2 border-amber-500 rounded-3xl p-6 md:p-8 text-center shadow-[0_0_40px_rgba(245,158,11,0.25)] relative z-20 overflow-hidden"
+            >
+              {/* Glowing background accent */}
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-transparent to-orange-500/5 pointer-events-none" />
+              
+              <div className="flex flex-col sm:flex-row items-center gap-6 text-left relative z-10">
+                <div className="bg-amber-500 text-black p-4 rounded-2xl text-3xl font-black flex-shrink-0 animate-bounce shadow-lg shadow-amber-500/20">
+                  🎁
+                </div>
+                <div>
+                  <h4 className="text-xl sm:text-2xl md:text-3xl font-black text-amber-400 tracking-tight uppercase leading-snug">
+                    Experimente Grátis por 20 Dias! 🎁
+                  </h4>
+                  <p className="text-sm sm:text-base text-white font-extrabold mt-3 leading-relaxed">
+                    Todos os novos cadastros ganham automaticamente <span className="text-amber-400 font-black underline decoration-2 underline-offset-2">20 dias de teste completo e gratuito</span> para criar seu mini-site, cadastrar até 6 produtos ou serviços e receber pedidos direto no seu WhatsApp! Sem compromisso e sem taxas iniciais.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h4 className="text-xl sm:text-2xl md:text-3xl font-black text-amber-400 tracking-tight uppercase leading-snug">
-                  Experimente Grátis por 20 Dias! 🎁
-                </h4>
-                <p className="text-sm sm:text-base text-white font-extrabold mt-3 leading-relaxed">
-                  Todos os novos cadastros ganham automaticamente <span className="text-amber-400 font-black underline decoration-2 underline-offset-2">20 dias de teste completo e gratuito</span> para criar seu mini-site, cadastrar até 6 produtos ou serviços e receber pedidos direto no seu WhatsApp! Sem compromisso e sem taxas iniciais.
-                </p>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          )}
 
           {/* Main Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 mt-8 w-full sm:w-auto relative z-20">
