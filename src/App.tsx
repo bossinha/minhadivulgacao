@@ -527,6 +527,7 @@ function AppContent() {
   const [isBlocked, setIsBlocked] = useState(false);
   const [showVideos, setShowVideos] = useState(false);
   const [hasAffiliateSystem, setHasAffiliateSystem] = useState(false);
+  const [hideAdvertiserAuth, setHideAdvertiserAuth] = useState(false);
   const [affiliates, setAffiliates] = useState<any[]>([]);
   const [isAffLoading, setIsAffLoading] = useState(false);
 
@@ -742,6 +743,7 @@ function AppContent() {
             
             setShowVideos(tData.showVideos === true);
             setHasAffiliateSystem(tData.hasAffiliateSystem === true);
+            setHideAdvertiserAuth(tData.hideAdvertiserAuth === true);
           } else {
             console.warn("Cidade não encontrada no banco");
             setAppData(null);
@@ -760,6 +762,12 @@ function AppContent() {
       }
     }
   }, [tenantId, location.pathname]);
+
+  useEffect(() => {
+    if (hideAdvertiserAuth) {
+      setAdLoginMode('login');
+    }
+  }, [hideAdvertiserAuth]);
 
   useEffect(() => {
     // Session visit count
@@ -850,6 +858,7 @@ function AppContent() {
               setAppData(data.data || DEFAULT_DATA);
               setCustomRadioLink(data.customRadioLink || '');
               setShowVideos(data.showVideos === true);
+              setHideAdvertiserAuth(data.hideAdvertiserAuth === true);
               if ((!tenantId || tenantId === 'login') && savedId !== 'fortaleza') {
                 navigate('/' + savedId);
               }
@@ -934,6 +943,7 @@ function AppContent() {
             setIsBlocked(blockedFlag);
             setShowVideos(tenantData.showVideos === true);
             setHasAffiliateSystem(tenantData.hasAffiliateSystem === true);
+            setHideAdvertiserAuth(tenantData.hideAdvertiserAuth === true);
           
           // Auto navigate to the correct city if on login or wrong page
           if (tenantId === 'login' || tenantId === firebaseUser.uid) {
@@ -1061,6 +1071,7 @@ function AppContent() {
           });
           setAppData(data.data || DEFAULT_DATA);
           setShowVideos(data.showVideos === true);
+          setHideAdvertiserAuth(data.hideAdvertiserAuth === true);
           setIsDevAreaOpen(true);
           alert("Login realizado com sucesso!");
           window.location.href = '#/' + id;
@@ -1943,6 +1954,27 @@ function AppContent() {
                     >
                       📻
                     </button>
+                    <button 
+                      className="dev-btn" 
+                      style={{ 
+                        height: '36px', 
+                        background: udata.hideAdvertiserAuth === true ? '#e11d48' : '#333', 
+                        borderColor: udata.hideAdvertiserAuth === true ? '#e11d48' : '#444',
+                        color: udata.hideAdvertiserAuth === true ? '#fff' : '#aaa' 
+                      }}
+                      onClick={async () => {
+                        await updateDoc(doc(db, 'tenants', uname), { hideAdvertiserAuth: udata.hideAdvertiserAuth !== true });
+                        alert(udata.hideAdvertiserAuth === true ? "Botões de Login/Cadastro de anunciantes agora estão VISÍVEIS no portal!" : "Botões de Login/Cadastro de anunciantes agora estão OCULTOS no portal!");
+                        // Refresh list
+                        const s = await getDocs(collection(db, 'tenants'));
+                        const u: any = {};
+                        s.forEach(d => u[d.id] = d.data());
+                        setAllUsers(u);
+                      }}
+                      title={udata.hideAdvertiserAuth === true ? "Login de Anunciantes OCULTO (Clique para MOSTRAR)" : "Login de Anunciantes ATIVO (Clique para OCULTAR)"}
+                    >
+                      {udata.hideAdvertiserAuth === true ? '👤❌' : '👤✅'}
+                    </button>
                    <button 
                      className="dev-btn" 
                      style={{ height: '36px', background: '#25D366', borderColor: '#25D366', color: '#fff' }}
@@ -2374,35 +2406,41 @@ function AppContent() {
           </div>
 
           {/* Action Buttons - Desktop */}
-          <div className="hidden lg:flex items-center gap-3 font-jakarta">
-            <button 
-              onClick={() => { setAuthMode('login'); setIsAdPortalOpen(true); }}
-              className="bg-neutral-950 hover:bg-neutral-900 border border-white/20 text-white/90 hover:text-white px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 flex items-center gap-1.5 cursor-pointer"
-            >
-              <User size={13} /> Entrar (Login)
-            </button>
-            <button 
-              onClick={() => { setAuthMode('register'); setIsAdPortalOpen(true); }}
-              className="bg-[var(--primary)] hover:brightness-110 text-black px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-300 shadow shadow-[var(--primary)]/20 cursor-pointer flex items-center gap-1.5"
-            >
-              🚀 Cadastre-se (Criar Conta)
-            </button>
-          </div>
+          {!hideAdvertiserAuth && (
+            <div className="hidden lg:flex items-center gap-3 font-jakarta">
+              <button 
+                onClick={() => { setAuthMode('login'); setIsAdPortalOpen(true); }}
+                className="bg-neutral-950 hover:bg-neutral-900 border border-white/20 text-white/90 hover:text-white px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 flex items-center gap-1.5 cursor-pointer"
+              >
+                <User size={13} /> Entrar (Login)
+              </button>
+              <button 
+                onClick={() => { setAuthMode('register'); setIsAdPortalOpen(true); }}
+                className="bg-[var(--primary)] hover:brightness-110 text-black px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-300 shadow shadow-[var(--primary)]/20 cursor-pointer flex items-center gap-1.5"
+              >
+                🚀 Cadastre-se (Criar Conta)
+              </button>
+            </div>
+          )}
 
           {/* Mobile Menu Trigger & Quick Actions */}
           <div className="flex lg:hidden items-center gap-2">
-            <button 
-              onClick={() => { setAuthMode('login'); setIsAdPortalOpen(true); }}
-              className="bg-neutral-900 border border-white/10 text-white px-2.5 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wide cursor-pointer flex items-center gap-1 shrink-0"
-            >
-              <User size={11} /> Entrar
-            </button>
-            <button 
-              onClick={() => { setAuthMode('register'); setIsAdPortalOpen(true); }}
-              className="bg-[var(--primary)] text-black px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-wide cursor-pointer shrink-0"
-            >
-              🚀 Cadastrar
-            </button>
+            {!hideAdvertiserAuth && (
+              <>
+                <button 
+                  onClick={() => { setAuthMode('login'); setIsAdPortalOpen(true); }}
+                  className="bg-neutral-900 border border-white/10 text-white px-2.5 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wide cursor-pointer flex items-center gap-1 shrink-0"
+                >
+                  <User size={11} /> Entrar
+                </button>
+                <button 
+                  onClick={() => { setAuthMode('register'); setIsAdPortalOpen(true); }}
+                  className="bg-[var(--primary)] text-black px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-wide cursor-pointer shrink-0"
+                >
+                  🚀 Cadastrar
+                </button>
+              </>
+            )}
             <button 
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -2432,20 +2470,22 @@ function AppContent() {
                 <a href="#servicos" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('servicos'); }} className="text-white hover:text-[var(--primary)] py-2">🛠️ Serviços</a>
                 <a href="#depoimentos" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('depoimentos'); }} className="text-white hover:text-[var(--primary)] py-2">💬 Depoimentos</a>
               </div>
-              <div className="flex flex-col gap-3 pt-4 border-t border-white/5">
-                <button 
-                  onClick={() => { setIsMobileMenuOpen(false); setAuthMode('login'); setIsAdPortalOpen(true); }}
-                  className="w-full text-center bg-neutral-950 border border-white/10 text-white px-5 py-3 rounded-xl font-extrabold text-xs uppercase tracking-widest block cursor-pointer"
-                >
-                  🔑 Entrar (Login)
-                </button>
-                <button 
-                  onClick={() => { setIsMobileMenuOpen(false); setAuthMode('register'); setIsAdPortalOpen(true); }}
-                  className="w-full text-center bg-[var(--primary)] text-black px-5 py-3 rounded-xl font-extrabold text-xs uppercase tracking-widest block cursor-pointer"
-                >
-                  🚀 Cadastre-se (Criar Conta)
-                </button>
-              </div>
+              {!hideAdvertiserAuth && (
+                <div className="flex flex-col gap-3 pt-4 border-t border-white/5">
+                  <button 
+                    onClick={() => { setIsMobileMenuOpen(false); setAuthMode('login'); setIsAdPortalOpen(true); }}
+                    className="w-full text-center bg-neutral-950 border border-white/10 text-white px-5 py-3 rounded-xl font-extrabold text-xs uppercase tracking-widest block cursor-pointer"
+                  >
+                    🔑 Entrar (Login)
+                  </button>
+                  <button 
+                    onClick={() => { setIsMobileMenuOpen(false); setAuthMode('register'); setIsAdPortalOpen(true); }}
+                    className="w-full text-center bg-[var(--primary)] text-black px-5 py-3 rounded-xl font-extrabold text-xs uppercase tracking-widest block cursor-pointer"
+                  >
+                    🚀 Cadastre-se (Criar Conta)
+                  </button>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -2507,28 +2547,41 @@ function AppContent() {
 
           {/* Main Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 mt-8 w-full sm:w-auto relative z-20">
-            <button 
-              onClick={() => { 
-                setAuthMode('register'); 
-                setAdRegisterForm(prev => ({ ...prev, type: 'loja' })); 
-                setIsAdPortalOpen(true); 
-              }}
-              className="group bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-black hover:scale-105 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] px-6 py-3.5 md:px-7 md:py-4 rounded-full font-black text-xs sm:text-sm uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto shrink-0"
-            >
-              🛍️ Cadastrar Loja Grátis
-            </button>
-            <button 
-              onClick={() => { 
-                setAuthMode('register'); 
-                setAdRegisterForm(prev => ({ ...prev, type: 'servico' })); 
-                setIsAdPortalOpen(true); 
-              }}
-              className="group bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white hover:scale-105 hover:shadow-[0_0_20px_rgba(37,99,235,0.3)] px-6 py-3.5 md:px-7 md:py-4 rounded-full font-black text-xs sm:text-sm uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto shrink-0"
-            >
-              🛠️ Cadastrar Serviço Grátis
-            </button>
+            {!hideAdvertiserAuth ? (
+              <>
+                <button 
+                  onClick={() => { 
+                    setAuthMode('register'); 
+                    setAdRegisterForm(prev => ({ ...prev, type: 'loja' })); 
+                    setIsAdPortalOpen(true); 
+                  }}
+                  className="group bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-black hover:scale-105 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] px-6 py-3.5 md:px-7 md:py-4 rounded-full font-black text-xs sm:text-sm uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto shrink-0"
+                >
+                  🛍️ Cadastrar Loja Grátis
+                </button>
+                <button 
+                  onClick={() => { 
+                    setAuthMode('register'); 
+                    setAdRegisterForm(prev => ({ ...prev, type: 'servico' })); 
+                    setIsAdPortalOpen(true); 
+                  }}
+                  className="group bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white hover:scale-105 hover:shadow-[0_0_20px_rgba(37,99,235,0.3)] px-6 py-3.5 md:px-7 md:py-4 rounded-full font-black text-xs sm:text-sm uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto shrink-0"
+                >
+                  🛠️ Cadastrar Serviço Grátis
+                </button>
+              </>
+            ) : (
+              <a 
+                href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '') || ''}?text=${encodeURIComponent('Olá! Acessei o portal de divulgação e gostaria de anunciar minha empresa em sua vitrine digital.')}`} 
+                target="_blank"
+                rel="noreferrer"
+                className="group bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-black hover:scale-105 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] px-8 py-4 sm:px-10 sm:py-5 rounded-full font-black text-xs sm:text-sm uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2.5 w-full sm:w-auto shrink-0 decoration-transparent"
+              >
+                📢 Quero Anunciar Meu Negócio
+              </a>
+            )}
             <a 
-              href={`https://wa.me/${appData.siteInfo.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Olá! Acessei o portal de divulgação e gostaria de receber mais informações sobre como destacar minha empresa na vitrine do Brasil.')}`} 
+              href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '') || ''}?text=${encodeURIComponent('Olá! Acessei o portal de divulgação e gostaria de receber mais informações sobre como destacar minha empresa na vitrine do Brasil.')}`} 
               target="_blank"
               rel="noreferrer"
               className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white hover:scale-105 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] px-6 py-3.5 md:px-7 md:py-4 rounded-full font-black text-xs sm:text-sm uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2 w-full sm:w-auto shrink-0 decoration-transparent"
@@ -6989,23 +7042,30 @@ function AppContent() {
               ) : !currentAdvertiser ? (
                 <div className="w-full max-w-md mx-auto py-8">
                   {/* Mode Selector */}
-                  <div className="flex gap-4 p-1 bg-white/5 rounded-2xl mb-8">
-                    <button 
-                      onClick={() => setAdLoginMode('login')}
-                      className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-200 ${adLoginMode === 'login' ? 'bg-[var(--primary)] text-black' : 'text-white hover:bg-white/5'}`}
-                    >
-                      Acessar Meu Painel
-                    </button>
-                    <button 
-                      onClick={() => setAdLoginMode('register')}
-                      className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-200 ${adLoginMode === 'register' ? 'bg-[var(--primary)] text-black' : 'text-white hover:bg-white/5'}`}
-                    >
-                      Cadastrar Negócio
-                    </button>
-                  </div>
+                  {!hideAdvertiserAuth ? (
+                    <div className="flex gap-4 p-1 bg-white/5 rounded-2xl mb-8">
+                      <button 
+                        onClick={() => setAdLoginMode('login')}
+                        className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-200 ${adLoginMode === 'login' ? 'bg-[var(--primary)] text-black' : 'text-white hover:bg-white/5'}`}
+                      >
+                        Acessar Meu Painel
+                      </button>
+                      <button 
+                        onClick={() => setAdLoginMode('register')}
+                        className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-200 ${adLoginMode === 'register' ? 'bg-[var(--primary)] text-black' : 'text-white hover:bg-white/5'}`}
+                      >
+                        Cadastrar Negócio
+                      </button>
+                    </div>
+                  ) : (
+                    // If hideAdvertiserAuth is true, show a clean header or notice
+                    <div className="text-center mb-6">
+                      <span className="text-[10px] font-bold text-amber-500 tracking-[0.2em] uppercase font-mono">PORTAL DO ANUNCIANTE</span>
+                    </div>
+                  )}
 
                   {/* Mode 1: Advertiser Login Form */}
-                  {adLoginMode === 'login' ? (
+                  {adLoginMode === 'login' || hideAdvertiserAuth ? (
                     <div className="flex flex-col gap-4">
                       <div>
                         <h2 className="text-xl font-extrabold text-white tracking-tight flex items-center gap-2">
