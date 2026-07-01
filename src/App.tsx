@@ -2778,9 +2778,9 @@ function AppContent() {
             onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
           >
             <img 
-              src={activeReferralPartner?.logo ? activeReferralPartner.logo : "https://i.postimg.cc/nVdYndN2/minha-divulgacao-png.png"} 
+              src={activeReferralPartner?.logo ? activeReferralPartner.logo : (appData?.siteInfo?.logo ? appData.siteInfo.logo : "https://i.postimg.cc/nVdYndN2/minha-divulgacao-png.png")} 
               alt={activeReferralPartner?.customTitle || activeReferralPartner?.name || "Minha Divulgação"} 
-              className={`h-10 md:h-12 ${activeReferralPartner?.logo ? 'w-10 md:w-12 rounded-full object-cover border border-white/10' : 'w-auto object-contain'} transition-transform duration-300 group-hover:scale-105`} 
+              className={`h-10 md:h-12 ${(activeReferralPartner?.logo || appData?.siteInfo?.logo) ? 'w-10 md:w-12 rounded-full object-cover border border-white/10' : 'w-auto object-contain'} transition-transform duration-300 group-hover:scale-105`} 
               referrerPolicy="no-referrer"
             />
             <div className="flex flex-col select-none">
@@ -3492,14 +3492,14 @@ function AppContent() {
 
                     {hasActiveReferral ? (
                       <div className="flex flex-col gap-2 mt-5">
-                        {company.website && company.website.trim() !== '' && (
+                        {company.wa && (
                           <a 
-                            href={company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`} 
+                            href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu comércio no portal ${appData?.siteInfo?.name || ''}!${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`) ? ` Fui indicado pelo parceiro: ${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`)}` : ''}`)}`} 
                             target="_blank" 
                             rel="noreferrer"
-                            className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
+                            className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
                           >
-                            <Globe size={12} /> Visitar Site Oficial
+                            <Smartphone size={12} /> Falar no WhatsApp
                           </a>
                         )}
                         {company.ig && company.ig !== '#' && company.ig !== '' && (
@@ -3512,7 +3512,17 @@ function AppContent() {
                             <Instagram size={12} /> Instagram
                           </a>
                         )}
-                        {(!company.website || company.website.trim() === '') && (!company.ig || company.ig === '#' || company.ig === '') && (
+                        {company.website && company.website.trim() !== '' && (
+                          <a 
+                            href={company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
+                          >
+                            <Globe size={12} /> Visitar Site Oficial
+                          </a>
+                        )}
+                        {(!company.wa) && (!company.website || company.website.trim() === '') && (!company.ig || company.ig === '#' || company.ig === '') && (
                           <span className="text-[9px] text-white/35 text-center py-2.5 bg-white/5 rounded-2xl font-bold uppercase tracking-widest">
                             Sem Links Cadastrados
                           </span>
@@ -3617,14 +3627,14 @@ function AppContent() {
 
                     {hasActiveReferral ? (
                       <div className="flex flex-col gap-2 mt-5">
-                        {company.website && company.website.trim() !== '' && (
+                        {company.wa && (
                           <a 
-                            href={company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`} 
+                            href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu comércio no portal ${appData?.siteInfo?.name || ''}!${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`) ? ` Fui indicado pelo parceiro: ${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`)}` : ''}`)}`} 
                             target="_blank" 
                             rel="noreferrer"
-                            className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
+                            className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
                           >
-                            <Globe size={12} /> Visitar Site Oficial
+                            <Smartphone size={12} /> Falar no WhatsApp
                           </a>
                         )}
                         {company.ig && company.ig !== '#' && company.ig !== '' && (
@@ -3637,7 +3647,17 @@ function AppContent() {
                             <Instagram size={12} /> Instagram
                           </a>
                         )}
-                        {(!company.website || company.website.trim() === '') && (!company.ig || company.ig === '#' || company.ig === '') && (
+                        {company.website && company.website.trim() !== '' && (
+                          <a 
+                            href={company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
+                          >
+                            <Globe size={12} /> Visitar Site Oficial
+                          </a>
+                        )}
+                        {(!company.wa) && (!company.website || company.website.trim() === '') && (!company.ig || company.ig === '#' || company.ig === '') && (
                           <span className="text-[9px] text-white/35 text-center py-2.5 bg-white/5 rounded-2xl font-bold uppercase tracking-widest">
                             Sem Links Cadastrados
                           </span>
@@ -3858,14 +3878,14 @@ function AppContent() {
                   {/* Action Buttons */}
                   {hasActiveReferral ? (
                     <div className="flex flex-col gap-2.5 mt-6 border-t border-white/5 pt-5">
-                      {company.website && company.website.trim() !== '' && (
+                      {company.wa && (
                         <a 
-                          href={company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`} 
+                          href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu anúncio no portal ${appData?.siteInfo?.name || ''}.${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`) ? ` Fui indicado pelo parceiro: ${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`)}` : ''}`)}`} 
                           target="_blank" 
-                          rel="noreferrer" 
-                          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-305 shadow-md cursor-pointer"
+                          rel="noreferrer"
+                          className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
                         >
-                          <Globe size={14} /> Visitar Site Oficial
+                          <Smartphone size={14} /> Falar no WhatsApp
                         </a>
                       )}
                       {company.ig && company.ig !== '#' && company.ig !== '' && (
@@ -3878,7 +3898,17 @@ function AppContent() {
                           <Instagram size={14} /> Instagram
                         </a>
                       )}
-                      {(!company.website || company.website.trim() === '') && (!company.ig || company.ig === '#' || company.ig === '') && (
+                      {company.website && company.website.trim() !== '' && (
+                        <a 
+                          href={company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-305 shadow-md cursor-pointer"
+                        >
+                          <Globe size={14} /> Visitar Site Oficial
+                        </a>
+                      )}
+                      {(!company.wa) && (!company.website || company.website.trim() === '') && (!company.ig || company.ig === '#' || company.ig === '') && (
                         <span className="text-xs text-white/35 text-center py-3 bg-white/5 rounded-2xl font-bold uppercase tracking-widest">
                           Sem Links Cadastrados
                         </span>
@@ -4465,9 +4495,9 @@ function AppContent() {
             {/* About column */}
             <div className="md:col-span-6 flex flex-col gap-4">
               <img 
-                src="https://i.postimg.cc/nVdYndYd" 
+                src={appData?.siteInfo?.logo ? appData.siteInfo.logo : "https://i.postimg.cc/nVdYndN2/minha-divulgacao-png.png"} 
                 alt="Minha Divulgação" 
-                className="h-10 md:h-12 w-auto object-contain self-start" 
+                className={`h-10 md:h-12 ${appData?.siteInfo?.logo ? 'w-10 md:w-12 rounded-full object-cover border border-white/10' : 'w-auto object-contain'} self-start`} 
                 referrerPolicy="no-referrer"
                 onError={(e) => { e.currentTarget.src = "https://i.postimg.cc/nVdYndN2/minha-divulgacao-png.png" }}
               />
@@ -4609,6 +4639,47 @@ function AppContent() {
                           }} 
                         />
                       </div>
+                    </div>
+
+                    <div className="dev-form-group">
+                      <div className="dev-label-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '5px', margin: 0 }}>
+                          📷 Logomarca do Portal / Parceiro
+                        </label>
+                        <a 
+                          href="https://postimages.org/" 
+                          onClick={(e) => handleOpenUploadHelper(e, 'https://postimages.org/')}
+                          rel="noreferrer" 
+                          className="dev-helper-link"
+                          style={{ color: 'var(--primary)', fontSize: '11px', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '3px' }}
+                        >
+                          📷 Abrir PostImages
+                        </a>
+                      </div>
+                      <input 
+                        type="text" 
+                        className="dev-input" 
+                        value={appData.siteInfo.logo || ''} 
+                        placeholder="Cole o link direto .jpg ou .png da sua logomarca (ex: https://i.postimg.cc/...)" 
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setAppData(prev => {
+                            if (!prev) return prev;
+                            return { ...prev, siteInfo: { ...prev.siteInfo, logo: val } };
+                          });
+                        }}
+                      />
+                      {appData.siteInfo.logo && (
+                        <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ fontSize: '11px', color: '#888' }}>Visualização:</span>
+                          <img 
+                            src={appData.siteInfo.logo} 
+                            alt="Logo Preview" 
+                            style={{ width: '45px', height: '45px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #333' }} 
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                      )}
                     </div>
                     <div className="dev-form-group">
                       <label>Seu Link para Divulgação</label>
