@@ -56,7 +56,9 @@ import {
   Truck,
   Copy,
   Share2,
-  Heart
+  Heart,
+  Globe,
+  Instagram
 } from 'lucide-react';
 
 import { auth, db, googleProvider } from './lib/firebase';
@@ -344,6 +346,15 @@ function AppContent() {
   const navigate = useNavigate();
   const { tenantId } = useParams();
   const location = useLocation();
+
+  const hasActiveReferral = useMemo(() => {
+    const tid = slugify(tenantId || 'fortaleza');
+    const fullUrl = window.location.href;
+    const searchPart = fullUrl.includes('?') ? fullUrl.split('?')[1] : '';
+    const queryParams = new URLSearchParams(searchPart);
+    const refCode = queryParams.get('ref') || queryParams.get('indica');
+    return !!(refCode || sessionStorage.getItem(`ref_${tid}`));
+  }, [tenantId, location]);
 
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
@@ -3417,39 +3428,69 @@ function AppContent() {
                       <p className="text-[11px] text-white/50 mt-1.5 leading-relaxed min-h-[2.5rem] line-clamp-2">{company.desc || 'Anunciante comercial verificado na plataforma.'}</p>
                     </div>
 
-                    <div className="flex flex-col gap-2 mt-5">
-                      {!company.hideMiniSite && (
-                        <button 
-                          onClick={() => {
-                            if (company.website && company.website.trim() !== '') {
-                              const targetUrl = company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`;
-                              window.open(targetUrl, '_blank');
-                            } else {
-                              setActiveMiniSiteCompany(company);
-                              const currentUrl = window.location.href;
-                              const baseUrl = currentUrl.split('?')[0];
-                              const nextUrl = `${baseUrl}?id=${company.id || slugify(company.name)}`;
-                              window.history.pushState({}, '', nextUrl);
-                            }
-                          }}
-                          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
-                        >
-                          <ShoppingBag size={12} /> 
-                          {company.website && company.website.trim() !== '' ? "Visitar Site Oficial" : 
-                           (company.type === 'loja' ? "Abrir Loja Virtual" : 
-                            company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site")}
-                        </button>
-                      )}
+                    {hasActiveReferral ? (
+                      <div className="flex flex-col gap-2 mt-5">
+                        {company.website && company.website.trim() !== '' && (
+                          <a 
+                            href={company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
+                          >
+                            <Globe size={12} /> Visitar Site Oficial
+                          </a>
+                        )}
+                        {company.ig && company.ig !== '#' && company.ig !== '' && (
+                          <a 
+                            href={company.ig} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="w-full bg-[#e1306c] hover:bg-[#d6245d] text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
+                          >
+                            <Instagram size={12} /> Instagram
+                          </a>
+                        )}
+                        {(!company.website || company.website.trim() === '') && (!company.ig || company.ig === '#' || company.ig === '') && (
+                          <span className="text-[9px] text-white/35 text-center py-2.5 bg-white/5 rounded-2xl font-bold uppercase tracking-widest">
+                            Sem Links Cadastrados
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-2 mt-5">
+                        {!company.hideMiniSite && (
+                          <button 
+                            onClick={() => {
+                              if (company.website && company.website.trim() !== '') {
+                                const targetUrl = company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`;
+                                window.open(targetUrl, '_blank');
+                              } else {
+                                setActiveMiniSiteCompany(company);
+                                const currentUrl = window.location.href;
+                                const baseUrl = currentUrl.split('?')[0];
+                                const nextUrl = `${baseUrl}?id=${company.id || slugify(company.name)}`;
+                                window.history.pushState({}, '', nextUrl);
+                              }
+                            }}
+                            className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
+                          >
+                            <ShoppingBag size={12} /> 
+                            {company.website && company.website.trim() !== '' ? "Visitar Site Oficial" : 
+                             (company.type === 'loja' ? "Abrir Loja Virtual" : 
+                              company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site")}
+                          </button>
+                        )}
 
-                      <a 
-                        href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu anúncio em destaque no portal ${appData.siteInfo.name}!`)}`} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
-                      >
-                        <Smartphone size={12} /> Falar no WhatsApp
-                      </a>
-                    </div>
+                        <a 
+                          href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu anúncio em destaque no portal ${appData.siteInfo.name}!`)}`} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
+                        >
+                          <Smartphone size={12} /> Falar no WhatsApp
+                        </a>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -3512,39 +3553,69 @@ function AppContent() {
                       <p className="text-[11px] text-white/45 mt-1.5 leading-relaxed min-h-[2.5rem] line-clamp-2">{company.desc || 'Parceiro local ativo na rede de anúncios.'}</p>
                     </div>
 
-                    <div className="flex flex-col gap-2 mt-5">
-                      {!company.hideMiniSite && (
-                        <button 
-                          onClick={() => {
-                            if (company.website && company.website.trim() !== '') {
-                              const targetUrl = company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`;
-                              window.open(targetUrl, '_blank');
-                            } else {
-                              setActiveMiniSiteCompany(company);
-                              const currentUrl = window.location.href;
-                              const baseUrl = currentUrl.split('?')[0];
-                              const nextUrl = `${baseUrl}?id=${company.id || slugify(company.name)}`;
-                              window.history.pushState({}, '', nextUrl);
-                            }
-                          }}
-                          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
-                        >
-                          <ShoppingBag size={12} /> 
-                          {company.website && company.website.trim() !== '' ? "Visitar Site Oficial" : 
-                           (company.type === 'loja' ? "Abrir Loja" : 
-                            company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site")}
-                        </button>
-                      )}
+                    {hasActiveReferral ? (
+                      <div className="flex flex-col gap-2 mt-5">
+                        {company.website && company.website.trim() !== '' && (
+                          <a 
+                            href={company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
+                          >
+                            <Globe size={12} /> Visitar Site Oficial
+                          </a>
+                        )}
+                        {company.ig && company.ig !== '#' && company.ig !== '' && (
+                          <a 
+                            href={company.ig} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="w-full bg-[#e1306c] hover:bg-[#d6245d] text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
+                          >
+                            <Instagram size={12} /> Instagram
+                          </a>
+                        )}
+                        {(!company.website || company.website.trim() === '') && (!company.ig || company.ig === '#' || company.ig === '') && (
+                          <span className="text-[9px] text-white/35 text-center py-2.5 bg-white/5 rounded-2xl font-bold uppercase tracking-widest">
+                            Sem Links Cadastrados
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-2 mt-5">
+                        {!company.hideMiniSite && (
+                          <button 
+                            onClick={() => {
+                              if (company.website && company.website.trim() !== '') {
+                                const targetUrl = company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`;
+                                window.open(targetUrl, '_blank');
+                              } else {
+                                setActiveMiniSiteCompany(company);
+                                const currentUrl = window.location.href;
+                                const baseUrl = currentUrl.split('?')[0];
+                                const nextUrl = `${baseUrl}?id=${company.id || slugify(company.name)}`;
+                                window.history.pushState({}, '', nextUrl);
+                              }
+                            }}
+                            className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
+                          >
+                            <ShoppingBag size={12} /> 
+                            {company.website && company.website.trim() !== '' ? "Visitar Site Oficial" : 
+                             (company.type === 'loja' ? "Abrir Loja" : 
+                              company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site")}
+                          </button>
+                        )}
 
-                      <a 
-                        href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu comércio no portal ${appData.siteInfo.name}!`)}`} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-[var(--primary)] py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300"
-                      >
-                        <Smartphone size={12} /> WhatsApp Comercial
-                      </a>
-                    </div>
+                        <a 
+                          href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu comércio no portal ${appData.siteInfo.name}!`)}`} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-[var(--primary)] py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300"
+                        >
+                          <Smartphone size={12} /> WhatsApp Comercial
+                        </a>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -3723,62 +3794,92 @@ function AppContent() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex flex-col gap-2.5 mt-6 border-t border-white/5 pt-5">
-                    {!company.hideMiniSite && (
-                      <button 
-                        onClick={() => {
-                          if (company.website && company.website.trim() !== '') {
-                            const targetUrl = company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`;
-                            window.open(targetUrl, '_blank');
-                          } else {
-                            setActiveMiniSiteCompany(company);
-                            const currentUrl = window.location.href;
-                            const baseUrl = currentUrl.split('?')[0];
-                            const nextUrl = `${baseUrl}?id=${company.id || slugify(company.name)}`;
-                            window.history.pushState({}, '', nextUrl);
-                          }
-                        }}
-                        className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-305 shadow-md cursor-pointer"
-                      >
-                        <ShoppingBag size={14} /> 
-                        {company.website && company.website.trim() !== '' ? "Visitar Site Oficial" : 
-                         (company.type === 'loja' ? "Abrir Loja Virtual" : 
-                          company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site / Catálogo")}
-                      </button>
-                    )}
-
-                    <a 
-                      href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu anúncio no portal ${appData.siteInfo.name}.${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`) ? ` Fui indicado pelo parceiro: ${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`)}` : ''}`)}`} 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
-                    >
-                      <Smartphone size={14} /> Falar no WhatsApp
-                    </a>
-
-                    <div className="flex gap-2">
+                  {hasActiveReferral ? (
+                    <div className="flex flex-col gap-2.5 mt-6 border-t border-white/5 pt-5">
+                      {company.website && company.website.trim() !== '' && (
+                        <a 
+                          href={company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-305 shadow-md cursor-pointer"
+                        >
+                          <Globe size={14} /> Visitar Site Oficial
+                        </a>
+                      )}
                       {company.ig && company.ig !== '#' && company.ig !== '' && (
                         <a 
                           href={company.ig} 
                           target="_blank" 
                           rel="noreferrer" 
-                          className="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center transition-all duration-200"
+                          className="w-full bg-[#e1306c] hover:bg-[#d6245d] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
                         >
-                          Instagram
+                          <Instagram size={14} /> Instagram
                         </a>
                       )}
-                      {company.website && company.website !== '' && (
-                        <a 
-                          href={company.website} 
-                          target="_blank" 
-                          rel="noreferrer" 
-                          className="flex-1 bg-[var(--primary)] hover:brightness-110 text-black py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center transition-all duration-200"
-                        >
-                          Website
-                        </a>
+                      {(!company.website || company.website.trim() === '') && (!company.ig || company.ig === '#' || company.ig === '') && (
+                        <span className="text-xs text-white/35 text-center py-3 bg-white/5 rounded-2xl font-bold uppercase tracking-widest">
+                          Sem Links Cadastrados
+                        </span>
                       )}
                     </div>
-                  </div>
+                  ) : (
+                    <div className="flex flex-col gap-2.5 mt-6 border-t border-white/5 pt-5">
+                      {!company.hideMiniSite && (
+                        <button 
+                          onClick={() => {
+                            if (company.website && company.website.trim() !== '') {
+                              const targetUrl = company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`;
+                              window.open(targetUrl, '_blank');
+                            } else {
+                              setActiveMiniSiteCompany(company);
+                              const currentUrl = window.location.href;
+                              const baseUrl = currentUrl.split('?')[0];
+                              const nextUrl = `${baseUrl}?id=${company.id || slugify(company.name)}`;
+                              window.history.pushState({}, '', nextUrl);
+                            }
+                          }}
+                          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-305 shadow-md cursor-pointer"
+                        >
+                          <ShoppingBag size={14} /> 
+                          {company.website && company.website.trim() !== '' ? "Visitar Site Oficial" : 
+                           (company.type === 'loja' ? "Abrir Loja Virtual" : 
+                            company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site / Catálogo")}
+                        </button>
+                      )}
+
+                      <a 
+                        href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu anúncio no portal ${appData.siteInfo.name}.${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`) ? ` Fui indicado pelo parceiro: ${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`)}` : ''}`)}`} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
+                      >
+                        <Smartphone size={14} /> Falar no WhatsApp
+                      </a>
+
+                      <div className="flex gap-2">
+                        {company.ig && company.ig !== '#' && company.ig !== '' && (
+                          <a 
+                            href={company.ig} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center transition-all duration-200"
+                          >
+                            Instagram
+                          </a>
+                        )}
+                        {company.website && company.website !== '' && (
+                          <a 
+                            href={company.website} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="flex-1 bg-[var(--primary)] hover:brightness-110 text-black py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center transition-all duration-200"
+                          >
+                            Website
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
