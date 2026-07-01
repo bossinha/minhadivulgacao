@@ -531,6 +531,29 @@ function AppContent() {
   const [affiliates, setAffiliates] = useState<any[]>([]);
   const [isAffLoading, setIsAffLoading] = useState(false);
 
+  // --- Modal states to replace window.prompt for sandboxed iframes ---
+  const [showAddCityModal, setShowAddCityModal] = useState(false);
+  const [newCityId, setNewCityId] = useState('');
+  const [newCityPass, setNewCityPass] = useState('');
+  const [newCityName, setNewCityName] = useState('');
+
+  const [showEditCityModal, setShowEditCityModal] = useState(false);
+  const [editingCityUname, setEditingCityUname] = useState('');
+  const [editingCityPass, setEditingCityPass] = useState('');
+  const [editingCityName, setEditingCityName] = useState('');
+
+  const [showDaysCityModal, setShowDaysCityModal] = useState(false);
+  const [daysCityUname, setDaysCityUname] = useState('');
+  const [daysToAddInput, setDaysToAddInput] = useState('30');
+
+  const [showRadioCityModal, setShowRadioCityModal] = useState(false);
+  const [radioCityUname, setRadioCityUname] = useState('');
+  const [radioLinkInput, setRadioLinkInput] = useState('');
+
+  const [showAddAffiliateModal, setShowAddAffiliateModal] = useState(false);
+  const [newAffName, setNewAffName] = useState('');
+  const [newAffCode, setNewAffCode] = useState('');
+
   // --- Advertiser & Mini-Site States ---
   const [advertiserCompanies, setAdvertiserCompanies] = useState<any[]>([]);
   const [isAdLoading, setIsAdLoading] = useState(false);
@@ -1883,29 +1906,10 @@ function AppContent() {
                      <button 
                        className="dev-btn" 
                        style={{ height: '36px', background: '#ff8a00', borderColor: '#ff8a00', color: '#000' }}
-                       onClick={async () => {
-                         const daysToAdd = parseInt(prompt("Quantos dias deseja adicionar?", "30") || "0");
-                         if (daysToAdd > 0) {
-                           let baseDate = new Date();
-                           if (udata.expiresAt) {
-                             const currentExpiry = new Date(udata.expiresAt);
-                             // If not expired, add to current expiry. If expired, add to today.
-                             if (currentExpiry > baseDate) {
-                               baseDate = currentExpiry;
-                             }
-                           }
-                           const newExpiry = new Date(baseDate.getTime() + (daysToAdd * 24 * 60 * 60 * 1000));
-                           const expiryStr = newExpiry.toISOString().split('T')[0];
-                           
-                           await updateDoc(doc(db, 'tenants', uname), { expiresAt: expiryStr });
-                           alert(`Assinatura renovada até ${expiryStr}`);
-                           
-                           // Refresh list
-                           const s = await getDocs(collection(db, 'tenants'));
-                           const u: any = {};
-                           s.forEach(d => u[d.id] = d.data());
-                           setAllUsers(u);
-                         }
+                       onClick={() => {
+                         setDaysCityUname(uname);
+                         setDaysToAddInput('30');
+                         setShowDaysCityModal(true);
                        }}
                        title="Renovar / Adicionar Dias de Assinatura"
                      >
@@ -1937,18 +1941,10 @@ function AppContent() {
                         borderColor: udata.customRadioLink ? '#d946ef' : '#444',
                         color: udata.customRadioLink ? '#fff' : '#aaa' 
                       }}
-                      onClick={async () => {
-                        const currentLink = udata.customRadioLink || '';
-                        const newLink = prompt(`Link da rádio personalizada para ${udata.city} (deixe em branco para usar a rádio universal):`, currentLink);
-                        if (newLink !== null) {
-                          await updateDoc(doc(db, 'tenants', uname), { customRadioLink: newLink.trim() });
-                          alert("Link da rádio atualizado com sucesso!");
-                          // Refresh list
-                          const s = await getDocs(collection(db, 'tenants'));
-                          const u: any = {};
-                          s.forEach(d => u[d.id] = d.data());
-                          setAllUsers(u);
-                        }
+                      onClick={() => {
+                        setRadioCityUname(uname);
+                        setRadioLinkInput(udata.customRadioLink || '');
+                        setShowRadioCityModal(true);
                       }}
                       title={udata.customRadioLink ? `Rádio Personalizada: ${udata.customRadioLink} (Clique para alterar)` : "Usando Rádio Universal (Clique para definir rádio personalizada)"}
                     >
@@ -1986,17 +1982,11 @@ function AppContent() {
                    <button 
                      className="dev-btn" 
                      style={{ height: '36px', background: '#333', borderColor: '#444' }}
-                     onClick={async () => {
-                       const newPass = prompt("Nova senha?", udata.password);
-                       const newCity = prompt("Nome da cidade?", udata.city);
-                       if (newPass && newCity) {
-                         await updateDoc(doc(db, 'tenants', uname), { password: newPass, city: newCity });
-                         // Refresh
-                         const s = await getDocs(collection(db, 'tenants'));
-                         const u: any = {};
-                         s.forEach(d => u[d.id] = d.data());
-                         setAllUsers(u);
-                       }
+                     onClick={() => {
+                       setEditingCityUname(uname);
+                       setEditingCityPass(udata.password || '');
+                       setEditingCityName(udata.city || '');
+                       setShowEditCityModal(true);
                      }}
                    >
                      ⚙️
@@ -2022,23 +2012,11 @@ function AppContent() {
             ))}
             <button 
               className="dev-add-btn" 
-              onClick={async () => {
-                const uname = prompt("ID de acesso (ex: fortaleza)?")?.toLowerCase().trim();
-                const upass = prompt("Senha?");
-                const ucity = prompt("Nome da Cidade?");
-                if (uname && upass && ucity) {
-                  await setDoc(doc(db, 'tenants', uname), { 
-                    password: upass, 
-                    city: ucity, 
-                    data: DEFAULT_DATA,
-                    isAdmin: false,
-                    showVideos: false 
-                  });
-                  const s = await getDocs(collection(db, 'tenants'));
-                  const u: any = {};
-                  s.forEach(d => u[d.id] = d.data());
-                  setAllUsers(u);
-                }
+              onClick={() => {
+                setNewCityId('');
+                setNewCityPass('');
+                setNewCityName('');
+                setShowAddCityModal(true);
               }}
             >
               + Adicionar Nova Cidade
@@ -2182,6 +2160,355 @@ function AppContent() {
                       style={{ height: '45px', background: '#25D366', color: '#000' }}
                     >
                       Salvar Alterações
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ADD CITY MODAL */}
+          {showAddCityModal && (
+            <div className="modal-overlay">
+              <div className="modal-content" style={{ maxWidth: '450px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h3 style={{ margin: 0, color: '#fff' }}>Adicionar Nova Cidade</h3>
+                  <button onClick={() => setShowAddCityModal(false)} style={{ background: '#222', border: 'none', color: '#fff', width: '30px', height: '30px', borderRadius: '50%', cursor: 'pointer' }}>✕</button>
+                </div>
+                <div style={{ display: 'grid', gap: '15px' }}>
+                  <div className="dev-form-group">
+                    <label>ID de Acesso (ex: belohorizonte)</label>
+                    <input 
+                      type="text" 
+                      className="dev-input" 
+                      style={{ width: '100%' }}
+                      placeholder="Somente letras minúsculas e sem espaços"
+                      value={newCityId} 
+                      onChange={e => setNewCityId(e.target.value.toLowerCase().replace(/\s+/g, ''))}
+                    />
+                  </div>
+                  <div className="dev-form-group">
+                    <label>Senha de Acesso</label>
+                    <input 
+                      type="text" 
+                      className="dev-input" 
+                      style={{ width: '100%' }}
+                      placeholder="Senha do gestor da cidade"
+                      value={newCityPass} 
+                      onChange={e => setNewCityPass(e.target.value)}
+                    />
+                  </div>
+                  <div className="dev-form-group">
+                    <label>Nome Visível da Cidade</label>
+                    <input 
+                      type="text" 
+                      className="dev-input" 
+                      style={{ width: '100%' }}
+                      placeholder="Ex: Belo Horizonte"
+                      value={newCityName} 
+                      onChange={e => setNewCityName(e.target.value)}
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '10px' }}>
+                    <button className="dev-btn dev-btn-secondary" onClick={() => setShowAddCityModal(false)}>
+                      Cancelar
+                    </button>
+                    <button 
+                      className="dev-btn dev-btn-primary" 
+                      style={{ background: '#25D366', color: '#000' }}
+                      onClick={async () => {
+                        const uname = newCityId.toLowerCase().trim();
+                        const upass = newCityPass.trim();
+                        const ucity = newCityName.trim();
+                        if (!uname || !upass || !ucity) {
+                          alert("Preencha todos os campos.");
+                          return;
+                        }
+                        try {
+                          await setDoc(doc(db, 'tenants', uname), { 
+                            password: upass, 
+                            city: ucity, 
+                            data: DEFAULT_DATA,
+                            isAdmin: false,
+                            showVideos: false 
+                          });
+                          const s = await getDocs(collection(db, 'tenants'));
+                          const u: any = {};
+                          s.forEach(d => u[d.id] = d.data());
+                          setAllUsers(u);
+                          setShowAddCityModal(false);
+                          alert("Cidade cadastrada com sucesso!");
+                        } catch (err: any) {
+                          alert("Erro ao salvar: " + err.message);
+                        }
+                      }}
+                    >
+                      Cadastrar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* EDIT CITY MODAL */}
+          {showEditCityModal && (
+            <div className="modal-overlay">
+              <div className="modal-content" style={{ maxWidth: '450px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h3 style={{ margin: 0, color: '#fff' }}>Editar Cidade: <strong style={{ color: '#ff8a00' }}>{editingCityUname}</strong></h3>
+                  <button onClick={() => setShowEditCityModal(false)} style={{ background: '#222', border: 'none', color: '#fff', width: '30px', height: '30px', borderRadius: '50%', cursor: 'pointer' }}>✕</button>
+                </div>
+                <div style={{ display: 'grid', gap: '15px' }}>
+                  <div className="dev-form-group">
+                    <label>Senha de Acesso</label>
+                    <input 
+                      type="text" 
+                      className="dev-input" 
+                      style={{ width: '100%' }}
+                      value={editingCityPass} 
+                      onChange={e => setEditingCityPass(e.target.value)}
+                    />
+                  </div>
+                  <div className="dev-form-group">
+                    <label>Nome Visível da Cidade</label>
+                    <input 
+                      type="text" 
+                      className="dev-input" 
+                      style={{ width: '100%' }}
+                      value={editingCityName} 
+                      onChange={e => setEditingCityName(e.target.value)}
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '10px' }}>
+                    <button className="dev-btn dev-btn-secondary" onClick={() => setShowEditCityModal(false)}>
+                      Cancelar
+                    </button>
+                    <button 
+                      className="dev-btn dev-btn-primary" 
+                      style={{ background: '#25D366', color: '#000' }}
+                      onClick={async () => {
+                        const upass = editingCityPass.trim();
+                        const ucity = editingCityName.trim();
+                        if (!upass || !ucity) {
+                          alert("Preencha todos os campos.");
+                          return;
+                        }
+                        try {
+                          await updateDoc(doc(db, 'tenants', editingCityUname), { password: upass, city: ucity });
+                          const s = await getDocs(collection(db, 'tenants'));
+                          const u: any = {};
+                          s.forEach(d => u[d.id] = d.data());
+                          setAllUsers(u);
+                          setShowEditCityModal(false);
+                          alert("Cidade atualizada com sucesso!");
+                        } catch (err: any) {
+                          alert("Erro ao atualizar: " + err.message);
+                        }
+                      }}
+                    >
+                      Salvar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* DAYS CITY MODAL */}
+          {showDaysCityModal && (
+            <div className="modal-overlay">
+              <div className="modal-content" style={{ maxWidth: '400px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h3 style={{ margin: 0, color: '#fff' }}>Adicionar Dias de Assinatura</h3>
+                  <button onClick={() => setShowDaysCityModal(false)} style={{ background: '#222', border: 'none', color: '#fff', width: '30px', height: '30px', borderRadius: '50%', cursor: 'pointer' }}>✕</button>
+                </div>
+                <div style={{ display: 'grid', gap: '15px' }}>
+                  <p style={{ fontSize: '13px', color: '#aaa', margin: 0 }}>
+                    Adicione dias de expiração para a cidade <strong style={{ color: '#ff8a00' }}>{daysCityUname}</strong>.
+                  </p>
+                  <div className="dev-form-group">
+                    <label>Quantidade de Dias</label>
+                    <input 
+                      type="number" 
+                      className="dev-input" 
+                      style={{ width: '100%' }}
+                      min="1"
+                      value={daysToAddInput} 
+                      onChange={e => setDaysToAddInput(e.target.value)}
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '10px' }}>
+                    <button className="dev-btn dev-btn-secondary" onClick={() => setShowDaysCityModal(false)}>
+                      Cancelar
+                    </button>
+                    <button 
+                      className="dev-btn dev-btn-primary" 
+                      style={{ background: '#ff8a00', color: '#000' }}
+                      onClick={async () => {
+                        const daysToAdd = parseInt(daysToAddInput || "0");
+                        if (daysToAdd <= 0) {
+                          alert("Informe um número válido de dias.");
+                          return;
+                        }
+                        try {
+                          const udata = allUsers[daysCityUname];
+                          let baseDate = new Date();
+                          if (udata && udata.expiresAt) {
+                            const currentExpiry = new Date(udata.expiresAt);
+                            // Se não estiver expirado, adiciona ao vencimento atual. Se estiver vencido, adiciona a partir de hoje.
+                            if (currentExpiry > baseDate) {
+                              baseDate = currentExpiry;
+                            }
+                          }
+                          const newExpiry = new Date(baseDate.getTime() + (daysToAdd * 24 * 60 * 60 * 1000));
+                          const expiryStr = newExpiry.toISOString().split('T')[0];
+                          
+                          await updateDoc(doc(db, 'tenants', daysCityUname), { expiresAt: expiryStr });
+                          alert(`Assinatura renovada com sucesso até ${expiryStr}`);
+                          
+                          const s = await getDocs(collection(db, 'tenants'));
+                          const u: any = {};
+                          s.forEach(d => u[d.id] = d.data());
+                          setAllUsers(u);
+                          setShowDaysCityModal(false);
+                        } catch (err: any) {
+                          alert("Erro ao renovar: " + err.message);
+                        }
+                      }}
+                    >
+                      Renovar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* RADIO CITY MODAL */}
+          {showRadioCityModal && (
+            <div className="modal-overlay">
+              <div className="modal-content" style={{ maxWidth: '450px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h3 style={{ margin: 0, color: '#fff' }}>Rádio de <strong style={{ color: '#ff8a00' }}>{radioCityUname}</strong></h3>
+                  <button onClick={() => setShowRadioCityModal(false)} style={{ background: '#222', border: 'none', color: '#fff', width: '30px', height: '30px', borderRadius: '50%', cursor: 'pointer' }}>✕</button>
+                </div>
+                <div style={{ display: 'grid', gap: '15px' }}>
+                  <div className="dev-form-group">
+                    <label>Link Stream da Rádio Personalizada</label>
+                    <input 
+                      type="text" 
+                      className="dev-input" 
+                      style={{ width: '100%' }}
+                      placeholder="Deixe em branco para usar a rádio universal"
+                      value={radioLinkInput} 
+                      onChange={e => setRadioLinkInput(e.target.value)}
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '10px' }}>
+                    <button className="dev-btn dev-btn-secondary" onClick={() => setShowRadioCityModal(false)}>
+                      Cancelar
+                    </button>
+                    <button 
+                      className="dev-btn dev-btn-primary" 
+                      style={{ background: '#25D366', color: '#000' }}
+                      onClick={async () => {
+                        try {
+                          await updateDoc(doc(db, 'tenants', radioCityUname), { customRadioLink: radioLinkInput.trim() });
+                          alert("Link da rádio atualizado com sucesso!");
+                          const s = await getDocs(collection(db, 'tenants'));
+                          const u: any = {};
+                          s.forEach(d => u[d.id] = d.data());
+                          setAllUsers(u);
+                          setShowRadioCityModal(false);
+                        } catch (err: any) {
+                          alert("Erro ao atualizar rádio: " + err.message);
+                        }
+                      }}
+                    >
+                      Salvar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ADD AFFILIATE (DIVULGADOR) MODAL */}
+          {showAddAffiliateModal && (
+            <div className="modal-overlay">
+              <div className="modal-content" style={{ maxWidth: '450px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h3 style={{ margin: 0, color: '#fff' }}>Adicionar Novo Divulgador</h3>
+                  <button onClick={() => setShowAddAffiliateModal(false)} style={{ background: '#222', border: 'none', color: '#fff', width: '30px', height: '30px', borderRadius: '50%', cursor: 'pointer' }}>✕</button>
+                </div>
+                <div style={{ display: 'grid', gap: '15px' }}>
+                  <div className="dev-form-group">
+                    <label>Nome do Divulgador / Parceiro</label>
+                    <input 
+                      type="text" 
+                      className="dev-input" 
+                      style={{ width: '100%' }}
+                      placeholder="Ex: João Silva"
+                      value={newAffName} 
+                      onChange={e => setNewAffName(e.target.value)}
+                    />
+                  </div>
+                  <div className="dev-form-group">
+                    <label>Código do Link (ex: joao)</label>
+                    <input 
+                      type="text" 
+                      className="dev-input" 
+                      style={{ width: '100%' }}
+                      placeholder="Somente minúsculas e sem espaços, exemplo: joao"
+                      value={newAffCode} 
+                      onChange={e => setNewAffCode(e.target.value.toLowerCase().replace(/\s+/g, ''))}
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '10px' }}>
+                    <button className="dev-btn dev-btn-secondary" onClick={() => setShowAddAffiliateModal(false)}>
+                      Cancelar
+                    </button>
+                    <button 
+                      className="dev-btn dev-btn-primary" 
+                      style={{ background: '#25D366', color: '#000' }}
+                      onClick={async () => {
+                        const nameVal = newAffName.trim();
+                        const codeVal = newAffCode.toLowerCase().trim();
+                        if (!nameVal || !codeVal) {
+                          alert("Por favor, preencha o nome e o código.");
+                          return;
+                        }
+                        const tid = slugify(tenantId || 'fortaleza');
+                        const slug = slugify(codeVal);
+                        const affDoc = doc(db, 'tenants', tid, 'affiliates', slug);
+                        try {
+                          const check = await getDoc(affDoc);
+                          if (check.exists()) {
+                            alert("Este código já está em uso por outro divulgador.");
+                            return;
+                          }
+                          const newAff = {
+                            name: nameVal,
+                            code: slug,
+                            commission: "20%",
+                            whatsapp: "",
+                            clicks: 0,
+                            sales: 0,
+                            totalEarned: 0,
+                            _auth: localStorage.getItem('tenantPass')
+                          };
+                          await setDoc(affDoc, newAff);
+                          setAffiliates(prev => [...(prev || []), { ...newAff, id: slug }]);
+                          setShowAddAffiliateModal(false);
+                          alert("Divulgador adicionado com sucesso!");
+                        } catch (err: any) {
+                          console.error("Erro ao adicionar divulgador:", err);
+                          alert("Erro ao adicionar: " + err.message);
+                        }
+                      }}
+                    >
+                      Cadastrar
                     </button>
                   </div>
                 </div>
@@ -5680,43 +6007,10 @@ function AppContent() {
                       <h3>Gerenciar Divulgadores (Afiliados)</h3>
                       
                       <div style={{ display: 'flex', gap: '10px' }}>
-                        <button className="dev-add-btn" style={{ margin: 0 }} onClick={async () => {
-                          const nameInput = prompt("Nome do Divulgador?");
-                          const codeInput = prompt("Código/Slug do Link (ex: joao)?");
-                          
-                          if (!nameInput || !codeInput) return;
-
-                          const tid = slugify(tenantId || 'fortaleza');
-                          const slug = slugify(codeInput);
-                          const affDoc = doc(db, 'tenants', tid, 'affiliates', slug);
-                          
-                          try {
-                            const check = await getDoc(affDoc);
-                            if (check.exists()) {
-                              alert("Este código já está em uso por outro divulgador.");
-                              return;
-                            }
-                            
-                            const newAff = {
-                              name: nameInput,
-                              code: slug,
-                              commission: "20%",
-                              whatsapp: "",
-                              clicks: 0,
-                              sales: 0,
-                              totalEarned: 0,
-                              _auth: localStorage.getItem('tenantPass') 
-                            };
-                            
-                            await setDoc(affDoc, newAff);
-                            
-                            // Update local state and ensure UI refreshes
-                            setAffiliates(prev => [...(prev || []), { ...newAff, id: slug }]);
-                            alert("Divulgador adicionado com sucesso!");
-                          } catch (err: any) {
-                            console.error("Erro ao adicionar divulgador:", err);
-                            alert("Erro ao adicionar: " + err.message);
-                          }
+                        <button className="dev-add-btn" style={{ margin: 0 }} onClick={() => {
+                          setNewAffName('');
+                          setNewAffCode('');
+                          setShowAddAffiliateModal(true);
                         }}>+ Novo Divulgador</button>
                       </div>
                     </div>
