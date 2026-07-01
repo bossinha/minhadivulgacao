@@ -564,6 +564,9 @@ function AppContent() {
   const [showAddAffiliateModal, setShowAddAffiliateModal] = useState(false);
   const [newAffName, setNewAffName] = useState('');
   const [newAffCode, setNewAffCode] = useState('');
+  const [newAffLogo, setNewAffLogo] = useState('');
+  const [newAffCustomTitle, setNewAffCustomTitle] = useState('');
+  const [activeReferralPartner, setActiveReferralPartner] = useState<any>(null);
 
   // --- Advertiser & Mini-Site States ---
   const [advertiserCompanies, setAdvertiserCompanies] = useState<any[]>([]);
@@ -1023,6 +1026,35 @@ function AppContent() {
       clearInterval(onlineInterval); 
     };
   }, [tenantId, navigate]);
+
+  useEffect(() => {
+    const fetchReferralPartner = async () => {
+      const tid = slugify(tenantId || 'fortaleza');
+      const fullUrl = window.location.href;
+      const searchPart = fullUrl.includes('?') ? fullUrl.split('?')[1] : '';
+      const queryParams = new URLSearchParams(searchPart);
+      const refCode = queryParams.get('ref') || queryParams.get('indica') || sessionStorage.getItem(`ref_${tid}`);
+      
+      if (refCode) {
+        const cleanRef = slugify(refCode);
+        try {
+          const affDoc = doc(db, 'tenants', tid, 'affiliates', cleanRef);
+          const affSnap = await getDoc(affDoc);
+          if (affSnap.exists()) {
+            setActiveReferralPartner({ id: affSnap.id, ...affSnap.data() });
+          } else {
+            setActiveReferralPartner(null);
+          }
+        } catch (e) {
+          console.error("Error loading affiliate details:", e);
+          setActiveReferralPartner(null);
+        }
+      } else {
+        setActiveReferralPartner(null);
+      }
+    };
+    fetchReferralPartner();
+  }, [tenantId, location]);
 
 
 
@@ -2476,8 +2508,30 @@ function AppContent() {
                       onChange={e => setNewAffCode(e.target.value.toLowerCase().replace(/\s+/g, ''))}
                     />
                   </div>
+                  <div className="dev-form-group">
+                    <label>Nome do Portal do Divulgador (Opcional)</label>
+                    <input 
+                      type="text" 
+                      className="dev-input" 
+                      style={{ width: '100%' }}
+                      placeholder="Ex: Jucervi"
+                      value={newAffCustomTitle} 
+                      onChange={e => setNewAffCustomTitle(e.target.value)}
+                    />
+                  </div>
+                  <div className="dev-form-group">
+                    <label>URL do Logo / Foto do Divulgador (Opcional)</label>
+                    <input 
+                      type="text" 
+                      className="dev-input" 
+                      style={{ width: '100%' }}
+                      placeholder="Ex: https://i.postimg.cc/..."
+                      value={newAffLogo} 
+                      onChange={e => setNewAffLogo(e.target.value)}
+                    />
+                  </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '10px' }}>
-                    <button className="dev-btn dev-btn-secondary" onClick={() => setShowAddAffiliateModal(false)}>
+                    <button className="dev-btn dev-btn-secondary" onClick={() => { setShowAddAffiliateModal(false); setNewAffName(''); setNewAffCode(''); setNewAffLogo(''); setNewAffCustomTitle(''); }}>
                       Cancelar
                     </button>
                     <button 
@@ -2507,10 +2561,16 @@ function AppContent() {
                             clicks: 0,
                             sales: 0,
                             totalEarned: 0,
+                            logo: newAffLogo.trim(),
+                            customTitle: newAffCustomTitle.trim(),
                             _auth: localStorage.getItem('tenantPass')
                           };
                           await setDoc(affDoc, newAff);
                           setAffiliates(prev => [...(prev || []), { ...newAff, id: slug }]);
+                          setNewAffName('');
+                          setNewAffCode('');
+                          setNewAffLogo('');
+                          setNewAffCustomTitle('');
                           setShowAddAffiliateModal(false);
                           alert("Divulgador adicionado com sucesso!");
                         } catch (err: any) {
@@ -2718,16 +2778,18 @@ function AppContent() {
             onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
           >
             <img 
-              src="https://i.postimg.cc/nVdYndN2/minha-divulgacao-png.png" 
-              alt="Minha Divulgação" 
-              className="h-10 md:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105" 
+              src={activeReferralPartner?.logo ? activeReferralPartner.logo : "https://i.postimg.cc/nVdYndN2/minha-divulgacao-png.png"} 
+              alt={activeReferralPartner?.customTitle || activeReferralPartner?.name || "Minha Divulgação"} 
+              className={`h-10 md:h-12 ${activeReferralPartner?.logo ? 'w-10 md:w-12 rounded-full object-cover border border-white/10' : 'w-auto object-contain'} transition-transform duration-300 group-hover:scale-105`} 
               referrerPolicy="no-referrer"
             />
             <div className="flex flex-col select-none">
               <span className="font-sans font-extrabold text-sm md:text-base leading-none text-white tracking-tight uppercase group-hover:text-[var(--primary)] transition-colors duration-200">
-                {appData.siteInfo.name} <span className="text-[var(--primary)]">{appData.siteInfo.suffix}</span>
+                {activeReferralPartner?.customTitle || activeReferralPartner?.name || appData.siteInfo.name} <span className="text-[var(--primary)]">{activeReferralPartner ? "" : appData.siteInfo.suffix}</span>
               </span>
-              <span className="text-[9px] text-white/40 tracking-widest font-mono uppercase mt-0.5">Portal de Mídia</span>
+              <span className="text-[9px] text-white/40 tracking-widest font-mono uppercase mt-0.5">
+                {activeReferralPartner ? `Divulgador: ${activeReferralPartner.name}` : "Portal de Mídia"}
+              </span>
             </div>
           </a>
 
@@ -6159,9 +6221,17 @@ function AppContent() {
                                     }
                                   }}>✕</button>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
-                                    <div>
-                                      <h4 style={{ color: 'var(--primary)', margin: 0 }}>{aff.name}</h4>
-                                      <code style={{ fontSize: '10px', color: '#888' }}>Código: {aff.code}</code>
+                                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                      {aff.logo ? (
+                                        <img src={aff.logo} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #333' }} alt="" referrerPolicy="no-referrer" />
+                                      ) : (
+                                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', border: '1px solid #333' }}>👤</div>
+                                      )}
+                                      <div>
+                                        <h4 style={{ color: 'var(--primary)', margin: 0 }}>{aff.name}</h4>
+                                        <code style={{ fontSize: '10px', color: '#888' }}>Código: {aff.code}</code>
+                                        {aff.customTitle && <div style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>Portal: {aff.customTitle}</div>}
+                                      </div>
                                     </div>
                                     <div style={{ background: 'rgba(37, 211, 102, 0.1)', color: '#25D366', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 900 }}>
                                       {aff.commission} de Comissão
@@ -6233,6 +6303,48 @@ function AppContent() {
                                           });
                                           await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
                                             whatsapp: val,
+                                            _auth: localStorage.getItem('tenantPass')
+                                          });
+                                        }}
+                                      />
+                                    </div>
+
+                                    <label style={{ marginTop: '10px', display: 'block' }}>Nome do Portal & Logo do Divulgador (Opcional)</label>
+                                    <div className="dev-grid-2" style={{ gap: '10px', marginTop: '5px' }}>
+                                      <input 
+                                        type="text" 
+                                        className="dev-input" 
+                                        value={aff.customTitle || ''} 
+                                        placeholder="Nome do Portal (ex: Jucervi)"
+                                        onChange={async (e) => {
+                                          const val = e.target.value;
+                                          const tid = slugify(tenantId || 'fortaleza');
+                                          setAffiliates(prev => {
+                                            const newList = [...prev];
+                                            newList[i] = { ...newList[i], customTitle: val };
+                                            return newList;
+                                          });
+                                          await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
+                                            customTitle: val,
+                                            _auth: localStorage.getItem('tenantPass')
+                                          });
+                                        }}
+                                      />
+                                      <input 
+                                        type="text" 
+                                        className="dev-input" 
+                                        value={aff.logo || ''} 
+                                        placeholder="URL do Logo (ex: https://...)"
+                                        onChange={async (e) => {
+                                          const val = e.target.value;
+                                          const tid = slugify(tenantId || 'fortaleza');
+                                          setAffiliates(prev => {
+                                            const newList = [...prev];
+                                            newList[i] = { ...newList[i], logo: val };
+                                            return newList;
+                                          });
+                                          await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
+                                            logo: val,
                                             _auth: localStorage.getItem('tenantPass')
                                           });
                                         }}
