@@ -2563,6 +2563,12 @@ function AppContent() {
                             totalEarned: 0,
                             logo: newAffLogo.trim(),
                             customTitle: newAffCustomTitle.trim(),
+                            heroTitle: "",
+                            heroSub: "",
+                            radioTitle: "",
+                            radioSub: "",
+                            ctaTitle: "",
+                            ctaSub: "",
                             _auth: localStorage.getItem('tenantPass')
                           };
                           await setDoc(affDoc, newAff);
@@ -2914,11 +2920,13 @@ function AppContent() {
   
           {/* Premium Headline & Subtitle */}
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-sans font-extrabold text-white tracking-tight leading-[1.05] max-w-6xl select-none">
-            A maior vitrine digital para seu negócio no <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--primary)] via-amber-400 to-yellow-500 font-extrabold">Brasil</span>!
+            {activeReferralPartner?.heroTitle ? activeReferralPartner.heroTitle : (
+              <>A maior vitrine digital para seu negócio no <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--primary)] via-amber-400 to-yellow-500 font-extrabold">Brasil</span>!</>
+            )}
           </h1>
   
           <p className="text-sm sm:text-lg md:text-xl text-white/75 font-medium max-w-4xl mt-6 leading-relaxed select-none">
-            Coloque seu negócio na maior vitrine digital do país: com rádio digital ativa, cardápio interativo e botão de vendas diretas pelo WhatsApp.
+            {activeReferralPartner?.heroSub ? activeReferralPartner.heroSub : "Coloque seu negócio na maior vitrine digital do país: com rádio digital ativa, cardápio interativo e botão de vendas diretas pelo WhatsApp."}
           </p>
 
           {/* HIGH IMPACT TRIAL BANNER - GIGANTE, COM LETRAS GROSSAS E SEM CONFLITOS */}
@@ -3993,10 +4001,10 @@ function AppContent() {
           <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16">
             <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase">Transmissões Digitais</span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">
-              Rádio & TV Online Ao Vivo
+              {activeReferralPartner?.radioTitle ? activeReferralPartner.radioTitle : "Rádio & TV Online Ao Vivo"}
             </h2>
             <p className="text-sm text-white/50 mt-3">
-              Acompanhe nossa programação musical completa em áudio de alta definição e assista aos melhores spots de anúncios na nossa TV interativa.
+              {activeReferralPartner?.radioSub ? activeReferralPartner.radioSub : "Acompanhe nossa programação musical completa em áudio de alta definição e assista aos melhores spots de anúncios na nossa TV interativa."}
             </p>
           </div>
 
@@ -4222,11 +4230,15 @@ function AppContent() {
           {/* Section footer info */}
           <div className="mt-20 bg-gradient-to-r from-amber-500/5 to-transparent border border-white/5 rounded-[28px] p-8 md:p-12 flex flex-col md:flex-row justify-between items-center gap-8 max-w-5xl mx-auto select-none">
             <div className="text-center md:text-left">
-              <h4 className="text-xl font-black text-white">Pronto para dominar seu segmento comercial?</h4>
-              <p className="text-xs sm:text-sm text-white/60 mt-2 max-w-lg leading-relaxed">Não perca vendas para seu maior concorrente da região. Fale agora mesmo com nossa central comercial no WhatsApp!</p>
+              <h4 className="text-xl font-black text-white">
+                {activeReferralPartner?.ctaTitle ? activeReferralPartner.ctaTitle : "Pronto para dominar seu segmento comercial?"}
+              </h4>
+              <p className="text-xs sm:text-sm text-white/60 mt-2 max-w-lg leading-relaxed">
+                {activeReferralPartner?.ctaSub ? activeReferralPartner.ctaSub : "Não perca vendas para seu maior concorrente da região. Fale agora mesmo com nossa central comercial no WhatsApp!"}
+              </p>
             </div>
             <a 
-              href={`https://wa.me/${appData.pricing.waLink.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Olá! Acessei a página comercial e gostaria de saber as disponibilidades de vagas para publicidade de meu negócio.')}`}
+              href={`https://wa.me/${(activeReferralPartner?.whatsapp || appData.pricing.waLink).replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá! Acessei o portal ${activeReferralPartner?.customTitle || appData?.siteInfo?.name || ''} e gostaria de falar com um consultor sobre anúncios.`)}`}
               target="_blank" 
               rel="noreferrer"
               className="bg-[var(--primary)] hover:bg-[#ffe066] text-black hover:scale-105 hover:shadow-[0_0_20px_rgba(251,191,36,0.3)] px-8 py-4 rounded-full font-black text-xs uppercase tracking-widest text-center transition-all duration-300 flex items-center gap-2"
@@ -6420,6 +6432,145 @@ function AppContent() {
                                           });
                                         }}
                                       />
+                                    </div>
+
+                                    <label style={{ marginTop: '15px', display: 'block', color: 'var(--primary)', fontWeight: 'bold' }}>📝 Textos Personalizados da Página (Opcional)</label>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
+                                      <div className="dev-form-group">
+                                        <label style={{ fontSize: '11px', color: '#888', display: 'block', marginBottom: '4px' }}>Título Principal (Hero)</label>
+                                        <input 
+                                          type="text" 
+                                          className="dev-input" 
+                                          style={{ width: '100%' }}
+                                          value={aff.heroTitle || ''} 
+                                          placeholder="Ex: A maior vitrine digital para seu negócio no Brasil!"
+                                          onChange={async (e) => {
+                                            const val = e.target.value;
+                                            const tid = slugify(tenantId || 'fortaleza');
+                                            setAffiliates(prev => {
+                                              const newList = [...prev];
+                                              newList[i] = { ...newList[i], heroTitle: val };
+                                              return newList;
+                                            });
+                                            await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
+                                              heroTitle: val,
+                                              _auth: localStorage.getItem('tenantPass')
+                                            });
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="dev-form-group">
+                                        <label style={{ fontSize: '11px', color: '#888', display: 'block', marginBottom: '4px' }}>Subtítulo Principal (Hero)</label>
+                                        <textarea 
+                                          className="dev-input" 
+                                          style={{ width: '100%', minHeight: '60px', resize: 'vertical' }}
+                                          value={aff.heroSub || ''} 
+                                          placeholder="Ex: Coloque seu negócio na maior vitrine..."
+                                          onChange={async (e) => {
+                                            const val = e.target.value;
+                                            const tid = slugify(tenantId || 'fortaleza');
+                                            setAffiliates(prev => {
+                                              const newList = [...prev];
+                                              newList[i] = { ...newList[i], heroSub: val };
+                                              return newList;
+                                            });
+                                            await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
+                                              heroSub: val,
+                                              _auth: localStorage.getItem('tenantPass')
+                                            });
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="dev-form-group">
+                                        <label style={{ fontSize: '11px', color: '#888', display: 'block', marginBottom: '4px' }}>Título da Rádio & TV</label>
+                                        <input 
+                                          type="text" 
+                                          className="dev-input" 
+                                          style={{ width: '100%' }}
+                                          value={aff.radioTitle || ''} 
+                                          placeholder="Ex: Rádio & TV Online Ao Vivo"
+                                          onChange={async (e) => {
+                                            const val = e.target.value;
+                                            const tid = slugify(tenantId || 'fortaleza');
+                                            setAffiliates(prev => {
+                                              const newList = [...prev];
+                                              newList[i] = { ...newList[i], radioTitle: val };
+                                              return newList;
+                                            });
+                                            await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
+                                              radioTitle: val,
+                                              _auth: localStorage.getItem('tenantPass')
+                                            });
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="dev-form-group">
+                                        <label style={{ fontSize: '11px', color: '#888', display: 'block', marginBottom: '4px' }}>Subtítulo da Rádio & TV</label>
+                                        <textarea 
+                                          className="dev-input" 
+                                          style={{ width: '100%', minHeight: '60px', resize: 'vertical' }}
+                                          value={aff.radioSub || ''} 
+                                          placeholder="Ex: Acompanhe nossa programação musical completa..."
+                                          onChange={async (e) => {
+                                            const val = e.target.value;
+                                            const tid = slugify(tenantId || 'fortaleza');
+                                            setAffiliates(prev => {
+                                              const newList = [...prev];
+                                              newList[i] = { ...newList[i], radioSub: val };
+                                              return newList;
+                                            });
+                                            await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
+                                              radioSub: val,
+                                              _auth: localStorage.getItem('tenantPass')
+                                            });
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="dev-form-group">
+                                        <label style={{ fontSize: '11px', color: '#888', display: 'block', marginBottom: '4px' }}>Título do Banner Call-to-Action (CTA)</label>
+                                        <input 
+                                          type="text" 
+                                          className="dev-input" 
+                                          style={{ width: '100%' }}
+                                          value={aff.ctaTitle || ''} 
+                                          placeholder="Ex: Pronto para dominar seu segmento comercial?"
+                                          onChange={async (e) => {
+                                            const val = e.target.value;
+                                            const tid = slugify(tenantId || 'fortaleza');
+                                            setAffiliates(prev => {
+                                              const newList = [...prev];
+                                              newList[i] = { ...newList[i], ctaTitle: val };
+                                              return newList;
+                                            });
+                                            await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
+                                              ctaTitle: val,
+                                              _auth: localStorage.getItem('tenantPass')
+                                            });
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="dev-form-group">
+                                        <label style={{ fontSize: '11px', color: '#888', display: 'block', marginBottom: '4px' }}>Subtítulo do Banner Call-to-Action (CTA)</label>
+                                        <textarea 
+                                          className="dev-input" 
+                                          style={{ width: '100%', minHeight: '60px', resize: 'vertical' }}
+                                          value={aff.ctaSub || ''} 
+                                          placeholder="Ex: Não perca vendas para seu maior concorrente..."
+                                          onChange={async (e) => {
+                                            const val = e.target.value;
+                                            const tid = slugify(tenantId || 'fortaleza');
+                                            setAffiliates(prev => {
+                                              const newList = [...prev];
+                                              newList[i] = { ...newList[i], ctaSub: val };
+                                              return newList;
+                                            });
+                                            await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
+                                              ctaSub: val,
+                                              _auth: localStorage.getItem('tenantPass')
+                                            });
+                                          }}
+                                        />
+                                      </div>
                                     </div>
                                   </div>
                                 </div>

@@ -28,7 +28,15 @@
         "whatsapp": { "type": "string" },
         "clicks": { "type": "number" },
         "sales": { "type": "number" },
-        "totalEarned": { "type": "number" }
+        "totalEarned": { "type": "number" },
+        "customTitle": { "type": "string" },
+        "logo": { "type": "string" },
+        "heroTitle": { "type": "string" },
+        "heroSub": { "type": "string" },
+        "radioTitle": { "type": "string" },
+        "radioSub": { "type": "string" },
+        "ctaTitle": { "type": "string" },
+        "ctaSub": { "type": "string" }
       },
       "required": ["name", "code"]
     },
