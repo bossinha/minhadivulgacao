@@ -253,6 +253,7 @@ const DEFAULT_DATA = {
     name: "Minha", suffix: "Divulgação", description: "A máquina de vendas definitiva para o seu negócio vender todos os dias na internet.",
     cnpj: "62.133.196/0001-40", phone: "85 99290-8713", address: "Anúncios em Todo o Brasil",
     radioLink: "https://stream.zeno.fm/gsstolze3mjtv",
+    heroTitle: "", heroSub: "", radioTitle: "", radioSub: "", ctaTitle: "", ctaSub: "",
     social: {
       fb: "https://www.facebook.com/profile.php?id=61586484977147",
       ig: "https://www.instagram.com/minhadivulgacaooficial/",
@@ -1217,6 +1218,62 @@ function AppContent() {
   const [activeFlyerIndex, setActiveFlyerIndex] = useState(0);
   const [activeHorizontalBannerIndex, setActiveHorizontalBannerIndex] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const getCompanyPrimaryButtonInfo = (company: any) => {
+    const action = company.primaryButtonAction || 'minisite';
+    let url = '';
+    let isExternal = false;
+    
+    if (action === 'site' && company.website) {
+      url = company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`;
+      isExternal = true;
+    } else if (action === 'instagram' && company.ig && company.ig !== '#') {
+      url = company.ig.trim().startsWith('http') ? company.ig.trim() : `https://${company.ig.trim()}`;
+      isExternal = true;
+    } else if (action === 'facebook' && company.fb) {
+      url = company.fb.trim().startsWith('http') ? company.fb.trim() : `https://${company.fb.trim()}`;
+      isExternal = true;
+    } else if (action === 'minisite') {
+      isExternal = false;
+    } else {
+      // Fallback
+      if (company.website && company.website.trim() !== '') {
+        url = company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`;
+        isExternal = true;
+      } else {
+        isExternal = false;
+      }
+    }
+    
+    let label = company.primaryButtonText || '';
+    if (!label) {
+      if (action === 'site' || (action === 'minisite' && company.website)) {
+        label = 'Visitar Site Oficial';
+      } else if (action === 'instagram') {
+        label = 'Acessar Instagram';
+      } else if (action === 'facebook') {
+        label = 'Acessar Facebook';
+      } else {
+        label = company.type === 'loja' ? 'Abrir Loja Virtual' : 
+                company.type === 'cardapio' ? 'Abrir Cardápio' : 'Ver Mini-Site';
+      }
+    }
+    
+    return { action, url, isExternal, label };
+  };
+
+  const handleCompanyPrimaryButtonClick = (company: any) => {
+    const info = getCompanyPrimaryButtonInfo(company);
+    if (info.isExternal && info.url) {
+      window.open(info.url, '_blank');
+    } else {
+      setActiveMiniSiteCompany(company);
+      const currentUrl = window.location.href;
+      const baseUrl = currentUrl.split('?')[0];
+      const nextUrl = `${baseUrl}?id=${company.id || slugify(company.name)}`;
+      window.history.pushState({}, '', nextUrl);
+    }
+  };
 
   // Live platform activity states (sensação de plataforma ativa e movimentada)
   const [activePlatformActivityIndex, setActivePlatformActivityIndex] = useState(0);
@@ -2921,12 +2978,16 @@ function AppContent() {
           {/* Premium Headline & Subtitle */}
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-sans font-extrabold text-white tracking-tight leading-[1.05] max-w-6xl select-none">
             {activeReferralPartner?.heroTitle ? activeReferralPartner.heroTitle : (
-              <>A maior vitrine digital para seu negócio no <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--primary)] via-amber-400 to-yellow-500 font-extrabold">Brasil</span>!</>
+              appData?.siteInfo?.heroTitle ? appData.siteInfo.heroTitle : (
+                <>A maior vitrine digital para seu negócio no <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--primary)] via-amber-400 to-yellow-500 font-extrabold">Brasil</span>!</>
+              )
             )}
           </h1>
   
           <p className="text-sm sm:text-lg md:text-xl text-white/75 font-medium max-w-4xl mt-6 leading-relaxed select-none">
-            {activeReferralPartner?.heroSub ? activeReferralPartner.heroSub : "Coloque seu negócio na maior vitrine digital do país: com rádio digital ativa, cardápio interativo e botão de vendas diretas pelo WhatsApp."}
+            {activeReferralPartner?.heroSub ? activeReferralPartner.heroSub : (
+              appData?.siteInfo?.heroSub ? appData.siteInfo.heroSub : "Coloque seu negócio na maior vitrine digital do país: com rádio digital ativa, cardápio interativo e botão de vendas diretas pelo WhatsApp."
+            )}
           </p>
 
           {/* HIGH IMPACT TRIAL BANNER - GIGANTE, COM LETRAS GROSSAS E SEM CONFLITOS */}
@@ -3538,28 +3599,18 @@ function AppContent() {
                       </div>
                     ) : (
                       <div className="flex flex-col gap-2 mt-5">
-                        {!company.hideMiniSite && (
-                          <button 
-                            onClick={() => {
-                              if (company.website && company.website.trim() !== '') {
-                                const targetUrl = company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`;
-                                window.open(targetUrl, '_blank');
-                              } else {
-                                setActiveMiniSiteCompany(company);
-                                const currentUrl = window.location.href;
-                                const baseUrl = currentUrl.split('?')[0];
-                                const nextUrl = `${baseUrl}?id=${company.id || slugify(company.name)}`;
-                                window.history.pushState({}, '', nextUrl);
-                              }
-                            }}
-                            className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
-                          >
-                            <ShoppingBag size={12} /> 
-                            {company.website && company.website.trim() !== '' ? "Visitar Site Oficial" : 
-                             (company.type === 'loja' ? "Abrir Loja Virtual" : 
-                              company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site")}
-                          </button>
-                        )}
+                        {!company.hideMiniSite && (() => {
+                          const btnInfo = getCompanyPrimaryButtonInfo(company);
+                          return (
+                            <button 
+                              onClick={() => handleCompanyPrimaryButtonClick(company)}
+                              className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
+                            >
+                              <ShoppingBag size={12} /> 
+                              {btnInfo.label}
+                            </button>
+                          );
+                        })()}
 
                         <a 
                           href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu anúncio em destaque no portal ${appData.siteInfo.name}!`)}`} 
@@ -3673,28 +3724,18 @@ function AppContent() {
                       </div>
                     ) : (
                       <div className="flex flex-col gap-2 mt-5">
-                        {!company.hideMiniSite && (
-                          <button 
-                            onClick={() => {
-                              if (company.website && company.website.trim() !== '') {
-                                const targetUrl = company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`;
-                                window.open(targetUrl, '_blank');
-                              } else {
-                                setActiveMiniSiteCompany(company);
-                                const currentUrl = window.location.href;
-                                const baseUrl = currentUrl.split('?')[0];
-                                const nextUrl = `${baseUrl}?id=${company.id || slugify(company.name)}`;
-                                window.history.pushState({}, '', nextUrl);
-                              }
-                            }}
-                            className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
-                          >
-                            <ShoppingBag size={12} /> 
-                            {company.website && company.website.trim() !== '' ? "Visitar Site Oficial" : 
-                             (company.type === 'loja' ? "Abrir Loja" : 
-                              company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site")}
-                          </button>
-                        )}
+                        {!company.hideMiniSite && (() => {
+                          const btnInfo = getCompanyPrimaryButtonInfo(company);
+                          return (
+                            <button 
+                              onClick={() => handleCompanyPrimaryButtonClick(company)}
+                              className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
+                            >
+                              <ShoppingBag size={12} /> 
+                              {btnInfo.label}
+                            </button>
+                          );
+                        })()}
 
                         <a 
                           href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu comércio no portal ${appData.siteInfo.name}!`)}`} 
@@ -3924,28 +3965,18 @@ function AppContent() {
                     </div>
                   ) : (
                     <div className="flex flex-col gap-2.5 mt-6 border-t border-white/5 pt-5">
-                      {!company.hideMiniSite && (
-                        <button 
-                          onClick={() => {
-                            if (company.website && company.website.trim() !== '') {
-                              const targetUrl = company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`;
-                              window.open(targetUrl, '_blank');
-                            } else {
-                              setActiveMiniSiteCompany(company);
-                              const currentUrl = window.location.href;
-                              const baseUrl = currentUrl.split('?')[0];
-                              const nextUrl = `${baseUrl}?id=${company.id || slugify(company.name)}`;
-                              window.history.pushState({}, '', nextUrl);
-                            }
-                          }}
-                          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-305 shadow-md cursor-pointer"
-                        >
-                          <ShoppingBag size={14} /> 
-                          {company.website && company.website.trim() !== '' ? "Visitar Site Oficial" : 
-                           (company.type === 'loja' ? "Abrir Loja Virtual" : 
-                            company.type === 'cardapio' ? "Abrir Cardápio" : "Ver Mini-Site / Catálogo")}
-                        </button>
-                      )}
+                      {!company.hideMiniSite && (() => {
+                        const btnInfo = getCompanyPrimaryButtonInfo(company);
+                        return (
+                          <button 
+                            onClick={() => handleCompanyPrimaryButtonClick(company)}
+                            className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-305 shadow-md cursor-pointer"
+                          >
+                            <ShoppingBag size={14} /> 
+                            {btnInfo.label}
+                          </button>
+                        );
+                      })()}
 
                       <a 
                         href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu anúncio no portal ${appData.siteInfo.name}.${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`) ? ` Fui indicado pelo parceiro: ${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`)}` : ''}`)}`} 
@@ -4001,10 +4032,14 @@ function AppContent() {
           <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16">
             <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase">Transmissões Digitais</span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">
-              {activeReferralPartner?.radioTitle ? activeReferralPartner.radioTitle : "Rádio & TV Online Ao Vivo"}
+              {activeReferralPartner?.radioTitle ? activeReferralPartner.radioTitle : (
+                appData?.siteInfo?.radioTitle ? appData.siteInfo.radioTitle : "Rádio & TV Online Ao Vivo"
+              )}
             </h2>
             <p className="text-sm text-white/50 mt-3">
-              {activeReferralPartner?.radioSub ? activeReferralPartner.radioSub : "Acompanhe nossa programação musical completa em áudio de alta definição e assista aos melhores spots de anúncios na nossa TV interativa."}
+              {activeReferralPartner?.radioSub ? activeReferralPartner.radioSub : (
+                appData?.siteInfo?.radioSub ? appData.siteInfo.radioSub : "Acompanhe nossa programação musical completa em áudio de alta definição e assista aos melhores spots de anúncios na nossa TV interativa."
+              )}
             </p>
           </div>
 
@@ -4231,14 +4266,18 @@ function AppContent() {
           <div className="mt-20 bg-gradient-to-r from-amber-500/5 to-transparent border border-white/5 rounded-[28px] p-8 md:p-12 flex flex-col md:flex-row justify-between items-center gap-8 max-w-5xl mx-auto select-none">
             <div className="text-center md:text-left">
               <h4 className="text-xl font-black text-white">
-                {activeReferralPartner?.ctaTitle ? activeReferralPartner.ctaTitle : "Pronto para dominar seu segmento comercial?"}
+                {activeReferralPartner?.ctaTitle ? activeReferralPartner.ctaTitle : (
+                  appData?.siteInfo?.ctaTitle ? appData.siteInfo.ctaTitle : "Pronto para dominar seu segmento comercial?"
+                )}
               </h4>
               <p className="text-xs sm:text-sm text-white/60 mt-2 max-w-lg leading-relaxed">
-                {activeReferralPartner?.ctaSub ? activeReferralPartner.ctaSub : "Não perca vendas para seu maior concorrente da região. Fale agora mesmo com nossa central comercial no WhatsApp!"}
+                {activeReferralPartner?.ctaSub ? activeReferralPartner.ctaSub : (
+                  appData?.siteInfo?.ctaSub ? appData.siteInfo.ctaSub : "Não perca vendas para seu maior concorrente da região. Fale agora mesmo com nossa central comercial no WhatsApp!"
+                )}
               </p>
             </div>
             <a 
-              href={`https://wa.me/${(activeReferralPartner?.whatsapp || appData.pricing.waLink).replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá! Acessei o portal ${activeReferralPartner?.customTitle || appData?.siteInfo?.name || ''} e gostaria de falar com um consultor sobre anúncios.`)}`}
+              href={`https://wa.me/${(activeReferralPartner?.whatsapp || appData?.siteInfo?.social?.wa || appData?.pricing?.waLink || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá! Acessei o portal ${activeReferralPartner?.customTitle || appData?.siteInfo?.name || ''} e gostaria de falar com um consultor sobre anúncios.`)}`}
               target="_blank" 
               rel="noreferrer"
               className="bg-[var(--primary)] hover:bg-[#ffe066] text-black hover:scale-105 hover:shadow-[0_0_20px_rgba(251,191,36,0.3)] px-8 py-4 rounded-full font-black text-xs uppercase tracking-widest text-center transition-all duration-300 flex items-center gap-2"
@@ -4730,6 +4769,116 @@ function AppContent() {
                         }} 
                       />
                     </div>
+
+                    <h4 style={{ marginTop: '25px', marginBottom: '10px', color: 'var(--primary)', fontWeight: 800 }}>📝 Textos Personalizados da Página (Opcional)</h4>
+                    <p style={{ fontSize: '11px', color: '#888', marginBottom: '15px' }}>
+                      Configure títulos e subtítulos personalizados para o seu portal. Deixe em branco para usar os textos padrão do sistema.
+                    </p>
+                    <div className="dev-grid-2">
+                      <div className="dev-form-group">
+                        <label>Título Principal (Hero)</label>
+                        <input 
+                          type="text" 
+                          className="dev-input" 
+                          value={appData.siteInfo.heroTitle || ''} 
+                          placeholder="Ex: A maior vitrine digital para seu negócio no Brasil!"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAppData(prev => {
+                              if (!prev) return prev;
+                              return { ...prev, siteInfo: { ...prev.siteInfo, heroTitle: val } };
+                            });
+                          }} 
+                        />
+                      </div>
+                      <div className="dev-form-group">
+                        <label>Subtítulo Principal (Hero)</label>
+                        <textarea 
+                          className="dev-input" 
+                          style={{ minHeight: '42px', resize: 'vertical' }}
+                          value={appData.siteInfo.heroSub || ''} 
+                          placeholder="Ex: Coloque seu negócio na maior vitrine..."
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAppData(prev => {
+                              if (!prev) return prev;
+                              return { ...prev, siteInfo: { ...prev.siteInfo, heroSub: val } };
+                            });
+                          }} 
+                        />
+                      </div>
+                    </div>
+
+                    <div className="dev-grid-2">
+                      <div className="dev-form-group">
+                        <label>Título da Rádio & TV</label>
+                        <input 
+                          type="text" 
+                          className="dev-input" 
+                          value={appData.siteInfo.radioTitle || ''} 
+                          placeholder="Ex: Rádio & TV Online Ao Vivo"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAppData(prev => {
+                              if (!prev) return prev;
+                              return { ...prev, siteInfo: { ...prev.siteInfo, radioTitle: val } };
+                            });
+                          }} 
+                        />
+                      </div>
+                      <div className="dev-form-group">
+                        <label>Subtítulo da Rádio & TV</label>
+                        <textarea 
+                          className="dev-input" 
+                          style={{ minHeight: '42px', resize: 'vertical' }}
+                          value={appData.siteInfo.radioSub || ''} 
+                          placeholder="Ex: Acompanhe nossa programação musical completa..."
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAppData(prev => {
+                              if (!prev) return prev;
+                              return { ...prev, siteInfo: { ...prev.siteInfo, radioSub: val } };
+                            });
+                          }} 
+                        />
+                      </div>
+                    </div>
+
+                    <div className="dev-grid-2">
+                      <div className="dev-form-group">
+                        <label>Título do Banner CTA</label>
+                        <input 
+                          type="text" 
+                          className="dev-input" 
+                          value={appData.siteInfo.ctaTitle || ''} 
+                          placeholder="Ex: Pronto para dominar seu segmento comercial?"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAppData(prev => {
+                              if (!prev) return prev;
+                              return { ...prev, siteInfo: { ...prev.siteInfo, ctaTitle: val } };
+                            });
+                          }} 
+                        />
+                      </div>
+                      <div className="dev-form-group">
+                        <label>Subtítulo do Banner CTA</label>
+                        <textarea 
+                          className="dev-input" 
+                          style={{ minHeight: '42px', resize: 'vertical' }}
+                          value={appData.siteInfo.ctaSub || ''} 
+                          placeholder="Ex: Não perca vendas para seu maior concorrente..."
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAppData(prev => {
+                              if (!prev) return prev;
+                              return { ...prev, siteInfo: { ...prev.siteInfo, ctaSub: val } };
+                            });
+                          }} 
+                        />
+                      </div>
+                    </div>
+
                     <div className="dev-form-group">
                       <label>Link da Rádio ({customRadioLink ? "Personalizada" : "Universal"} - Apenas Visualização)</label>
                       <input type="text" className="dev-input" value={customRadioLink || universalConfig.radioLink} readOnly style={{ opacity: 0.6, cursor: 'not-allowed' }} />
@@ -5172,8 +5321,8 @@ function AppContent() {
                                   }} placeholder="Cole o link direto .jpg ou .png aqui" />
                                   {c.logo && <img src={c.logo} className="dev-img-preview" alt="Preview da Logo" referrerPolicy="no-referrer" />}
                                 </div>
-                                <div className="dev-grid-2">
-                                  <div className="dev-form-group">
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginBottom: '15px' }}>
+                                  <div className="dev-form-group" style={{ margin: 0 }}>
                                     <label>Link do Instagram</label>
                                     <input type="text" className="dev-input" value={c.ig} onChange={(e) => {
                                       const val = e.target.value;
@@ -5185,7 +5334,7 @@ function AppContent() {
                                       });
                                     }} placeholder="Opcional" />
                                   </div>
-                                  <div className="dev-form-group">
+                                  <div className="dev-form-group" style={{ margin: 0 }}>
                                     <label>Link do Site</label>
                                     <input type="text" className="dev-input" value={c.website} onChange={(e) => {
                                       const val = e.target.value;
@@ -5193,6 +5342,18 @@ function AppContent() {
                                         if (!prev) return prev;
                                         const newList = [...prev.companies];
                                         newList[idx] = { ...newList[idx], website: val };
+                                        return { ...prev, companies: newList };
+                                      });
+                                    }} placeholder="Opcional" />
+                                  </div>
+                                  <div className="dev-form-group" style={{ margin: 0 }}>
+                                    <label>Link do Facebook</label>
+                                    <input type="text" className="dev-input" value={c.fb || ''} onChange={(e) => {
+                                      const val = e.target.value;
+                                      setAppData(prev => {
+                                        if (!prev) return prev;
+                                        const newList = [...prev.companies];
+                                        newList[idx] = { ...newList[idx], fb: val };
                                         return { ...prev, companies: newList };
                                       });
                                     }} placeholder="Opcional" />
@@ -5271,6 +5432,39 @@ function AppContent() {
                                       <option value="sim">Ocultar Botão (Apenas Botão de WhatsApp) 🙈</option>
                                     </select>
                                     <small style={{ color: '#aaa', fontSize: '0.7rem' }}>Se escolher ocultar, os botões "Ver Mini-site" ou "Visitar Site" sumirão no card, mantendo foco puro no WhatsApp.</small>
+                                    
+                                    <label style={{ marginTop: '15px' }}>Ação do Botão Principal (Site)</label>
+                                    <select className="dev-input" value={c.primaryButtonAction || 'minisite'} onChange={(e) => {
+                                      const val = e.target.value;
+                                      setAppData(prev => {
+                                        if (!prev) return prev;
+                                        const newList = [...prev.companies];
+                                        newList[idx] = { ...newList[idx], primaryButtonAction: val };
+                                        return { ...prev, companies: newList };
+                                      });
+                                    }}>
+                                      <option value="minisite">Abrir Mini-Site / Catálogo Interno 📲</option>
+                                      <option value="site">Abrir Site Oficial Externo (Website) 🌐</option>
+                                      <option value="instagram">Instagram Comercial 📸</option>
+                                      <option value="facebook">Página do Facebook 👥</option>
+                                    </select>
+
+                                    <label style={{ marginTop: '10px' }}>Texto Personalizado do Botão</label>
+                                    <input 
+                                      type="text" 
+                                      className="dev-input" 
+                                      value={c.primaryButtonText || ''} 
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        setAppData(prev => {
+                                          if (!prev) return prev;
+                                          const newList = [...prev.companies];
+                                          newList[idx] = { ...newList[idx], primaryButtonText: val };
+                                          return { ...prev, companies: newList };
+                                        });
+                                      }} 
+                                      placeholder="Ex: Abrir Instagram, Visitar Loja (Vazio = Padrão)" 
+                                    />
                                   </div>
                                   <div className="dev-form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'rgba(251, 191, 36, 0.05)', border: '1px dashed rgba(251, 191, 36, 0.15)', borderRadius: '12px', padding: '12px', marginTop: '12px' }}>
                                     <span style={{ fontSize: '11px', color: '#fbbf24', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px' }}>
@@ -8492,6 +8686,81 @@ function AppContent() {
                                 setCurrentAdvertiser((prev: any) => ({
                                   ...prev,
                                   company: { ...prev.company, ig: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Link do Site Oficial (Website)</label>
+                            <input 
+                              type="text"
+                              value={currentAdvertiser.company.website || ''}
+                              placeholder="https://seu-site.com"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, website: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            />
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Link do Facebook (facebook.com/...)</label>
+                            <input 
+                              type="text"
+                              value={currentAdvertiser.company.fb || ''}
+                              placeholder="https://facebook.com/sua-pagina"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, fb: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Ação do Botão Principal (Site)</label>
+                            <select 
+                              value={currentAdvertiser.company.primaryButtonAction || 'minisite'}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, primaryButtonAction: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            >
+                              <option value="minisite">Abrir Mini-Site / Catálogo Interno 📲</option>
+                              <option value="site">Abrir Site Oficial Externo (Website) 🌐</option>
+                              <option value="instagram">Instagram Comercial 📸</option>
+                              <option value="facebook">Página do Facebook 👥</option>
+                            </select>
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Texto Personalizado do Botão</label>
+                            <input 
+                              type="text"
+                              value={currentAdvertiser.company.primaryButtonText || ''}
+                              placeholder="Ex: Abrir Instagram (Vazio = Padrão)"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, primaryButtonText: val }
                                 }));
                               }}
                               className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
