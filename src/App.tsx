@@ -2990,6 +2990,87 @@ function AppContent() {
             )}
           </p>
 
+          {/* Active Referral Partner Web Radio Player */}
+          {activeReferralPartner?.hasRadioPlayer && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-8 mb-4 max-w-xl w-full bg-gradient-to-r from-amber-500/10 via-yellow-600/10 to-amber-500/10 border border-amber-500/30 rounded-2xl p-5 md:p-6 text-center shadow-[0_0_30px_rgba(251,191,36,0.15)] relative z-20 overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 p-3">
+                <span className="flex h-2 w-2 relative">
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${radioPlaying ? 'bg-red-400' : 'bg-amber-400'} opacity-75`}></span>
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${radioPlaying ? 'bg-red-500' : 'bg-amber-500'}`}></span>
+                </span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4 text-left">
+                  {/* Rotating Disk */}
+                  <div className="relative w-16 h-16 flex-shrink-0">
+                    <div 
+                      className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-500 via-yellow-600 to-amber-400 p-0.5 shadow-md animate-spin"
+                      style={{ 
+                        animationDuration: '10s',
+                        animationPlayState: radioPlaying ? 'running' : 'paused',
+                      }}
+                    >
+                      <div className="w-full h-full rounded-full bg-neutral-950 flex items-center justify-center border border-white/10 relative">
+                        <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center">
+                          <div className="w-2 h-2 rounded-full bg-black"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-[9px] text-[var(--primary)] font-mono tracking-widest uppercase font-extrabold block">RÁDIO PARCEIRO ONLINE</span>
+                    <h4 className="text-base font-black text-white leading-tight">
+                      {activeReferralPartner.customTitle || activeReferralPartner.name} Rádio
+                    </h4>
+                    <p className="text-xs text-white/60 leading-normal">
+                      {activeReferralPartner.radioSub || "Ouça agora nossa rádio digital exclusiva ao vivo!"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 flex-shrink-0 w-full sm:w-auto justify-end">
+                  {/* Volume Control */}
+                  <div className="flex items-center gap-2 bg-neutral-900/80 border border-white/5 rounded-xl px-3 py-2">
+                    <button 
+                      type="button"
+                      onClick={() => setRadioVolume(prev => prev === 0 ? 0.8 : 0)}
+                      className="text-white/60 hover:text-white transition-colors"
+                    >
+                      {radioVolume === 0 ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                    </button>
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="1" 
+                      step="0.01"
+                      value={radioVolume}
+                      onChange={(e) => setRadioVolume(parseFloat(e.target.value))}
+                      className="w-16 accent-[var(--primary)] opacity-70 hover:opacity-100 h-1 rounded-full cursor-pointer bg-neutral-800"
+                    />
+                  </div>
+
+                  {/* Play Button */}
+                  <button
+                    type="button"
+                    onClick={handleRadioTogglePlay}
+                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
+                      radioPlaying 
+                        ? 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-500/20' 
+                        : 'bg-[var(--primary)] hover:bg-amber-400 text-black hover:scale-105 shadow-lg shadow-amber-500/20'
+                    }`}
+                  >
+                    {radioPlaying ? <Pause size={18} /> : <Play size={18} className="translate-x-0.5" />}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {/* HIGH IMPACT TRIAL BANNER - GIGANTE, COM LETRAS GROSSAS E SEM CONFLITOS */}
           {!hideAdvertiserAuth && (!tenantId || tenantId.toLowerCase() === 'fortaleza') && (
             <motion.div 
@@ -4127,7 +4208,7 @@ function AppContent() {
 
                 <audio 
                   ref={radioAudioRef}
-                  src={customRadioLink || universalConfig.radioLink || (appData && appData.siteInfo && appData.siteInfo.radioLink)}
+                  src={activeReferralPartner?.radioLink || customRadioLink || universalConfig.radioLink || (appData && appData.siteInfo && appData.siteInfo.radioLink)}
                   onPlay={() => setRadioPlaying(true)}
                   onPause={() => setRadioPlaying(false)}
                 />
@@ -6626,6 +6707,59 @@ function AppContent() {
                                           });
                                         }}
                                       />
+                                    </div>
+
+                                    <label style={{ marginTop: '15px', display: 'block', color: 'var(--primary)', fontWeight: 'bold' }}>📻 Configuração de Web Rádio (Exclusivo para Parceiros Rádio)</label>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px', background: 'rgba(251, 191, 36, 0.03)', border: '1px dashed rgba(251, 191, 36, 0.15)', borderRadius: '12px', padding: '12px', marginBottom: '10px' }}>
+                                      <div className="dev-form-group">
+                                        <label style={{ fontSize: '11px', color: '#888', display: 'block', marginBottom: '4px' }}>Ativar Player de Rádio no Topo (Início da Página)?</label>
+                                        <select 
+                                          className="dev-input" 
+                                          style={{ width: '100%' }}
+                                          value={aff.hasRadioPlayer ? "sim" : "nao"}
+                                          onChange={async (e) => {
+                                            const val = e.target.value === "sim";
+                                            const tid = slugify(tenantId || 'fortaleza');
+                                            setAffiliates(prev => {
+                                              const newList = [...prev];
+                                              newList[i] = { ...newList[i], hasRadioPlayer: val };
+                                              return newList;
+                                            });
+                                            await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
+                                              hasRadioPlayer: val,
+                                              _auth: localStorage.getItem('tenantPass')
+                                            });
+                                          }}
+                                        >
+                                          <option value="nao">Não (Layout Padrão) ❌</option>
+                                          <option value="sim">Sim (Ativar Player no Topo) 📻</option>
+                                        </select>
+                                        <small style={{ color: '#aaa', fontSize: '0.7rem' }}>Se ativado, um player de rádio exclusivo aparecerá no início da página (logo abaixo da introdução) apenas para este parceiro.</small>
+                                      </div>
+                                      <div className="dev-form-group">
+                                        <label style={{ fontSize: '11px', color: '#888', display: 'block', marginBottom: '4px' }}>Link de Transmissão da Rádio (Streaming URL)</label>
+                                        <input 
+                                          type="text" 
+                                          className="dev-input" 
+                                          style={{ width: '100%' }}
+                                          value={aff.radioLink || ''} 
+                                          placeholder="Ex: https://stream.suaradio.com/stream"
+                                          onChange={async (e) => {
+                                            const val = e.target.value;
+                                            const tid = slugify(tenantId || 'fortaleza');
+                                            setAffiliates(prev => {
+                                              const newList = [...prev];
+                                              newList[i] = { ...newList[i], radioLink: val };
+                                              return newList;
+                                            });
+                                            await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
+                                              radioLink: val,
+                                              _auth: localStorage.getItem('tenantPass')
+                                            });
+                                          }}
+                                        />
+                                        <small style={{ color: '#aaa', fontSize: '0.7rem' }}>Caso fique vazio, usará o link de rádio padrão do portal.</small>
+                                      </div>
                                     </div>
 
                                     <label style={{ marginTop: '15px', display: 'block', color: 'var(--primary)', fontWeight: 'bold' }}>📝 Textos Personalizados da Página (Opcional)</label>
