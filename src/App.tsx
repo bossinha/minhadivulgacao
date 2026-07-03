@@ -538,6 +538,7 @@ function AppContent() {
   const [appData, setAppData] = useState<AppData | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
   const [showVideos, setShowVideos] = useState(false);
+  const [showRadio, setShowRadio] = useState(true);
   const [hasAffiliateSystem, setHasAffiliateSystem] = useState(false);
   const [hideAdvertiserAuth, setHideAdvertiserAuth] = useState(false);
   const [affiliates, setAffiliates] = useState<any[]>([]);
@@ -561,6 +562,7 @@ function AppContent() {
   const [showRadioCityModal, setShowRadioCityModal] = useState(false);
   const [radioCityUname, setRadioCityUname] = useState('');
   const [radioLinkInput, setRadioLinkInput] = useState('');
+  const [radioActiveInput, setRadioActiveInput] = useState(true);
 
   const [showAddAffiliateModal, setShowAddAffiliateModal] = useState(false);
   const [newAffName, setNewAffName] = useState('');
@@ -780,6 +782,7 @@ function AppContent() {
             setIsBlocked(blockedFlag);
             
             setShowVideos(tData.showVideos === true);
+            setShowRadio(tData.showRadio !== false);
             setHasAffiliateSystem(tData.hasAffiliateSystem === true);
             setHideAdvertiserAuth(tData.hideAdvertiserAuth === true);
           } else {
@@ -896,6 +899,7 @@ function AppContent() {
               setAppData(data.data || DEFAULT_DATA);
               setCustomRadioLink(data.customRadioLink || '');
               setShowVideos(data.showVideos === true);
+              setShowRadio(data.showRadio !== false);
               setHideAdvertiserAuth(data.hideAdvertiserAuth === true);
               if ((!tenantId || tenantId === 'login') && savedId !== 'fortaleza') {
                 navigate('/' + savedId);
@@ -980,6 +984,7 @@ function AppContent() {
             }
             setIsBlocked(blockedFlag);
             setShowVideos(tenantData.showVideos === true);
+            setShowRadio(tenantData.showRadio !== false);
             setHasAffiliateSystem(tenantData.hasAffiliateSystem === true);
             setHideAdvertiserAuth(tenantData.hideAdvertiserAuth === true);
           
@@ -1138,6 +1143,7 @@ function AppContent() {
           });
           setAppData(data.data || DEFAULT_DATA);
           setShowVideos(data.showVideos === true);
+          setShowRadio(data.showRadio !== false);
           setHideAdvertiserAuth(data.hideAdvertiserAuth === true);
           setIsDevAreaOpen(true);
           alert("Login realizado com sucesso!");
@@ -2037,18 +2043,22 @@ function AppContent() {
                       className="dev-btn" 
                       style={{ 
                         height: '36px', 
-                        background: udata.customRadioLink ? '#d946ef' : '#333', 
-                        borderColor: udata.customRadioLink ? '#d946ef' : '#444',
-                        color: udata.customRadioLink ? '#fff' : '#aaa' 
+                        background: udata.showRadio !== false ? (udata.customRadioLink ? '#d946ef' : '#25D366') : '#333', 
+                        borderColor: udata.showRadio !== false ? (udata.customRadioLink ? '#d946ef' : '#25D366') : '#444',
+                        color: udata.showRadio !== false ? '#fff' : '#aaa' 
                       }}
                       onClick={() => {
                         setRadioCityUname(uname);
                         setRadioLinkInput(udata.customRadioLink || '');
+                        setRadioActiveInput(udata.showRadio !== false);
                         setShowRadioCityModal(true);
                       }}
-                      title={udata.customRadioLink ? `Rádio Personalizada: ${udata.customRadioLink} (Clique para alterar)` : "Usando Rádio Universal (Clique para definir rádio personalizada)"}
+                      title={udata.showRadio !== false 
+                        ? `Rádio ATIVA: ${udata.customRadioLink ? `Personalizada (${udata.customRadioLink})` : 'Universal'} (Clique para Configurar)` 
+                        : "Rádio DESATIVADA no Portal (Clique para ATIVAR/Configurar)"
+                      }
                     >
-                      📻
+                      {udata.showRadio !== false ? '📻✅' : '📻❌'}
                     </button>
                     <button 
                       className="dev-btn" 
@@ -2495,6 +2505,18 @@ function AppContent() {
                 </div>
                 <div style={{ display: 'grid', gap: '15px' }}>
                   <div className="dev-form-group">
+                    <label>Status da Rádio no Portal</label>
+                    <select 
+                      className="dev-input" 
+                      style={{ width: '100%' }}
+                      value={radioActiveInput ? "ativo" : "inativo"}
+                      onChange={e => setRadioActiveInput(e.target.value === "ativo")}
+                    >
+                      <option value="ativo">Ativada (Visível no Portal) ✅</option>
+                      <option value="inativo">Desativada (Oculta no Portal) ❌</option>
+                    </select>
+                  </div>
+                  <div className="dev-form-group">
                     <label>Link Stream da Rádio Personalizada</label>
                     <input 
                       type="text" 
@@ -2514,8 +2536,11 @@ function AppContent() {
                       style={{ background: '#25D366', color: '#000' }}
                       onClick={async () => {
                         try {
-                          await updateDoc(doc(db, 'tenants', radioCityUname), { customRadioLink: radioLinkInput.trim() });
-                          alert("Link da rádio atualizado com sucesso!");
+                          await updateDoc(doc(db, 'tenants', radioCityUname), { 
+                            customRadioLink: radioLinkInput.trim(),
+                            showRadio: radioActiveInput
+                          });
+                          alert("Configurações de rádio atualizadas com sucesso!");
                           const s = await getDocs(collection(db, 'tenants'));
                           const u: any = {};
                           s.forEach(d => u[d.id] = d.data());
@@ -2863,7 +2888,9 @@ function AppContent() {
               <a href="#promocoes" onClick={(e) => { e.preventDefault(); scrollToSection('promocoes'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Promoções</a>
             )}
             <a href="#filtro-empresas" onClick={(e) => { e.preventDefault(); scrollToSection('filtro-empresas'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Anunciantes</a>
-            <a href="#radio-tv" onClick={(e) => { e.preventDefault(); scrollToSection('radio-tv'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Rádio & TV</a>
+            {showRadio && (
+              <a href="#radio-tv" onClick={(e) => { e.preventDefault(); scrollToSection('radio-tv'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Rádio & TV</a>
+            )}
             <a href="#servicos" onClick={(e) => { e.preventDefault(); scrollToSection('servicos'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Serviços</a>
             <a href="#depoimentos" onClick={(e) => { e.preventDefault(); scrollToSection('depoimentos'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Depoimentos</a>
           </div>
@@ -2929,7 +2956,9 @@ function AppContent() {
                   <a href="#promocoes" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('promocoes'); }} className="text-white hover:text-[var(--primary)] py-2">🔥 Promoções</a>
                 )}
                 <a href="#filtro-empresas" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('filtro-empresas'); }} className="text-white hover:text-[var(--primary)] py-2">🔍 Empresas</a>
-                <a href="#radio-tv" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('radio-tv'); }} className="text-white hover:text-[var(--primary)] py-2">📻 Rádio & TV</a>
+                {showRadio && (
+                  <a href="#radio-tv" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('radio-tv'); }} className="text-white hover:text-[var(--primary)] py-2">📻 Rádio & TV</a>
+                )}
                 <a href="#servicos" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('servicos'); }} className="text-white hover:text-[var(--primary)] py-2">🛠️ Serviços</a>
                 <a href="#depoimentos" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('depoimentos'); }} className="text-white hover:text-[var(--primary)] py-2">💬 Depoimentos</a>
               </div>
@@ -2991,7 +3020,7 @@ function AppContent() {
           </p>
 
           {/* Active Referral Partner Web Radio Player */}
-          {activeReferralPartner?.hasRadioPlayer && (
+          {showRadio && activeReferralPartner?.hasRadioPlayer && (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -4101,6 +4130,7 @@ function AppContent() {
       </section>
 
       {/* Live Radio & TV Streaming Broadcast */}
+      {showRadio && (
       <section id="radio-tv" className="relative w-full py-16 md:py-24 bg-[#0a0a10] border-b border-white/5 overflow-hidden">
         
         {/* Background graphics */}
@@ -4291,6 +4321,7 @@ function AppContent() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Professional Services Presentation */}
       <section id="servicos" className="w-full py-20 md:py-28 bg-[#050508] border-b border-white/5 relative">
