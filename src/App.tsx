@@ -539,6 +539,7 @@ function AppContent() {
   const [isBlocked, setIsBlocked] = useState(false);
   const [showVideos, setShowVideos] = useState(false);
   const [showRadio, setShowRadio] = useState(true);
+  const [tenantHasRadioPlayer, setTenantHasRadioPlayer] = useState(false);
   const [hasAffiliateSystem, setHasAffiliateSystem] = useState(false);
   const [hideAdvertiserAuth, setHideAdvertiserAuth] = useState(false);
   const [affiliates, setAffiliates] = useState<any[]>([]);
@@ -563,6 +564,7 @@ function AppContent() {
   const [radioCityUname, setRadioCityUname] = useState('');
   const [radioLinkInput, setRadioLinkInput] = useState('');
   const [radioActiveInput, setRadioActiveInput] = useState(true);
+  const [radioHeaderPlayerInput, setRadioHeaderPlayerInput] = useState(false);
 
   const [showAddAffiliateModal, setShowAddAffiliateModal] = useState(false);
   const [newAffName, setNewAffName] = useState('');
@@ -783,6 +785,7 @@ function AppContent() {
             
             setShowVideos(tData.showVideos === true);
             setShowRadio(tData.showRadio !== false);
+            setTenantHasRadioPlayer(tData.hasRadioPlayer === true);
             setHasAffiliateSystem(tData.hasAffiliateSystem === true);
             setHideAdvertiserAuth(tData.hideAdvertiserAuth === true);
           } else {
@@ -900,6 +903,7 @@ function AppContent() {
               setCustomRadioLink(data.customRadioLink || '');
               setShowVideos(data.showVideos === true);
               setShowRadio(data.showRadio !== false);
+              setTenantHasRadioPlayer(data.hasRadioPlayer === true);
               setHideAdvertiserAuth(data.hideAdvertiserAuth === true);
               if ((!tenantId || tenantId === 'login') && savedId !== 'fortaleza') {
                 navigate('/' + savedId);
@@ -985,6 +989,7 @@ function AppContent() {
             setIsBlocked(blockedFlag);
             setShowVideos(tenantData.showVideos === true);
             setShowRadio(tenantData.showRadio !== false);
+            setTenantHasRadioPlayer(tenantData.hasRadioPlayer === true);
             setHasAffiliateSystem(tenantData.hasAffiliateSystem === true);
             setHideAdvertiserAuth(tenantData.hideAdvertiserAuth === true);
           
@@ -1144,6 +1149,7 @@ function AppContent() {
           setAppData(data.data || DEFAULT_DATA);
           setShowVideos(data.showVideos === true);
           setShowRadio(data.showRadio !== false);
+          setTenantHasRadioPlayer(data.hasRadioPlayer === true);
           setHideAdvertiserAuth(data.hideAdvertiserAuth === true);
           setIsDevAreaOpen(true);
           alert("Login realizado com sucesso!");
@@ -2051,6 +2057,7 @@ function AppContent() {
                         setRadioCityUname(uname);
                         setRadioLinkInput(udata.customRadioLink || '');
                         setRadioActiveInput(udata.showRadio !== false);
+                        setRadioHeaderPlayerInput(udata.hasRadioPlayer === true);
                         setShowRadioCityModal(true);
                       }}
                       title={udata.showRadio !== false 
@@ -2517,6 +2524,21 @@ function AppContent() {
                     </select>
                   </div>
                   <div className="dev-form-group">
+                    <label>Ativar Player de Rádio no Topo (Início)?</label>
+                    <select 
+                      className="dev-input" 
+                      style={{ width: '100%' }}
+                      value={radioHeaderPlayerInput ? "sim" : "nao"}
+                      onChange={e => setRadioHeaderPlayerInput(e.target.value === "sim")}
+                    >
+                      <option value="nao">Não (Apenas no rodapé) ❌</option>
+                      <option value="sim">Sim (Mostrar Player no Início da Página) 📻</option>
+                    </select>
+                    <small style={{ color: '#aaa', fontSize: '0.75rem' }}>
+                      Se ativado, o player de rádio aparecerá no início da página (logo abaixo da introdução) para o dono do portal.
+                    </small>
+                  </div>
+                  <div className="dev-form-group">
                     <label>Link Stream da Rádio Personalizada</label>
                     <input 
                       type="text" 
@@ -2538,7 +2560,8 @@ function AppContent() {
                         try {
                           await updateDoc(doc(db, 'tenants', radioCityUname), { 
                             customRadioLink: radioLinkInput.trim(),
-                            showRadio: radioActiveInput
+                            showRadio: radioActiveInput,
+                            hasRadioPlayer: radioHeaderPlayerInput
                           });
                           alert("Configurações de rádio atualizadas com sucesso!");
                           const s = await getDocs(collection(db, 'tenants'));
@@ -3019,8 +3042,8 @@ function AppContent() {
             )}
           </p>
 
-          {/* Active Referral Partner Web Radio Player */}
-          {showRadio && activeReferralPartner?.hasRadioPlayer && (
+          {/* Active Radio Player at Top (Referral Partner or Portal Owner) */}
+          {showRadio && (activeReferralPartner?.hasRadioPlayer || tenantHasRadioPlayer) && (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -3052,13 +3075,27 @@ function AppContent() {
                     </div>
                   </div>
                   <div>
-                    <span className="text-[9px] text-[var(--primary)] font-mono tracking-widest uppercase font-extrabold block">RÁDIO PARCEIRO ONLINE</span>
-                    <h4 className="text-base font-black text-white leading-tight">
-                      {activeReferralPartner.customTitle || activeReferralPartner.name} Rádio
-                    </h4>
-                    <p className="text-xs text-white/60 leading-normal">
-                      {activeReferralPartner.radioSub || "Ouça agora nossa rádio digital exclusiva ao vivo!"}
-                    </p>
+                    {activeReferralPartner?.hasRadioPlayer ? (
+                      <>
+                        <span className="text-[9px] text-[var(--primary)] font-mono tracking-widest uppercase font-extrabold block">RÁDIO DO PARCEIRO</span>
+                        <h4 className="text-base font-black text-white leading-tight">
+                          {activeReferralPartner.customTitle || activeReferralPartner.name} Rádio
+                        </h4>
+                        <p className="text-xs text-white/60 leading-normal">
+                          {activeReferralPartner.radioSub || "Ouça agora nossa rádio digital exclusiva ao vivo!"}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-[9px] text-[var(--primary)] font-mono tracking-widest uppercase font-extrabold block">RÁDIO DO PORTAL</span>
+                        <h4 className="text-base font-black text-white leading-tight">
+                          {appData?.siteInfo?.radioTitle || "Rádio Ao Vivo"}
+                        </h4>
+                        <p className="text-xs text-white/60 leading-normal">
+                          {appData?.siteInfo?.radioSub || "Acompanhe nossa programação musical completa!"}
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
 
