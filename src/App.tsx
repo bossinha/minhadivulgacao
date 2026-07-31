@@ -9389,33 +9389,79 @@ function AppContent() {
                     const currentPlan = getCompanyPlanType(currentAdvertiser.company);
                     return (
                       <div className="flex flex-col gap-6">
-                        {/* Current Active Plan Header */}
-                        <div className="bg-[#11121c] border border-white/10 p-6 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-xl">
-                          <div>
-                            <span className="text-[10px] text-white/50 uppercase font-black tracking-widest">Seu Plano Atual</span>
-                            <div className="flex items-center gap-3 mt-1">
-                              <h3 className="text-2xl font-black text-white capitalize">
-                                {currentPlan === 'patrocinado' ? '🔥 Plano Patrocinado (1º Lugar Absoluto)' :
-                                 currentPlan === 'destaque' ? '⭐ Plano Destaque VIP' :
-                                 currentPlan === 'verificado' ? '✔ Empresa Verificada' :
-                                 'Gratuito (Básico)'}
-                              </h3>
+                        {/* Current Active Plan Header & Conversion Triggers */}
+                        <div className="bg-gradient-to-r from-[#11121c] via-[#161726] to-[#11121c] border border-amber-500/30 p-6 rounded-3xl flex flex-col gap-5 shadow-2xl relative overflow-hidden">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                            <div>
+                              <span className="text-[10px] text-amber-400 font-mono font-black uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                                ⭐ Status do Seu Negócio
+                              </span>
+                              <div className="flex items-center gap-3 mt-2">
+                                <h3 className="text-2xl font-black text-white capitalize">
+                                  {currentPlan === 'patrocinado' ? '🔥 Plano Patrocinado (1º Lugar Absoluto)' :
+                                   currentPlan === 'destaque' ? '⭐ Plano Destaque VIP' :
+                                   currentPlan === 'verificado' ? '✔ Empresa Verificada' :
+                                   '🟢 Plano Gratuito (Perfil Básico)'}
+                                </h3>
+                              </div>
+                              <p className="text-xs text-white/70 mt-1.5 max-w-2xl leading-relaxed">
+                                {currentPlan === 'patrocinado' ? 'Sua empresa está no topo absoluto de todas as pesquisas com selo animado e prioridade máxima!' :
+                                 currentPlan === 'destaque' ? 'Sua empresa aparece antes de todas as empresas gratuitas com selo estelar de destaque!' :
+                                 currentPlan === 'verificado' ? 'Sua empresa transmite confiança total para clientes com o selo verde de Verificado.' :
+                                 'Sua empresa possui o perfil básico e está listada após as empresas Premium no portal.'}
+                              </p>
                             </div>
-                            <p className="text-xs text-white/60 mt-1">
-                              {currentPlan === 'patrocinado' ? 'Sua empresa está no topo absoluto de todas as pesquisas com selo animado e prioridade máxima!' :
-                               currentPlan === 'destaque' ? 'Sua empresa aparece antes de todas as empresas gratuitas com selo estelar de destaque!' :
-                               currentPlan === 'verificado' ? 'Sua empresa transmite confiança total para clientes com o selo verde de Verificado.' :
-                               'Cadastre-se gratuitamente ou faça upgrade para aparecer no topo e receber mais clientes.'}
-                            </p>
+
+                            <a 
+                              href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero ativar o Plano Premium para minha empresa (${currentAdvertiser?.company?.name}) para aparecer em 1º lugar!`)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:brightness-110 text-black px-7 py-4 rounded-2xl font-black text-xs uppercase tracking-wider text-center shadow-xl shadow-amber-500/20 shrink-0 cursor-pointer flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
+                            >
+                              🚀 Quero Aparecer Primeiro
+                            </a>
                           </div>
-                          <a 
-                            href={`https://wa.me/${(appData?.siteInfo?.phone || '5585992862177').replace(/[^0-9]/g, '') || '5585992862177'}?text=${encodeURIComponent(`Olá! Gostaria de fazer um upgrade de plano no portal para minha empresa (${currentAdvertiser.company.name}).`)}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center shadow-lg shrink-0 cursor-pointer flex items-center justify-center gap-2"
-                          >
-                            💬 SOLICITAR UPGRADE NO WHATSAPP
-                          </a>
+
+                          {/* Conversion Triggers Banner */}
+                          {currentPlan === 'gratuito' && (
+                            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 text-xs text-amber-200/90 flex flex-col gap-2">
+                              <div className="flex items-center gap-2 font-black text-amber-300 text-xs uppercase tracking-wide">
+                                ⚡ GATILHOS DE VISIBILIDADE & VANTAGEM COMPETITIVA:
+                              </div>
+                              <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-1 font-medium">
+                                <li className="flex items-center gap-1.5">
+                                  <span>🔴</span>
+                                  <span><strong>Sua empresa está atrás das empresas Premium.</strong></span>
+                                </li>
+                                <li className="flex items-center gap-1.5">
+                                  <span>🔎</span>
+                                  <span><strong>As empresas Premium aparecem primeiro nas pesquisas.</strong></span>
+                                </li>
+                                <li className="flex items-center gap-1.5">
+                                  <span>🤖</span>
+                                  <span><strong>As empresas Premium possuem prioridade nas recomendações do Atendente Virtual.</strong></span>
+                                </li>
+                                <li className="flex items-center gap-1.5 text-emerald-300 font-bold">
+                                  <span>🚀</span>
+                                  <span>Ative o Premium para aumentar sua visibilidade e fechar mais vendas!</span>
+                                </li>
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Modern Badges Showcase */}
+                          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
+                            <span className="text-[10px] text-white/40 uppercase font-bold tracking-widest mr-2">Selos de Destaque Oficial:</span>
+                            <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] px-3 py-1 rounded-full font-black flex items-center gap-1 shadow">
+                              ⭐ Premium
+                            </span>
+                            <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] px-3 py-1 rounded-full font-black flex items-center gap-1 shadow">
+                              ✔ Verificada
+                            </span>
+                            <span className="bg-red-500/20 text-red-300 border border-red-500/40 text-[11px] px-3 py-1 rounded-full font-black flex items-center gap-1 shadow">
+                              🔥 Empresa Recomendada
+                            </span>
+                          </div>
                         </div>
 
                         {/* Four Tiers Comparison Grid */}
@@ -9424,129 +9470,188 @@ function AppContent() {
                           <div className={`bg-[#0f1016] border rounded-3xl p-6 flex flex-col justify-between ${currentPlan === 'gratuito' ? 'border-white/30 ring-1 ring-white/20' : 'border-white/5 opacity-80'}`}>
                             <div>
                               <span className="text-[10px] font-mono text-white/40 uppercase font-extrabold tracking-widest">Nível 1</span>
-                              <h4 className="text-lg font-black text-white mt-1">Gratuito</h4>
+                              <h4 className="text-lg font-black text-white mt-1 flex items-center gap-1.5">
+                                🟢 Gratuito
+                              </h4>
                               <div className="text-xl font-black text-white/80 mt-2 font-mono">R$ 0</div>
                               <ul className="text-xs text-white/70 space-y-2 mt-4">
-                                <li>✔ Perfil da empresa completo</li>
-                                <li>✔ Logo, endereço, WhatsApp</li>
+                                <li>✔ Perfil básico da empresa</li>
+                                <li>✔ Logo</li>
+                                <li>✔ Endereço</li>
+                                <li>✔ WhatsApp</li>
                                 <li>✔ Horário de funcionamento</li>
-                                <li>✔ Redes sociais (IG e FB)</li>
-                                <li>✔ Galeria até 10 fotos</li>
-                                <li>✔ Catálogo até 5 produtos</li>
-                                <li>✔ Aparece nas buscas</li>
+                                <li>✔ Instagram</li>
+                                <li>✔ Facebook</li>
+                                <li>✔ Até 5 fotos</li>
+                                <li>✔ Até 5 produtos</li>
+                                <li className="text-white/50">✔ Aparece nas buscas (sempre após empresas Premium)</li>
                               </ul>
                             </div>
-                            {currentPlan === 'gratuito' && (
-                              <div className="mt-6 text-center text-xs font-black text-white/50 bg-white/5 py-2.5 rounded-xl uppercase tracking-wider">
-                                Plano Ativo
+                            <div>
+                              {/* Observation */}
+                              <div className="mt-4 p-3 bg-white/5 border border-white/10 rounded-2xl text-[11px] text-white/60 leading-tight">
+                                💡 <em>O plano gratuito permite que sua empresa esteja presente no portal.</em>
                               </div>
-                            )}
+
+                              {currentPlan === 'gratuito' && (
+                                <div className="mt-4 text-center text-xs font-black text-white/50 bg-white/5 py-2.5 rounded-xl uppercase tracking-wider">
+                                  Plano Ativo
+                                </div>
+                              )}
+                            </div>
                           </div>
 
-                          {/* Verificado */}
-                          <div className={`bg-[#0f1016] border rounded-3xl p-6 flex flex-col justify-between ${currentPlan === 'verificado' ? 'border-emerald-500 ring-1 ring-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'border-emerald-500/20'}`}>
+                          {/* Verificado - Confiança */}
+                          <div className={`bg-[#0f1016] border rounded-3xl p-6 flex flex-col justify-between ${currentPlan === 'verificado' ? 'border-emerald-500 ring-1 ring-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'border-emerald-500/30'}`}>
                             <div>
-                              <span className="text-[10px] font-mono text-emerald-400 uppercase font-extrabold tracking-widest">Nível 2</span>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-mono text-emerald-400 uppercase font-extrabold tracking-widest">Nível 2</span>
+                                <span className="bg-emerald-500/20 text-emerald-300 text-[9px] font-black px-2 py-0.5 rounded-full border border-emerald-500/40">
+                                  ✔ Verificada
+                                </span>
+                              </div>
                               <h4 className="text-lg font-black text-emerald-400 mt-1 flex items-center gap-1.5">
-                                ✔ Verificado
+                                ⭐ Premium Confiança
                               </h4>
-                              <div className="text-xl font-black text-white mt-1 font-mono">Plano Confiança</div>
                               <div className="text-2xl font-black text-emerald-400 mt-1 font-mono flex items-baseline gap-1">
                                 R$ 39,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
                               </div>
-                              <ul className="text-xs text-white/80 space-y-2 mt-4">
-                                <li className="text-emerald-400 font-bold">✔ Selo de Empresa Verificada</li>
-                                <li>✔ Aparece acima das grátis</li>
-                                <li>✔ Transmite segurança ao cliente</li>
-                                <li>✔ Galeria com mais fotos</li>
-                                <li>✔ Produtos/Serviços ilimitados</li>
-                                <li>✔ Estatísticas de visualizações</li>
+                              <ul className="text-xs text-white/90 space-y-2 mt-4">
+                                <li className="text-emerald-400 font-bold">⭐ Empresa Verificada</li>
+                                <li>⭐ Aparece antes das empresas gratuitas</li>
+                                <li>⭐ Destaque no Atendente Virtual</li>
+                                <li>⭐ Prioridade nas pesquisas</li>
+                                <li>⭐ Até 30 fotos</li>
+                                <li>⭐ Até 100 produtos</li>
+                                <li>⭐ Cadastro de vídeos & Promoções</li>
+                                <li>⭐ Botão WhatsApp destacado</li>
+                                <li>⭐ Catálogo completo</li>
+                                <li className="text-emerald-300/90">⭐ Estatísticas completas (Visualizações, Cliques, WhatsApp, Relatório)</li>
+                                <li className="text-emerald-300/90 font-bold">⭐ Badge Premium & Card diferenciado</li>
                               </ul>
                             </div>
-                            {currentPlan === 'verificado' ? (
-                              <div className="mt-6 text-center text-xs font-black text-emerald-400 bg-emerald-500/10 py-2.5 rounded-xl uppercase tracking-wider">
-                                Plano Ativo
+                            <div>
+                              {/* Observation */}
+                              <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-[11px] text-emerald-200/90 leading-tight">
+                                🚀 <em>O plano Premium aumenta a visibilidade da sua empresa, coloca seu negócio na frente dos concorrentes e gera mais oportunidades de contato.</em>
                               </div>
-                            ) : (
-                              <a 
-                                href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano Confiança Verificado (R$ 39,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="mt-6 text-center text-xs font-black text-black bg-emerald-400 hover:bg-emerald-300 py-3 rounded-xl uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-1.5"
-                              >
-                                💬 UPGRADE R$ 39,90
-                              </a>
-                            )}
+
+                              {currentPlan === 'verificado' ? (
+                                <div className="mt-4 text-center text-xs font-black text-emerald-400 bg-emerald-500/10 py-2.5 rounded-xl uppercase tracking-wider">
+                                  Plano Ativo
+                                </div>
+                              ) : (
+                                <a 
+                                  href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano Premium Confiança (R$ 39,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="mt-4 text-center text-xs font-black text-black bg-emerald-400 hover:bg-emerald-300 py-3.5 rounded-xl uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                                >
+                                  🚀 Quero Aparecer Primeiro
+                                </a>
+                              )}
+                            </div>
                           </div>
 
-                          {/* Destaque */}
-                          <div className={`bg-[#0f1016] border rounded-3xl p-6 flex flex-col justify-between ${currentPlan === 'destaque' ? 'border-amber-400 ring-1 ring-amber-400/50 shadow-[0_0_15px_rgba(251,191,36,0.2)]' : 'border-amber-500/20'}`}>
+                          {/* Destaque VIP */}
+                          <div className={`bg-[#0f1016] border rounded-3xl p-6 flex flex-col justify-between ${currentPlan === 'destaque' ? 'border-amber-400 ring-1 ring-amber-400/50 shadow-[0_0_15px_rgba(251,191,36,0.25)]' : 'border-amber-500/30'}`}>
                             <div>
-                              <span className="text-[10px] font-mono text-amber-400 uppercase font-extrabold tracking-widest">Nível 3</span>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-mono text-amber-400 uppercase font-extrabold tracking-widest">Nível 3</span>
+                                <span className="bg-amber-500/20 text-amber-300 text-[9px] font-black px-2 py-0.5 rounded-full border border-amber-500/40">
+                                  ⭐ Premium VIP
+                                </span>
+                              </div>
                               <h4 className="text-lg font-black text-amber-400 mt-1 flex items-center gap-1.5">
-                                ⭐ Destaque VIP
+                                ⭐ Premium Destaque VIP
                               </h4>
-                              <div className="text-xl font-black text-white mt-1 font-mono">Plano Destaque</div>
                               <div className="text-2xl font-black text-amber-400 mt-1 font-mono flex items-baseline gap-1">
                                 R$ 49,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
                               </div>
-                              <ul className="text-xs text-white/80 space-y-2 mt-4">
-                                <li className="text-amber-400 font-bold">⭐ Selo Destaque Estelar</li>
-                                <li>✔ Aparece antes dos verificados</li>
-                                <li>✔ Borda e iluminação VIP</li>
-                                <li>✔ Prioridade máxima de busca</li>
-                                <li>✔ Suporte com especialista</li>
+                              <ul className="text-xs text-white/90 space-y-2 mt-4">
+                                <li className="text-amber-400 font-bold">⭐ Empresa Verificada & Selo VIP</li>
+                                <li>⭐ Aparece antes das gratuitas e verificadas</li>
+                                <li>⭐ Destaque Especial no Atendente Virtual</li>
+                                <li>⭐ Prioridade Alta nas pesquisas</li>
+                                <li>⭐ Fotos, Produtos & Vídeos Ilimitados</li>
+                                <li>⭐ Borda e Iluminação VIP no Portal</li>
+                                <li>⭐ Botão WhatsApp em Destaque Especial</li>
+                                <li>⭐ Catálogo Completo & Promoções</li>
+                                <li className="text-amber-300/90">⭐ Estatísticas completas (Visualizações, Cliques, WhatsApp, Relatórios)</li>
+                                <li className="text-amber-300/90 font-bold">⭐ Badge Premium & Card diferenciado</li>
                               </ul>
                             </div>
-                            {currentPlan === 'destaque' ? (
-                              <div className="mt-6 text-center text-xs font-black text-amber-400 bg-amber-500/10 py-2.5 rounded-xl uppercase tracking-wider">
-                                Plano Ativo
+                            <div>
+                              {/* Observation */}
+                              <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-[11px] text-amber-200/90 leading-tight">
+                                🚀 <em>O plano Premium aumenta a visibilidade da sua empresa, coloca seu negócio na frente dos concorrentes e gera mais oportunidades de contato.</em>
                               </div>
-                            ) : (
-                              <a 
-                                href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano Destaque VIP (R$ 49,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="mt-6 text-center text-xs font-black text-black bg-amber-400 hover:bg-amber-300 py-3 rounded-xl uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-1.5"
-                              >
-                                💬 UPGRADE R$ 49,90
-                              </a>
-                            )}
+
+                              {currentPlan === 'destaque' ? (
+                                <div className="mt-4 text-center text-xs font-black text-amber-400 bg-amber-500/10 py-2.5 rounded-xl uppercase tracking-wider">
+                                  Plano Ativo
+                                </div>
+                              ) : (
+                                <a 
+                                  href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano Premium Destaque VIP (R$ 49,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="mt-4 text-center text-xs font-black text-black bg-gradient-to-r from-amber-400 to-yellow-400 hover:brightness-110 py-3.5 rounded-xl uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                                >
+                                  🚀 Quero Aparecer Primeiro
+                                </a>
+                              )}
+                            </div>
                           </div>
 
-                          {/* Patrocinado */}
-                          <div className={`bg-[#0f1016] border rounded-3xl p-6 flex flex-col justify-between ${currentPlan === 'patrocinado' ? 'border-red-500 ring-1 ring-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.3)]' : 'border-red-500/20'}`}>
+                          {/* Patrocinado Top 1 */}
+                          <div className={`bg-[#0f1016] border rounded-3xl p-6 flex flex-col justify-between ${currentPlan === 'patrocinado' ? 'border-red-500 ring-1 ring-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.3)]' : 'border-red-500/30'}`}>
                             <div>
-                              <span className="text-[10px] font-mono text-red-400 uppercase font-extrabold tracking-widest">Nível Max</span>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-mono text-red-400 uppercase font-extrabold tracking-widest">Nível Max</span>
+                                <span className="bg-red-500/20 text-red-300 text-[9px] font-black px-2 py-0.5 rounded-full border border-red-500/40">
+                                  🔥 Empresa Recomendada
+                                </span>
+                              </div>
                               <h4 className="text-lg font-black text-red-400 mt-1 flex items-center gap-1.5">
-                                🔥 Patrocinado
+                                🔥 Premium Patrocinado (1º Lugar)
                               </h4>
-                              <div className="text-xl font-black text-white mt-1 font-mono">1º Lugar Absoluto</div>
                               <div className="text-2xl font-black text-red-400 mt-1 font-mono flex items-baseline gap-1">
                                 R$ 59,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
                               </div>
-                              <ul className="text-xs text-white/80 space-y-2 mt-4">
+                              <ul className="text-xs text-white/90 space-y-2 mt-4">
                                 <li className="text-red-400 font-bold">🔥 1ª Posição Garantida (Top 1)</li>
-                                <li>✔ Posição Fixa Escolhida</li>
-                                <li>✔ Borda Dourada Animada</li>
-                                <li>✔ Atendimento via IA Prioritário</li>
-                                <li>✔ Recomendação no WhatsApp Chat</li>
+                                <li>⭐ Posição Fixa Escolhida & Borda Dourada Animada</li>
+                                <li>⭐ Prioridade Máxima no Atendente Virtual IA</li>
+                                <li>⭐ Recomendação Direta no WhatsApp Chat</li>
+                                <li>⭐ Atendimento via IA Prioritário</li>
+                                <li>⭐ Fotos, Produtos & Vídeos Ilimitados</li>
+                                <li>⭐ Botão WhatsApp em Destaque Absoluto</li>
+                                <li>⭐ Estatísticas Completas (Visualizações, Cliques, WhatsApp)</li>
+                                <li className="text-red-300/90 font-bold">⭐ Badge Premium & Card diferenciado</li>
                               </ul>
                             </div>
-                            {currentPlan === 'patrocinado' ? (
-                              <div className="mt-6 text-center text-xs font-black text-red-400 bg-red-500/10 py-2.5 rounded-xl uppercase tracking-wider">
-                                Plano Ativo
+                            <div>
+                              {/* Observation */}
+                              <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-[11px] text-red-200/90 leading-tight">
+                                🚀 <em>O plano Premium aumenta a visibilidade da sua empresa, coloca seu negócio na frente dos concorrentes e gera mais oportunidades de contato.</em>
                               </div>
-                            ) : (
-                              <a 
-                                href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano 1º Lugar Absoluto / Patrocinado (R$ 59,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="mt-6 text-center text-xs font-black text-white bg-gradient-to-r from-red-600 to-amber-600 hover:brightness-110 py-3 rounded-xl uppercase tracking-wider transition-all shadow-lg flex items-center justify-center gap-1.5"
-                              >
-                                💬 UPGRADE R$ 59,90
-                              </a>
-                            )}
+
+                              {currentPlan === 'patrocinado' ? (
+                                <div className="mt-4 text-center text-xs font-black text-red-400 bg-red-500/10 py-2.5 rounded-xl uppercase tracking-wider">
+                                  Plano Ativo
+                                </div>
+                              ) : (
+                                <a 
+                                  href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano Premium Patrocinado Top 1 (R$ 59,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="mt-4 text-center text-xs font-black text-white bg-gradient-to-r from-red-600 via-amber-600 to-yellow-500 hover:brightness-110 py-3.5 rounded-xl uppercase tracking-wider transition-all shadow-lg flex items-center justify-center gap-1.5 cursor-pointer"
+                                >
+                                  🚀 Quero Aparecer Primeiro
+                                </a>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
