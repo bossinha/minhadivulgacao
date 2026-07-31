@@ -353,9 +353,9 @@ export function getCompanyPlanType(company: any): 'patrocinado' | 'destaque' | '
     }
   }
 
-  if (company.patrocinado || company.tipoPlano === 'patrocinado') return 'patrocinado';
-  if (company.destaque || company.tipoPlano === 'destaque' || (company.featured && !company.tipoPlano)) return 'destaque';
-  if (company.verificado || company.tipoPlano === 'verificado') return 'verificado';
+  if (company.patrocinado || company.tipoPlano === 'patrocinado' || company.plan === 'sponsored' || company.plan === 'patrocinado') return 'patrocinado';
+  if (company.destaque || company.tipoPlano === 'destaque' || company.tipoPlano === 'premium' || company.plan === 'premium' || company.hasPlan || (company.featured && company.tipoPlano !== 'gratuito')) return 'destaque';
+  if (company.verificado || company.tipoPlano === 'verificado' || company.isVerified) return 'verificado';
   return 'gratuito';
 }
 
@@ -363,12 +363,12 @@ export function getCompanyOrderScore(company: any): number {
   if (!company) return 0;
   const planType = getCompanyPlanType(company);
   let planTier = 100000;
-  if (planType === 'patrocinado') planTier = 400000;
-  else if (planType === 'destaque') planTier = 300000;
-  else if (planType === 'verificado') planTier = 200000;
+  if (planType === 'patrocinado') planTier = 900000;
+  else if (planType === 'destaque') planTier = 500000;
+  else if (planType === 'verificado') planTier = 300000;
 
-  const posicaoFixa = Number(company.posicaoFixa || company.posicao || 0);
-  const fixedPosBonus = (posicaoFixa > 0 && posicaoFixa <= 10) ? (100 - posicaoFixa) * 1000 : 0;
+  const posFixa = Number(company.posicaoCategoria || company.posicaoFixa || company.posicao || 0);
+  const fixedPosBonus = (posFixa > 0 && posFixa <= 10) ? (11 - posFixa) * 20000 : 0;
 
   const priority = Number(company.prioridade || 0);
   const views = Number(company.views || 0);
@@ -388,6 +388,41 @@ export function sortCompaniesByPlanAndPriority(companies: any[]): any[] {
   });
 }
 
+export function getCompanyCategoryRanking(company: any, allCompanies: any[]): {
+  position: number;
+  totalInCat: number;
+  premiumInCat: number;
+  rankBadge: string;
+} {
+  if (!company) return { position: 1, totalInCat: 1, premiumInCat: 0, rankBadge: '1º Lugar' };
+
+  const catName = (company.category || '').trim().toLowerCase();
+  const sameCat = (allCompanies || []).filter(c => c && c.active !== false && (c.category || '').trim().toLowerCase() === catName);
+  
+  const pool = sameCat.length > 0 ? sameCat : [company];
+  const sortedCat = sortCompaniesByPlanAndPriority(pool);
+
+  const compIdStr = String(company.id || '');
+  const compNameStr = (company.name || '').toLowerCase().trim();
+
+  const index = sortedCat.findIndex(c => String(c.id || '') === compIdStr || (c.name || '').toLowerCase().trim() === compNameStr);
+  const position = index !== -1 ? index + 1 : sortedCat.length;
+
+  const premiumInCat = pool.filter(c => getCompanyPlanType(c) !== 'gratuito').length;
+
+  let rankBadge = `#${position}º Lugar`;
+  if (position === 1) rankBadge = '🥇 1º Lugar';
+  else if (position === 2) rankBadge = '🥈 2º Lugar';
+  else if (position === 3) rankBadge = '🥉 3º Lugar';
+
+  return {
+    position,
+    totalInCat: pool.length || 1,
+    premiumInCat,
+    rankBadge
+  };
+}
+
 export function calculateVisibilityScore(company: any): { score: number; checklist: { id: string; label: string; bonus: number; done: boolean; action: string }[] } {
   if (!company) return { score: 0, checklist: [] };
 
@@ -399,7 +434,7 @@ export function calculateVisibilityScore(company: any): { score: number; checkli
   const hasVideo = Boolean(company.videoUrl || company.video);
   const hasPromo = Boolean(company.items && company.items.some((i: any) => i.promo || i.discount || i.originalPrice));
   const isVerificado = Boolean(company.verificado || company.tipoPlano === 'verificado');
-  const isDestaque = Boolean(company.destaque || company.tipoPlano === 'destaque' || company.featured);
+  const isDestaque = Boolean(company.destaque || company.tipoPlano === 'destaque' || company.tipoPlano === 'premium' || company.featured);
   const isPatrocinado = Boolean(company.patrocinado || company.tipoPlano === 'patrocinado');
 
   const checklist = [
@@ -6097,6 +6132,47 @@ function AppContent() {
                                 </div>
 
                                 <div className="dev-form-group" style={{ margin: 0 }}>
+                                  <label style={{ fontSize: '11px', color: '#bbb', display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Posição na Categoria (1º, 2º, 3º lugar):</label>
+                                  <select 
+                                    className="dev-input" 
+                                    style={{ padding: '8px', fontSize: '12px', background: '#12131a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                                    value={ad.posicaoCategoria || ad.posicaoFixa || 0}
+                                    onChange={async (e) => {
+                                      const posVal = Number(e.target.value) || 0;
+                                      setIsAdLoading(true);
+                                      try {
+                                        const docRef = doc(db, 'advertisers', ad.id);
+                                        await setDoc(docRef, {
+                                          email: ad.email,
+                                          password: ad.password || '123456',
+                                          tenantId: slugify(tenantId || 'fortaleza'),
+                                          expiresAt: ad.expiresAt || '',
+                                          createdAt: ad.createdAt || '',
+                                          company: {
+                                            ...ad,
+                                            posicaoCategoria: posVal,
+                                            posicaoFixa: posVal,
+                                            expiresAt: ad.expiresAt || '',
+                                            createdAt: ad.createdAt || ''
+                                          }
+                                        });
+                                        await fetchAdvertisers(tenantId || 'fortaleza');
+                                        alert(`Posição na categoria alterada para ${posVal === 0 ? 'Automática' : posVal + 'º Lugar'}!`);
+                                      } catch(ee) {
+                                        console.error(ee);
+                                      } finally {
+                                        setIsAdLoading(false);
+                                      }
+                                    }}
+                                  >
+                                    <option value={0}>Automática (Por Pontuação/Visualizações)</option>
+                                    <option value={1}>🥇 1º Lugar na Categoria (Exclusivo)</option>
+                                    <option value={2}>🥈 2º Lugar na Categoria</option>
+                                    <option value={3}>🥉 3º Lugar na Categoria</option>
+                                  </select>
+                                </div>
+
+                                <div className="dev-form-group" style={{ margin: 0 }}>
                                   <label style={{ fontSize: '11px', color: '#bbb', display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Posição Fixa no Topo:</label>
                                   <select 
                                     className="dev-input" 
@@ -7318,36 +7394,85 @@ function AppContent() {
                     ))}
                   </div>
                 )}
-                {msg.results && msg.results.length > 0 && (
-                  <div style={{ marginTop: '10px' }}>
-                    {msg.results.map(c => (
-                      <div key={c.id} className="chat-result-card">
+                {msg.results && msg.results.length > 0 && (() => {
+                  const recommended = msg.results.filter((c: any) => getCompanyPlanType(c) !== 'gratuito');
+                  const others = msg.results.filter((c: any) => getCompanyPlanType(c) === 'gratuito');
+
+                  const renderCard = (c: any) => {
+                    const pType = getCompanyPlanType(c);
+                    return (
+                      <div key={c.id} className="chat-result-card" style={{
+                        border: pType === 'patrocinado' ? '1px solid rgba(245, 158, 11, 0.6)' : pType === 'destaque' ? '1px solid rgba(251, 191, 36, 0.4)' : pType === 'verificado' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255, 255, 255, 0.08)'
+                      }}>
                         <div className="chat-result-info">
-                          <img src={c.logo} className="chat-result-logo" referrerPolicy="no-referrer" />
+                          <img src={c.logo} className="chat-result-logo" referrerPolicy="no-referrer" alt={c.name} />
                           <div className="chat-result-details">
-                            <div className="chat-result-name">{c.name}</div>
-                            <div className="chat-result-cat">{c.category}</div>
+                            <div className="chat-result-name" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              {c.name}
+                            </div>
+                            <div className="chat-result-cat" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                              <span>{c.category}</span>
+                              {pType === 'patrocinado' && (
+                                <span style={{ background: 'linear-gradient(90deg, #ef4444, #f59e0b)', color: '#fff', fontSize: '8px', fontWeight: 900, padding: '1px 5px', borderRadius: '10px' }}>
+                                  🔥 DESTAQUE
+                                </span>
+                              )}
+                              {pType === 'destaque' && (
+                                <span style={{ background: '#f59e0b', color: '#000', fontSize: '8px', fontWeight: 900, padding: '1px 5px', borderRadius: '10px' }}>
+                                  ⭐ RECOMENDADO
+                                </span>
+                              )}
+                              {pType === 'verificado' && (
+                                <span style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', fontSize: '8px', fontWeight: 900, padding: '1px 5px', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                                  ✔ VERIFICADO
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <div className="chat-result-actions" style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
-                          <a href={`https://wa.me/${c.wa}`} target="_blank" className="chat-result-wa" style={{ flex: 1 }}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                          <a href={`https://wa.me/${(c.wa || '').replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="chat-result-wa" style={{ flex: 1 }}>
+                            WhatsApp 💬
                           </a>
                           {c.ig && c.ig !== '' && c.ig !== '#' && (
-                            <a href={c.ig} target="_blank" className="chat-result-wa" style={{ flex: 1, background: '#E1306C' }}>
-                              IG
+                            <a href={c.ig} target="_blank" rel="noreferrer" className="chat-result-wa" style={{ flex: 1, background: '#E1306C' }}>
+                              IG 📸
                             </a>
                           )}
                           {c.website && c.website !== '' && (
-                            <a href={c.website} target="_blank" className="chat-result-wa" style={{ flex: 1, background: 'var(--primary)', color: 'black' }}>
-                              Web
+                            <a href={c.website} target="_blank" rel="noreferrer" className="chat-result-wa" style={{ flex: 1, background: 'var(--primary)', color: 'black' }}>
+                              Web 🌐
                             </a>
                           )}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    );
+                  };
+
+                  return (
+                    <div style={{ marginTop: '10px' }}>
+                      {recommended.length > 0 && (
+                        <div style={{ marginBottom: '12px' }}>
+                          <div style={{ fontSize: '10px', fontWeight: 800, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+                            🔥 EMPRESAS RECOMENDADAS EM DESTAQUE:
+                          </div>
+                          {recommended.map(renderCard)}
+                        </div>
+                      )}
+
+                      {others.length > 0 && (
+                        <div>
+                          {recommended.length > 0 && (
+                            <div style={{ fontSize: '10px', fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', marginTop: '10px' }}>
+                              📍 OUTROS ESTABELECIMENTOS LOCAIS:
+                            </div>
+                          )}
+                          {others.map(renderCard)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             ))}
             {isTyping && (
@@ -9063,29 +9188,115 @@ function AppContent() {
                   {adDashboardTab === 'metricas' && (() => {
                     const { score, checklist } = calculateVisibilityScore(currentAdvertiser.company);
                     const currentPlan = getCompanyPlanType(currentAdvertiser.company);
+                    const rankInfo = getCompanyCategoryRanking(currentAdvertiser.company, displayedCompanies);
+                    const views = Number(currentAdvertiser.company.views || 0);
+
                     return (
                       <div className="flex flex-col gap-6">
+                        {/* Dynamic Ranking & Visibility Banner */}
+                        <div className="bg-gradient-to-r from-amber-950/70 via-[#181308] to-amber-950/70 border-2 border-amber-500/40 p-6 rounded-3xl shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                          <div className="flex-1 z-10">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="bg-amber-500 text-black text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full tracking-widest">
+                                {rankInfo.rankBadge}
+                              </span>
+                              <span className="text-xs text-amber-300 font-bold font-mono">
+                                Categoria: {currentAdvertiser.company.category || 'Geral'}
+                              </span>
+                            </div>
+                            <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                              Sua empresa está na posição <span className="text-amber-400 font-mono">#{rankInfo.position} de {rankInfo.totalInCat}</span> concorrentes.
+                            </h3>
+                            <p className="text-xs text-white/70 mt-2 max-w-2xl leading-relaxed">
+                              {currentPlan === 'gratuito' 
+                                ? 'As empresas com Plano Premium aparecem antes das gratuitas nas buscas do portal e no Atendente Virtual, recebendo até 10x mais contatos no WhatsApp!' 
+                                : 'Sua empresa possui posição de alta visibilidade e prioridade máxima nas pesquisas dos clientes no portal!'}
+                            </p>
+                          </div>
+                          
+                          <button
+                            type="button"
+                            onClick={() => setIsCheckoutOpen(true)}
+                            className="z-10 shrink-0 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:brightness-110 text-black font-black text-xs uppercase tracking-widest px-6 py-4 rounded-2xl shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer flex items-center gap-2"
+                          >
+                            ⭐ Quero Aparecer em Primeiro
+                          </button>
+                        </div>
+
+                        {/* Automated Conversion Trigger Nudges */}
+                        {currentPlan === 'gratuito' && (
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-[#11121d] border border-amber-500/20 p-4 rounded-2xl flex flex-col justify-between">
+                              <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase font-mono">
+                                <span>📊</span> Tráfego do Perfil
+                              </div>
+                              <p className="text-xs text-white/80 mt-2 leading-relaxed">
+                                Sua empresa recebeu <strong className="text-white">{views} visualizações</strong>. Você está atrás de <strong className="text-amber-400">{rankInfo.premiumInCat || 1} empresas Premium</strong> na sua categoria.
+                              </p>
+                              <button 
+                                type="button" 
+                                onClick={() => setIsCheckoutOpen(true)}
+                                className="mt-3 text-[10px] font-black text-amber-400 uppercase tracking-widest hover:underline text-left cursor-pointer"
+                              >
+                                🚀 Passar a Frente no Topo →
+                              </button>
+                            </div>
+
+                            <div className="bg-[#11121d] border border-amber-500/20 p-4 rounded-2xl flex flex-col justify-between">
+                              <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase font-mono">
+                                <span>🎯</span> Ranking de Buscas
+                              </div>
+                              <p className="text-xs text-white/80 mt-2 leading-relaxed">
+                                Posição atual: <strong className="text-white font-mono">#{rankInfo.position}</strong>. Empresas Premium ocupam as primeiras posições das pesquisas no portal.
+                              </p>
+                              <button 
+                                type="button" 
+                                onClick={() => setIsCheckoutOpen(true)}
+                                className="mt-3 text-[10px] font-black text-amber-400 uppercase tracking-widest hover:underline text-left cursor-pointer"
+                              >
+                                ⭐ Garantir Posição Premium →
+                              </button>
+                            </div>
+
+                            <div className="bg-[#11121d] border border-amber-500/20 p-4 rounded-2xl flex flex-col justify-between">
+                              <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase font-mono">
+                                <span>🤖</span> Atendente Virtual
+                              </div>
+                              <p className="text-xs text-white/80 mt-2 leading-relaxed">
+                                Clientes buscando por <strong className="text-white">{currentAdvertiser.company.category}</strong> recebem recomendações diretas do Atendente Virtual.
+                              </p>
+                              <button 
+                                type="button" 
+                                onClick={() => setIsCheckoutOpen(true)}
+                                className="mt-3 text-[10px] font-black text-amber-400 uppercase tracking-widest hover:underline text-left cursor-pointer"
+                              >
+                                🔥 Ser Recomendado pelo Robô →
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
                         {/* Stat Counters Grid */}
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                           <div className="bg-[#11111a] border border-white/10 p-4 rounded-2xl flex flex-col justify-between">
                             <div className="text-[10px] text-white/50 font-bold uppercase tracking-wider">👁️ Visualizações</div>
-                            <div className="text-2xl font-black text-white mt-2 font-mono">{currentAdvertiser.company.views || 0}</div>
+                            <div className="text-2xl font-black text-white mt-2 font-mono">{views}</div>
                             <div className="text-[9px] text-emerald-400 mt-1">Acessos no perfil</div>
                           </div>
                           <div className="bg-[#11111a] border border-white/10 p-4 rounded-2xl flex flex-col justify-between">
                             <div className="text-[10px] text-white/50 font-bold uppercase tracking-wider">💬 Cliques WhatsApp</div>
-                            <div className="text-2xl font-black text-emerald-400 mt-2 font-mono">{currentAdvertiser.company.clicksWa || Math.floor((currentAdvertiser.company.views || 0) * 0.4)}</div>
+                            <div className="text-2xl font-black text-emerald-400 mt-2 font-mono">{currentAdvertiser.company.clicksWa || Math.floor(views * 0.4)}</div>
                             <div className="text-[9px] text-white/40 mt-1">Contatos diretos</div>
                           </div>
                           <div className="bg-[#11111a] border border-white/10 p-4 rounded-2xl flex flex-col justify-between">
                             <div className="text-[10px] text-white/50 font-bold uppercase tracking-wider">🔍 Buscas e Aparições</div>
-                            <div className="text-2xl font-black text-amber-400 mt-2 font-mono">{currentAdvertiser.company.searchImpressions || Math.floor((currentAdvertiser.company.views || 0) * 3.2 + 12)}</div>
-                            <div className="text-[9px] text-white/40 mt-1">Vezes exibido na pesquisa</div>
+                            <div className="text-2xl font-black text-amber-400 mt-2 font-mono">{currentAdvertiser.company.searchImpressions || Math.floor(views * 3.2 + 12)}</div>
+                            <div className="text-[9px] text-white/40 mt-1">Exibições em buscas</div>
                           </div>
                           <div className="bg-[#11111a] border border-white/10 p-4 rounded-2xl flex flex-col justify-between">
                             <div className="text-[10px] text-white/50 font-bold uppercase tracking-wider">⭐ Posição na Categoria</div>
                             <div className="text-lg font-black text-white mt-2 font-mono">
-                              {currentPlan === 'patrocinado' ? '🥇 Top 1º a 3º' : currentPlan === 'destaque' ? '⭐ Top 5' : currentPlan === 'verificado' ? '✔ Top 10' : 'Geral'}
+                              #{rankInfo.position} de {rankInfo.totalInCat}
                             </div>
                             <div className="text-[9px] text-amber-400 mt-1">
                               {currentPlan === 'gratuito' ? 'Faça upgrade para subir' : 'Posição prioritária'}
@@ -9094,7 +9305,7 @@ function AppContent() {
                           <div className="bg-[#11111a] border border-white/10 p-4 rounded-2xl flex flex-col justify-between col-span-2 sm:col-span-1">
                             <div className="text-[10px] text-white/50 font-bold uppercase tracking-wider">📈 Taxa de Conversão</div>
                             <div className="text-2xl font-black text-blue-400 mt-2 font-mono">
-                              {currentAdvertiser.company.views ? `${((Math.floor((currentAdvertiser.company.views || 0) * 0.4) / currentAdvertiser.company.views) * 100).toFixed(1)}%` : '100%'}
+                              {views ? `${((Math.floor(views * 0.4) / views) * 100).toFixed(1)}%` : '100%'}
                             </div>
                             <div className="text-[9px] text-white/40 mt-1">Visitantes → Cliques</div>
                           </div>
@@ -9992,10 +10203,11 @@ function AppContent() {
 
                                 if (editingItemIndex === -1) {
                                   const currentCount = currentAdvertiser.company.items?.length || 0;
-                                  const hasPaidPlan = currentAdvertiser.company.hasPlan || currentAdvertiser.company.featured || false;
+                                  const planType = getCompanyPlanType(currentAdvertiser.company);
+                                  const isFree = planType === 'gratuito';
                                   const isInTrialPeriod = (currentAdvertiser.expiresAt && !isAdExpired) || user?.isAdmin;
-                                  if (currentCount >= 6 && !hasPaidPlan && !isInTrialPeriod && !user?.isAdmin) {
-                                    alert("Oops! Você atingiu o limite de 6 produtos/fotos do Plano Gratuito. Adquira o Plano para ter acesso ilimitado a produtos e ganhar destaque preferencial no portal!");
+                                  if (isFree && currentCount >= 5 && !isInTrialPeriod && !user?.isAdmin) {
+                                    alert("Oops! Você atingiu o limite de 5 produtos do Plano Gratuito. Adquira o Plano Premium para ter até 100 produtos no catálogo e prioridade máxima no portal!");
                                     setIsCheckoutOpen(true);
                                     return;
                                   }
