@@ -1051,10 +1051,9 @@ function AppContent() {
 
   const isAdExpired = useMemo(() => {
     if (!currentAdvertiser) return false;
-    if (currentAdvertiser.company?.hasPlan) return false;
-    if (!currentAdvertiser.expiresAt) return false;
-    const todayStr = new Date().toISOString().split('T')[0];
-    return currentAdvertiser.expiresAt < todayStr;
+    // Only blocked accounts are blocked from saving or accessing
+    if (currentAdvertiser.company?.blocked || currentAdvertiser.isBlocked) return true;
+    return false;
   }, [currentAdvertiser]);
 
   const getRemainingTrialDays = useCallback(() => {
@@ -6213,7 +6212,7 @@ function AppContent() {
                                 </div>
 
                                 <div className="dev-form-group" style={{ margin: 0 }}>
-                                  <label style={{ fontSize: '11px', color: '#bbb', display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Expiração do Teste / Assinatura:</label>
+                                  <label style={{ fontSize: '11px', color: '#bbb', display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Validade da Assinatura VIP:</label>
                                   <input 
                                     type="date" 
                                     className="dev-input" 
@@ -6304,14 +6303,10 @@ function AppContent() {
                                   <span style={{ fontSize: '12px', color: '#fff' }}>
                                     Produtos: <strong style={{ color: ad.hasPlan ? 'var(--primary)' : '#25D366' }}>{itemsCount}</strong> {(!ad.hasPlan && itemsCount >= 6 && (!ad.expiresAt || ad.expiresAt < new Date().toISOString().split('T')[0])) ? '⚠️' : '✅'}
                                   </span>
-                                  <small style={{ color: (ad.expiresAt && ad.expiresAt < new Date().toISOString().split('T')[0] && !ad.hasPlan && itemsCount >= 6) ? '#ff4444' : (ad.expiresAt && ad.expiresAt >= new Date().toISOString().split('T')[0] && !ad.hasPlan) ? '#25D366' : '#888', fontSize: '10.5px', marginTop: '2px' }}>
+                                  <small style={{ color: ad.hasPlan ? 'var(--primary)' : '#34d399', fontSize: '10.5px', marginTop: '2px' }}>
                                     {ad.hasPlan 
-                                      ? 'Liberado ilimitado (Premium)' 
-                                      : (ad.expiresAt && ad.expiresAt >= new Date().toISOString().split('T')[0]) 
-                                        ? 'Teste Ativo (Ilimitado ⏳)' 
-                                        : (itemsCount >= 6) 
-                                          ? 'Status: Expirado / Limite 6 Excedido ❌' 
-                                          : 'Grátis (limite 6)'
+                                      ? 'Plano Premium VIP (Ativo)' 
+                                      : 'Cadastro Gratuito (Ativo)'
                                     }
                                   </small>
                                 </div>
@@ -8719,8 +8714,8 @@ function AppContent() {
                           🚀 Cadastre Seu Negócio no Portal
                         </h2>
                         <p className="text-xs text-white/50 mt-1">Sua empresa será listada automaticamente de forma profissional e interativa.</p>
-                        <div className="bg-amber-500/10 border border-amber-500/25 rounded-xl p-3.5 text-[11px] text-amber-300 mt-3 font-medium leading-relaxed">
-                          🎁 <strong>Período de Teste Grátis Ativo:</strong> Você ganhará automaticamente <strong>20 dias completos</strong> para experimentar o portal, divulgar seus serviços/produtos e receber vendas! Sem taxas iniciais.
+                        <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-xl p-3.5 text-[11px] text-emerald-300 mt-3 font-medium leading-relaxed">
+                          🎁 <strong>Cadastro 100% Gratuito:</strong> Sua empresa será divulgada gratuitamente na vitrine oficial da cidade! Sem taxas obrigatórias para cadastrar seu negócio e produtos.
                         </div>
 
                         {/* Video Tutorial Box */}
@@ -9072,48 +9067,51 @@ function AppContent() {
                     </button>
                   </div>
 
-                  {/* Trial Expiry Alert Box */}
+                  {/* Plan Status Banner */}
                   {isAdExpired ? (
                     <div className="bg-red-500/15 border border-red-500/30 rounded-2xl p-5 md:p-6 text-center shadow-lg">
                       <span className="text-3xl">⚠️</span>
-                      <h3 className="text-lg font-black text-white uppercase mt-2">Seu Período de Testes Expirou!</h3>
+                      <h3 className="text-lg font-black text-white uppercase mt-2">Conta Suspensa / Bloqueada</h3>
                       <p className="text-xs text-white/70 mt-2 max-w-lg mx-auto leading-relaxed">
-                        Seus 20 dias de experimentação grátis terminaram em <strong className="text-red-400">{currentAdvertiser.expiresAt}</strong>. Para continuar gerenciando seus produtos e aparecer na vitrine oficial para receber vendas, converse com o nosso suporte para ativar o plano premium.
+                        Sua conta foi suspensa temporariamente. Para reativar o seu acesso e continuar gerenciando seus produtos, entre em contato com o suporte oficial.
                       </p>
-                      {user?.isAdmin && (
-                        <div className="mt-3.5 bg-amber-500/10 border border-amber-500/20 text-amber-300 px-4 py-2.5 rounded-xl text-[11px] font-bold inline-block max-w-lg text-left">
-                          💡 <strong>Modo Administrador:</strong> Você tem permissão de nível Master para ignorar este bloqueio e gerenciar o perfil, adicionar ou remover itens e atualizar as informações do anunciante livremente!
-                        </div>
-                      )}
                       <div className="mt-4 flex flex-wrap justify-center gap-2">
                         <a 
-                          href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá! Meu período de testes para o mini-site ${currentAdvertiser?.company?.name} expirou e gostaria de assinar o plano para continuar ativo no portal.`)}`}
+                          href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá! Preciso de ajuda para reativar minha conta ${currentAdvertiser?.company?.name}.`)}`}
                           target="_blank"
                           rel="noreferrer"
                           className="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-150 shadow decoration-transparent"
                         >
-                          💬 Ativar Meu Plano no WhatsApp
+                          💬 Falar com Suporte no WhatsApp
                         </a>
                       </div>
                     </div>
-                  ) : currentAdvertiser?.expiresAt && !currentAdvertiser?.company?.hasPlan ? (
-                    <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  ) : !currentAdvertiser?.company?.hasPlan ? (
+                    <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                       <div className="text-left">
-                        <span className="text-[10px] bg-amber-500/20 text-amber-400 px-2.5 py-1 rounded font-black uppercase tracking-widest">⏳ Período de Teste Grátis</span>
-                        <p className="text-xs text-white/80 mt-2.5">
-                          Você tem até <strong>{currentAdvertiser.expiresAt}</strong> ({getRemainingTrialDays()} dias restantes) para testar a plataforma gratuitamente!
+                        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded font-black uppercase tracking-widest">✔ Cadastro Gratuito Ativo</span>
+                        <p className="text-xs text-white/80 mt-2">
+                          Sua empresa possui <strong>cadastro gratuito permanente</strong> no portal! Quer aparecer no topo e receber mais clientes no WhatsApp?
                         </p>
                       </div>
-                      <a 
-                        href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá! Estou gostando muito do portal e gostaria de garantir a assinatura da minha empresa ${currentAdvertiser?.company?.name} de forma definitiva.`)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-black rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all duration-150 shrink-0 decoration-transparent"
+                      <button 
+                        type="button"
+                        onClick={() => setIsCheckoutOpen(true)}
+                        className="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-yellow-500 hover:brightness-110 text-black rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-150 shrink-0 cursor-pointer shadow-lg"
                       >
-                        💎 Ativar Plano VIP
-                      </a>
+                        ⭐ Ativar Plano Premium
+                      </button>
                     </div>
-                  ) : null}
+                  ) : (
+                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="text-left">
+                        <span className="text-[10px] bg-amber-500/20 text-amber-400 px-2.5 py-1 rounded font-black uppercase tracking-widest">⭐ Plano Premium VIP Ativo</span>
+                        <p className="text-xs text-white/80 mt-2">
+                          Sua empresa possui <strong>prioridade máxima de exibição</strong> no portal e no Atendente Virtual!
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Share Link Card */}
                   <div className="bg-gradient-to-r from-neutral-900 via-neutral-950 to-neutral-900 border border-white/5 rounded-3xl p-5 md:p-6 shadow-xl flex flex-col gap-4">
@@ -9936,7 +9934,7 @@ function AppContent() {
                         <button 
                           onClick={async () => {
                             if (isAdExpired && !user?.isAdmin) {
-                              alert("Seu período de teste expirou! Para continuar salvando alterações, ative o seu plano VIP.");
+                              alert("Sua conta está suspensa ou bloqueada. Entre em contato com o suporte para reativar seu acesso.");
                               return;
                             }
                             if (!currentAdvertiser.company.name.trim() || !currentAdvertiser.company.wa.trim() || !(currentAdvertiser.company.state || currentAdvertiser.company.uf) || !currentAdvertiser.company.city?.trim()) {
@@ -10029,7 +10027,7 @@ function AppContent() {
                           <button 
                             onClick={() => {
                               if (isAdExpired && !user?.isAdmin) {
-                                alert("Seu período de teste expirou! Ative o seu plano VIP para continuar adicionando novos itens.");
+                                alert("Sua conta está suspensa ou bloqueada. Entre em contato com o suporte.");
                                 return;
                               }
                               setItemForm({ name: '', desc: '', price: '', photo: '', photo2: '', photo3: '', photo4: '', video: '' });
@@ -10187,7 +10185,7 @@ function AppContent() {
                             <button 
                               onClick={async () => {
                                 if (isAdExpired && !user?.isAdmin) {
-                                  alert("Seu período de teste expirou! Para continuar salvando produtos, ative o seu plano VIP.");
+                                  alert("Sua conta está suspensa ou bloqueada. Entre em contato com o suporte.");
                                   return;
                                 }
                                 const { name, price, desc, photo, photo2, photo3, photo4, video } = itemForm;
