@@ -9409,12 +9409,12 @@ function AppContent() {
                             </p>
                           </div>
                           <a 
-                            href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, gostaria de fazer um upgrade no plano da minha empresa (${currentAdvertiser.company.name}) para garantir o Destaque / 1º Lugar no portal!`)}`}
+                            href={`https://wa.me/${(appData?.siteInfo?.phone || '5585992862177').replace(/[^0-9]/g, '') || '5585992862177'}?text=${encodeURIComponent(`Olá! Gostaria de fazer um upgrade de plano no portal para minha empresa (${currentAdvertiser.company.name}).`)}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center shadow-lg shrink-0 cursor-pointer"
+                            className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center shadow-lg shrink-0 cursor-pointer flex items-center justify-center gap-2"
                           >
-                            🚀 Solicitar Upgrade de Plano
+                            💬 SOLICITAR UPGRADE NO WHATSAPP
                           </a>
                         </div>
 
@@ -9432,7 +9432,7 @@ function AppContent() {
                                 <li>✔ Horário de funcionamento</li>
                                 <li>✔ Redes sociais (IG e FB)</li>
                                 <li>✔ Galeria até 10 fotos</li>
-                                <li>✔ Catálogo até 10 produtos</li>
+                                <li>✔ Catálogo até 5 produtos</li>
                                 <li>✔ Aparece nas buscas</li>
                               </ul>
                             </div>
@@ -9450,7 +9450,10 @@ function AppContent() {
                               <h4 className="text-lg font-black text-emerald-400 mt-1 flex items-center gap-1.5">
                                 ✔ Verificado
                               </h4>
-                              <div className="text-xl font-black text-white mt-2 font-mono">Plano Confiança</div>
+                              <div className="text-xl font-black text-white mt-1 font-mono">Plano Confiança</div>
+                              <div className="text-2xl font-black text-emerald-400 mt-1 font-mono flex items-baseline gap-1">
+                                R$ 39,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
+                              </div>
                               <ul className="text-xs text-white/80 space-y-2 mt-4">
                                 <li className="text-emerald-400 font-bold">✔ Selo de Empresa Verificada</li>
                                 <li>✔ Aparece acima das grátis</li>
@@ -9466,12 +9469,12 @@ function AppContent() {
                               </div>
                             ) : (
                               <a 
-                                href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, quero ativar o Selo Verificado para minha empresa (${currentAdvertiser.company.name}).`)}`}
+                                href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano Confiança Verificado (R$ 39,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="mt-6 text-center text-xs font-black text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-black py-2.5 rounded-xl uppercase tracking-wider transition-all"
+                                className="mt-6 text-center text-xs font-black text-black bg-emerald-400 hover:bg-emerald-300 py-3 rounded-xl uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-1.5"
                               >
-                                Virar Verificado
+                                💬 UPGRADE R$ 39,90
                               </a>
                             )}
                           </div>
@@ -9483,7 +9486,10 @@ function AppContent() {
                               <h4 className="text-lg font-black text-amber-400 mt-1 flex items-center gap-1.5">
                                 ⭐ Destaque VIP
                               </h4>
-                              <div className="text-xl font-black text-white mt-2 font-mono">Plano Destaque</div>
+                              <div className="text-xl font-black text-white mt-1 font-mono">Plano Destaque</div>
+                              <div className="text-2xl font-black text-amber-400 mt-1 font-mono flex items-baseline gap-1">
+                                R$ 49,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
+                              </div>
                               <ul className="text-xs text-white/80 space-y-2 mt-4">
                                 <li className="text-amber-400 font-bold">⭐ Selo Destaque Estelar</li>
                                 <li>✔ Aparece antes dos verificados</li>
@@ -9498,12 +9504,12 @@ function AppContent() {
                               </div>
                             ) : (
                               <a 
-                                href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, quero contratar o Plano Destaque VIP para minha empresa (${currentAdvertiser.company.name}).`)}`}
+                                href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano Destaque VIP (R$ 49,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="mt-6 text-center text-xs font-black text-black bg-amber-400 hover:bg-amber-300 py-2.5 rounded-xl uppercase tracking-wider transition-all"
+                                className="mt-6 text-center text-xs font-black text-black bg-amber-400 hover:bg-amber-300 py-3 rounded-xl uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-1.5"
                               >
-                                Garantir Destaque
+                                💬 UPGRADE R$ 49,90
                               </a>
                             )}
                           </div>
@@ -9515,7 +9521,10 @@ function AppContent() {
                               <h4 className="text-lg font-black text-red-400 mt-1 flex items-center gap-1.5">
                                 🔥 Patrocinado
                               </h4>
-                              <div className="text-xl font-black text-white mt-2 font-mono">1º Lugar Absoluto</div>
+                              <div className="text-xl font-black text-white mt-1 font-mono">1º Lugar Absoluto</div>
+                              <div className="text-2xl font-black text-red-400 mt-1 font-mono flex items-baseline gap-1">
+                                R$ 59,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
+                              </div>
                               <ul className="text-xs text-white/80 space-y-2 mt-4">
                                 <li className="text-red-400 font-bold">🔥 1ª Posição Garantida (Top 1)</li>
                                 <li>✔ Posição Fixa Escolhida</li>
@@ -9530,12 +9539,12 @@ function AppContent() {
                               </div>
                             ) : (
                               <a 
-                                href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, quero ser o 1º Lugar Absoluto (Patrocinado) para minha empresa (${currentAdvertiser.company.name}).`)}`}
+                                href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano 1º Lugar Absoluto / Patrocinado (R$ 59,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="mt-6 text-center text-xs font-black text-white bg-gradient-to-r from-red-600 to-amber-600 hover:brightness-110 py-2.5 rounded-xl uppercase tracking-wider transition-all shadow-lg"
+                                className="mt-6 text-center text-xs font-black text-white bg-gradient-to-r from-red-600 to-amber-600 hover:brightness-110 py-3 rounded-xl uppercase tracking-wider transition-all shadow-lg flex items-center justify-center gap-1.5"
                               >
-                                Ser Top 1º Lugar
+                                💬 UPGRADE R$ 59,90
                               </a>
                             )}
                           </div>
