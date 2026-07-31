@@ -222,21 +222,41 @@ const BRAZIL_STATES = [
 ];
 
 const CATEGORIES = [
-  { name: "Restaurantes", icon: "🍽️" },
-  { name: "Mercados & Lojas", icon: "🛒" },
-  { name: "Farmácias", icon: "💊" },
-  { name: "Pet Shops", icon: "🐾" },
-  { name: "Salões & Estética", icon: "✂️" },
-  { name: "Advogados", icon: "⚖️" },
-  { name: "Clínicas & Saúde", icon: "🩺" },
-  { name: "Academias", icon: "🏋️" },
-  { name: "Autopeças & Veículos", icon: "🚘" },
-  { name: "Material de Construção", icon: "🧱" },
+  { name: "Restaurantes & Bares", icon: "🍽️" },
   { name: "Pizzarias", icon: "🍕" },
-  { name: "Hamburguerias", icon: "🍔" },
-  { name: "Padarias", icon: "🥖" },
-  { name: "Hotéis & Pousadas", icon: "🏨" },
-  { name: "Oficinas & Mecânicas", icon: "🔧" },
+  { name: "Hamburguerias & Lanches", icon: "🍔" },
+  { name: "Mercados & Supermercados", icon: "🛒" },
+  { name: "Farmácias & Drogarias", icon: "💊" },
+  { name: "Padarias & Confeitarias", icon: "🥖" },
+  { name: "Salões, Barbearias & Estética", icon: "✂️" },
+  { name: "Pet Shops & Veterinárias", icon: "🐾" },
+  { name: "Lojas de Roupas & Calçados", icon: "👗" },
+  { name: "Oficinas Mecânicas & Auto", icon: "🔧" },
+  { name: "Autopeças & Veículos", icon: "🚘" },
+  { name: "Lava Jato & Borracharia", icon: "🚙" },
+  { name: "Material de Construção & Reformas", icon: "🧱" },
+  { name: "Clínicas & Médicos & Dentistas", icon: "🩺" },
+  { name: "Academias & Fitness", icon: "🏋️" },
+  { name: "Eletrônicos & Assistência de Celular", icon: "📱" },
+  { name: "Informática & Tecnologia", icon: "💻" },
+  { name: "Sorveterias & Açaí", icon: "🍦" },
+  { name: "Marmitarias & Quentinhas", icon: "🍱" },
+  { name: "Advogados & Jurídico", icon: "⚖️" },
+  { name: "Contabilidade & Finanças", icon: "📊" },
+  { name: "Imobiliárias & Corretores", icon: "🏠" },
+  { name: "Escolas & Cursos & Treinamentos", icon: "🎓" },
+  { name: "Gráficas & Comunicação Visual", icon: "🖨️" },
+  { name: "Eletricistas & Encanadores", icon: "⚡" },
+  { name: "Ar Condicionado & Refrigeração", icon: "❄️" },
+  { name: "Chaveiros & Segurança", icon: "🔑" },
+  { name: "Hotéis, Pousadas & Lazer", icon: "🏨" },
+  { name: "Eventos, Festas & Buffet", icon: "🎈" },
+  { name: "Transporte, Fretes & Mudanças", icon: "🚚" },
+  { name: "Perfumarias & Cosméticos", icon: "💄" },
+  { name: "Papelarias & Armarinhos", icon: "📚" },
+  { name: "Óticas & Joalherias", icon: "👓" },
+  { name: "Floriculturas & Jardinagem", icon: "💐" },
+  { name: "Publicidade & Marketing", icon: "📢" },
   { name: "Serviços Gerais", icon: "🛠️" }
 ];
 
@@ -414,6 +434,145 @@ interface AppData {
   categories: any[];
   whatsappTestimonials?: { image: string; active?: boolean }[];
   horizontalBanners?: { image: string; link: string; title?: string; active?: boolean }[];
+}
+
+// --- ImgBB Direct Upload Helpers & Components ---
+const IMGBB_API_KEY = "b84e5dcba9b322fbb2c1adde190bfe95";
+
+export const uploadToImgBB = async (file: File): Promise<string> => {
+  const apiKey = (import.meta.env as any).VITE_IMGBB_API_KEY || IMGBB_API_KEY;
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = await res.json();
+  if (data && data.success && data.data && data.data.url) {
+    return data.data.url;
+  } else {
+    throw new Error(data?.error?.message || "Erro ao fazer upload da imagem no ImgBB.");
+  }
+};
+
+function DirectFileUploadButton({ 
+  onUploadSuccess, 
+  label = "📷 Escolher do Celular", 
+  className = "" 
+}: { 
+  onUploadSuccess: (url: string) => void; 
+  label?: string; 
+  className?: string; 
+}) {
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione um arquivo de imagem (JPG, PNG, WEBP, etc.).');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const url = await uploadToImgBB(file);
+      onUploadSuccess(url);
+    } catch (err: any) {
+      console.error("ImgBB upload error:", err);
+      alert("Falha ao enviar foto. Tente novamente.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  return (
+    <div className={`inline-flex items-center ${className}`}>
+      <input 
+        type="file" 
+        accept="image/*" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        style={{ display: 'none' }} 
+      />
+      <button
+        type="button"
+        disabled={isUploading}
+        onClick={() => fileInputRef.current?.click()}
+        className="text-[10px] font-bold uppercase tracking-wider bg-[var(--primary)] text-black hover:brightness-110 px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-sm disabled:opacity-50"
+      >
+        {isUploading ? (
+          <>
+            <span className="animate-spin text-xs">⏳</span>
+            <span>Enviando...</span>
+          </>
+        ) : (
+          <>
+            <span>{label}</span>
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
+
+function DevFileUploadButton({
+  onUploadSuccess,
+  label = "📷 Enviar Foto do Celular"
+}: {
+  onUploadSuccess: (url: string) => void;
+  label?: string;
+}) {
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione um arquivo de imagem.');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const url = await uploadToImgBB(file);
+      onUploadSuccess(url);
+    } catch (err: any) {
+      console.error("ImgBB upload error:", err);
+      alert("Falha ao enviar imagem.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  return (
+    <div style={{ display: 'inline-flex', alignItems: 'center' }}>
+      <input 
+        type="file" 
+        accept="image/*" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        style={{ display: 'none' }} 
+      />
+      <button
+        type="button"
+        disabled={isUploading}
+        onClick={() => fileInputRef.current?.click()}
+        className="dev-btn dev-btn-secondary"
+        style={{ padding: '4px 10px', fontSize: '0.65rem', textDecoration: 'none', height: 'auto', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}
+      >
+        {isUploading ? "⏳ Enviando..." : label}
+      </button>
+    </div>
+  );
 }
 
 export default function App() {
@@ -884,17 +1043,30 @@ function AppContent() {
           if (snap.exists()) {
             const tData = snap.data();
             const loadedData = tData.data || DEFAULT_DATA;
-            if (loadedData && loadedData.pricing) {
-              if (!loadedData.pricing.price || loadedData.pricing.price === '39,90' || loadedData.pricing.price === '39.90' || loadedData.pricing.price === '147') {
-                loadedData.pricing.price = '49,90';
+            if (loadedData) {
+              if (loadedData.pricing) {
+                if (!loadedData.pricing.price || loadedData.pricing.price === '39,90' || loadedData.pricing.price === '39.90' || loadedData.pricing.price === '147') {
+                  loadedData.pricing.price = '49,90';
+                }
+                if (!loadedData.pricing.title || loadedData.pricing.title === 'Plano Máquina de Clientes VIP') {
+                  loadedData.pricing.title = 'Plano Divulgação';
+                }
+                if (loadedData.pricing.period) {
+                  loadedData.pricing.period = loadedData.pricing.period.replace(/^\/+/, '').toUpperCase();
+                } else {
+                  loadedData.pricing.period = 'MÊS';
+                }
               }
-              if (!loadedData.pricing.title || loadedData.pricing.title === 'Plano Máquina de Clientes VIP') {
-                loadedData.pricing.title = 'Plano Divulgação';
-              }
-              if (loadedData.pricing.period) {
-                loadedData.pricing.period = loadedData.pricing.period.replace(/^\/+/, '').toUpperCase();
+
+              if (!loadedData.categories || !Array.isArray(loadedData.categories) || loadedData.categories.length < 10) {
+                loadedData.categories = CATEGORIES;
               } else {
-                loadedData.pricing.period = 'MÊS';
+                const existingNames = new Set(loadedData.categories.map((c: any) => c.name));
+                CATEGORIES.forEach(cat => {
+                  if (!existingNames.has(cat.name)) {
+                    loadedData.categories.push(cat);
+                  }
+                });
               }
             }
             setAppData(loadedData);
@@ -1977,15 +2149,15 @@ function AppContent() {
                 />
               </div>
               <div className="dev-form-group">
-                <label>Link Externo para Hospedar Imagens (Ícone Câmera 📷)</label>
+                <label>Serviço de Upload de Imagens (ImgBB Integrado 📷)</label>
                 <input 
                   type="text" 
                   className="dev-input" 
-                  placeholder="Ex: https://postimages.org/"
-                  value={universalConfig.uploadImageHelpUrl || ''} 
-                  onChange={e => setUniversalConfig({ ...universalConfig, uploadImageHelpUrl: e.target.value })}
+                  placeholder="API Key ImgBB ativa"
+                  value="ImgBB API (Upload direto do Celular Ativo)" 
+                  disabled
                 />
-                <small style={{ color: '#666' }}>Direciona o anunciante para esta URL ao clicar no ícone de câmera para upar fotos.</small>
+                <small style={{ color: '#25D366' }}>✓ Upload direto ativado! Os usuários e anunciantes já podem selecionar fotos diretamente do celular.</small>
               </div>
               <div className="dev-form-group">
                 <label>Link Externo para Hospedar Vídeos (Ícone Vídeo 🎥)</label>
@@ -4908,21 +5080,16 @@ function AppContent() {
                         <label style={{ display: 'flex', alignItems: 'center', gap: '5px', margin: 0 }}>
                           📷 Logomarca do Portal / Parceiro
                         </label>
-                        <a 
-                          href="https://postimages.org/" 
-                          onClick={(e) => handleOpenUploadHelper(e, 'https://postimages.org/')}
-                          rel="noreferrer" 
-                          className="dev-helper-link"
-                          style={{ color: 'var(--primary)', fontSize: '11px', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '3px' }}
-                        >
-                          📷 Abrir PostImages
-                        </a>
+                        <DevFileUploadButton 
+                          label="📷 Escolher do Celular / PC" 
+                          onUploadSuccess={(url) => setAppData(prev => prev ? { ...prev, siteInfo: { ...prev.siteInfo, logo: url } } : prev)} 
+                        />
                       </div>
                       <input 
                         type="text" 
                         className="dev-input" 
                         value={appData.siteInfo.logo || ''} 
-                        placeholder="Cole o link direto .jpg ou .png da sua logomarca (ex: https://i.postimg.cc/...)" 
+                        placeholder="Cole a URL ou escolha uma foto direto do seu celular acima" 
                         onChange={(e) => {
                           const val = e.target.value;
                           setAppData(prev => {
@@ -5516,20 +5683,20 @@ function AppContent() {
                                 <div className="dev-form-group">
                                   <div className="dev-label-row">
                                     <label>Link da Logo (URL)</label>
-                                    <a 
-                                      href="https://postimages.org/" 
-                                      onClick={(e) => handleOpenUploadHelper(e, 'https://postimages.org/')}
-                                      rel="noreferrer" 
-                                      className="dev-helper-link"
-                                    >
-                                      📸 Abrir PostImages
-                                    </a>
+                                    <DevFileUploadButton 
+                                      label="📷 Enviar Foto do Celular" 
+                                      onUploadSuccess={(url) => {
+                                        const newList = [...appData.companies];
+                                        newList[idx].logo = url;
+                                        updateData('companies', newList);
+                                      }} 
+                                    />
                                   </div>
                                   <input type="text" className="dev-input" value={c.logo} onChange={(e) => {
                                     const newList = [...appData.companies];
                                     newList[idx].logo = e.target.value;
                                     updateData('companies', newList);
-                                  }} placeholder="Cole o link direto .jpg ou .png aqui" />
+                                  }} placeholder="Cole a URL ou envie do celular acima" />
                                   {c.logo && <img src={c.logo} className="dev-img-preview" alt="Preview da Logo" referrerPolicy="no-referrer" />}
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginBottom: '15px' }}>
@@ -6197,15 +6364,18 @@ function AppContent() {
                             <div className="dev-form-group">
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
                                 <label style={{ marginBottom: '0' }}>Link da Imagem Flyer</label>
-                                <a 
-                                  href="https://postimages.org/" 
-                                  onClick={(e) => handleOpenUploadHelper(e, 'https://postimages.org/')}
-                                  rel="noreferrer" 
-                                  className="dev-btn dev-btn-secondary"
-                                  style={{ padding: '4px 10px', fontSize: '0.65rem', textDecoration: 'none', height: 'auto', display: 'flex', alignItems: 'center', gap: '5px' }}
-                                >
-                                  🖼️ Enviar Foto no PostImage
-                                </a>
+                                <DevFileUploadButton 
+                                  label="📷 Enviar Foto do Celular" 
+                                  onUploadSuccess={(url) => {
+                                    const newList = [...appData.flyers];
+                                    if (typeof newList[idx] === 'string') {
+                                      newList[idx] = { image: url, link: '' };
+                                    } else {
+                                      newList[idx] = { ...newList[idx], image: url };
+                                    }
+                                    updateData('flyers', newList);
+                                  }} 
+                                />
                               </div>
                               <input type="text" className="dev-input" value={flyerObj.image || ''} onChange={(e) => {
                                 const newList = [...appData.flyers];
@@ -6215,8 +6385,7 @@ function AppContent() {
                                   newList[idx] = { ...newList[idx], image: e.target.value };
                                 }
                                 updateData('flyers', newList);
-                              }} placeholder="Link .jpg ou .png" />
-                              <small style={{ color: '#888', fontSize: '0.65rem' }}>Dica: No PostImage, use o "Link Direto"</small>
+                              }} placeholder="Cole a URL ou envie do celular acima" />
                             </div>
                             <div className="dev-form-group">
                               <label>Link de Ação (WhatsApp/IG/Site)</label>
@@ -6324,15 +6493,14 @@ function AppContent() {
                             <div className="dev-form-group">
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
                                 <label style={{ marginBottom: '0' }}>Link da Imagem Horizontal</label>
-                                <a 
-                                  href="https://postimages.org/" 
-                                  onClick={(e) => handleOpenUploadHelper(e, 'https://postimages.org/')}
-                                  rel="noreferrer" 
-                                  className="dev-btn dev-btn-secondary"
-                                  style={{ padding: '4px 10px', fontSize: '0.65rem', textDecoration: 'none', height: 'auto', display: 'flex', alignItems: 'center', gap: '5px' }}
-                                >
-                                  🖼️ Enviar Foto no PostImage
-                                </a>
+                                <DevFileUploadButton 
+                                  label="📷 Enviar Foto do Celular" 
+                                  onUploadSuccess={(url) => {
+                                    const newList = [...((appData as any).horizontalBanners || [])];
+                                    newList[idx] = { ...bannerObj, image: url };
+                                    updateData('horizontalBanners', newList);
+                                  }} 
+                                />
                               </div>
                               <input 
                                 type="text" 
@@ -6343,7 +6511,7 @@ function AppContent() {
                                   newList[idx] = { ...bannerObj, image: e.target.value };
                                   updateData('horizontalBanners', newList);
                                 }} 
-                                placeholder="Link .jpg ou .png" 
+                                placeholder="Cole a URL ou envie do celular acima" 
                               />
                             </div>
                             
@@ -6459,15 +6627,14 @@ function AppContent() {
                           <div className="dev-form-group">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
                               <label style={{ marginBottom: '0' }}>Link da Imagem do Print</label>
-                              <a 
-                                href="https://postimages.org/" 
-                                onClick={(e) => handleOpenUploadHelper(e, 'https://postimages.org/')} 
-                                rel="noreferrer" 
-                                className="dev-btn dev-btn-secondary"
-                                style={{ padding: '4px 10px', fontSize: '0.65rem', textDecoration: 'none', height: 'auto', display: 'flex', alignItems: 'center', gap: '5px' }}
-                              >
-                                🖼️ Enviar Foto no PostImage
-                              </a>
+                              <DevFileUploadButton 
+                                label="📷 Enviar Print do Celular" 
+                                onUploadSuccess={(url) => {
+                                  const newList = [...(appData.whatsappTestimonials || [])];
+                                  newList[idx] = { ...printObj, image: url };
+                                  updateData('whatsappTestimonials', newList);
+                                }} 
+                              />
                             </div>
                             <input 
                               type="text" 
@@ -6478,9 +6645,8 @@ function AppContent() {
                                 newList[idx] = { ...printObj, image: e.target.value };
                                 updateData('whatsappTestimonials', newList);
                               }} 
-                              placeholder="Link direto .jpg ou .png" 
+                              placeholder="Cole a URL ou envie do celular acima" 
                             />
-                            <small style={{ color: '#888', fontSize: '0.65rem', marginTop: '4px', display: 'block' }}>Dica: No PostImage, use o "Link Direto"</small>
                           </div>
 
                           {printObj.image && (
@@ -6540,15 +6706,21 @@ function AppContent() {
 
                     <div className="dev-grid-2" style={{ marginTop: '15px', borderTop: '1px dashed rgba(255, 255, 255, 0.1)', paddingTop: '15px' }}>
                       <div className="dev-form-group">
-                        <label>QR Code de Pagamento PIX (Link de Imagem)</label>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                          <label style={{ margin: 0 }}>QR Code de Pagamento PIX (Link de Imagem)</label>
+                          <DevFileUploadButton 
+                            label="📷 Enviar Foto QR Code" 
+                            onUploadSuccess={(url) => updateData('pricing', { ...appData.pricing, pixQrCodeLink: url })} 
+                          />
+                        </div>
                         <input 
                           type="text" 
                           className="dev-input" 
-                          placeholder="https://exemplo.com/qrcode.png" 
+                          placeholder="Cole a URL ou envie do celular acima" 
                           value={appData.pricing.pixQrCodeLink || ''} 
                           onChange={(e) => updateData('pricing', { ...appData.pricing, pixQrCodeLink: e.target.value })} 
                         />
-                        <small style={{ color: '#aaa', fontSize: '11px', marginTop: '4px', display: 'block' }}>Insira o link de imagem direta (ex: do Postimages ou do seu próprio site/servidor) para exibir o QR Code no checkout.</small>
+                        <small style={{ color: '#aaa', fontSize: '11px', marginTop: '4px', display: 'block' }}>Envie a imagem do QR Code direto do celular para exibir no checkout.</small>
                       </div>
                       <div className="dev-form-group">
                         <label>Chave PIX Copia e Cola / Chave Aleatória</label>
@@ -8550,20 +8722,14 @@ function AppContent() {
                         <div className="flex flex-col gap-1.5">
                           <div className="flex justify-between items-center">
                             <label className="text-[10px] text-white/50 uppercase font-black">Link da Logo (Opcional)</label>
-                            <div className="flex gap-1.5">
-                              <a 
-                                href={universalConfig.uploadImageHelpUrl || 'https://postimages.org/'} 
-                                onClick={(e) => handleOpenUploadHelper(e, universalConfig.uploadImageHelpUrl || 'https://postimages.org/')}
-                                rel="noreferrer"
-                                className="text-[9px] text-[var(--primary)] hover:underline flex items-center gap-1 bg-[var(--primary)]/10 px-1.5 py-0.5 rounded border border-[var(--primary)]/10 decoration-transparent"
-                              >
-                                📷 Imagem
-                              </a>
-                            </div>
+                            <DirectFileUploadButton 
+                              label="📷 Escolher do Celular" 
+                              onUploadSuccess={(url) => setAdRegisterForm(prev => ({ ...prev, logo: url }))} 
+                            />
                           </div>
                           <input 
                             type="text"
-                            placeholder="https://suaimagem.com/foto.jpg"
+                            placeholder="Cole a URL ou selecione uma foto do celular acima"
                             value={adRegisterForm.logo}
                             onChange={(e) => setAdRegisterForm(prev => ({ ...prev, logo: e.target.value }))}
                             className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
@@ -9280,21 +9446,18 @@ function AppContent() {
                           <div className="flex flex-col gap-1.5">
                             <div className="flex justify-between items-center">
                               <label className="text-[10px] text-white/50 uppercase font-bold">Link da Foto Logo (URL)</label>
-                              <div className="flex gap-2">
-                                <a 
-                                  href={universalConfig.uploadImageHelpUrl || 'https://postimages.org/'} 
-                                  onClick={(e) => handleOpenUploadHelper(e, universalConfig.uploadImageHelpUrl || 'https://postimages.org/')}
-                                  rel="noreferrer"
-                                  className="text-[10px] text-[var(--primary)] hover:underline flex items-center gap-1 bg-[var(--primary)]/10 px-2 py-0.5 rounded border border-[var(--primary)]/20 decoration-transparent"
-                                >
-                                  📷 Imagem
-                                </a>
-                              </div>
+                              <DirectFileUploadButton 
+                                label="📷 Escolher do Celular" 
+                                onUploadSuccess={(url) => setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, logo: url }
+                                }))} 
+                              />
                             </div>
                             <input 
                               type="text"
                               value={currentAdvertiser.company.logo}
-                              placeholder="https://..."
+                              placeholder="Cole a URL ou escolha a foto do celular acima"
                               onChange={(e) => {
                                 const val = e.target.value;
                                 setCurrentAdvertiser((prev: any) => ({
@@ -9715,22 +9878,16 @@ function AppContent() {
                             <div className="flex flex-col gap-1.5">
                               <div className="flex justify-between items-center">
                                 <label className="text-[10px] text-white/50 uppercase font-bold">Foto Principal / Foto 1 (Opcional)</label>
-                                <div className="flex gap-2">
-                                  <a 
-                                    href={universalConfig.uploadImageHelpUrl || 'https://postimages.org/'} 
-                                    onClick={(e) => handleOpenUploadHelper(e, universalConfig.uploadImageHelpUrl || 'https://postimages.org/')}
-                                    rel="noreferrer"
-                                    className="text-[10px] text-[var(--primary)] hover:underline flex items-center gap-1 bg-[var(--primary)]/10 px-2 py-0.5 rounded border border-[var(--primary)]/20 decoration-transparent"
-                                  >
-                                    📷 Imagem
-                                  </a>
-                                </div>
+                                <DirectFileUploadButton 
+                                  label="📷 Foto 1" 
+                                  onUploadSuccess={(url) => setItemForm(prev => ({ ...prev, photo: url }))} 
+                                />
                               </div>
                               <input 
                                 type="text"
                                 value={itemForm.photo}
                                 onChange={(e) => setItemForm(prev => ({ ...prev, photo: e.target.value }))}
-                                placeholder="https://..."
+                                placeholder="Cole a URL ou escolha do celular acima"
                                 className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
                               />
                             </div>
@@ -9739,7 +9896,13 @@ function AppContent() {
                           {/* Additional Photos & Video */}
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 border-t border-white/5 pt-4">
                             <div className="flex flex-col gap-1.5">
-                              <label className="text-[10px] text-white/50 uppercase font-bold">Foto 2 (Opcional)</label>
+                              <div className="flex justify-between items-center">
+                                <label className="text-[10px] text-white/50 uppercase font-bold">Foto 2 (Opcional)</label>
+                                <DirectFileUploadButton 
+                                  label="📷 Foto 2" 
+                                  onUploadSuccess={(url) => setItemForm(prev => ({ ...prev, photo2: url }))} 
+                                />
+                              </div>
                               <input 
                                 type="text"
                                 value={itemForm.photo2 || ''}
@@ -9749,7 +9912,13 @@ function AppContent() {
                               />
                             </div>
                             <div className="flex flex-col gap-1.5">
-                              <label className="text-[10px] text-white/50 uppercase font-bold">Foto 3 (Opcional)</label>
+                              <div className="flex justify-between items-center">
+                                <label className="text-[10px] text-white/50 uppercase font-bold">Foto 3 (Opcional)</label>
+                                <DirectFileUploadButton 
+                                  label="📷 Foto 3" 
+                                  onUploadSuccess={(url) => setItemForm(prev => ({ ...prev, photo3: url }))} 
+                                />
+                              </div>
                               <input 
                                 type="text"
                                 value={itemForm.photo3 || ''}
@@ -9759,7 +9928,13 @@ function AppContent() {
                               />
                             </div>
                             <div className="flex flex-col gap-1.5">
-                              <label className="text-[10px] text-white/50 uppercase font-bold">Foto 4 (Opcional)</label>
+                              <div className="flex justify-between items-center">
+                                <label className="text-[10px] text-white/50 uppercase font-bold">Foto 4 (Opcional)</label>
+                                <DirectFileUploadButton 
+                                  label="📷 Foto 4" 
+                                  onUploadSuccess={(url) => setItemForm(prev => ({ ...prev, photo4: url }))} 
+                                />
+                              </div>
                               <input 
                                 type="text"
                                 value={itemForm.photo4 || ''}
