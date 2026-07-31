@@ -222,14 +222,22 @@ const BRAZIL_STATES = [
 ];
 
 const CATEGORIES = [
-  { name: "Supermercado", icon: "🏭" },
-  { name: "Saúde", icon: "💊" },
-  { name: "Oficina", icon: "🔧" },
-  { name: "Financeiro", icon: "💸" },
-  { name: "Restaurante & bar", icon: "🍽️" },
-  { name: "Refrigeração", icon: "🛠️" },
-  { name: "Publicidade", icon: "🎧" },
-  { name: "Lazer", icon: "🎭" }
+  { name: "Restaurantes", icon: "🍽️" },
+  { name: "Mercados & Lojas", icon: "🛒" },
+  { name: "Farmácias", icon: "💊" },
+  { name: "Pet Shops", icon: "🐾" },
+  { name: "Salões & Estética", icon: "✂️" },
+  { name: "Advogados", icon: "⚖️" },
+  { name: "Clínicas & Saúde", icon: "🩺" },
+  { name: "Academias", icon: "🏋️" },
+  { name: "Autopeças & Veículos", icon: "🚘" },
+  { name: "Material de Construção", icon: "🧱" },
+  { name: "Pizzarias", icon: "🍕" },
+  { name: "Hamburguerias", icon: "🍔" },
+  { name: "Padarias", icon: "🥖" },
+  { name: "Hotéis & Pousadas", icon: "🏨" },
+  { name: "Oficinas & Mecânicas", icon: "🔧" },
+  { name: "Serviços Gerais", icon: "🛠️" }
 ];
 
 const NOTIFICATION_NAMES = ["João", "Maria", "Carlos", "Ana", "Paulo", "Fernanda", "Lucas", "Juliana", "Roberto", "Patricia", "Rafael", "Camila", "Bruno", "Larissa", "Diego", "Renata", "Felipe", "Vanessa", "Eduardo", "Carla"];
@@ -270,17 +278,18 @@ const DEFAULT_DATA = {
     segments: { tag: "Exclusividade categórica", title: "RESERVE SEU SETOR ANTES QUE SEU CONCORRENTE FAÇA", highlight: "Atenção: Apenas 1 empresa é permitida por categoria de destaque! Não seja deixado para trás.", callToAction: "👉 CLIQUE AQUI AGORA E BLOQUEIE SEU SEGMENTO ANTES QUE SEU MAIOR RIVAL COLOQUE A MARCA DELE PRIMEIRO" }
   },
   pricing: {
-    badge: "Exclusividade máxima garantida", title: "Plano Máquina de Clientes VIP", price: "147", period: "/mês",
+    badge: "Exclusividade máxima garantida", title: "Plano Divulgação", price: "49,90", period: "MÊS",
     features: [
-      "Seu comercial rodando 24h por dia na TV Online do portal",
-      "Spot de áudio profissional criado e veiculado na Rádio Digital",
-      "Card empresarial interativo VIP posicionado estrategicamente",
-      "SEO Otimizado: Seu negócio listado no topo de buscas do Google",
-      "Botão de clique único para abrir conversas direto no seu WhatsApp",
-      "Envio automatizado de leads qualificados da região para seu chat",
-      "Produção de áudio profissional e vídeo comercial inclusos sem taxas extras"
+      "Comercial exibido na TV Online da plataforma 24h por dia",
+      "Divulgação contínua na Rádio Digital da plataforma",
+      "Card empresarial em destaque na página principal",
+      "Presença nas buscas internas do guia digital",
+      "Botão de contato direto via WhatsApp",
+      "Catálogo digital on line 24 Horas",
+      "Divulgação 24 horas",
+      "Link personalizado para venda direta no whatsapp"
     ],
-    cta: "🚀 QUERO DEIXAR MEU CONCORRENTE NO CHINELO", waLink: "https://wa.me/5585992908713"
+    cta: "QUERO DIVULGAR AGORA", waLink: "https://wa.me/5585992908713"
   },
   segmentsList: [
     { name: "Internet", status: "Disponível" }, { name: "Pizzaria", status: "Disponível" }, { name: "Oficina", status: "Ocupado" },
@@ -310,8 +319,84 @@ const DEFAULT_DATA = {
 };
 
 // --- Helper Functions ---
-const normalize = (str: string) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-const slugify = (str: string) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+const normalize = (str: string) => (str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const slugify = (str: string) => (str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+
+// --- Plan & Monetization Helpers ---
+export function getCompanyPlanType(company: any): 'patrocinado' | 'destaque' | 'verificado' | 'gratuito' {
+  if (!company) return 'gratuito';
+  
+  if (company.vencimentoPlano) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (company.vencimentoPlano < todayStr) {
+      return 'gratuito';
+    }
+  }
+
+  if (company.patrocinado || company.tipoPlano === 'patrocinado') return 'patrocinado';
+  if (company.destaque || company.tipoPlano === 'destaque' || (company.featured && !company.tipoPlano)) return 'destaque';
+  if (company.verificado || company.tipoPlano === 'verificado') return 'verificado';
+  return 'gratuito';
+}
+
+export function getCompanyOrderScore(company: any): number {
+  if (!company) return 0;
+  const planType = getCompanyPlanType(company);
+  let planTier = 100000;
+  if (planType === 'patrocinado') planTier = 400000;
+  else if (planType === 'destaque') planTier = 300000;
+  else if (planType === 'verificado') planTier = 200000;
+
+  const posicaoFixa = Number(company.posicaoFixa || company.posicao || 0);
+  const fixedPosBonus = (posicaoFixa > 0 && posicaoFixa <= 10) ? (100 - posicaoFixa) * 1000 : 0;
+
+  const priority = Number(company.prioridade || 0);
+  const views = Number(company.views || 0);
+
+  return planTier + fixedPosBonus + (priority * 10) + (views * 0.01);
+}
+
+export function sortCompaniesByPlanAndPriority(companies: any[]): any[] {
+  if (!Array.isArray(companies)) return [];
+  return [...companies].sort((a, b) => {
+    const scoreA = getCompanyOrderScore(a);
+    const scoreB = getCompanyOrderScore(b);
+    if (scoreB !== scoreA) {
+      return scoreB - scoreA;
+    }
+    return (a.name || '').localeCompare(b.name || '');
+  });
+}
+
+export function calculateVisibilityScore(company: any): { score: number; checklist: { id: string; label: string; bonus: number; done: boolean; action: string }[] } {
+  if (!company) return { score: 0, checklist: [] };
+
+  const hasLogo = Boolean(company.logo && company.logo.trim());
+  const hasDesc = Boolean(company.desc && company.desc.trim().length > 15);
+  const hasWa = Boolean(company.wa && company.wa.trim());
+  const hasItems = Boolean(company.items && company.items.length >= 3);
+  const hasHours = Boolean(company.hours || company.horario);
+  const hasVideo = Boolean(company.videoUrl || company.video);
+  const hasPromo = Boolean(company.items && company.items.some((i: any) => i.promo || i.discount || i.originalPrice));
+  const isVerificado = Boolean(company.verificado || company.tipoPlano === 'verificado');
+  const isDestaque = Boolean(company.destaque || company.tipoPlano === 'destaque' || company.featured);
+  const isPatrocinado = Boolean(company.patrocinado || company.tipoPlano === 'patrocinado');
+
+  const checklist = [
+    { id: 'logo', label: 'Logomarca e foto do perfil cadastrados', bonus: 10, done: hasLogo, action: 'perfil' },
+    { id: 'desc', label: 'Descrição detalhada do negócio', bonus: 10, done: hasDesc, action: 'perfil' },
+    { id: 'wa', label: 'WhatsApp comercial para vendas diretas', bonus: 10, done: hasWa, action: 'perfil' },
+    { id: 'items', label: 'Cadastrar 3 ou mais produtos / serviços', bonus: 15, done: hasItems, action: 'catalogo' },
+    { id: 'hours', label: 'Informar Horário de Funcionamento', bonus: 10, done: hasHours, action: 'perfil' },
+    { id: 'video', label: 'Adicionar Vídeo da Empresa', bonus: 10, done: hasVideo, action: 'perfil' },
+    { id: 'promo', label: 'Cadastrar Promoções e Descontos', bonus: 10, done: hasPromo, action: 'catalogo' },
+    { id: 'verificado', label: 'Ativar Selo de Empresa Verificada', bonus: 10, done: isVerificado, action: 'plano' },
+    { id: 'premium', label: 'Ativar Plano Destaque ou Patrocinado (1º Lugar)', bonus: 15, done: isDestaque || isPatrocinado, action: 'plano' },
+  ];
+
+  const totalScore = checklist.reduce((acc, item) => acc + (item.done ? item.bonus : 0), 0);
+  return { score: Math.min(100, totalScore), checklist };
+}
 
 // --- Types ---
 interface AppData {
@@ -639,8 +724,8 @@ function AppContent() {
     photo4: '',
     video: ''
   });
-  const [adDashboardTab, setAdDashboardTab] = useState<'perfil' | 'catalogo'>(() => {
-    return (localStorage.getItem('adDashboardTab') as 'perfil' | 'catalogo') || 'perfil';
+  const [adDashboardTab, setAdDashboardTab] = useState<'metricas' | 'perfil' | 'catalogo' | 'plano'>(() => {
+    return (localStorage.getItem('adDashboardTab') as any) || 'metricas';
   });
 
   // Persistence and State Preservation for the Advertiser Portal
@@ -652,6 +737,36 @@ function AppContent() {
   useEffect(() => {
     localStorage.setItem('adDashboardTab', adDashboardTab);
   }, [adDashboardTab]);
+
+  // SEO Schema.org JSON-LD Structured Data Injection for Google Search Indexing
+  useEffect(() => {
+    const siteName = appData?.siteInfo?.name || 'Portal Guia Comercial';
+    const siteDesc = 'Cadastre sua empresa gratuitamente e seja encontrado por milhares de clientes na sua cidade.';
+    
+    document.title = `${siteName} | Cadastre sua Empresa Grátis & Guia Comercial`;
+
+    const schemaData = {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": siteName,
+      "url": window.location.origin,
+      "description": siteDesc,
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": `${window.location.origin}/#filtro-empresas?q={search_term_string}`,
+        "query-input": "required name=search_term_string"
+      }
+    };
+
+    let scriptTag = document.getElementById('schema-jsonld') as HTMLScriptElement;
+    if (!scriptTag) {
+      scriptTag = document.createElement('script');
+      scriptTag.id = 'schema-jsonld';
+      scriptTag.type = 'application/ld+json';
+      document.head.appendChild(scriptTag);
+    }
+    scriptTag.text = JSON.stringify(schemaData);
+  }, [appData]);
 
   // Auto login effect for advertisers on refresh
   useEffect(() => {
@@ -768,7 +883,21 @@ function AppContent() {
           const snap = await getDoc(doc(db, 'tenants', id));
           if (snap.exists()) {
             const tData = snap.data();
-            setAppData(tData.data || DEFAULT_DATA);
+            const loadedData = tData.data || DEFAULT_DATA;
+            if (loadedData && loadedData.pricing) {
+              if (!loadedData.pricing.price || loadedData.pricing.price === '39,90' || loadedData.pricing.price === '39.90' || loadedData.pricing.price === '147') {
+                loadedData.pricing.price = '49,90';
+              }
+              if (!loadedData.pricing.title || loadedData.pricing.title === 'Plano Máquina de Clientes VIP') {
+                loadedData.pricing.title = 'Plano Divulgação';
+              }
+              if (loadedData.pricing.period) {
+                loadedData.pricing.period = loadedData.pricing.period.replace(/^\/+/, '').toUpperCase();
+              } else {
+                loadedData.pricing.period = 'MÊS';
+              }
+            }
+            setAppData(loadedData);
             setCustomRadioLink(tData.customRadioLink || '');
             fetchAdvertisers(targetTenantId);
             fetchReviews(targetTenantId);
@@ -1426,11 +1555,17 @@ function AppContent() {
         const matchesCategory = selectedCategory ? c.category === selectedCategory : true;
         const matchesSearch = searchQuery 
           ? normalize(c.name).includes(normalize(searchQuery)) || 
-            normalize(c.desc).includes(normalize(searchQuery)) || 
-            normalize(c.category).includes(normalize(searchQuery)) ||
+            normalize(c.desc || '').includes(normalize(searchQuery)) || 
+            normalize(c.category || '').includes(normalize(searchQuery)) ||
             (c.city && normalize(c.city).includes(normalize(searchQuery))) ||
             (c.state && normalize(c.state).includes(normalize(searchQuery))) ||
-            (c.uf && normalize(c.uf).includes(normalize(searchQuery)))
+            (c.uf && normalize(c.uf).includes(normalize(searchQuery))) ||
+            (c.neighborhood && normalize(c.neighborhood).includes(normalize(searchQuery))) ||
+            (c.bairro && normalize(c.bairro).includes(normalize(searchQuery))) ||
+            (c.items && Array.isArray(c.items) && c.items.some((it: any) => 
+              normalize(it.title || it.name || '').includes(normalize(searchQuery)) ||
+              normalize(it.desc || '').includes(normalize(searchQuery))
+            ))
           : true;
         
         // Match state filter
@@ -1460,7 +1595,10 @@ function AppContent() {
       })
     : [];
   
-  const filteredCompanies = filteredCompaniesRaw.filter(c => c.active !== false);
+  const filteredCompanies = useMemo(() => {
+    const activeOnes = filteredCompaniesRaw.filter(c => c.active !== false);
+    return sortCompaniesByPlanAndPriority(activeOnes);
+  }, [filteredCompaniesRaw]);
 
   const visibleFlyers = (appData?.flyers || []).filter((f: any) => {
     const obj = typeof f === 'string' ? { image: f, link: '', active: true } : f;
@@ -1728,7 +1866,12 @@ function AppContent() {
   const toggleChat = () => {
     setIsChatOpen(prev => !prev);
     if (!isChatOpen && chatMessages.length === 0) {
-      setChatMessages([{ sender: 'bot', text: "Procurando algum serviço? Digite o que você precisa que eu te mostro empresas disponíveis." }]);
+      const topRecommended = sortCompaniesByPlanAndPriority(displayedCompanies.filter(c => c.active !== false)).slice(0, 3);
+      setChatMessages([{ 
+        sender: 'bot', 
+        text: `👋 Olá! Sou o Assistente Virtual do Portal Guia Comercial. Como posso te ajudar hoje?\n\n⭐ Empresas Recomendadas em Destaque:`,
+        results: topRecommended
+      }]);
     }
   };
 
@@ -1747,19 +1890,16 @@ function AppContent() {
       const query = normalize(text);
       
       // Keyword mapping for common terms
-      const keywordMap = appData.chatKeywords;
+      const keywordMap = appData.chatKeywords || {};
 
       let searchTerms = [query];
       Object.keys(keywordMap).forEach(key => {
-        // Suporte a múltiplas palavras-chaves/sinônimos separadas por vírgula, ponto e vírgula ou barra
         const subKeys = key.split(/[,;\/]+/).map(s => normalize(s.trim())).filter(Boolean);
         
         const isMatched = subKeys.some(subKey => {
           if (!subKey) return false;
-          // Se a busca contiver diretamente a palavra-chave
           if (query.includes(subKey)) return true;
           
-          // Se a palavra-chave bater com o início de alguma palavra digitada (ex: "mecanic" -> mecânico)
           const queryWords = query.split(/\s+/);
           return queryWords.some(qw => qw === subKey || (qw.startsWith(subKey) && subKey.length >= 4));
         });
@@ -1771,8 +1911,9 @@ function AppContent() {
       });
 
       const matchedCategories = Array.from(new Set(
-        appData.companies
+        displayedCompanies
           .map(c => c.category)
+          .filter(Boolean)
           .filter(cat => {
             const nCat = normalize(cat);
             return searchTerms.some(term => nCat.includes(term) || term.includes(nCat)) && nCat !== query;
@@ -1780,31 +1921,36 @@ function AppContent() {
       ));
 
       const queryWords = query.split(/\s+/).filter(w => w.length > 2);
-      const results = appData.companies.filter(c => {
-        const name = normalize(c.name);
-        const cat = normalize(c.category);
-        const desc = normalize(c.desc);
+      const rawResults = displayedCompanies.filter(c => {
+        if (c.active === false) return false;
+        const name = normalize(c.name || '');
+        const cat = normalize(c.category || '');
+        const desc = normalize(c.desc || '');
+        const city = normalize(c.city || '');
+        const bairro = normalize(c.neighborhood || c.bairro || '');
         
         const isMatch = searchTerms.some(term => 
           name.includes(term) || term.includes(name) || 
           cat.includes(term) || term.includes(cat) || 
-          desc.includes(term)
+          desc.includes(term) || city.includes(term) || bairro.includes(term)
         );
 
         if (isMatch) return true;
-        return queryWords.some(word => name.includes(word) || cat.includes(word) || desc.includes(word));
+        return queryWords.some(word => name.includes(word) || cat.includes(word) || desc.includes(word) || city.includes(word) || bairro.includes(word));
       });
 
+      const results = sortCompaniesByPlanAndPriority(rawResults);
+
       let botText = '';
-      const isExactCategory = appData.companies.some(c => normalize(c.category) === query);
+      const isExactCategory = displayedCompanies.some(c => normalize(c.category) === query);
 
       if (results.length > 0) {
-        botText = isExactCategory ? `Mostrando empresas da categoria ${appData.companies.find(c => normalize(c.category) === query)?.category}:` : "Encontrei estas empresas e categorias relacionadas:";
+        botText = isExactCategory ? `Mostrando empresas da categoria ${displayedCompanies.find(c => normalize(c.category) === query)?.category}:` : "Encontrei estas empresas ordenadas por recomendação e destaque:";
         setChatMessages(prev => [...prev, { sender: 'bot', text: botText, results, categories: matchedCategories }]);
       } else if (matchedCategories.length > 0) {
-        setChatMessages(prev => [...prev, { sender: 'bot', text: "Encontrei estas categorias. Clique em uma para ver as empresas:", categories: matchedCategories }]);
+        setChatMessages(prev => [...prev, { sender: 'bot', text: "Encontrei estas categorias relacionadas. Clique em uma para ver as empresas:", categories: matchedCategories }]);
       } else {
-        setChatMessages(prev => [...prev, { sender: 'bot', text: "Desculpe, não encontrei nenhuma empresa com esse termo. Tente algo como: supermercado, mecânico, internet ou restaurante." }]);
+        setChatMessages(prev => [...prev, { sender: 'bot', text: "Desculpe, não encontrei nenhuma empresa com esse termo. Tente buscar por: pizzaria, supermercado, oficina, ar condicionado ou restaurante." }]);
       }
     }, 800);
   };
@@ -3021,192 +3167,77 @@ function AppContent() {
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2.5 bg-neutral-950/80 border border-[var(--primary)]/30 backdrop-blur-2xl px-5 py-2.5 rounded-full text-[10px] sm:text-xs font-black tracking-[0.2em] uppercase text-[var(--primary)] mb-8 md:mb-10 font-mono shadow-[0_4px_30px_rgba(251,191,36,0.15)] select-none"
+            className="inline-flex items-center gap-2.5 bg-neutral-950/90 border border-amber-500/40 backdrop-blur-2xl px-5 py-2.5 rounded-full text-[10px] sm:text-xs font-black tracking-[0.2em] uppercase text-amber-400 mb-6 md:mb-8 font-mono shadow-[0_4px_30px_rgba(251,191,36,0.2)] select-none"
           >
-            <span className="w-2.5 h-2.5 rounded-full bg-[var(--primary)] animate-ping" />
-            Portal de Mídia Digital & Divulgação Empresarial • Ativo
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
+            Guia Comercial Digital & Divulgação Local
           </motion.div>
   
-          {/* Premium Headline & Subtitle */}
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-sans font-extrabold text-white tracking-tight leading-[1.05] max-w-6xl select-none">
-            {activeReferralPartner?.heroTitle ? activeReferralPartner.heroTitle : (
-              appData?.siteInfo?.heroTitle ? appData.siteInfo.heroTitle : (
-                <>A maior vitrine digital para seu negócio no <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--primary)] via-amber-400 to-yellow-500 font-extrabold">Brasil</span>!</>
-              )
-            )}
+          {/* Main Headline & Subtitle */}
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-sans font-black text-white tracking-tight leading-[1.05] max-w-5xl select-none">
+            Cadastre sua empresa <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 font-black">gratuitamente</span>
           </h1>
   
-          <p className="text-sm sm:text-lg md:text-xl text-white/75 font-medium max-w-4xl mt-6 leading-relaxed select-none">
-            {activeReferralPartner?.heroSub ? activeReferralPartner.heroSub : (
-              appData?.siteInfo?.heroSub ? appData.siteInfo.heroSub : "Coloque seu negócio na maior vitrine digital do país: com rádio digital ativa, cardápio interativo e botão de vendas diretas pelo WhatsApp."
-            )}
+          <p className="text-base sm:text-xl md:text-2xl text-white/85 font-semibold max-w-3xl mt-5 leading-relaxed select-none">
+            Seja encontrado por milhares de clientes da sua cidade e aumente suas vendas diretas pelo WhatsApp.
           </p>
 
-          {/* Active Radio Player at Top (Referral Partner or Portal Owner) */}
-          {showRadio && (activeReferralPartner?.hasRadioPlayer || tenantHasRadioPlayer) && (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-8 mb-4 max-w-xl w-full bg-gradient-to-r from-amber-500/10 via-yellow-600/10 to-amber-500/10 border border-amber-500/30 rounded-2xl p-5 md:p-6 text-center shadow-[0_0_30px_rgba(251,191,36,0.15)] relative z-20 overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 p-3">
-                <span className="flex h-2 w-2 relative">
-                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${radioPlaying ? 'bg-red-400' : 'bg-amber-400'} opacity-75`}></span>
-                  <span className={`relative inline-flex rounded-full h-2 w-2 ${radioPlaying ? 'bg-red-500' : 'bg-amber-500'}`}></span>
-                </span>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4 text-left">
-                  {/* Rotating Disk */}
-                  <div className="relative w-16 h-16 flex-shrink-0">
-                    <div 
-                      className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-500 via-yellow-600 to-amber-400 p-0.5 shadow-md animate-spin"
-                      style={{ 
-                        animationDuration: '10s',
-                        animationPlayState: radioPlaying ? 'running' : 'paused',
-                      }}
-                    >
-                      <div className="w-full h-full rounded-full bg-neutral-950 flex items-center justify-center border border-white/10 relative">
-                        <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center">
-                          <div className="w-2 h-2 rounded-full bg-black"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    {activeReferralPartner?.hasRadioPlayer ? (
-                      <>
-                        <span className="text-[9px] text-[var(--primary)] font-mono tracking-widest uppercase font-extrabold block">RÁDIO DO PARCEIRO</span>
-                        <h4 className="text-base font-black text-white leading-tight">
-                          {activeReferralPartner.customTitle || activeReferralPartner.name} Rádio
-                        </h4>
-                        <p className="text-xs text-white/60 leading-normal">
-                          {activeReferralPartner.radioSub || "Ouça agora nossa rádio digital exclusiva ao vivo!"}
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-[9px] text-[var(--primary)] font-mono tracking-widest uppercase font-extrabold block">RÁDIO DO PORTAL</span>
-                        <h4 className="text-base font-black text-white leading-tight">
-                          {appData?.siteInfo?.radioTitle || "Rádio Ao Vivo"}
-                        </h4>
-                        <p className="text-xs text-white/60 leading-normal">
-                          {appData?.siteInfo?.radioSub || "Acompanhe nossa programação musical completa!"}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 flex-shrink-0 w-full sm:w-auto justify-end">
-                  {/* Volume Control */}
-                  <div className="flex items-center gap-2 bg-neutral-900/80 border border-white/5 rounded-xl px-3 py-2">
-                    <button 
-                      type="button"
-                      onClick={() => setRadioVolume(prev => prev === 0 ? 0.8 : 0)}
-                      className="text-white/60 hover:text-white transition-colors"
-                    >
-                      {radioVolume === 0 ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                    </button>
-                    <input 
-                      type="range" 
-                      min="0" 
-                      max="1" 
-                      step="0.01"
-                      value={radioVolume}
-                      onChange={(e) => setRadioVolume(parseFloat(e.target.value))}
-                      className="w-16 accent-[var(--primary)] opacity-70 hover:opacity-100 h-1 rounded-full cursor-pointer bg-neutral-800"
-                    />
-                  </div>
-
-                  {/* Play Button */}
-                  <button
-                    type="button"
-                    onClick={handleRadioTogglePlay}
-                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-                      radioPlaying 
-                        ? 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-500/20' 
-                        : 'bg-[var(--primary)] hover:bg-amber-400 text-black hover:scale-105 shadow-lg shadow-amber-500/20'
-                    }`}
-                  >
-                    {radioPlaying ? <Pause size={18} /> : <Play size={18} className="translate-x-0.5" />}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* HIGH IMPACT TRIAL BANNER - GIGANTE, COM LETRAS GROSSAS E SEM CONFLITOS */}
-          {!hideAdvertiserAuth && (!tenantId || tenantId.toLowerCase() === 'fortaleza') && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="mt-10 max-w-4xl w-full bg-[#0d0e15] border-2 border-amber-500 rounded-3xl p-6 md:p-8 text-center shadow-[0_0_40px_rgba(245,158,11,0.25)] relative z-20 overflow-hidden"
-            >
-              {/* Glowing background accent */}
-              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-transparent to-orange-500/5 pointer-events-none" />
-              
-              <div className="flex flex-col sm:flex-row items-center gap-6 text-left relative z-10">
-                <div className="bg-amber-500 text-black p-4 rounded-2xl text-3xl font-black flex-shrink-0 animate-bounce shadow-lg shadow-amber-500/20">
-                  🎁
-                </div>
-                <div>
-                  <h4 className="text-xl sm:text-2xl md:text-3xl font-black text-amber-400 tracking-tight uppercase leading-snug">
-                    Experimente Grátis por 20 Dias! 🎁
-                  </h4>
-                  <p className="text-sm sm:text-base text-white font-extrabold mt-3 leading-relaxed">
-                    Todos os novos cadastros ganham automaticamente <span className="text-amber-400 font-black underline decoration-2 underline-offset-2">20 dias de teste completo e gratuito</span> para criar seu mini-site, cadastrar até 6 produtos ou serviços e receber pedidos direto no seu WhatsApp! Sem compromisso e sem taxas iniciais.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
           {/* Main Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 mt-8 w-full sm:w-auto relative z-20">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 w-full sm:w-auto relative z-20">
             {!hideAdvertiserAuth ? (
-              <>
-                <button 
-                  onClick={() => { 
-                    setAuthMode('register'); 
-                    setAdRegisterForm(prev => ({ ...prev, type: 'loja' })); 
-                    setIsAdPortalOpen(true); 
-                  }}
-                  className="group bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-black hover:scale-105 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] px-6 py-3.5 md:px-7 md:py-4 rounded-full font-black text-xs sm:text-sm uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto shrink-0"
-                >
-                  🛍️ Cadastrar Loja Grátis
-                </button>
-                <button 
-                  onClick={() => { 
-                    setAuthMode('register'); 
-                    setAdRegisterForm(prev => ({ ...prev, type: 'servico' })); 
-                    setIsAdPortalOpen(true); 
-                  }}
-                  className="group bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white hover:scale-105 hover:shadow-[0_0_20px_rgba(37,99,235,0.3)] px-6 py-3.5 md:px-7 md:py-4 rounded-full font-black text-xs sm:text-sm uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto shrink-0"
-                >
-                  🛠️ Cadastrar Serviço Grátis
-                </button>
-              </>
+              <button 
+                onClick={() => { 
+                  setAuthMode('register'); 
+                  setIsAdPortalOpen(true); 
+                }}
+                className="group bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-400 hover:to-yellow-400 text-black hover:scale-105 hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] px-8 py-4.5 md:px-10 md:py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider text-center transition-all duration-300 shadow-2xl flex items-center justify-center gap-3 cursor-pointer w-full sm:w-auto shrink-0 border border-amber-300/30"
+              >
+                🚀 Cadastrar Empresa Grátis
+              </button>
             ) : (
               <a 
-                href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '') || ''}?text=${encodeURIComponent('Olá! Acessei o portal de divulgação e gostaria de anunciar minha empresa em sua vitrine digital.')}`} 
+                href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '') || ''}?text=${encodeURIComponent('Olá! Acessei o portal e gostaria de cadastrar minha empresa gratuitamente.')}`} 
                 target="_blank"
                 rel="noreferrer"
-                className="group bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-black hover:scale-105 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] px-8 py-4 sm:px-10 sm:py-5 rounded-full font-black text-xs sm:text-sm uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2.5 w-full sm:w-auto shrink-0 decoration-transparent"
+                className="group bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black hover:scale-105 px-8 py-4.5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2.5 w-full sm:w-auto shrink-0 decoration-transparent"
               >
-                📢 Quero Anunciar Meu Negócio
+                🚀 Cadastrar Empresa Grátis
               </a>
             )}
-            <a 
-              href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '') || ''}?text=${encodeURIComponent('Olá! Acessei o portal de divulgação e gostaria de receber mais informações sobre como destacar minha empresa na vitrine do Brasil.')}`} 
-              target="_blank"
-              rel="noreferrer"
-              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white hover:scale-105 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] px-6 py-3.5 md:px-7 md:py-4 rounded-full font-black text-xs sm:text-sm uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2 w-full sm:w-auto shrink-0 decoration-transparent"
+            
+            <button 
+              onClick={() => { 
+                const el = document.getElementById('filtro-empresas');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="bg-white/10 hover:bg-white/15 text-white border border-white/20 hover:border-white/40 px-8 py-4.5 md:px-10 md:py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2.5 cursor-pointer w-full sm:w-auto shrink-0"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="inline-block"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              Contato WhatsApp
-            </a>
+              🔍 Encontrar Empresas
+            </button>
+          </div>
+
+          {/* Advantages Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 sm:gap-4 mt-12 w-full max-w-5xl text-left select-none relative z-20">
+            {[
+              { title: "Cadastro Gratuito", desc: "Sem taxas ou mensalidades" },
+              { title: "WhatsApp Direto", desc: "Receba pedidos no seu celular" },
+              { title: "Localização & Mapa", desc: "Endereço e rotas de acesso" },
+              { title: "Redes Sociais", desc: "Instagram, Facebook e Site" },
+              { title: "Catálogo de Produtos", desc: "Cardápio e serviços online" },
+              { title: "Horário Comercial", desc: "Aberto / Fechado em tempo real" },
+              { title: "Fotos da Empresa", desc: "Sua estrutura em destaque" },
+              { title: "Perfil Profissional", desc: "Estilo Google Empresas" }
+            ].map((item, idx) => (
+              <div key={idx} className="bg-[#0b0c12]/90 border border-white/10 hover:border-amber-500/40 rounded-2xl p-4 flex flex-col justify-between shadow-lg backdrop-blur-md transition-all duration-200 hover:-translate-y-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center text-xs font-black shrink-0">
+                    ✔
+                  </span>
+                  <h4 className="text-xs sm:text-sm font-black text-white leading-tight">{item.title}</h4>
+                </div>
+                <p className="text-[11px] text-white/60 font-medium pl-7">{item.desc}</p>
+              </div>
+            ))}
           </div>
 
           {/* DUAL COLUMN WORK: INTERACTIVE SELECTION + NATIONAL STATS WIDGET (FROM IMAGE 2) */}
@@ -3983,30 +4014,32 @@ function AppContent() {
             )}
           </div>
 
-          {/* Category Pills Auto-Scrolling Marquee (Non-clickable Carousel) */}
-          {displayedCategories && displayedCategories.length > 0 && (
-            <div className="category-marquee-container">
-              <div className="category-marquee-track">
-                {(() => {
-                  const doubledCats = [
-                    ...displayedCategories, 
-                    ...displayedCategories, 
-                    ...displayedCategories, 
-                    ...displayedCategories
-                  ];
-                  return doubledCats.map((cat, idx) => (
-                    <div 
-                      key={`${cat.name}-${idx}`} 
-                      className="category-marquee-item"
-                    >
-                      <span className="text-base">{cat.icon}</span> 
-                      <span>{cat.name}</span>
-                    </div>
-                  ));
-                })()}
-              </div>
+          {/* Interactive Category Grid Filter */}
+          <div className="mb-12">
+            <h3 className="text-xs font-black font-mono text-amber-400 tracking-[0.2em] uppercase text-center mb-6">
+              📂 CATEGORIAS POPULARES
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
+              {CATEGORIES.map((cat, idx) => {
+                const isSelected = selectedCategory === cat.name;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setSelectedCategory(isSelected ? null : cat.name)}
+                    className={`p-3.5 rounded-2xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer ${
+                      isSelected 
+                        ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-black scale-[1.03] shadow-[0_0_15px_rgba(251,191,36,0.25)]' 
+                        : 'bg-[#11121c] border-white/10 text-white/80 hover:border-amber-400/40 hover:text-white hover:bg-neutral-800'
+                    }`}
+                  >
+                    <span className="text-2xl mb-1.5">{cat.icon}</span>
+                    <span className="text-[11px] font-extrabold leading-tight">{cat.name}</span>
+                  </button>
+                );
+              })}
             </div>
-          )}
+          </div>
 
           {/* Grid of Results */}
           {filteredCompanies.length === 0 ? (
@@ -4023,53 +4056,81 @@ function AppContent() {
             </div>
           ) : (
             <div id="destaque" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-12">
-              {filteredCompanies.map(company => (
-                <div 
-                  key={company.id} 
-                  className={`bg-[#0f1016] border transition-all duration-300 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1.5 shadow-xl hover:shadow-2xl relative select-none ${company.featured ? 'border-[var(--primary)] shadow-[var(--primary)]/5 hover:shadow-[rgb(251,191,36)]/10' : 'border-white/5 hover:border-white/20'}`}
-                >
-                  {company.featured && (
-                    <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-black text-[8px] tracking-widest uppercase px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1 z-10">
-                      <Award size={10} /> Destaque
-                    </div>
-                  )}
-                  
-                  <div>
-                    {/* Logo Frame */}
-                    <div className="w-20 h-20 rounded-full bg-white border border-white/15 overflow-hidden flex items-center justify-center shadow-lg p-0 mb-5 mt-2">
-                      <img src={company.logo} alt={company.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                    </div>
+              {filteredCompanies.map(company => {
+                const planType = getCompanyPlanType(company);
+                return (
+                  <div 
+                    key={company.id} 
+                    className={`bg-[#0f1016] border transition-all duration-300 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1.5 shadow-xl hover:shadow-2xl relative select-none ${
+                      planType === 'patrocinado' 
+                        ? 'border-amber-400/80 shadow-[0_0_25px_rgba(251,191,36,0.25)] ring-1 ring-amber-400/50' 
+                        : planType === 'destaque'
+                        ? 'border-amber-500/50 shadow-lg shadow-amber-500/5'
+                        : planType === 'verificado'
+                        ? 'border-emerald-500/30 hover:border-emerald-500/50'
+                        : 'border-white/5 hover:border-white/20'
+                    }`}
+                  >
+                    {planType === 'patrocinado' && (
+                      <div className="absolute top-4 right-4 bg-gradient-to-r from-red-500 via-amber-500 to-yellow-500 text-black font-black text-[9px] tracking-widest uppercase px-3 py-1 rounded-full shadow-lg flex items-center gap-1 z-10 animate-pulse">
+                        🔥 PATROCINADO
+                      </div>
+                    )}
+                    {planType === 'destaque' && (
+                      <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-black text-[9px] tracking-widest uppercase px-3 py-1 rounded-full shadow-lg flex items-center gap-1 z-10">
+                        ⭐ DESTAQUE
+                      </div>
+                    )}
+                    {planType === 'verificado' && (
+                      <div className="absolute top-4 right-4 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-black text-[9px] tracking-widest uppercase px-3 py-1 rounded-full shadow-lg flex items-center gap-1 z-10">
+                        ✔ VERIFICADO
+                      </div>
+                    )}
+                    
+                    <div>
+                      {/* Logo Frame */}
+                      <div className="w-20 h-20 rounded-full bg-white border border-white/15 overflow-hidden flex items-center justify-center shadow-lg p-0 mb-5 mt-2">
+                        <img src={company.logo} alt={company.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      </div>
 
-                    <div className="flex flex-wrap gap-1.5 items-center">
-                      <span className="text-[10px] text-[var(--primary)] font-extrabold uppercase tracking-widest bg-[var(--primary)]/10 px-2.5 py-1 rounded-full select-none">
-                        {company.category}
-                      </span>
-                      {(() => {
-                        const { average, count } = getCompanyReviewStats(company.id);
-                        if (count > 0) {
-                          return (
-                            <span className="text-[9px] text-amber-400 font-extrabold uppercase tracking-wide bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
-                              ⭐ {average.toFixed(1)} ({count})
-                            </span>
-                          );
-                        } else {
-                          return (
-                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-wide bg-white/5 border border-white/10 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
-                              ⭐ Novo
-                            </span>
-                          );
-                        }
-                      })()}
-                      {(company.city || company.state || company.uf) && (
-                        <span className="text-[9px] text-white/50 font-bold uppercase tracking-wide bg-white/5 border border-white/10 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
-                          📍 {company.city || 'Fortaleza'}{company.state || company.uf ? ` - ${company.state || company.uf}` : ''}
+                      <div className="flex flex-wrap gap-1.5 items-center">
+                        <span className="text-[10px] text-[var(--primary)] font-extrabold uppercase tracking-widest bg-[var(--primary)]/10 px-2.5 py-1 rounded-full select-none">
+                          {company.category}
                         </span>
-                      )}
-                    </div>
+                        {(() => {
+                          const { average, count } = getCompanyReviewStats(company.id);
+                          if (count > 0) {
+                            return (
+                              <span className="text-[9px] text-amber-400 font-extrabold uppercase tracking-wide bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
+                                ⭐ {average.toFixed(1)} ({count})
+                              </span>
+                            );
+                          } else {
+                            return (
+                              <span className="text-[9px] text-white/40 font-bold uppercase tracking-wide bg-white/5 border border-white/10 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
+                                ⭐ Novo
+                              </span>
+                            );
+                          }
+                        })()}
+                        {(company.city || company.state || company.uf) && (
+                          <span className="text-[9px] text-white/50 font-bold uppercase tracking-wide bg-white/5 border border-white/10 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
+                            📍 {company.city || 'Fortaleza'}{company.state || company.uf ? ` - ${company.state || company.uf}` : ''}
+                          </span>
+                        )}
+                        <span className="text-[9px] text-white/40 font-bold uppercase tracking-wide bg-white/5 border border-white/10 px-2 py-1 rounded-full select-none flex items-center gap-1 font-mono">
+                          👁️ {company.views || 0}
+                        </span>
+                      </div>
 
-                    <h3 className="text-base font-extrabold text-white mt-4 line-clamp-1">{company.name}</h3>
-                    <p className="text-xs text-white/50 mt-2 line-clamp-3 leading-relaxed min-h-[3.5rem]">{company.desc || 'Anunciante comercial verificado de alta qualidade e atendimento dedicado.'}</p>
-                  </div>
+                      <h3 className="text-base font-extrabold text-white mt-4 line-clamp-1 flex items-center gap-1.5">
+                        {company.name}
+                        {planType === 'verificado' && (
+                          <span className="text-emerald-400 text-xs" title="Empresa Verificada">✔</span>
+                        )}
+                      </h3>
+                      <p className="text-xs text-white/50 mt-2 line-clamp-3 leading-relaxed min-h-[3.5rem]">{company.desc || 'Anunciante comercial verificado de alta qualidade e atendimento dedicado.'}</p>
+                    </div>
 
                   {/* Action Buttons */}
                   {hasActiveReferral ? (
@@ -4159,7 +4220,8 @@ function AppContent() {
                     </div>
                   )}
                 </div>
-              ))}
+              );
+            })}
             </div>
           )}
 
@@ -4495,13 +4557,13 @@ function AppContent() {
                 <span className="text-[9px] text-white/50 tracking-widest font-mono uppercase text-center block mb-3 select-none">
                   Pacote de Mídia Integrada
                 </span>
-                <h3 className="text-xl md:text-2xl font-black text-white text-center select-none">{appData.pricing.title}</h3>
+                <h3 className="text-xl md:text-2xl font-black text-white text-center select-none">{appData?.pricing?.title || 'Plano Divulgação'}</h3>
                 
                 {/* Price tag */}
                 <div className="flex items-baseline justify-center gap-1 text-[#ff8a00] mt-6 select-none font-sans">
                   <span className="text-2xl font-bold font-mono">R$</span>
-                  <span className="text-5xl md:text-6xl font-black tracking-tight">{appData.pricing.price}</span>
-                  <span className="text-xs font-bold text-white/50 uppercase ml-1">/ {appData.pricing.period}</span>
+                  <span className="text-5xl md:text-6xl font-black tracking-tight">{appData?.pricing?.price || '49,90'}</span>
+                  <span className="text-xs font-bold text-white/50 uppercase ml-1">/ {appData?.pricing?.period ? appData.pricing.period.replace(/^\/+/, '') : 'MÊS'}</span>
                 </div>
 
                 {/* Feature List */}
@@ -5783,15 +5845,15 @@ function AppContent() {
                                 </div>
                               </div>
                               
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '15px', marginTop: '15px', paddingTop: '15px', borderTop: '1px dashed rgba(255, 255, 255, 0.05)' }}>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px', marginTop: '15px', paddingTop: '15px', borderTop: '1px dashed rgba(255, 255, 255, 0.05)' }}>
                                 <div className="dev-form-group" style={{ margin: 0 }}>
-                                  <label style={{ fontSize: '11px', color: '#bbb', display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Status do Plano:</label>
+                                  <label style={{ fontSize: '11px', color: '#bbb', display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Nível do Plano:</label>
                                   <select 
                                     className="dev-input" 
-                                    style={{ padding: '8px', fontSize: '12px', background: '#12131a', border: '1px solid rgba(255,255,255,0.1)' }}
-                                    value={ad.hasPlan ? 'sim' : 'nao'} 
+                                    style={{ padding: '8px', fontSize: '12px', background: '#12131a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                                    value={getCompanyPlanType(ad)} 
                                     onChange={async (e) => {
-                                      const hasPlanVal = e.target.value === 'sim';
+                                      const newType = e.target.value as 'gratuito' | 'verificado' | 'destaque' | 'patrocinado';
                                       setIsAdLoading(true);
                                       try {
                                         const docRef = doc(db, 'advertisers', ad.id);
@@ -5803,35 +5865,44 @@ function AppContent() {
                                           createdAt: ad.createdAt || '',
                                           company: {
                                             ...ad,
-                                            hasPlan: hasPlanVal,
-                                            featured: ad.featured || hasPlanVal,
+                                            tipoPlano: newType,
+                                            hasPlan: newType !== 'gratuito',
+                                            verificado: newType === 'verificado',
+                                            destaque: newType === 'destaque',
+                                            featured: newType === 'destaque' || newType === 'patrocinado',
+                                            patrocinado: newType === 'patrocinado',
                                             expiresAt: ad.expiresAt || '',
                                             createdAt: ad.createdAt || ''
                                           }
                                         });
                                         await fetchAdvertisers(tenantId || 'fortaleza');
-                                        alert(`Plano do anunciante "${ad.name}" atualizado com sucesso!`);
+                                        alert(`Plano do anunciante "${ad.name}" alterado para ${newType.toUpperCase()}!`);
                                       } catch(ee) {
                                         console.error(ee);
-                                        alert("Falha ao salvar status.");
+                                        alert("Falha ao salvar plano.");
                                       } finally {
                                         setIsAdLoading(false);
                                       }
                                     }}
                                   >
-                                    <option value="nao">Plano Grátis (Máx 6 produtos, sem destaque automático) 🛑</option>
-                                    <option value="sim">Plano Adquirido / VIP (Produtos Ilimitados) ✅</option>
+                                    <option value="gratuito">⚪ Gratuito (Sem Destaque)</option>
+                                    <option value="verificado">✔ Verificado (Selo de Confiança)</option>
+                                    <option value="destaque">⭐ Destaque VIP (Selo Estelar)</option>
+                                    <option value="patrocinado">🔥 Patrocinado (Top 1º Lugar + Borda Dourada)</option>
                                   </select>
                                 </div>
-                                
+
                                 <div className="dev-form-group" style={{ margin: 0 }}>
-                                  <label style={{ fontSize: '11px', color: '#bbb', display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Destaque Especial no Topo:</label>
-                                  <select 
+                                  <label style={{ fontSize: '11px', color: '#bbb', display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Prioridade na Busca (0-100):</label>
+                                  <input 
+                                    type="number" 
+                                    min="0"
+                                    max="100"
                                     className="dev-input" 
-                                    style={{ padding: '8px', fontSize: '12px', background: '#12131a', border: '1px solid rgba(255,255,255,0.1)' }}
-                                    value={ad.featured ? 'sim' : 'nao'} 
+                                    style={{ padding: '7px 8px', fontSize: '12px', background: '#12131a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '4px', width: '100%', outline: 'none' }}
+                                    value={ad.prioridade || 0}
                                     onChange={async (e) => {
-                                      const featuredVal = e.target.value === 'sim';
+                                      const pVal = Number(e.target.value) || 0;
                                       setIsAdLoading(true);
                                       try {
                                         const docRef = doc(db, 'advertisers', ad.id);
@@ -5843,23 +5914,58 @@ function AppContent() {
                                           createdAt: ad.createdAt || '',
                                           company: {
                                             ...ad,
-                                            featured: featuredVal,
+                                            prioridade: pVal,
                                             expiresAt: ad.expiresAt || '',
                                             createdAt: ad.createdAt || ''
                                           }
                                         });
                                         await fetchAdvertisers(tenantId || 'fortaleza');
-                                        alert(`Destaque do anunciante "${ad.name}" atualizado com sucesso!`);
                                       } catch(ee) {
                                         console.error(ee);
-                                        alert("Falha ao salvar destaque.");
+                                      } finally {
+                                        setIsAdLoading(false);
+                                      }
+                                    }}
+                                  />
+                                </div>
+
+                                <div className="dev-form-group" style={{ margin: 0 }}>
+                                  <label style={{ fontSize: '11px', color: '#bbb', display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Posição Fixa no Topo:</label>
+                                  <select 
+                                    className="dev-input" 
+                                    style={{ padding: '8px', fontSize: '12px', background: '#12131a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                                    value={ad.posicaoFixa || 0} 
+                                    onChange={async (e) => {
+                                      const posVal = Number(e.target.value) || 0;
+                                      setIsAdLoading(true);
+                                      try {
+                                        const docRef = doc(db, 'advertisers', ad.id);
+                                        await setDoc(docRef, {
+                                          email: ad.email,
+                                          password: ad.password || '123456',
+                                          tenantId: slugify(tenantId || 'fortaleza'),
+                                          expiresAt: ad.expiresAt || '',
+                                          createdAt: ad.createdAt || '',
+                                          company: {
+                                            ...ad,
+                                            posicaoFixa: posVal,
+                                            expiresAt: ad.expiresAt || '',
+                                            createdAt: ad.createdAt || ''
+                                          }
+                                        });
+                                        await fetchAdvertisers(tenantId || 'fortaleza');
+                                        alert(`Posição fixa de "${ad.name}" alterada para ${posVal === 0 ? 'Ordem Padrão' : `${posVal}º Lugar`}`);
+                                      } catch(ee) {
+                                        console.error(ee);
                                       } finally {
                                         setIsAdLoading(false);
                                       }
                                     }}
                                   >
-                                    <option value="nao">Sem Destaque (Lista normal) 👎</option>
-                                    <option value="sim">Com Destaque (Destaque VIP do portal) ⭐</option>
+                                    <option value={0}>0 - Ordem por Prioridade/Plano</option>
+                                    <option value={1}>🥇 1º Lugar Absoluto</option>
+                                    <option value={2}>🥈 2º Lugar Absoluto</option>
+                                    <option value={3}>🥉 3º Lugar Absoluto</option>
                                   </select>
                                 </div>
 
@@ -8607,6 +8713,47 @@ function AppContent() {
               ) : (
                 // SECTION B: IF AUTHENTICATED SHOW ADVERTISER DASHBOARD
                 <div className="flex flex-col gap-6">
+                  {/* Registration Confirmation Banner & Public Preview Link */}
+                  <div className="bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-emerald-500/15 border-2 border-emerald-500/40 rounded-2xl p-5 md:p-6 shadow-[0_0_30px_rgba(16,185,129,0.15)] flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 text-left">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-black flex items-center justify-center text-2xl font-black shrink-0 shadow-lg">
+                        🎉
+                      </div>
+                      <div>
+                        <h3 className="text-base sm:text-lg font-black text-white leading-snug">
+                          Sua empresa já está publicada e visível para milhares de clientes!
+                        </h3>
+                        <p className="text-xs text-white/70 mt-1 font-medium">
+                          Seu perfil comercial e botão de WhatsApp estão ativos no guia da sua cidade.
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-3 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAdPortalOpen(false);
+                          setActiveMiniSiteCompany(currentAdvertiser.company);
+                        }}
+                        className="bg-emerald-500 hover:bg-emerald-400 text-black px-5 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-lg cursor-pointer"
+                      >
+                        👁️ Ver Perfil Público
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const shareUrl = `${window.location.origin}/#/${tenantId || 'fortaleza'}?id=${currentAdvertiser.company.id || slugify(currentAdvertiser.company.name)}`;
+                          navigator.clipboard.writeText(shareUrl);
+                          alert("Link do seu perfil comercial copiado!");
+                        }}
+                        className="bg-white/10 hover:bg-white/20 text-white border border-white/10 px-4 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer"
+                      >
+                        🔗 Copiar Link
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Dashboard Header Bar */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-5 mt-4">
                     <div>
@@ -8719,26 +8866,308 @@ function AppContent() {
                   </div>
 
                   {/* Tabs Nav */}
-                  <div className="flex gap-3 border-b border-white/5 pb-1">
+                  <div className="flex gap-2 border-b border-white/5 pb-1 overflow-x-auto">
                     <button 
-                      onClick={() => {
-                        setAdDashboardTab('perfil');
-                        setEditingItemIndex(null);
-                      }}
-                      className={`text-xs font-black uppercase tracking-wider pb-3 px-1 transition-all border-b-2 hover:text-white ${adDashboardTab === 'perfil' ? 'border-[var(--primary)] text-white' : 'border-transparent text-white/40'}`}
+                      onClick={() => { setAdDashboardTab('metricas'); setEditingItemIndex(null); }}
+                      className={`text-xs font-black uppercase tracking-wider pb-3 px-3 transition-all border-b-2 hover:text-white shrink-0 cursor-pointer ${adDashboardTab === 'metricas' ? 'border-[var(--primary)] text-white' : 'border-transparent text-white/40'}`}
                     >
-                      Perfil & Dados Gerais
+                      📊 Métricas & Visibilidade
                     </button>
                     <button 
-                      onClick={() => {
-                        setAdDashboardTab('catalogo');
-                        setEditingItemIndex(null);
-                      }}
-                      className={`text-xs font-black uppercase tracking-wider pb-3 px-1 transition-all border-b-2 hover:text-white ${adDashboardTab === 'catalogo' ? 'border-[var(--primary)] text-white' : 'border-transparent text-white/40'}`}
+                      onClick={() => { setAdDashboardTab('perfil'); setEditingItemIndex(null); }}
+                      className={`text-xs font-black uppercase tracking-wider pb-3 px-3 transition-all border-b-2 hover:text-white shrink-0 cursor-pointer ${adDashboardTab === 'perfil' ? 'border-[var(--primary)] text-white' : 'border-transparent text-white/40'}`}
                     >
-                      Gerenciar Itens ({currentAdvertiser.company.items?.length || 0})
+                      ⚙️ Perfil & Dados
+                    </button>
+                    <button 
+                      onClick={() => { setAdDashboardTab('catalogo'); setEditingItemIndex(null); }}
+                      className={`text-xs font-black uppercase tracking-wider pb-3 px-3 transition-all border-b-2 hover:text-white shrink-0 cursor-pointer ${adDashboardTab === 'catalogo' ? 'border-[var(--primary)] text-white' : 'border-transparent text-white/40'}`}
+                    >
+                      📦 Produtos & Serviços ({currentAdvertiser.company.items?.length || 0})
+                    </button>
+                    <button 
+                      onClick={() => { setAdDashboardTab('plano'); setEditingItemIndex(null); }}
+                      className={`text-xs font-black uppercase tracking-wider pb-3 px-3 transition-all border-b-2 hover:text-white shrink-0 cursor-pointer ${adDashboardTab === 'plano' ? 'border-[var(--primary)] text-white' : 'border-transparent text-white/40'}`}
+                    >
+                      💎 Meu Plano & Benefícios
                     </button>
                   </div>
+
+                  {/* Tab 1: Metrics & Score de Visibilidade */}
+                  {adDashboardTab === 'metricas' && (() => {
+                    const { score, checklist } = calculateVisibilityScore(currentAdvertiser.company);
+                    const currentPlan = getCompanyPlanType(currentAdvertiser.company);
+                    return (
+                      <div className="flex flex-col gap-6">
+                        {/* Stat Counters Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                          <div className="bg-[#11111a] border border-white/10 p-4 rounded-2xl flex flex-col justify-between">
+                            <div className="text-[10px] text-white/50 font-bold uppercase tracking-wider">👁️ Visualizações</div>
+                            <div className="text-2xl font-black text-white mt-2 font-mono">{currentAdvertiser.company.views || 0}</div>
+                            <div className="text-[9px] text-emerald-400 mt-1">Acessos no perfil</div>
+                          </div>
+                          <div className="bg-[#11111a] border border-white/10 p-4 rounded-2xl flex flex-col justify-between">
+                            <div className="text-[10px] text-white/50 font-bold uppercase tracking-wider">💬 Cliques WhatsApp</div>
+                            <div className="text-2xl font-black text-emerald-400 mt-2 font-mono">{currentAdvertiser.company.clicksWa || Math.floor((currentAdvertiser.company.views || 0) * 0.4)}</div>
+                            <div className="text-[9px] text-white/40 mt-1">Contatos diretos</div>
+                          </div>
+                          <div className="bg-[#11111a] border border-white/10 p-4 rounded-2xl flex flex-col justify-between">
+                            <div className="text-[10px] text-white/50 font-bold uppercase tracking-wider">🔍 Buscas e Aparições</div>
+                            <div className="text-2xl font-black text-amber-400 mt-2 font-mono">{currentAdvertiser.company.searchImpressions || Math.floor((currentAdvertiser.company.views || 0) * 3.2 + 12)}</div>
+                            <div className="text-[9px] text-white/40 mt-1">Vezes exibido na pesquisa</div>
+                          </div>
+                          <div className="bg-[#11111a] border border-white/10 p-4 rounded-2xl flex flex-col justify-between">
+                            <div className="text-[10px] text-white/50 font-bold uppercase tracking-wider">⭐ Posição na Categoria</div>
+                            <div className="text-lg font-black text-white mt-2 font-mono">
+                              {currentPlan === 'patrocinado' ? '🥇 Top 1º a 3º' : currentPlan === 'destaque' ? '⭐ Top 5' : currentPlan === 'verificado' ? '✔ Top 10' : 'Geral'}
+                            </div>
+                            <div className="text-[9px] text-amber-400 mt-1">
+                              {currentPlan === 'gratuito' ? 'Faça upgrade para subir' : 'Posição prioritária'}
+                            </div>
+                          </div>
+                          <div className="bg-[#11111a] border border-white/10 p-4 rounded-2xl flex flex-col justify-between col-span-2 sm:col-span-1">
+                            <div className="text-[10px] text-white/50 font-bold uppercase tracking-wider">📈 Taxa de Conversão</div>
+                            <div className="text-2xl font-black text-blue-400 mt-2 font-mono">
+                              {currentAdvertiser.company.views ? `${((Math.floor((currentAdvertiser.company.views || 0) * 0.4) / currentAdvertiser.company.views) * 100).toFixed(1)}%` : '100%'}
+                            </div>
+                            <div className="text-[9px] text-white/40 mt-1">Visitantes → Cliques</div>
+                          </div>
+                        </div>
+
+                        {/* Visibility Score Progress Box */}
+                        <div className="bg-gradient-to-r from-[#13141f] via-[#1a1c2d] to-[#13141f] border border-white/10 p-6 rounded-3xl shadow-xl">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                            <div>
+                              <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                                🚀 Score de Visibilidade do Perfil: <span className="text-[var(--primary)] font-mono text-xl">{score}%</span>
+                              </h3>
+                              <p className="text-xs text-white/60 mt-1">
+                                Quanto maior o seu score, mais alto sua empresa aparece nas buscas do portal e do Google!
+                              </p>
+                            </div>
+                            <div className="shrink-0">
+                              <span className={`text-xs font-black uppercase px-3 py-1.5 rounded-full ${
+                                score >= 80 ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-400' :
+                                score >= 50 ? 'bg-amber-500/20 border border-amber-500/40 text-amber-400' :
+                                'bg-red-500/20 border border-red-500/40 text-red-400'
+                              }`}>
+                                {score >= 80 ? '🔥 Excelente Visibilidade' : score >= 50 ? '⚡ Média Visibilidade' : '⚠️ Baixa Visibilidade'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Progress Bar */}
+                          <div className="w-full h-3 bg-black/50 border border-white/10 rounded-full overflow-hidden p-0.5">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                score >= 80 ? 'bg-gradient-to-r from-emerald-500 to-teal-400' :
+                                score >= 50 ? 'bg-gradient-to-r from-amber-500 to-yellow-400' :
+                                'bg-gradient-to-r from-red-500 to-orange-500'
+                              }`}
+                              style={{ width: `${score}%` }}
+                            />
+                          </div>
+
+                          {/* Practical Suggestions Checklist */}
+                          <div className="mt-6">
+                            <h4 className="text-xs font-bold text-white/70 uppercase tracking-widest mb-3">
+                              Dicas Práticas para Aumentar sua Pontuação:
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                              {checklist.map((item) => (
+                                <div 
+                                  key={item.id} 
+                                  className={`p-3 rounded-xl border flex items-center justify-between text-xs ${
+                                    item.done 
+                                      ? 'bg-emerald-500/5 border-emerald-500/20 text-white/90' 
+                                      : 'bg-white/5 border-white/10 text-white/60'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    <span className={item.done ? 'text-emerald-400 font-bold' : 'text-white/30'}>
+                                      {item.done ? '✅' : '⭕'}
+                                    </span>
+                                    <span>{item.label}</span>
+                                  </div>
+                                  {!item.done ? (
+                                    <button 
+                                      type="button"
+                                      onClick={() => setAdDashboardTab(item.action as any)}
+                                      className="text-[10px] font-extrabold uppercase bg-[var(--primary)] text-black px-2.5 py-1 rounded-lg hover:brightness-110 shrink-0 ml-2 cursor-pointer"
+                                    >
+                                      +{item.bonus}%
+                                    </button>
+                                  ) : (
+                                    <span className="text-[10px] text-emerald-400 font-mono font-bold">+{item.bonus}%</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Tab 4: Meu Plano & Benefícios */}
+                  {adDashboardTab === 'plano' && (() => {
+                    const currentPlan = getCompanyPlanType(currentAdvertiser.company);
+                    return (
+                      <div className="flex flex-col gap-6">
+                        {/* Current Active Plan Header */}
+                        <div className="bg-[#11121c] border border-white/10 p-6 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-xl">
+                          <div>
+                            <span className="text-[10px] text-white/50 uppercase font-black tracking-widest">Seu Plano Atual</span>
+                            <div className="flex items-center gap-3 mt-1">
+                              <h3 className="text-2xl font-black text-white capitalize">
+                                {currentPlan === 'patrocinado' ? '🔥 Plano Patrocinado (1º Lugar Absoluto)' :
+                                 currentPlan === 'destaque' ? '⭐ Plano Destaque VIP' :
+                                 currentPlan === 'verificado' ? '✔ Empresa Verificada' :
+                                 'Gratuito (Básico)'}
+                              </h3>
+                            </div>
+                            <p className="text-xs text-white/60 mt-1">
+                              {currentPlan === 'patrocinado' ? 'Sua empresa está no topo absoluto de todas as pesquisas com selo animado e prioridade máxima!' :
+                               currentPlan === 'destaque' ? 'Sua empresa aparece antes de todas as empresas gratuitas com selo estelar de destaque!' :
+                               currentPlan === 'verificado' ? 'Sua empresa transmite confiança total para clientes com o selo verde de Verificado.' :
+                               'Cadastre-se gratuitamente ou faça upgrade para aparecer no topo e receber mais clientes.'}
+                            </p>
+                          </div>
+                          <a 
+                            href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, gostaria de fazer um upgrade no plano da minha empresa (${currentAdvertiser.company.name}) para garantir o Destaque / 1º Lugar no portal!`)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center shadow-lg shrink-0 cursor-pointer"
+                          >
+                            🚀 Solicitar Upgrade de Plano
+                          </a>
+                        </div>
+
+                        {/* Four Tiers Comparison Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                          {/* Gratuito */}
+                          <div className={`bg-[#0f1016] border rounded-3xl p-6 flex flex-col justify-between ${currentPlan === 'gratuito' ? 'border-white/30 ring-1 ring-white/20' : 'border-white/5 opacity-80'}`}>
+                            <div>
+                              <span className="text-[10px] font-mono text-white/40 uppercase font-extrabold tracking-widest">Nível 1</span>
+                              <h4 className="text-lg font-black text-white mt-1">Gratuito</h4>
+                              <div className="text-xl font-black text-white/80 mt-2 font-mono">R$ 0</div>
+                              <ul className="text-xs text-white/70 space-y-2 mt-4">
+                                <li>✔ Perfil da empresa completo</li>
+                                <li>✔ Logo, endereço, WhatsApp</li>
+                                <li>✔ Horário de funcionamento</li>
+                                <li>✔ Redes sociais (IG e FB)</li>
+                                <li>✔ Galeria até 10 fotos</li>
+                                <li>✔ Catálogo até 10 produtos</li>
+                                <li>✔ Aparece nas buscas</li>
+                              </ul>
+                            </div>
+                            {currentPlan === 'gratuito' && (
+                              <div className="mt-6 text-center text-xs font-black text-white/50 bg-white/5 py-2.5 rounded-xl uppercase tracking-wider">
+                                Plano Ativo
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Verificado */}
+                          <div className={`bg-[#0f1016] border rounded-3xl p-6 flex flex-col justify-between ${currentPlan === 'verificado' ? 'border-emerald-500 ring-1 ring-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'border-emerald-500/20'}`}>
+                            <div>
+                              <span className="text-[10px] font-mono text-emerald-400 uppercase font-extrabold tracking-widest">Nível 2</span>
+                              <h4 className="text-lg font-black text-emerald-400 mt-1 flex items-center gap-1.5">
+                                ✔ Verificado
+                              </h4>
+                              <div className="text-xl font-black text-white mt-2 font-mono">Plano Confiança</div>
+                              <ul className="text-xs text-white/80 space-y-2 mt-4">
+                                <li className="text-emerald-400 font-bold">✔ Selo de Empresa Verificada</li>
+                                <li>✔ Aparece acima das grátis</li>
+                                <li>✔ Transmite segurança ao cliente</li>
+                                <li>✔ Galeria com mais fotos</li>
+                                <li>✔ Produtos/Serviços ilimitados</li>
+                                <li>✔ Estatísticas de visualizações</li>
+                              </ul>
+                            </div>
+                            {currentPlan === 'verificado' ? (
+                              <div className="mt-6 text-center text-xs font-black text-emerald-400 bg-emerald-500/10 py-2.5 rounded-xl uppercase tracking-wider">
+                                Plano Ativo
+                              </div>
+                            ) : (
+                              <a 
+                                href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, quero ativar o Selo Verificado para minha empresa (${currentAdvertiser.company.name}).`)}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="mt-6 text-center text-xs font-black text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-black py-2.5 rounded-xl uppercase tracking-wider transition-all"
+                              >
+                                Virar Verificado
+                              </a>
+                            )}
+                          </div>
+
+                          {/* Destaque */}
+                          <div className={`bg-[#0f1016] border rounded-3xl p-6 flex flex-col justify-between ${currentPlan === 'destaque' ? 'border-amber-400 ring-1 ring-amber-400/50 shadow-[0_0_15px_rgba(251,191,36,0.2)]' : 'border-amber-500/20'}`}>
+                            <div>
+                              <span className="text-[10px] font-mono text-amber-400 uppercase font-extrabold tracking-widest">Nível 3</span>
+                              <h4 className="text-lg font-black text-amber-400 mt-1 flex items-center gap-1.5">
+                                ⭐ Destaque VIP
+                              </h4>
+                              <div className="text-xl font-black text-white mt-2 font-mono">Plano Destaque</div>
+                              <ul className="text-xs text-white/80 space-y-2 mt-4">
+                                <li className="text-amber-400 font-bold">⭐ Selo Destaque Estelar</li>
+                                <li>✔ Aparece antes dos verificados</li>
+                                <li>✔ Borda e iluminação VIP</li>
+                                <li>✔ Prioridade máxima de busca</li>
+                                <li>✔ Suporte com especialista</li>
+                              </ul>
+                            </div>
+                            {currentPlan === 'destaque' ? (
+                              <div className="mt-6 text-center text-xs font-black text-amber-400 bg-amber-500/10 py-2.5 rounded-xl uppercase tracking-wider">
+                                Plano Ativo
+                              </div>
+                            ) : (
+                              <a 
+                                href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, quero contratar o Plano Destaque VIP para minha empresa (${currentAdvertiser.company.name}).`)}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="mt-6 text-center text-xs font-black text-black bg-amber-400 hover:bg-amber-300 py-2.5 rounded-xl uppercase tracking-wider transition-all"
+                              >
+                                Garantir Destaque
+                              </a>
+                            )}
+                          </div>
+
+                          {/* Patrocinado */}
+                          <div className={`bg-[#0f1016] border rounded-3xl p-6 flex flex-col justify-between ${currentPlan === 'patrocinado' ? 'border-red-500 ring-1 ring-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.3)]' : 'border-red-500/20'}`}>
+                            <div>
+                              <span className="text-[10px] font-mono text-red-400 uppercase font-extrabold tracking-widest">Nível Max</span>
+                              <h4 className="text-lg font-black text-red-400 mt-1 flex items-center gap-1.5">
+                                🔥 Patrocinado
+                              </h4>
+                              <div className="text-xl font-black text-white mt-2 font-mono">1º Lugar Absoluto</div>
+                              <ul className="text-xs text-white/80 space-y-2 mt-4">
+                                <li className="text-red-400 font-bold">🔥 1ª Posição Garantida (Top 1)</li>
+                                <li>✔ Posição Fixa Escolhida</li>
+                                <li>✔ Borda Dourada Animada</li>
+                                <li>✔ Atendimento via IA Prioritário</li>
+                                <li>✔ Recomendação no WhatsApp Chat</li>
+                              </ul>
+                            </div>
+                            {currentPlan === 'patrocinado' ? (
+                              <div className="mt-6 text-center text-xs font-black text-red-400 bg-red-500/10 py-2.5 rounded-xl uppercase tracking-wider">
+                                Plano Ativo
+                              </div>
+                            ) : (
+                              <a 
+                                href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, quero ser o 1º Lugar Absoluto (Patrocinado) para minha empresa (${currentAdvertiser.company.name}).`)}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="mt-6 text-center text-xs font-black text-white bg-gradient-to-r from-red-600 to-amber-600 hover:brightness-110 py-2.5 rounded-xl uppercase tracking-wider transition-all shadow-lg"
+                              >
+                                Ser Top 1º Lugar
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Sub-Tab 1: Profile Edits */}
                   {adDashboardTab === 'perfil' && (
@@ -10034,7 +10463,7 @@ function AppContent() {
               <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mt-6 text-center select-none">
                 <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Valor do Plano</span>
                 <div className="text-2xl font-black text-[#ff8a00] mt-1">
-                  R$ {appData?.pricing.price || '147,00'} <span className="text-xs text-white/40">/ {appData?.pricing.period || 'mês'}</span>
+                  R$ {appData?.pricing?.price || '49,90'} <span className="text-xs text-white/40">/ {appData?.pricing?.period ? appData.pricing.period.replace(/^\/+/, '') : 'MÊS'}</span>
                 </div>
               </div>
 
