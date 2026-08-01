@@ -3991,27 +3991,62 @@ function AppContent() {
                       </div>
                     ) : (
                       <div className="flex flex-col gap-2 mt-5">
-                        {!company.hideMiniSite && (() => {
+                        {(() => {
+                          const hasIg = company.ig && company.ig !== '#' && company.ig.trim() !== '';
+                          const hasWebsite = company.website && company.website !== '#' && company.website.trim() !== '';
+                          const showCatalogBtn = !company.hideMiniSite && (!hasIg || !hasWebsite);
                           const btnInfo = getCompanyPrimaryButtonInfo(company);
+
                           return (
-                            <button 
-                              onClick={() => handleCompanyPrimaryButtonClick(company)}
-                              className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
-                            >
-                              <ShoppingBag size={12} /> 
-                              {btnInfo.label}
-                            </button>
+                            <>
+                              {showCatalogBtn && (
+                                <button 
+                                  onClick={() => handleCompanyPrimaryButtonClick(company)}
+                                  className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
+                                >
+                                  <ShoppingBag size={12} /> 
+                                  {btnInfo.label}
+                                </button>
+                              )}
+
+                              {company.wa && (
+                                <a 
+                                  href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu anúncio em destaque no portal ${appData.siteInfo.name}!`)}`} 
+                                  target="_blank" 
+                                  rel="noreferrer"
+                                  className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
+                                >
+                                  <Smartphone size={12} /> Falar no WhatsApp
+                                </a>
+                              )}
+
+                              {(hasIg || hasWebsite) && (
+                                <div className="flex gap-2">
+                                  {hasIg && (
+                                    <a 
+                                      href={company.ig} 
+                                      target="_blank" 
+                                      rel="noreferrer" 
+                                      className="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center transition-all duration-200"
+                                    >
+                                      Instagram
+                                    </a>
+                                  )}
+                                  {hasWebsite && (
+                                    <a 
+                                      href={company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`} 
+                                      target="_blank" 
+                                      rel="noreferrer" 
+                                      className="flex-1 bg-[var(--primary)] hover:brightness-110 text-black py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center transition-all duration-200"
+                                    >
+                                      Website
+                                    </a>
+                                  )}
+                                </div>
+                              )}
+                            </>
                           );
                         })()}
-
-                        <a 
-                          href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu anúncio em destaque no portal ${appData.siteInfo.name}!`)}`} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
-                        >
-                          <Smartphone size={12} /> Falar no WhatsApp
-                        </a>
                       </div>
                     )}
                   </div>
@@ -4116,27 +4151,62 @@ function AppContent() {
                       </div>
                     ) : (
                       <div className="flex flex-col gap-2 mt-5">
-                        {!company.hideMiniSite && (() => {
+                        {(() => {
+                          const hasIg = company.ig && company.ig !== '#' && company.ig.trim() !== '';
+                          const hasWebsite = company.website && company.website !== '#' && company.website.trim() !== '';
+                          const showCatalogBtn = !company.hideMiniSite && (!hasIg || !hasWebsite);
                           const btnInfo = getCompanyPrimaryButtonInfo(company);
+
                           return (
-                            <button 
-                              onClick={() => handleCompanyPrimaryButtonClick(company)}
-                              className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
-                            >
-                              <ShoppingBag size={12} /> 
-                              {btnInfo.label}
-                            </button>
+                            <>
+                              {showCatalogBtn && (
+                                <button 
+                                  onClick={() => handleCompanyPrimaryButtonClick(company)}
+                                  className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer"
+                                >
+                                  <ShoppingBag size={12} /> 
+                                  {btnInfo.label}
+                                </button>
+                              )}
+
+                              {company.wa && (
+                                <a 
+                                  href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu comércio no portal ${appData.siteInfo.name}!`)}`} 
+                                  target="_blank" 
+                                  rel="noreferrer"
+                                  className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
+                                >
+                                  <Smartphone size={12} /> WhatsApp Comercial
+                                </a>
+                              )}
+
+                              {(hasIg || hasWebsite) && (
+                                <div className="flex gap-2">
+                                  {hasIg && (
+                                    <a 
+                                      href={company.ig} 
+                                      target="_blank" 
+                                      rel="noreferrer" 
+                                      className="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center transition-all duration-200"
+                                    >
+                                      Instagram
+                                    </a>
+                                  )}
+                                  {hasWebsite && (
+                                    <a 
+                                      href={company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`} 
+                                      target="_blank" 
+                                      rel="noreferrer" 
+                                      className="flex-1 bg-[var(--primary)] hover:brightness-110 text-black py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center transition-all duration-200"
+                                    >
+                                      Website
+                                    </a>
+                                  )}
+                                </div>
+                              )}
+                            </>
                           );
                         })()}
-
-                        <a 
-                          href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu comércio no portal ${appData.siteInfo.name}!`)}`} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-[var(--primary)] py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300"
-                        >
-                          <Smartphone size={12} /> WhatsApp Comercial
-                        </a>
                       </div>
                     )}
                   </div>
@@ -4387,50 +4457,62 @@ function AppContent() {
                     </div>
                   ) : (
                     <div className="flex flex-col gap-2.5 mt-6 border-t border-white/5 pt-5">
-                      {!company.hideMiniSite && (() => {
+                      {(() => {
+                        const hasIg = company.ig && company.ig !== '#' && company.ig.trim() !== '';
+                        const hasWebsite = company.website && company.website !== '#' && company.website.trim() !== '';
+                        const showCatalogBtn = !company.hideMiniSite && (!hasIg || !hasWebsite);
                         const btnInfo = getCompanyPrimaryButtonInfo(company);
+
                         return (
-                          <button 
-                            onClick={() => handleCompanyPrimaryButtonClick(company)}
-                            className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-305 shadow-md cursor-pointer"
-                          >
-                            <ShoppingBag size={14} /> 
-                            {btnInfo.label}
-                          </button>
+                          <>
+                            {showCatalogBtn && (
+                              <button 
+                                onClick={() => handleCompanyPrimaryButtonClick(company)}
+                                className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-305 shadow-md cursor-pointer"
+                              >
+                                <ShoppingBag size={14} /> 
+                                {btnInfo.label}
+                              </button>
+                            )}
+
+                            {company.wa && (
+                              <a 
+                                href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu anúncio no portal ${appData.siteInfo.name}.${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`) ? ` Fui indicado pelo parceiro: ${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`)}` : ''}`)}`} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
+                              >
+                                <Smartphone size={14} /> Falar no WhatsApp
+                              </a>
+                            )}
+
+                            {(hasIg || hasWebsite) && (
+                              <div className="flex gap-2">
+                                {hasIg && (
+                                  <a 
+                                    href={company.ig} 
+                                    target="_blank" 
+                                    rel="noreferrer" 
+                                    className="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center transition-all duration-200"
+                                  >
+                                    Instagram
+                                  </a>
+                                )}
+                                {hasWebsite && (
+                                  <a 
+                                    href={company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`} 
+                                    target="_blank" 
+                                    rel="noreferrer" 
+                                    className="flex-1 bg-[var(--primary)] hover:brightness-110 text-black py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center transition-all duration-200"
+                                  >
+                                    Website
+                                  </a>
+                                )}
+                              </div>
+                            )}
+                          </>
                         );
                       })()}
-
-                      <a 
-                        href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá, vi seu anúncio no portal ${appData.siteInfo.name}.${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`) ? ` Fui indicado pelo parceiro: ${sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`)}` : ''}`)}`} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md"
-                      >
-                        <Smartphone size={14} /> Falar no WhatsApp
-                      </a>
-
-                      <div className="flex gap-2">
-                        {company.ig && company.ig !== '#' && company.ig !== '' && (
-                          <a 
-                            href={company.ig} 
-                            target="_blank" 
-                            rel="noreferrer" 
-                            className="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center transition-all duration-200"
-                          >
-                            Instagram
-                          </a>
-                        )}
-                        {company.website && company.website !== '' && (
-                          <a 
-                            href={company.website} 
-                            target="_blank" 
-                            rel="noreferrer" 
-                            className="flex-1 bg-[var(--primary)] hover:brightness-110 text-black py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center transition-all duration-200"
-                          >
-                            Website
-                          </a>
-                        )}
-                      </div>
                     </div>
                   )}
                 </div>
