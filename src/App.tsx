@@ -858,7 +858,22 @@ function AppContent() {
   const [activeMiniSiteCompany, setActiveMiniSiteCompany] = useState<any | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [pixCopied, setPixCopied] = useState(false);
-  const [shoppingCart, setShoppingCart] = useState<{ [key: string]: { item: any, count: number } }>({});
+  const [shoppingCart, setShoppingCart] = useState<{ [key: string]: { item: any, count: number } }>(() => {
+    try {
+      const saved = localStorage.getItem('minhadivulgacao_cart');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('minhadivulgacao_cart', JSON.stringify(shoppingCart));
+    } catch (err) {
+      console.error("Erro ao salvar carrinho no localStorage:", err);
+    }
+  }, [shoppingCart]);
   const [cartCustomerName, setCartCustomerName] = useState('');
   const [cartCustomerDetails, setCartCustomerDetails] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<'entrega' | 'retirada'>('entrega');
@@ -1567,59 +1582,30 @@ function AppContent() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const getCompanyPrimaryButtonInfo = (company: any) => {
-    const action = company.primaryButtonAction || 'minisite';
-    let url = '';
-    let isExternal = false;
-    
-    if (action === 'site' && company.website) {
-      url = company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`;
-      isExternal = true;
-    } else if (action === 'instagram' && company.ig && company.ig !== '#') {
-      url = company.ig.trim().startsWith('http') ? company.ig.trim() : `https://${company.ig.trim()}`;
-      isExternal = true;
-    } else if (action === 'facebook' && company.fb) {
-      url = company.fb.trim().startsWith('http') ? company.fb.trim() : `https://${company.fb.trim()}`;
-      isExternal = true;
-    } else if (action === 'minisite') {
-      isExternal = false;
-    } else {
-      // Fallback
-      if (company.website && company.website.trim() !== '') {
-        url = company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`;
-        isExternal = true;
-      } else {
-        isExternal = false;
-      }
-    }
-    
+    const isService = company.type === 'servico' || (
+      ['servicos', 'saude', 'clinica', 'oficina', 'educacao', 'advocacia', 'publicidade', 'construcao', 'financas', 'academia'].some(c => (company.category || '').toLowerCase().includes(c))
+    );
     let label = company.primaryButtonText || '';
     if (!label) {
-      if (action === 'site' || (action === 'minisite' && company.website)) {
-        label = 'Visitar Site Oficial';
-      } else if (action === 'instagram') {
-        label = 'Acessar Instagram';
-      } else if (action === 'facebook') {
-        label = 'Acessar Facebook';
+      if (isService) {
+        label = '🛠️ Ver Serviços & Orçamento';
+      } else if (company.type === 'cardapio') {
+        label = '🍽️ Ver Cardápio & Pedidos';
+      } else if (company.type === 'loja') {
+        label = '🛍️ Ver Catálogo & Preços';
       } else {
-        label = company.type === 'loja' ? 'Abrir Loja Virtual' : 
-                company.type === 'cardapio' ? 'Abrir Cardápio' : 'Ver Mini-Site';
+        label = '🏪 Abrir Loja / Catálogo';
       }
     }
-    
-    return { action, url, isExternal, label };
+    return { action: 'minisite', url: '', isExternal: false, label };
   };
 
   const handleCompanyPrimaryButtonClick = (company: any) => {
-    const info = getCompanyPrimaryButtonInfo(company);
-    if (info.isExternal && info.url) {
-      window.open(info.url, '_blank');
-    } else {
-      setActiveMiniSiteCompany(company);
-      const currentUrl = window.location.href;
-      const baseUrl = currentUrl.split('?')[0];
-      const nextUrl = `${baseUrl}?id=${company.id || slugify(company.name)}`;
-      window.history.pushState({}, '', nextUrl);
-    }
+    setActiveMiniSiteCompany(company);
+    const currentUrl = window.location.href;
+    const baseUrl = currentUrl.split('?')[0];
+    const nextUrl = `${baseUrl}?id=${company.id || slugify(company.name)}`;
+    window.history.pushState({}, '', nextUrl);
   };
 
   // Live platform activity states (sensação de plataforma ativa e movimentada)
@@ -7686,7 +7672,13 @@ function AppContent() {
         {activeMiniSiteCompany && (() => {
           const company = activeMiniSiteCompany;
           const siteType = company.type || (
-            ['servicos', 'saude', 'clinica', 'oficina', 'educacao', 'advocacia', 'publicidade', 'construcao', 'financas', 'academia'].some(c => company.category.toLowerCase().includes(c)) ? 'servico' : 'loja'
+            ['agendamento', 'salao', 'barbearia', 'estetica', 'consultorio', 'massagem', 'dentista', 'podologia', 'unhas', 'cilios', 'tattoo', 'barbeiro', 'beleza'].some(c => (company.category || '').toLowerCase().includes(c))
+              ? 'agendamento'
+              : ['servicos', 'saude', 'clinica', 'oficina', 'educacao', 'advocacia', 'publicidade', 'construcao', 'financas', 'academia', 'mecanica', 'pintor', 'eletricista', 'pedreiro', 'limpeza', 'contabilidade'].some(c => (company.category || '').toLowerCase().includes(c))
+                ? 'servico'
+                : ['cardapio', 'pizzaria', 'lanchonete', 'restaurante', 'hamburgueria', 'comida', 'acai', 'marmita', 'bar', 'sorvete'].some(c => (company.category || '').toLowerCase().includes(c))
+                  ? 'cardapio'
+                  : 'loja'
           );
           
           const items = company.items || [];
@@ -7733,7 +7725,6 @@ function AppContent() {
                       const nextUrl = remaining ? `${baseUrl}?${remaining}` : baseUrl;
                       window.history.pushState({}, '', nextUrl);
                     }
-                    setShoppingCart({});
                   }}
                   className="absolute top-5 right-5 bg-black/60 hover:bg-black/90 border border-white/20 text-white p-3 rounded-full hover:scale-105 transition-all duration-200 z-30"
                   aria-label="Voltar ao portal"
@@ -8098,14 +8089,14 @@ function AppContent() {
                         <h3 className="text-lg font-extrabold text-white tracking-tight">
                           🛠️ Serviços Disponíveis & Portfólio
                         </h3>
-                        <p className="text-xs text-white/50 mt-1">Conheça nossa carteira de serviços profissionais e solicite orçamento direto.</p>
+                        <p className="text-xs text-white/50 mt-1">Conheça nossa carteira de serviços profissionais e solicite seu orçamento sem compromisso.</p>
                       </div>
 
                       {items.length === 0 ? (
                         <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
                           <span className="text-4xl">💼</span>
                           <h4 className="text-white/80 font-bold mt-4">Nenhum serviço listado</h4>
-                          <p className="text-white/45 text-xs max-w-xs mt-1">Você pode solicitar um atendimento personalizado clicando em Contactar WhatsApp.</p>
+                          <p className="text-white/45 text-xs max-w-xs mt-1">Você pode solicitar um orçamento personalizado no formulário ao lado ou no WhatsApp!</p>
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 gap-4 mt-6">
@@ -8132,19 +8123,84 @@ function AppContent() {
                                   <h4 className="text-base font-extrabold text-white">{item.name}</h4>
                                   <p className="text-xs text-white/55 leading-relaxed mt-1">{item.desc || 'Atendimento comercial dedicado.'}</p>
                                 </div>
-                                <div className="flex items-center justify-between mt-4 sm:mt-1 pt-2 border-t border-white/5">
-                                  <span className="text-xs font-black text-[var(--primary)] font-mono">
-                                    {item.price ? `R$ ${parseFloat(item.price).toFixed(2).replace('.', ',')}` : 'Sob Consulta'}
-                                  </span>
+                                <div className="flex items-center justify-end mt-4 sm:mt-1 pt-2 border-t border-white/5">
                                   <button 
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      const textMsg = `Olá! Gostaria de fazer um orçamento para o serviço comercial: *${item.name}* no portal ${appData.siteInfo.name}`;
+                                      const textMsg = `Olá! Gostaria de solicitar um orçamento para o serviço comercial: *${item.name}* no portal ${appData.siteInfo.name}`;
                                       window.open(`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
                                     }}
-                                    className="px-4 py-2 rounded-xl bg-transparent hover:bg-amber-400/10 border border-[var(--primary)]/30 hover:border-[var(--primary)] text-[var(--primary)] text-[10px] font-black uppercase tracking-widest transition-all duration-200"
+                                    className="px-4 py-2 rounded-xl bg-[var(--primary)]/10 hover:bg-[var(--primary)] text-[var(--primary)] hover:text-black border border-[var(--primary)]/30 text-[10px] font-black uppercase tracking-widest transition-all duration-200 flex items-center gap-1.5"
                                   >
-                                    Pedir Orçamento
+                                    <MessageSquare size={12} /> Solicitar Orçamento
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Render Scheduling Services (if Agendamento Type) */}
+                  {siteType === 'agendamento' && (
+                    <div className="bg-[#0b0c10] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-xl flex-1 flex flex-col">
+                      <div className="border-b border-white/5 pb-5">
+                        <h3 className="text-lg font-extrabold text-white tracking-tight">
+                          📅 Serviços para Agendamento
+                        </h3>
+                        <p className="text-xs text-white/50 mt-1">Selecione o serviço e agende seu horário com total praticidade.</p>
+                      </div>
+
+                      {items.length === 0 ? (
+                        <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
+                          <span className="text-4xl">📅</span>
+                          <h4 className="text-white/80 font-bold mt-4">Nenhum serviço disponível</h4>
+                          <p className="text-white/45 text-xs max-w-xs mt-1">Você pode solicitar um agendamento direto pelo formulário de horário ou no WhatsApp!</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 gap-4 mt-6">
+                          {items.map((item: any, idx: number) => (
+                            <div 
+                              key={item.id || idx} 
+                              onClick={() => {
+                                setSelectedItemForDetail(item);
+                                setDetailModalTab('detalhes');
+                                setIsReviewFormOpen(false);
+                                setNewReviewForm({ rating: 5, author: '', comment: '' });
+                              }}
+                              className="bg-neutral-900/60 hover:bg-neutral-900 border border-white/5 hover:border-white/10 rounded-2xl p-5 flex flex-col sm:flex-row gap-4 transition-all duration-200 cursor-pointer"
+                            >
+                              <div className="w-20 h-20 rounded-xl bg-neutral-950 overflow-hidden flex-shrink-0 flex items-center justify-center border border-white/10">
+                                {item.photo ? (
+                                  <img src={item.photo} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                ) : (
+                                  <Calendar className="text-white/20" size={24} />
+                                )}
+                              </div>
+                              <div className="flex-1 flex flex-col justify-between">
+                                <div>
+                                  <h4 className="text-base font-extrabold text-white">{item.name}</h4>
+                                  <p className="text-xs text-white/55 leading-relaxed mt-1">{item.desc || 'Atendimento agendado com horário reservado.'}</p>
+                                </div>
+                                <div className="flex items-center justify-end mt-4 sm:mt-1 pt-2 border-t border-white/5">
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const bookingSelect = document.getElementById('booking-service-select') as HTMLSelectElement;
+                                      if (bookingSelect) {
+                                        bookingSelect.value = item.name;
+                                      }
+                                      const bookingInput = document.getElementById('booking-sender-name');
+                                      if (bookingInput) {
+                                        bookingInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        bookingInput.focus();
+                                      }
+                                    }}
+                                    className="px-4 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-400 text-amber-400 hover:text-black border border-amber-500/30 text-[10px] font-black uppercase tracking-widest transition-all duration-200 flex items-center gap-1.5"
+                                  >
+                                    <Calendar size={12} /> Agendar Horário
                                   </button>
                                 </div>
                               </div>
@@ -8701,6 +8757,125 @@ function AppContent() {
                           className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md cursor-pointer mt-2"
                         >
                           <Smartphone size={14} /> Enviar no WhatsApp
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Option C: Agendamento form (for scheduling pages) */}
+                  {siteType === 'agendamento' && (
+                    <div className="bg-[#0b0c10] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-xl relative sticky top-6">
+                      <h3 className="text-sm font-black font-mono uppercase tracking-[0.2em] text-[var(--primary)] flex items-center gap-2">
+                        <Calendar size={16} /> AGENDAMENTO DE HORÁRIO
+                      </h3>
+                      <p className="text-xs text-white/45 mt-2 leading-relaxed">
+                        Escolha o serviço, selecione a data e o horário desejados e confirme o seu agendamento direto no WhatsApp!
+                      </p>
+                      
+                      <div className="flex flex-col gap-4 mt-6">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase tracking-widest font-extrabold">Seu Nome Completo *</label>
+                          <input 
+                            type="text"
+                            placeholder="Informe seu nome"
+                            id="booking-sender-name"
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase tracking-widest font-extrabold">Seu WhatsApp / Celular *</label>
+                          <input 
+                            type="text"
+                            placeholder="(00) 00000-0000"
+                            id="booking-sender-phone"
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white font-mono"
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase tracking-widest font-extrabold">Serviço Desejado *</label>
+                          <select 
+                            id="booking-service-select"
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                          >
+                            <option value="Atendimento Geral">Atendimento Geral</option>
+                            {items.map((it: any) => (
+                              <option key={it.id || it.name} value={it.name}>{it.name}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase tracking-widest font-extrabold">Data *</label>
+                            <input 
+                              type="date"
+                              id="booking-date"
+                              defaultValue={new Date().toISOString().split('T')[0]}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-3 py-2.5 text-xs text-white font-mono"
+                            />
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase tracking-widest font-extrabold">Horário *</label>
+                            <input 
+                              type="time"
+                              id="booking-time"
+                              defaultValue="09:00"
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-3 py-2.5 text-xs text-white font-mono"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase tracking-widest font-extrabold">Observações / Preferências</label>
+                          <textarea 
+                            placeholder="Ex: Preferência de profissional, orientações ou observações..."
+                            id="booking-sender-notes"
+                            rows={2}
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white resize-none"
+                          />
+                        </div>
+
+                        <button 
+                          onClick={() => {
+                            const clientName = (document.getElementById('booking-sender-name') as HTMLInputElement)?.value;
+                            const clientPhone = (document.getElementById('booking-sender-phone') as HTMLInputElement)?.value;
+                            const serv = (document.getElementById('booking-service-select') as HTMLSelectElement)?.value;
+                            const dateVal = (document.getElementById('booking-date') as HTMLInputElement)?.value;
+                            const timeVal = (document.getElementById('booking-time') as HTMLInputElement)?.value;
+                            const notes = (document.getElementById('booking-sender-notes') as HTMLTextAreaElement)?.value;
+                            
+                            if (!clientName || !clientPhone) {
+                              alert("Por favor, informe seu nome e WhatsApp.");
+                              return;
+                            }
+                            if (!dateVal || !timeVal) {
+                              alert("Por favor, selecione a data e o horário desejados.");
+                              return;
+                            }
+
+                            const formattedDate = dateVal.split('-').reverse().join('/');
+                            
+                            let textMsg = `*📅 SOLICITAÇÃO DE AGENDAMENTO - ${company.name.toUpperCase()}*\n`;
+                            textMsg += `====================================\n`;
+                            textMsg += `*Cliente:* ${clientName}\n`;
+                            textMsg += `*WhatsApp:* ${clientPhone}\n`;
+                            textMsg += `*Serviço:* ${serv}\n`;
+                            textMsg += `*Data:* ${formattedDate}\n`;
+                            textMsg += `*Horário:* ${timeVal}hs\n`;
+                            if (notes) {
+                              textMsg += `*Observações:* ${notes}\n`;
+                            }
+                            textMsg += `====================================\n`;
+                            textMsg += `Gostaria de confirmar a disponibilidade deste horário no portal *${appData.siteInfo.name}*!`;
+                            
+                            window.open(`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
+                          }}
+                          className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md cursor-pointer mt-2"
+                        >
+                          <Calendar size={14} /> Confirmar Agendamento (WhatsApp)
                         </button>
                       </div>
                     </div>
@@ -9938,9 +10113,10 @@ function AppContent() {
                               }}
                               className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
                             >
-                              <option value="loja">🛍️ Loja Virtual (Produtos com carrinho e WhatsApp)</option>
-                              <option value="cardapio">🍔 Cardápio / Lanchonete (Itens alimentícios e pedidos)</option>
-                              <option value="servico">🛠️ Prestador de Serviços (Landing page de portfólio)</option>
+                              <option value="loja">🛍️ Loja Virtual / Vendas Online (Com Preços, Carrinho e Pedidos no WhatsApp)</option>
+                              <option value="cardapio">🍔 Cardápio / Pizzaria (Com Preços, Carrinho e Pedidos no WhatsApp)</option>
+                              <option value="servico">🛠️ Prestador de Serviços (Sem Preços/Carrinho, com Botão e Pedido de Orçamento)</option>
+                              <option value="agendamento">📅 Agendamento de Horários (Sem Preços/Carrinho, com Formulário de Agendamento)</option>
                             </select>
                           </div>
                         </div>
@@ -10680,7 +10856,13 @@ function AppContent() {
             ? (itemReviews.reduce((sum, r) => sum + r.rating, 0) / itemReviews.length).toFixed(1)
             : '0.0';
           const siteType = activeMiniSiteCompany.type || (
-            ['servicos', 'saude', 'clinica', 'oficina', 'educacao', 'advocacia', 'publicidade', 'construcao', 'financas', 'academia'].some(c => activeMiniSiteCompany.category.toLowerCase().includes(c)) ? 'servico' : 'loja'
+            ['agendamento', 'salao', 'barbearia', 'estetica', 'consultorio', 'massagem', 'dentista', 'podologia', 'unhas', 'cilios', 'tattoo', 'barbeiro', 'beleza'].some(c => (activeMiniSiteCompany.category || '').toLowerCase().includes(c))
+              ? 'agendamento'
+              : ['servicos', 'saude', 'clinica', 'oficina', 'educacao', 'advocacia', 'publicidade', 'construcao', 'financas', 'academia', 'mecanica', 'pintor', 'eletricista', 'pedreiro', 'limpeza', 'contabilidade'].some(c => (activeMiniSiteCompany.category || '').toLowerCase().includes(c))
+                ? 'servico'
+                : ['cardapio', 'pizzaria', 'lanchonete', 'restaurante', 'hamburgueria', 'comida', 'acai', 'marmita', 'bar', 'sorvete'].some(c => (activeMiniSiteCompany.category || '').toLowerCase().includes(c))
+                  ? 'cardapio'
+                  : 'loja'
           );
           
           // Build media array for 1-4 photos and 1 video
@@ -10884,12 +11066,28 @@ function AppContent() {
                           {selectedItemForDetail.desc || 'Nenhuma descrição detalhada disponível para este item comercial.'}
                         </p>
 
-                        <div className="mt-4 bg-white/5 border border-white/5 rounded-2xl p-4">
-                          <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest block">Preço de Tabela</span>
-                          <span className="text-2xl font-black text-[var(--primary)] font-mono mt-1 block">
-                            {selectedItemForDetail.price ? `R$ ${parseFloat(selectedItemForDetail.price).toFixed(2).replace('.', ',')}` : 'Sob Consulta'}
-                          </span>
-                        </div>
+                        {(siteType === 'loja' || siteType === 'cardapio') ? (
+                          <div className="mt-4 bg-white/5 border border-white/5 rounded-2xl p-4">
+                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest block">Preço de Tabela</span>
+                            <span className="text-2xl font-black text-[var(--primary)] font-mono mt-1 block">
+                              {selectedItemForDetail.price ? `R$ ${parseFloat(selectedItemForDetail.price).toFixed(2).replace('.', ',')}` : 'Sob Consulta'}
+                            </span>
+                          </div>
+                        ) : siteType === 'servico' ? (
+                          <div className="mt-4 bg-white/5 border border-white/5 rounded-2xl p-4">
+                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest block">Condição Comercial</span>
+                            <span className="text-sm font-bold text-amber-400 font-mono mt-1 block">
+                              📋 Solicite orçamento sem compromisso
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="mt-4 bg-white/5 border border-white/5 rounded-2xl p-4">
+                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest block">Atendimento por Agendamento</span>
+                            <span className="text-sm font-bold text-amber-400 font-mono mt-1 block">
+                              📅 Escolha a data e o horário para agendar
+                            </span>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -11074,35 +11272,55 @@ function AppContent() {
 
                   {/* Footer Panel - Sticky Actions */}
                   <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/5 flex-shrink-0">
-                    {/* WhatsApp Button (Green) */}
-                    <button
-                      onClick={() => {
-                        const priceText = selectedItemForDetail.price 
-                          ? `R$ ${parseFloat(selectedItemForDetail.price).toFixed(2).replace('.', ',')}` 
-                          : 'Sob Consulta';
-                        const textMsg = `Olá! Tenho interesse no item listado no portal ${appData.siteInfo.name}: *${selectedItemForDetail.name}* (Valor: ${priceText}). Gostaria de mais informações ou solicitar o pedido.`;
-                        window.open(`https://wa.me/${activeMiniSiteCompany.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
-                      }}
-                      className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-[1.02] text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/10 cursor-pointer transition-all duration-200"
-                    >
-                      <MessageSquare size={14} /> Pedir pelo WhatsApp
-                    </button>
-
-                    {/* Cart Add Button (Orange) - only shown for stores/menus */}
-                    {(siteType === 'loja' || siteType === 'cardapio') && (
+                    {siteType === 'servico' ? (
                       <button
                         onClick={() => {
-                          setShoppingCart(prev => ({
-                            ...prev,
-                            [selectedItemForDetail.id]: { item: selectedItemForDetail, count: (prev[selectedItemForDetail.id]?.count || 0) + 1 }
-                          }));
-                          setSelectedItemForDetail(null);
-                          alert("Item adicionado ao carrinho!");
+                          const textMsg = `Olá! Gostaria de solicitar um orçamento para o serviço comercial: *${selectedItemForDetail.name}* no portal ${appData.siteInfo.name}`;
+                          window.open(`https://wa.me/${activeMiniSiteCompany.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
                         }}
-                        className="flex-1 inline-flex items-center justify-center gap-2 bg-[var(--primary)] hover:bg-[#ffe066] hover:scale-[1.02] text-black py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-[var(--primary)]/10 cursor-pointer transition-all duration-200"
+                        className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-[1.02] text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/10 cursor-pointer transition-all duration-200"
                       >
-                        <ShoppingCart size={14} /> Adicionar {selectedItemForDetail.price ? `R$ ${parseFloat(selectedItemForDetail.price).toFixed(2).replace('.', ',')}` : ''}
+                        <MessageSquare size={14} /> Solicitar Orçamento no WhatsApp
                       </button>
+                    ) : siteType === 'agendamento' ? (
+                      <button
+                        onClick={() => {
+                          const textMsg = `Olá! Gostaria de agendar um horário para o serviço: *${selectedItemForDetail.name}* no portal ${appData.siteInfo.name}`;
+                          window.open(`https://wa.me/${activeMiniSiteCompany.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
+                        }}
+                        className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-[1.02] text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/10 cursor-pointer transition-all duration-200"
+                      >
+                        <Calendar size={14} /> Agendar este Horário no WhatsApp
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => {
+                            const priceText = selectedItemForDetail.price 
+                              ? `R$ ${parseFloat(selectedItemForDetail.price).toFixed(2).replace('.', ',')}` 
+                              : 'Sob Consulta';
+                            const textMsg = `Olá! Tenho interesse no item listado no portal ${appData.siteInfo.name}: *${selectedItemForDetail.name}* (Valor: ${priceText}). Gostaria de mais informações ou solicitar o pedido.`;
+                            window.open(`https://wa.me/${activeMiniSiteCompany.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
+                          }}
+                          className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-[1.02] text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/10 cursor-pointer transition-all duration-200"
+                        >
+                          <MessageSquare size={14} /> Pedir pelo WhatsApp
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setShoppingCart(prev => ({
+                              ...prev,
+                              [selectedItemForDetail.id]: { item: selectedItemForDetail, count: (prev[selectedItemForDetail.id]?.count || 0) + 1 }
+                            }));
+                            setSelectedItemForDetail(null);
+                            alert("Item adicionado ao carrinho!");
+                          }}
+                          className="flex-1 inline-flex items-center justify-center gap-2 bg-[var(--primary)] hover:bg-[#ffe066] hover:scale-[1.02] text-black py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-[var(--primary)]/10 cursor-pointer transition-all duration-200"
+                        >
+                          <ShoppingCart size={14} /> Adicionar {selectedItemForDetail.price ? `R$ ${parseFloat(selectedItemForDetail.price).toFixed(2).replace('.', ',')}` : ''}
+                        </button>
+                      </>
                     )}
                   </div>
 
