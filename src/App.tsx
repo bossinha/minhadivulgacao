@@ -1581,20 +1581,42 @@ function AppContent() {
   const [activeHorizontalBannerIndex, setActiveHorizontalBannerIndex] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  const getCompanySiteType = (comp: any) => {
+    if (!comp) return 'loja';
+    const c = comp.company || comp;
+    const rawType = (c.type || comp.type || '').toLowerCase();
+    const categoryStr = (c.category || comp.category || '').toLowerCase();
+
+    if (rawType.includes('agendamento')) return 'agendamento';
+    if (rawType.includes('servico')) return 'servico';
+    if (rawType.includes('cardapio')) return 'cardapio';
+    if (rawType.includes('loja')) return 'loja';
+
+    // Category fallbacks
+    if (['agendamento', 'salao', 'barbearia', 'estetica', 'consultorio', 'massagem', 'dentista', 'podologia', 'unhas', 'cilios', 'tattoo', 'barbeiro', 'beleza', 'petshop'].some(k => categoryStr.includes(k))) {
+      return 'agendamento';
+    }
+    if (['servico', 'servicos', 'saude', 'clinica', 'oficina', 'educacao', 'advocacia', 'publicidade', 'construcao', 'financas', 'academia', 'mecanica', 'pintor', 'eletricista', 'pedreiro', 'limpeza', 'contabilidade', 'refrigeracao', 'tecnico', 'conserto', 'guincho', 'serralheria', 'marcenaria'].some(k => categoryStr.includes(k))) {
+      return 'servico';
+    }
+    if (['cardapio', 'pizzaria', 'lanchonete', 'restaurante', 'hamburgueria', 'comida', 'acai', 'marmita', 'bar', 'sorvete', 'padaria', 'doce', 'confeitaria'].some(k => categoryStr.includes(k))) {
+      return 'cardapio';
+    }
+    return 'loja';
+  };
+
   const getCompanyPrimaryButtonInfo = (company: any) => {
-    const isService = company.type === 'servico' || (
-      ['servicos', 'saude', 'clinica', 'oficina', 'educacao', 'advocacia', 'publicidade', 'construcao', 'financas', 'academia'].some(c => (company.category || '').toLowerCase().includes(c))
-    );
+    const sType = getCompanySiteType(company);
     let label = company.primaryButtonText || '';
     if (!label) {
-      if (isService) {
+      if (sType === 'servico') {
         label = '🛠️ Ver Serviços & Orçamento';
-      } else if (company.type === 'cardapio') {
+      } else if (sType === 'agendamento') {
+        label = '📅 Ver Serviços & Agendamento';
+      } else if (sType === 'cardapio') {
         label = '🍽️ Ver Cardápio & Pedidos';
-      } else if (company.type === 'loja') {
-        label = '🛍️ Ver Catálogo & Preços';
       } else {
-        label = '🏪 Abrir Loja / Catálogo';
+        label = '🛍️ Ver Catálogo & Preços';
       }
     }
     return { action: 'minisite', url: '', isExternal: false, label };
@@ -7671,15 +7693,7 @@ function AppContent() {
       <AnimatePresence>
         {activeMiniSiteCompany && (() => {
           const company = activeMiniSiteCompany;
-          const siteType = company.type || (
-            ['agendamento', 'salao', 'barbearia', 'estetica', 'consultorio', 'massagem', 'dentista', 'podologia', 'unhas', 'cilios', 'tattoo', 'barbeiro', 'beleza'].some(c => (company.category || '').toLowerCase().includes(c))
-              ? 'agendamento'
-              : ['servicos', 'saude', 'clinica', 'oficina', 'educacao', 'advocacia', 'publicidade', 'construcao', 'financas', 'academia', 'mecanica', 'pintor', 'eletricista', 'pedreiro', 'limpeza', 'contabilidade'].some(c => (company.category || '').toLowerCase().includes(c))
-                ? 'servico'
-                : ['cardapio', 'pizzaria', 'lanchonete', 'restaurante', 'hamburgueria', 'comida', 'acai', 'marmita', 'bar', 'sorvete'].some(c => (company.category || '').toLowerCase().includes(c))
-                  ? 'cardapio'
-                  : 'loja'
-          );
+          const siteType = getCompanySiteType(company);
           
           const items = company.items || [];
           
@@ -8695,7 +8709,7 @@ function AppContent() {
 
                   {/* Option B: Landing Quote form (for service-landing pages) */}
                   {siteType === 'servico' && (
-                    <div className="bg-[#0b0c10] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-xl relative sticky top-6">
+                    <div id="quote-side-form" className="bg-[#0b0c10] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-xl relative sticky top-6">
                       <h3 className="text-sm font-black font-mono uppercase tracking-[0.2em] text-[var(--primary)]">SOLICITAR ORÇAMENTO</h3>
                       <p className="text-xs text-white/45 mt-2 leading-relaxed">Envie sua dúvida ou descreva o serviço que você precisa receber diretamente para o nosso suporte oficial!</p>
                       
@@ -10855,15 +10869,7 @@ function AppContent() {
           const avgRating = itemReviews.length > 0 
             ? (itemReviews.reduce((sum, r) => sum + r.rating, 0) / itemReviews.length).toFixed(1)
             : '0.0';
-          const siteType = activeMiniSiteCompany.type || (
-            ['agendamento', 'salao', 'barbearia', 'estetica', 'consultorio', 'massagem', 'dentista', 'podologia', 'unhas', 'cilios', 'tattoo', 'barbeiro', 'beleza'].some(c => (activeMiniSiteCompany.category || '').toLowerCase().includes(c))
-              ? 'agendamento'
-              : ['servicos', 'saude', 'clinica', 'oficina', 'educacao', 'advocacia', 'publicidade', 'construcao', 'financas', 'academia', 'mecanica', 'pintor', 'eletricista', 'pedreiro', 'limpeza', 'contabilidade'].some(c => (activeMiniSiteCompany.category || '').toLowerCase().includes(c))
-                ? 'servico'
-                : ['cardapio', 'pizzaria', 'lanchonete', 'restaurante', 'hamburgueria', 'comida', 'acai', 'marmita', 'bar', 'sorvete'].some(c => (activeMiniSiteCompany.category || '').toLowerCase().includes(c))
-                  ? 'cardapio'
-                  : 'loja'
-          );
+          const siteType = getCompanySiteType(activeMiniSiteCompany);
           
           // Build media array for 1-4 photos and 1 video
           const mediaList: Array<{ type: 'image' | 'video'; url: string }> = [];
@@ -11273,25 +11279,66 @@ function AppContent() {
                   {/* Footer Panel - Sticky Actions */}
                   <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/5 flex-shrink-0">
                     {siteType === 'servico' ? (
-                      <button
-                        onClick={() => {
-                          const textMsg = `Olá! Gostaria de solicitar um orçamento para o serviço comercial: *${selectedItemForDetail.name}* no portal ${appData.siteInfo.name}`;
-                          window.open(`https://wa.me/${activeMiniSiteCompany.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
-                        }}
-                        className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-[1.02] text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/10 cursor-pointer transition-all duration-200"
-                      >
-                        <MessageSquare size={14} /> Solicitar Orçamento no WhatsApp
-                      </button>
+                      <div className="flex flex-col sm:flex-row gap-2.5 w-full">
+                        <button
+                          onClick={() => {
+                            const textMsg = `Olá! Gostaria de solicitar um orçamento para o serviço: *${selectedItemForDetail.name}* no portal ${appData.siteInfo.name}`;
+                            window.open(`https://wa.me/${activeMiniSiteCompany.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
+                          }}
+                          className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-[1.02] text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/10 cursor-pointer transition-all duration-200"
+                        >
+                          <MessageSquare size={14} /> Soliicitar no WhatsApp
+                        </button>
+                        <button
+                          onClick={() => {
+                            const servName = selectedItemForDetail.name;
+                            setSelectedItemForDetail(null);
+                            setTimeout(() => {
+                              const selectEl = document.getElementById('quote-service-select') as HTMLSelectElement;
+                              if (selectEl) selectEl.value = servName;
+                              const formEl = document.getElementById('quote-side-form');
+                              if (formEl) {
+                                formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                const inputEl = document.getElementById('quote-sender-name') as HTMLInputElement;
+                                if (inputEl) inputEl.focus();
+                              }
+                            }, 150);
+                          }}
+                          className="flex-1 inline-flex items-center justify-center gap-2 bg-[var(--primary)] hover:brightness-110 hover:scale-[1.02] text-black py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-[var(--primary)]/10 cursor-pointer transition-all duration-200"
+                        >
+                          <FileText size={14} /> Preencher Formulário
+                        </button>
+                      </div>
                     ) : siteType === 'agendamento' ? (
-                      <button
-                        onClick={() => {
-                          const textMsg = `Olá! Gostaria de agendar um horário para o serviço: *${selectedItemForDetail.name}* no portal ${appData.siteInfo.name}`;
-                          window.open(`https://wa.me/${activeMiniSiteCompany.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
-                        }}
-                        className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-[1.02] text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/10 cursor-pointer transition-all duration-200"
-                      >
-                        <Calendar size={14} /> Agendar este Horário no WhatsApp
-                      </button>
+                      <div className="flex flex-col sm:flex-row gap-2.5 w-full">
+                        <button
+                          onClick={() => {
+                            const textMsg = `Olá! Gostaria de agendar um horário para o serviço: *${selectedItemForDetail.name}* no portal ${appData.siteInfo.name}`;
+                            window.open(`https://wa.me/${activeMiniSiteCompany.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
+                          }}
+                          className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-[1.02] text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/10 cursor-pointer transition-all duration-200"
+                        >
+                          <MessageSquare size={14} /> Agendar no WhatsApp
+                        </button>
+                        <button
+                          onClick={() => {
+                            const servName = selectedItemForDetail.name;
+                            setSelectedItemForDetail(null);
+                            setTimeout(() => {
+                              const selectEl = document.getElementById('booking-service-select') as HTMLSelectElement;
+                              if (selectEl) selectEl.value = servName;
+                              const formEl = document.getElementById('booking-sender-name');
+                              if (formEl) {
+                                formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                formEl.focus();
+                              }
+                            }, 150);
+                          }}
+                          className="flex-1 inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 hover:scale-[1.02] text-black py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-amber-400/10 cursor-pointer transition-all duration-200"
+                        >
+                          <Calendar size={14} /> Preencher Agendamento
+                        </button>
+                      </div>
                     ) : (
                       <>
                         <button
