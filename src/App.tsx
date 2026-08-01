@@ -9225,7 +9225,7 @@ function AppContent() {
                           <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black/60 border border-white/10">
                             <iframe 
                               className="absolute top-0 left-0 w-full h-full"
-                              src="https://www.youtube.com/embed/iJg2RtDqh-0" 
+                              src="https://www.youtube.com/embed/ksjH0BOP8Kw" 
                               title="Tutorial de Cadastro"
                               frameBorder="0"
                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
