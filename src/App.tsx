@@ -4710,93 +4710,273 @@ function AppContent() {
       <section id="anuncie" className="w-full py-16 md:py-24 bg-[#0a0a10] border-b border-white/5 relative">
         <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6 z-10">
           
-          {/* Grid container */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start mt-8">
-            
-            {/* Scarcity Category Status - Left Column */}
-            <div className="lg:col-span-7 select-none">
-              <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase mb-2 block">Vagas de Segmentos</span>
-              <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-                Categorias Oficiais e Vagas
-              </h2>
-              <p className="text-sm text-white/65 mt-3 leading-relaxed max-w-xl">
-                {appData.sections.segments.highlight} Garantimos exclusividade categórica em algumas categorias para parceiros masters, confira o andamento:
-              </p>
+          {/* Main Section Header for Plans */}
+          <div className="text-center max-w-3xl mx-auto mb-12 select-none">
+            <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase block mb-2">
+              ⭐ PLANOS DE ANÚNCIO & VISIBILIDADE
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
+              Escolha o Plano Ideal Para Seu Negócio
+            </h2>
+            <p className="text-sm text-white/65 mt-3 leading-relaxed">
+              Do perfil gratuito para estar presente na cidade aos planos Premium para dominar a concorrência e aparecer em 1º lugar no portal.
+            </p>
+          </div>
 
-              {/* Table display segments */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
-                {appData.segmentsList.map(seg => (
-                  <div 
-                    key={seg.name} 
-                    className="bg-[#0f1016]/40 border border-white/5 rounded-2xl p-4 flex justify-between items-center hover:bg-black/50 transition-all duration-200"
-                  >
-                    <div>
-                      <h4 className="text-sm font-extrabold text-white">{seg.name}</h4>
-                      <p className="text-[10px] text-white/45 mt-1 uppercase font-mono font-bold">{seg.status === "Ocupado" ? "Sponsor Exclusivo" : "Categoria Livre"}</p>
-                    </div>
-                    <span className={`text-[9px] font-black tracking-widest uppercase px-2.5 py-1 rounded-full ${seg.status === "Ocupado" ? 'bg-amber-950/80 text-amber-500 border border-amber-500/20' : 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/20'}`}>
-                      {seg.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div 
-                onClick={() => setIsCheckoutOpen(true)}
-                className="mt-8 bg-black/40 hover:bg-black/60 border border-white/5 hover:border-[var(--primary)]/30 rounded-2xl p-4.5 cursor-pointer transition-all duration-300"
-              >
-                <span className="text-xs text-[var(--primary)] font-black uppercase tracking-widest font-mono">
-                  ⚡ {appData.sections.segments.callToAction || 'Anuncie para dominar seu segmento comercial!'}
-                </span>
-              </div>
+          {/* Conversion Triggers Banner */}
+          <div className="bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-amber-500/10 border border-amber-500/30 rounded-3xl p-6 mb-10 text-xs text-amber-200/90 shadow-2xl">
+            <div className="flex items-center gap-2 font-black text-amber-300 text-sm uppercase tracking-wide mb-3">
+              ⚡ POR QUE ANUNCIAR NO PLANO PREMIUM?
             </div>
-
-            {/* Highlight Pricing Card - Right Column */}
-            <div className="lg:col-span-5">
-              <div className="relative bg-gradient-to-b from-[#11111a] to-[#04050a] border-2 border-[var(--primary)] rounded-3xl p-8 md:p-10 shadow-2xl relative mt-4 lg:mt-0">
-                
-                {/* badge */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[var(--primary)] text-black px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase shadow-lg shadow-black/25 select-none font-sans">
-                  {appData.pricing.badge || 'Plano de Alta Conversão'}
-                </div>
-
-                <span className="text-[9px] text-white/50 tracking-widest font-mono uppercase text-center block mb-3 select-none">
-                  Pacote de Mídia Integrada
-                </span>
-                <h3 className="text-xl md:text-2xl font-black text-white text-center select-none">{appData?.pricing?.title || 'Plano Divulgação'}</h3>
-                
-                {/* Price tag */}
-                <div className="flex items-baseline justify-center gap-1 text-[#ff8a00] mt-6 select-none font-sans">
-                  <span className="text-2xl font-bold font-mono">R$</span>
-                  <span className="text-5xl md:text-6xl font-black tracking-tight">{appData?.pricing?.price || '49,90'}</span>
-                  <span className="text-xs font-bold text-white/50 uppercase ml-1">/ {appData?.pricing?.period ? appData.pricing.period.replace(/^\/+/, '') : 'MÊS'}</span>
-                </div>
-
-                {/* Feature List */}
-                <ul className="flex flex-col gap-3.5 mt-8 border-t border-white/5 pt-8 select-none">
-                  {appData.pricing.features.map((feat: string, i: number) => (
-                    <li key={i} className="flex items-start gap-2 text-xs font-semibold text-white/70">
-                      <span className="text-emerald-400 mt-0.5"><Check size={14} /></span>
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* CTA action */}
-                <button 
-                  onClick={() => setIsCheckoutOpen(true)}
-                  className="w-full block text-center bg-[var(--primary)] hover:brightness-110 text-black py-4 rounded-2xl font-extrabold text-xs uppercase tracking-widest shadow-xl shadow-[rgb(251,191,36)]/10 mt-8 transition-all duration-300 cursor-pointer"
-                >
-                  {appData.pricing.cta}
-                </button>
-
-                {/* Moneyback indicator secure */}
-                <div className="flex items-center justify-center gap-2 mt-5 text-[10px] text-white/40 tracking-wider font-semibold select-none">
-                  <span>🚀 Liberação e ativação no mesmo dia</span>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 font-medium">
+              <div className="bg-black/30 border border-amber-500/20 rounded-2xl p-3.5 flex items-start gap-2.5">
+                <span className="text-base">🔴</span>
+                <span><strong>Sua empresa está atrás das empresas Premium.</strong></span>
+              </div>
+              <div className="bg-black/30 border border-amber-500/20 rounded-2xl p-3.5 flex items-start gap-2.5">
+                <span className="text-base">🔎</span>
+                <span><strong>As empresas Premium aparecem primeiro nas pesquisas.</strong></span>
+              </div>
+              <div className="bg-black/30 border border-amber-500/20 rounded-2xl p-3.5 flex items-start gap-2.5">
+                <span className="text-base">🤖</span>
+                <span><strong>As empresas Premium possuem prioridade nas recomendações do Atendente Virtual.</strong></span>
+              </div>
+              <div className="bg-amber-500/20 border border-amber-500/40 rounded-2xl p-3.5 flex items-start gap-2.5 text-amber-200">
+                <span className="text-base">🚀</span>
+                <span><strong>Ative o Premium para aumentar sua visibilidade e vender mais!</strong></span>
               </div>
             </div>
           </div>
+
+          {/* 4 Plans Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16 select-none">
+            
+            {/* 1. Gratuito */}
+            <div className="bg-[#0f1016] border border-white/10 hover:border-white/20 rounded-3xl p-6 flex flex-col justify-between shadow-xl transition-all">
+              <div>
+                <span className="text-[10px] font-mono text-white/40 uppercase font-extrabold tracking-widest">Nível 1</span>
+                <h3 className="text-xl font-black text-white mt-1 flex items-center gap-1.5">
+                  🟢 Gratuito
+                </h3>
+                <div className="text-2xl font-black text-white/90 mt-2 font-mono">
+                  R$ 0 <span className="text-xs text-white/40 font-normal">/ MÊS</span>
+                </div>
+
+                <ul className="text-xs text-white/70 space-y-2.5 mt-5 border-t border-white/5 pt-5">
+                  <li className="flex items-center gap-1.5">✔ Perfil básico da empresa</li>
+                  <li className="flex items-center gap-1.5">✔ Logo</li>
+                  <li className="flex items-center gap-1.5">✔ Endereço</li>
+                  <li className="flex items-center gap-1.5">✔ WhatsApp</li>
+                  <li className="flex items-center gap-1.5">✔ Horário de funcionamento</li>
+                  <li className="flex items-center gap-1.5">✔ Instagram</li>
+                  <li className="flex items-center gap-1.5">✔ Facebook</li>
+                  <li className="flex items-center gap-1.5">✔ Até 5 fotos</li>
+                  <li className="flex items-center gap-1.5">✔ Até 5 produtos</li>
+                  <li className="flex items-center gap-1.5 text-white/50">✔ Aparece nas buscas (sempre após empresas Premium)</li>
+                </ul>
+              </div>
+
+              <div>
+                <div className="mt-5 p-3.5 bg-white/5 border border-white/10 rounded-2xl text-[11px] text-white/60 leading-tight">
+                  💡 <em>O plano gratuito permite que sua empresa esteja presente no portal.</em>
+                </div>
+
+                <button 
+                  onClick={() => {
+                    setAuthMode('register');
+                    setIsAdPortalOpen(true);
+                  }}
+                  className="w-full mt-4 bg-white/10 hover:bg-white/20 text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl transition-all border border-white/10 cursor-pointer"
+                >
+                  🟢 Cadastrar Empresa Grátis
+                </button>
+              </div>
+            </div>
+
+            {/* 2. Premium Confiança */}
+            <div className="bg-[#0f1016] border border-emerald-500/40 hover:border-emerald-500/70 rounded-3xl p-6 flex flex-col justify-between shadow-2xl relative transition-all group">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-emerald-400 uppercase font-extrabold tracking-widest">Nível 2</span>
+                  <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-black px-2.5 py-1 rounded-full border border-emerald-500/40">
+                    ✔ Verificada
+                  </span>
+                </div>
+                <h3 className="text-xl font-black text-emerald-400 mt-1 flex items-center gap-1.5">
+                  ⭐ Premium Confiança
+                </h3>
+                <div className="text-3xl font-black text-emerald-400 mt-2 font-mono flex items-baseline gap-1">
+                  R$ 39,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
+                </div>
+
+                <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-white/5 pt-5">
+                  <li className="text-emerald-400 font-bold">⭐ Empresa Verificada</li>
+                  <li className="font-semibold text-emerald-300">⭐ Aparece antes das empresas gratuitas</li>
+                  <li>⭐ Destaque no Atendente Virtual</li>
+                  <li>⭐ Prioridade nas pesquisas</li>
+                  <li>⭐ Até 30 fotos</li>
+                  <li>⭐ Até 100 produtos</li>
+                  <li>⭐ Cadastro de vídeos & Promoções</li>
+                  <li>⭐ Botão WhatsApp destacado</li>
+                  <li>⭐ Catálogo completo</li>
+                  <li className="text-emerald-300/90">⭐ Estatísticas completas (Visualizações, Cliques, WhatsApp, Relatório)</li>
+                  <li className="text-emerald-300/90 font-bold">⭐ Badge Premium & Card diferenciado</li>
+                </ul>
+              </div>
+
+              <div>
+                <div className="mt-5 p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-[11px] text-emerald-200/90 leading-tight">
+                  🚀 <em>O plano Premium aumenta a visibilidade da sua empresa, coloca seu negócio na frente dos concorrentes e gera mais oportunidades de contato.</em>
+                </div>
+
+                <a 
+                  href={`https://wa.me/5585992862177?text=${encodeURIComponent('Olá! Vi na página inicial e quero contratar o Plano Premium Confiança (R$ 39,90/mês) para minha empresa no portal.')}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full block mt-4 bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-lg transition-all cursor-pointer"
+                >
+                  🚀 Quero Aparecer Primeiro
+                </a>
+              </div>
+            </div>
+
+            {/* 3. Premium Destaque VIP */}
+            <div className="bg-[#0f1016] border-2 border-amber-400/60 hover:border-amber-400 rounded-3xl p-6 flex flex-col justify-between shadow-2xl relative transition-all group scale-[1.02]">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-amber-400 text-black px-3.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-md">
+                MAIS POPULAR
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-[10px] font-mono text-amber-400 uppercase font-extrabold tracking-widest">Nível 3</span>
+                  <span className="bg-amber-500/20 text-amber-300 text-[10px] font-black px-2.5 py-1 rounded-full border border-amber-500/40">
+                    ⭐ Premium VIP
+                  </span>
+                </div>
+                <h3 className="text-xl font-black text-amber-400 mt-1 flex items-center gap-1.5">
+                  ⭐ Premium Destaque VIP
+                </h3>
+                <div className="text-3xl font-black text-amber-400 mt-2 font-mono flex items-baseline gap-1">
+                  R$ 49,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
+                </div>
+
+                <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-white/5 pt-5">
+                  <li className="text-amber-400 font-bold">⭐ Empresa Verificada & Selo VIP</li>
+                  <li className="font-semibold text-amber-300">⭐ Aparece antes das gratuitas e verificadas</li>
+                  <li>⭐ Destaque Especial no Atendente Virtual</li>
+                  <li>⭐ Prioridade Alta nas pesquisas</li>
+                  <li>⭐ Fotos, Produtos & Vídeos Ilimitados</li>
+                  <li>⭐ Borda e Iluminação VIP no Portal</li>
+                  <li>⭐ Botão WhatsApp em Destaque Especial</li>
+                  <li>⭐ Catálogo Completo & Promoções</li>
+                  <li className="text-amber-300/90">⭐ Estatísticas completas (Visualizações, Cliques, WhatsApp, Relatórios)</li>
+                  <li className="text-amber-300/90 font-bold">⭐ Badge Premium & Card diferenciado</li>
+                </ul>
+              </div>
+
+              <div>
+                <div className="mt-5 p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-[11px] text-amber-200/90 leading-tight">
+                  🚀 <em>O plano Premium aumenta a visibilidade da sua empresa, coloca seu negócio na frente dos concorrentes e gera mais oportunidades de contato.</em>
+                </div>
+
+                <a 
+                  href={`https://wa.me/5585992862177?text=${encodeURIComponent('Olá! Vi na página inicial e quero contratar o Plano Premium Destaque VIP (R$ 49,90/mês) para minha empresa no portal.')}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full block mt-4 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:brightness-110 text-black font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-lg transition-all cursor-pointer"
+                >
+                  🚀 Quero Aparecer Primeiro
+                </a>
+              </div>
+            </div>
+
+            {/* 4. Premium Patrocinado Top 1 */}
+            <div className="bg-[#0f1016] border border-red-500/50 hover:border-red-500 rounded-3xl p-6 flex flex-col justify-between shadow-2xl relative transition-all group">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-red-400 uppercase font-extrabold tracking-widest">Nível Max</span>
+                  <span className="bg-red-500/20 text-red-300 text-[10px] font-black px-2.5 py-1 rounded-full border border-red-500/40">
+                    🔥 Empresa Recomendada
+                  </span>
+                </div>
+                <h3 className="text-xl font-black text-red-400 mt-1 flex items-center gap-1.5">
+                  🔥 Premium Patrocinado (1º Lugar)
+                </h3>
+                <div className="text-3xl font-black text-red-400 mt-2 font-mono flex items-baseline gap-1">
+                  R$ 59,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
+                </div>
+
+                <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-white/5 pt-5">
+                  <li className="text-red-400 font-bold">🔥 1ª Posição Garantida (Top 1)</li>
+                  <li className="font-semibold text-red-300">⭐ Posição Fixa Escolhida & Borda Dourada Animada</li>
+                  <li>⭐ Prioridade Máxima no Atendente Virtual IA</li>
+                  <li>⭐ Recomendação Direta no WhatsApp Chat</li>
+                  <li>⭐ Atendimento via IA Prioritário</li>
+                  <li>⭐ Fotos, Produtos & Vídeos Ilimitados</li>
+                  <li>⭐ Botão WhatsApp em Destaque Absoluto</li>
+                  <li>⭐ Estatísticas Completas (Visualizações, Cliques, WhatsApp)</li>
+                  <li className="text-red-300/90 font-bold">⭐ Badge Premium & Card diferenciado</li>
+                </ul>
+              </div>
+
+              <div>
+                <div className="mt-5 p-3.5 bg-red-500/10 border border-red-500/20 rounded-2xl text-[11px] text-red-200/90 leading-tight">
+                  🚀 <em>O plano Premium aumenta a visibilidade da sua empresa, coloca seu negócio na frente dos concorrentes e gera mais oportunidades de contato.</em>
+                </div>
+
+                <a 
+                  href={`https://wa.me/5585992862177?text=${encodeURIComponent('Olá! Vi na página inicial e quero contratar o Plano Premium Patrocinado Top 1 (R$ 59,90/mês) para minha empresa no portal.')}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full block mt-4 bg-gradient-to-r from-red-600 via-amber-600 to-yellow-500 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-lg transition-all cursor-pointer"
+                >
+                  🚀 Quero Aparecer Primeiro
+                </a>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Scarcity Category Status - Section below plans */}
+          <div className="border-t border-white/10 pt-16 mt-8 select-none">
+            <div className="max-w-3xl mb-8">
+              <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase mb-2 block">VAGAS EXCLUSIVAS DE SEGMENTOS</span>
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                Categorias Oficiais e Vagas
+              </h3>
+              <p className="text-sm text-white/65 mt-2 leading-relaxed">
+                {appData.sections.segments.highlight} Garantimos exclusividade categórica em algumas categorias para parceiros masters, confira o andamento:
+              </p>
+            </div>
+
+            {/* Table display segments */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {appData.segmentsList.map(seg => (
+                <div 
+                  key={seg.name} 
+                  className="bg-[#0f1016]/40 border border-white/5 rounded-2xl p-4 flex justify-between items-center hover:bg-black/50 transition-all duration-200"
+                >
+                  <div>
+                    <h4 className="text-sm font-extrabold text-white">{seg.name}</h4>
+                    <p className="text-[10px] text-white/45 mt-1 uppercase font-mono font-bold">{seg.status === "Ocupado" ? "Sponsor Exclusivo" : "Categoria Livre"}</p>
+                  </div>
+                  <span className={`text-[9px] font-black tracking-widest uppercase px-2.5 py-1 rounded-full ${seg.status === "Ocupado" ? 'bg-amber-950/80 text-amber-500 border border-amber-500/20' : 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/20'}`}>
+                    {seg.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div 
+              onClick={() => setIsCheckoutOpen(true)}
+              className="mt-8 bg-black/40 hover:bg-black/60 border border-white/5 hover:border-[var(--primary)]/30 rounded-2xl p-4.5 cursor-pointer transition-all duration-300 text-center"
+            >
+              <span className="text-xs text-[var(--primary)] font-black uppercase tracking-widest font-mono">
+                ⚡ {appData.sections.segments.callToAction || 'Anuncie para dominar seu segmento comercial!'}
+              </span>
+            </div>
+          </div>
+
         </div>
       </section>
 
