@@ -4692,36 +4692,57 @@ function AppContent() {
           </div>
 
           {/* 4 Plans Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16 select-none">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16 select-none items-stretch">
             
             {/* 1. Gratuito */}
-            <div className="bg-[#0f1016] border border-white/10 hover:border-white/20 rounded-3xl p-6 flex flex-col justify-between shadow-xl transition-all">
+            <div className="bg-gradient-to-b from-[#141622] to-[#0d0e15] border border-white/10 hover:border-white/20 rounded-3xl p-6 flex flex-col justify-between shadow-xl transition-all duration-300 relative overflow-hidden group">
               <div>
-                <span className="text-[10px] font-mono text-white/40 uppercase font-extrabold tracking-widest">Nível 1</span>
-                <h3 className="text-xl font-black text-white mt-1 flex items-center gap-1.5">
-                  🟢 Gratuito
-                </h3>
-                <div className="text-2xl font-black text-white/90 mt-2 font-mono">
-                  R$ 0 <span className="text-xs text-white/40 font-normal">/ MÊS</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-white/50 uppercase font-extrabold tracking-widest bg-white/5 px-2.5 py-1 rounded-full border border-white/10">Nível 1</span>
+                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Básico</span>
                 </div>
 
-                <ul className="text-xs text-white/70 space-y-2.5 mt-5 border-t border-white/5 pt-5">
-                  <li className="flex items-center gap-1.5">✔ Perfil básico da empresa</li>
-                  <li className="flex items-center gap-1.5">✔ Logo</li>
-                  <li className="flex items-center gap-1.5">✔ Endereço</li>
-                  <li className="flex items-center gap-1.5">✔ WhatsApp</li>
-                  <li className="flex items-center gap-1.5">✔ Horário de funcionamento</li>
-                  <li className="flex items-center gap-1.5">✔ Instagram</li>
-                  <li className="flex items-center gap-1.5">✔ Facebook</li>
-                  <li className="flex items-center gap-1.5">✔ Até 5 fotos</li>
-                  <li className="flex items-center gap-1.5">✔ Até 5 produtos</li>
-                  <li className="flex items-center gap-1.5 text-white/50">✔ Aparece nas buscas (sempre após empresas Premium)</li>
+                <h3 className="text-xl font-black text-white mt-3 flex items-center gap-1.5">
+                  🟢 Gratuito
+                </h3>
+
+                <div className="text-3xl font-black text-white mt-2 font-mono flex items-baseline gap-1">
+                  R$ 0 <span className="text-xs text-white/40 font-normal font-sans">/ MÊS</span>
+                </div>
+
+                {/* Capacity Pills */}
+                <div className="grid grid-cols-2 gap-2 mt-4 p-2.5 bg-white/5 border border-white/5 rounded-2xl text-[11px] font-bold text-white/70 text-center">
+                  <div className="bg-white/5 py-1.5 rounded-xl">📸 5 Fotos</div>
+                  <div className="bg-white/5 py-1.5 rounded-xl">📦 5 Produtos</div>
+                </div>
+
+                <ul className="text-xs text-white/80 space-y-2.5 mt-5 border-t border-white/10 pt-5">
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 font-bold">✓</span>
+                    <span>Perfil Básico da Empresa</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 font-bold">✓</span>
+                    <span>Logo, Endereço e Horários</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 font-bold">✓</span>
+                    <span>WhatsApp & Redes Sociais</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 font-bold">✓</span>
+                    <span>Catálogo simples de itens</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-white/50">
+                    <span className="text-white/30 font-bold">✓</span>
+                    <span>Aparece nas buscas (após empresas Premium)</span>
+                  </li>
                 </ul>
               </div>
 
-              <div>
-                <div className="mt-5 p-3.5 bg-white/5 border border-white/10 rounded-2xl text-[11px] text-white/60 leading-tight">
-                  💡 <em>O plano gratuito permite que sua empresa esteja presente no portal.</em>
+              <div className="mt-6">
+                <div className="p-3 bg-white/5 border border-white/10 rounded-2xl text-[11px] text-white/50 leading-relaxed">
+                  💡 <em>Permite que sua empresa esteja cadastrada e visível no portal.</em>
                 </div>
 
                 <button 
@@ -4729,7 +4750,7 @@ function AppContent() {
                     setAuthMode('register');
                     setIsAdPortalOpen(true);
                   }}
-                  className="w-full mt-4 bg-white/10 hover:bg-white/20 text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl transition-all border border-white/10 cursor-pointer"
+                  className="w-full mt-4 bg-white/10 hover:bg-white/20 text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl transition-all duration-200 border border-white/15 hover:border-white/30 cursor-pointer shadow-md active:scale-98"
                 >
                   🟢 Cadastrar Empresa Grátis
                 </button>
@@ -4737,97 +4758,157 @@ function AppContent() {
             </div>
 
             {/* 2. Premium Confiança */}
-            <div className="bg-[#0f1016] border border-emerald-500/40 hover:border-emerald-500/70 rounded-3xl p-6 flex flex-col justify-between shadow-2xl relative transition-all group">
+            <div className="bg-gradient-to-b from-[#0c2018] via-[#0f171c] to-[#0a1114] border-2 border-emerald-500/50 hover:border-emerald-400 rounded-3xl p-6 flex flex-col justify-between shadow-[0_0_25px_rgba(16,185,129,0.12)] hover:shadow-[0_0_35px_rgba(16,185,129,0.25)] transition-all duration-300 relative overflow-hidden group">
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-emerald-400 uppercase font-extrabold tracking-widest">Nível 2</span>
-                  <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-black px-2.5 py-1 rounded-full border border-emerald-500/40">
+                  <span className="text-[10px] font-mono text-emerald-400 uppercase font-extrabold tracking-widest bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">Nível 2</span>
+                  <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-black px-2.5 py-1 rounded-full border border-emerald-500/40 flex items-center gap-1 shadow-sm">
                     ✔ Verificada
                   </span>
                 </div>
-                <h3 className="text-xl font-black text-emerald-400 mt-1 flex items-center gap-1.5">
+
+                <h3 className="text-xl font-black text-emerald-400 mt-3 flex items-center gap-1.5">
                   ⭐ Premium Confiança
                 </h3>
+
                 <div className="text-3xl font-black text-emerald-400 mt-2 font-mono flex items-baseline gap-1">
-                  R$ 39,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
+                  R$ 39,90 <span className="text-xs text-white/50 font-normal font-sans">/ MÊS</span>
                 </div>
 
-                <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-white/5 pt-5">
-                  <li className="text-emerald-400 font-bold">⭐ Empresa Verificada</li>
-                  <li className="font-semibold text-emerald-300">⭐ Aparece antes das empresas gratuitas</li>
-                  <li className="text-emerald-300 font-bold">💬 Indicação no Chat Interno se você é Premium</li>
-                  <li>⭐ Prioridade nas pesquisas</li>
-                  <li className="text-emerald-300 font-bold">📸 Até 20 fotos</li>
-                  <li className="text-emerald-300 font-bold">📦 Até 30 produtos</li>
-                  <li>⭐ Cadastro de vídeos & Promoções</li>
-                  <li>⭐ Botão WhatsApp destacado</li>
-                  <li>⭐ Catálogo completo</li>
-                  <li className="text-emerald-300/90">⭐ Estatísticas completas (Visualizações, Cliques, WhatsApp, Relatório)</li>
-                  <li className="text-emerald-300/90 font-bold">⭐ Badge Premium & Card diferenciado</li>
+                {/* Capacity Pills */}
+                <div className="grid grid-cols-2 gap-2 mt-4 p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-[11px] font-bold text-emerald-300 text-center">
+                  <div className="bg-emerald-500/15 py-1.5 rounded-xl border border-emerald-500/20">📸 Até 20 Fotos</div>
+                  <div className="bg-emerald-500/15 py-1.5 rounded-xl border border-emerald-500/20">📦 Até 30 Produtos</div>
+                </div>
+
+                <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-emerald-500/20 pt-5">
+                  <li className="flex items-start gap-2 text-emerald-400 font-bold">
+                    <span>⭐</span>
+                    <span>Empresa Verificada com Selo de Confiança</span>
+                  </li>
+                  <li className="flex items-start gap-2 font-semibold text-emerald-300">
+                    <span>⭐</span>
+                    <span>Aparece antes das empresas gratuitas</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-emerald-300 font-bold bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20">
+                    <span>💬</span>
+                    <span>Indicação no Chat Interno se você é Premium</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span>⭐</span>
+                    <span>Prioridade média nas pesquisas do portal</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span>⭐</span>
+                    <span>Cadastro de Vídeos & Promoções</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span>⭐</span>
+                    <span>Botão WhatsApp em Destaque</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-emerald-300/90">
+                    <span>⭐</span>
+                    <span>Relatório completo (Cliques, Visualizações, Leads)</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-emerald-300/90 font-bold">
+                    <span>⭐</span>
+                    <span>Badge Premium & Card estilizado</span>
+                  </li>
                 </ul>
               </div>
 
-              <div>
-                <div className="mt-5 p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-[11px] text-emerald-200/90 leading-tight">
-                  🚀 <em>O plano Premium aumenta a visibilidade da sua empresa, coloca seu negócio na frente dos concorrentes e gera mais oportunidades de contato.</em>
+              <div className="mt-6">
+                <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-[11px] text-emerald-200/90 leading-relaxed">
+                  🚀 <em>Garante credibilidade, selo de verificação e prioridade sobre concorrentes gratuitos.</em>
                 </div>
 
                 <a 
                   href={`https://wa.me/5585992862177?text=${encodeURIComponent('Olá! Vi na página inicial e quero contratar o Plano Premium Confiança (R$ 39,90/mês) para minha empresa no portal.')}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full block mt-4 bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-lg transition-all cursor-pointer"
+                  className="w-full block mt-4 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
                 >
                   🚀 Quero Aparecer Primeiro
                 </a>
               </div>
             </div>
 
-            {/* 3. Premium Destaque VIP */}
-            <div className="bg-[#0f1016] border-2 border-amber-400/60 hover:border-amber-400 rounded-3xl p-6 flex flex-col justify-between shadow-2xl relative transition-all group scale-[1.02]">
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-amber-400 text-black px-3.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-md">
-                MAIS POPULAR
+            {/* 3. Premium Destaque VIP (Featured Card) */}
+            <div className="bg-gradient-to-b from-[#2a1d08] via-[#1a140b] to-[#100d07] border-2 border-amber-400 shadow-[0_0_35px_rgba(245,158,11,0.3)] hover:shadow-[0_0_50px_rgba(245,158,11,0.45)] rounded-3xl p-6 flex flex-col justify-between relative transition-all duration-300 group scale-[1.03] lg:-translate-y-1 z-10">
+              
+              {/* Floating Top Badge */}
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-black px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.6)] flex items-center gap-1">
+                <span>👑</span> MAIS POPULAR
               </div>
 
               <div>
                 <div className="flex items-center justify-between mt-1">
-                  <span className="text-[10px] font-mono text-amber-400 uppercase font-extrabold tracking-widest">Nível 3</span>
-                  <span className="bg-amber-500/20 text-amber-300 text-[10px] font-black px-2.5 py-1 rounded-full border border-amber-500/40">
+                  <span className="text-[10px] font-mono text-amber-400 uppercase font-extrabold tracking-widest bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">Nível 3</span>
+                  <span className="bg-amber-500/20 text-amber-300 text-[10px] font-black px-2.5 py-1 rounded-full border border-amber-500/40 flex items-center gap-1 shadow-sm">
                     ⭐ Premium VIP
                   </span>
                 </div>
-                <h3 className="text-xl font-black text-amber-400 mt-1 flex items-center gap-1.5">
+
+                <h3 className="text-xl font-black text-amber-400 mt-3 flex items-center gap-1.5">
                   ⭐ Premium Destaque VIP
                 </h3>
+
                 <div className="text-3xl font-black text-amber-400 mt-2 font-mono flex items-baseline gap-1">
-                  R$ 59,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
+                  R$ 59,90 <span className="text-xs text-white/50 font-normal font-sans">/ MÊS</span>
                 </div>
 
-                <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-white/5 pt-5">
-                  <li className="text-amber-400 font-bold">⭐ Empresa Verificada & Selo VIP</li>
-                  <li className="font-semibold text-amber-300">⭐ Aparece antes das gratuitas e verificadas</li>
-                  <li className="text-amber-300 font-bold">💬 Indicação Especial no Chat Interno se você é Premium</li>
-                  <li>⭐ Prioridade Alta nas pesquisas</li>
-                  <li className="text-amber-300 font-bold">📸 Até 30 fotos</li>
-                  <li className="text-amber-300 font-bold">📦 Até 50 produtos</li>
-                  <li>⭐ Borda e Iluminação VIP no Portal</li>
-                  <li>⭐ Botão WhatsApp em Destaque Especial</li>
-                  <li>⭐ Catálogo Completo & Promoções</li>
-                  <li className="text-amber-300/90">⭐ Estatísticas completas (Visualizações, Cliques, WhatsApp, Relatórios)</li>
-                  <li className="text-amber-300/90 font-bold">⭐ Badge Premium & Card diferenciado</li>
+                {/* Capacity Pills */}
+                <div className="grid grid-cols-2 gap-2 mt-4 p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-[11px] font-bold text-amber-300 text-center">
+                  <div className="bg-amber-500/15 py-1.5 rounded-xl border border-amber-500/20">📸 Até 30 Fotos</div>
+                  <div className="bg-amber-500/15 py-1.5 rounded-xl border border-amber-500/20">📦 Até 50 Produtos</div>
+                </div>
+
+                <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-amber-500/20 pt-5">
+                  <li className="flex items-start gap-2 text-amber-400 font-bold">
+                    <span>⭐</span>
+                    <span>Empresa Verificada & Selo VIP Ouro</span>
+                  </li>
+                  <li className="flex items-start gap-2 font-semibold text-amber-300">
+                    <span>⭐</span>
+                    <span>Aparece antes das gratuitas e verificadas</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-amber-300 font-bold bg-amber-500/15 p-2 rounded-xl border border-amber-500/30 shadow-inner">
+                    <span>💬</span>
+                    <span>Indicação Especial no Chat Interno se você é Premium</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span>⭐</span>
+                    <span>Prioridade Alta nas buscas do portal</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span>⭐</span>
+                    <span>Borda e Iluminação VIP Exclusiva no Portal</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span>⭐</span>
+                    <span>Botão WhatsApp em Destaque Especial</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-amber-300/90">
+                    <span>⭐</span>
+                    <span>Estatísticas e Relatórios de Desempenho</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-amber-300/90 font-bold">
+                    <span>⭐</span>
+                    <span>Badge Premium VIP & Card Iluminado</span>
+                  </li>
                 </ul>
               </div>
 
-              <div>
-                <div className="mt-5 p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-[11px] text-amber-200/90 leading-tight">
-                  🚀 <em>O plano Premium aumenta a visibilidade da sua empresa, coloca seu negócio na frente dos concorrentes e gera mais oportunidades de contato.</em>
+              <div className="mt-6">
+                <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-[11px] text-amber-200/90 leading-relaxed">
+                  🚀 <em>O plano de maior custo-benefício: posicionamento de alto destaque e grande capacidade no catálogo.</em>
                 </div>
 
                 <a 
                   href={`https://wa.me/5585992862177?text=${encodeURIComponent('Olá! Vi na página inicial e quero contratar o Plano Premium Destaque VIP (R$ 59,90/mês) para minha empresa no portal.')}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full block mt-4 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:brightness-110 text-black font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-lg transition-all cursor-pointer"
+                  className="w-full block mt-4 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:brightness-110 text-black font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-[0_4px_25px_rgba(245,158,11,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
                 >
                   🚀 Quero Aparecer Primeiro
                 </a>
@@ -4835,47 +4916,76 @@ function AppContent() {
             </div>
 
             {/* 4. Premium Patrocinado Top 1 */}
-            <div className="bg-[#0f1016] border border-red-500/50 hover:border-red-500 rounded-3xl p-6 flex flex-col justify-between shadow-2xl relative transition-all group">
+            <div className="bg-gradient-to-b from-[#330f16] via-[#1e0a11] to-[#12060a] border-2 border-red-500/80 hover:border-red-400 shadow-[0_0_35px_rgba(239,68,68,0.3)] hover:shadow-[0_0_50px_rgba(239,68,68,0.5)] rounded-3xl p-6 flex flex-col justify-between transition-all duration-300 relative overflow-hidden group">
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-red-400 uppercase font-extrabold tracking-widest">Nível Max</span>
-                  <span className="bg-red-500/20 text-red-300 text-[10px] font-black px-2.5 py-1 rounded-full border border-red-500/40">
+                  <span className="text-[10px] font-mono text-red-400 uppercase font-extrabold tracking-widest bg-red-500/10 px-2.5 py-1 rounded-full border border-red-500/20">Nível MAX</span>
+                  <span className="bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full shadow-md border border-red-400/50 flex items-center gap-1">
                     🔥 Empresa Recomendada
                   </span>
                 </div>
-                <h3 className="text-xl font-black text-red-400 mt-1 flex items-center gap-1.5">
+
+                <h3 className="text-xl font-black text-red-400 mt-3 flex items-center gap-1.5">
                   🔥 Premium Patrocinado (1º Lugar)
                 </h3>
+
                 <div className="text-3xl font-black text-red-400 mt-2 font-mono flex items-baseline gap-1">
-                  R$ 89,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
+                  R$ 89,90 <span className="text-xs text-white/50 font-normal font-sans">/ MÊS</span>
                 </div>
 
-                <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-white/5 pt-5">
-                  <li className="text-red-400 font-bold">🔥 1ª Posição Garantida (Top 1)</li>
-                  <li className="font-semibold text-red-300">⭐ Posição Fixa Escolhida & Borda Dourada Animada</li>
-                  <li className="text-yellow-300 font-black bg-yellow-500/10 p-1.5 rounded-lg border border-yellow-500/20">♾️ Fotos, Produtos & Vídeos ILIMITADOS (Exclusivo deste plano)</li>
-                  <li className="text-cyan-300 font-bold">📺 Aparece na TV On-line</li>
-                  <li className="text-pink-300 font-bold">📻 Comercial na Rádio On-line</li>
-                  <li className="text-emerald-300 font-bold">📲 Divulgação em Grupos de Facebook & WhatsApp diariamente (Seg a Sex: 3x ao dia - Manhã, Tarde e Noite)</li>
-                  <li className="text-red-300 font-bold">💬 Indicação Prioritária e Destaque no Chat Interno se você é Premium</li>
-                  <li>⭐ Botão WhatsApp em Destaque Absoluto</li>
-                  <li>⭐ Estatísticas Completas (Visualizações, Cliques, WhatsApp)</li>
-                  <li className="text-red-300/90 font-bold">⭐ Badge Premium & Card diferenciado</li>
+                {/* Capacity Box */}
+                <div className="mt-4 p-2.5 bg-gradient-to-r from-amber-500/20 via-red-500/20 to-amber-500/20 border border-amber-400/40 rounded-2xl text-center font-black text-amber-300 text-[11px] shadow-inner tracking-wider flex items-center justify-center gap-1.5">
+                  <span>♾️</span> FOTOS, PRODUTOS & VÍDEOS ILIMITADOS
+                </div>
+
+                <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-red-500/20 pt-5">
+                  <li className="flex items-start gap-2 text-red-400 font-black">
+                    <span>🔥</span>
+                    <span>1ª Posição Garantida na sua Categoria (Top 1)</span>
+                  </li>
+                  <li className="flex items-start gap-2 font-semibold text-red-300">
+                    <span>⭐</span>
+                    <span>Posição Fixa Escolhida & Borda Dourada Animada</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-cyan-300 font-bold">
+                    <span>📺</span>
+                    <span>Comercial exibido na TV On-line da plataforma</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-pink-300 font-bold">
+                    <span>📻</span>
+                    <span>Comercial veiculado na Rádio On-line</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-emerald-300 font-bold">
+                    <span>📲</span>
+                    <span>Divulgação em Grupos Facebook & WhatsApp (3x ao dia)</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-red-300 font-bold bg-red-500/15 p-2 rounded-xl border border-red-500/30">
+                    <span>💬</span>
+                    <span>Indicação Prioritária e Destaque Absoluto no Chat Interno</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span>⭐</span>
+                    <span>Botão WhatsApp em Destaque Absoluto</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-red-300/90 font-bold">
+                    <span>⭐</span>
+                    <span>Badge Premium Supremo & Card Diferenciado</span>
+                  </li>
                 </ul>
               </div>
 
-              <div>
-                <div className="mt-5 p-3.5 bg-red-500/10 border border-red-500/20 rounded-2xl text-[11px] text-red-200/90 leading-tight">
-                  🚀 <em>O plano Premium aumenta a visibilidade da sua empresa, coloca seu negócio na frente dos concorrentes e gera mais oportunidades de contato.</em>
+              <div className="mt-6">
+                <div className="p-3.5 bg-red-500/10 border border-red-500/20 rounded-2xl text-[11px] text-red-200/90 leading-relaxed">
+                  🚀 <em>Máxima exposição multi-canal: TV, Rádio, Grupos Diários e 1º lugar absoluto no portal.</em>
                 </div>
 
                 <a 
                   href={`https://wa.me/5585992862177?text=${encodeURIComponent('Olá! Vi na página inicial e quero contratar o Plano Premium Patrocinado Top 1 (R$ 89,90/mês) para minha empresa no portal.')}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full block mt-4 bg-gradient-to-r from-red-600 via-amber-600 to-yellow-500 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-lg transition-all cursor-pointer"
+                  className="w-full block mt-4 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-[0_4px_25px_rgba(239,68,68,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
                 >
-                  🚀 Quero Aparecer Primeiro
+                  🚀 Quero Aparecer em 1º Lugar
                 </a>
               </div>
             </div>
@@ -9772,192 +9882,312 @@ function AppContent() {
                         </div>
 
                         {/* Four Tiers Comparison Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
                           {/* Gratuito */}
-                          <div className={`bg-[#0f1016] border rounded-3xl p-6 flex flex-col justify-between ${currentPlan === 'gratuito' ? 'border-white/30 ring-1 ring-white/20' : 'border-white/5 opacity-80'}`}>
+                          <div className={`bg-gradient-to-b from-[#141622] to-[#0d0e15] border rounded-3xl p-6 flex flex-col justify-between shadow-xl transition-all duration-300 relative overflow-hidden ${currentPlan === 'gratuito' ? 'border-white/40 ring-2 ring-white/20' : 'border-white/10 opacity-80'}`}>
                             <div>
-                              <span className="text-[10px] font-mono text-white/40 uppercase font-extrabold tracking-widest">Nível 1</span>
-                              <h4 className="text-lg font-black text-white mt-1 flex items-center gap-1.5">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-mono text-white/50 uppercase font-extrabold tracking-widest bg-white/5 px-2.5 py-1 rounded-full border border-white/10">Nível 1</span>
+                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Básico</span>
+                              </div>
+
+                              <h4 className="text-xl font-black text-white mt-3 flex items-center gap-1.5">
                                 🟢 Gratuito
                               </h4>
-                              <div className="text-xl font-black text-white/80 mt-2 font-mono">R$ 0</div>
-                              <ul className="text-xs text-white/70 space-y-2 mt-4">
-                                <li>✔ Perfil básico da empresa</li>
-                                <li>✔ Logo</li>
-                                <li>✔ Endereço</li>
-                                <li>✔ WhatsApp</li>
-                                <li>✔ Horário de funcionamento</li>
-                                <li>✔ Instagram</li>
-                                <li>✔ Facebook</li>
-                                <li>✔ Até 5 fotos</li>
-                                <li>✔ Até 5 produtos</li>
-                                <li className="text-white/50">✔ Aparece nas buscas (sempre após empresas Premium)</li>
+
+                              <div className="text-3xl font-black text-white mt-2 font-mono flex items-baseline gap-1">
+                                R$ 0 <span className="text-xs text-white/40 font-normal font-sans">/ MÊS</span>
+                              </div>
+
+                              {/* Capacity Pills */}
+                              <div className="grid grid-cols-2 gap-2 mt-4 p-2.5 bg-white/5 border border-white/5 rounded-2xl text-[11px] font-bold text-white/70 text-center">
+                                <div className="bg-white/5 py-1.5 rounded-xl">📸 5 Fotos</div>
+                                <div className="bg-white/5 py-1.5 rounded-xl">📦 5 Produtos</div>
+                              </div>
+
+                              <ul className="text-xs text-white/80 space-y-2.5 mt-5 border-t border-white/10 pt-5">
+                                <li className="flex items-start gap-2">
+                                  <span className="text-emerald-400 font-bold">✓</span>
+                                  <span>Perfil Básico da Empresa</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span className="text-emerald-400 font-bold">✓</span>
+                                  <span>Logo, Endereço e Horários</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span className="text-emerald-400 font-bold">✓</span>
+                                  <span>WhatsApp & Redes Sociais</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span className="text-emerald-400 font-bold">✓</span>
+                                  <span>Catálogo simples de itens</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-white/50">
+                                  <span className="text-white/30 font-bold">✓</span>
+                                  <span>Aparece nas buscas (após empresas Premium)</span>
+                                </li>
                               </ul>
                             </div>
-                            <div>
-                              {/* Observation */}
-                              <div className="mt-4 p-3 bg-white/5 border border-white/10 rounded-2xl text-[11px] text-white/60 leading-tight">
-                                💡 <em>O plano gratuito permite que sua empresa esteja presente no portal.</em>
+
+                            <div className="mt-6">
+                              <div className="p-3 bg-white/5 border border-white/10 rounded-2xl text-[11px] text-white/50 leading-relaxed">
+                                💡 <em>Permite que sua empresa esteja cadastrada e visível no portal.</em>
                               </div>
 
                               {currentPlan === 'gratuito' && (
-                                <div className="mt-4 text-center text-xs font-black text-white/50 bg-white/5 py-2.5 rounded-xl uppercase tracking-wider">
-                                  Plano Ativo
+                                <div className="mt-4 text-center text-xs font-black text-white/70 bg-white/10 border border-white/10 py-3 rounded-2xl uppercase tracking-wider">
+                                  ✔ Seu Plano Atual
                                 </div>
                               )}
                             </div>
                           </div>
 
                           {/* Verificado - Confiança */}
-                          <div className={`bg-[#0f1016] border rounded-3xl p-6 flex flex-col justify-between ${currentPlan === 'verificado' ? 'border-emerald-500 ring-1 ring-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'border-emerald-500/30'}`}>
+                          <div className={`bg-gradient-to-b from-[#0c2018] via-[#0f171c] to-[#0a1114] border-2 rounded-3xl p-6 flex flex-col justify-between shadow-[0_0_25px_rgba(16,185,129,0.12)] transition-all duration-300 relative overflow-hidden ${currentPlan === 'verificado' ? 'border-emerald-400 ring-2 ring-emerald-400/50 shadow-[0_0_30px_rgba(16,185,129,0.3)]' : 'border-emerald-500/40 hover:border-emerald-400'}`}>
                             <div>
                               <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-mono text-emerald-400 uppercase font-extrabold tracking-widest">Nível 2</span>
-                                <span className="bg-emerald-500/20 text-emerald-300 text-[9px] font-black px-2 py-0.5 rounded-full border border-emerald-500/40">
+                                <span className="text-[10px] font-mono text-emerald-400 uppercase font-extrabold tracking-widest bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">Nível 2</span>
+                                <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-black px-2.5 py-1 rounded-full border border-emerald-500/40 flex items-center gap-1 shadow-sm">
                                   ✔ Verificada
                                 </span>
                               </div>
-                              <h4 className="text-lg font-black text-emerald-400 mt-1 flex items-center gap-1.5">
+
+                              <h4 className="text-xl font-black text-emerald-400 mt-3 flex items-center gap-1.5">
                                 ⭐ Premium Confiança
                               </h4>
-                              <div className="text-2xl font-black text-emerald-400 mt-1 font-mono flex items-baseline gap-1">
-                                R$ 39,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
+
+                              <div className="text-3xl font-black text-emerald-400 mt-2 font-mono flex items-baseline gap-1">
+                                R$ 39,90 <span className="text-xs text-white/50 font-normal font-sans">/ MÊS</span>
                               </div>
-                              <ul className="text-xs text-white/90 space-y-2 mt-4">
-                                <li className="text-emerald-400 font-bold">⭐ Empresa Verificada</li>
-                                <li>⭐ Aparece antes das empresas gratuitas</li>
-                                <li className="text-emerald-300 font-bold">💬 Indicação no Chat Interno se você é Premium</li>
-                                <li>⭐ Prioridade nas pesquisas</li>
-                                <li className="text-emerald-300 font-bold">📸 Até 20 fotos</li>
-                                <li className="text-emerald-300 font-bold">📦 Até 30 produtos</li>
-                                <li>⭐ Cadastro de vídeos & Promoções</li>
-                                <li>⭐ Botão WhatsApp destacado</li>
-                                <li>⭐ Catálogo completo</li>
-                                <li className="text-emerald-300/90">⭐ Estatísticas completas (Visualizações, Cliques, WhatsApp, Relatório)</li>
-                                <li className="text-emerald-300/90 font-bold">⭐ Badge Premium & Card diferenciado</li>
+
+                              {/* Capacity Pills */}
+                              <div className="grid grid-cols-2 gap-2 mt-4 p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-[11px] font-bold text-emerald-300 text-center">
+                                <div className="bg-emerald-500/15 py-1.5 rounded-xl border border-emerald-500/20">📸 Até 20 Fotos</div>
+                                <div className="bg-emerald-500/15 py-1.5 rounded-xl border border-emerald-500/20">📦 Até 30 Produtos</div>
+                              </div>
+
+                              <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-emerald-500/20 pt-5">
+                                <li className="flex items-start gap-2 text-emerald-400 font-bold">
+                                  <span>⭐</span>
+                                  <span>Empresa Verificada com Selo de Confiança</span>
+                                </li>
+                                <li className="flex items-start gap-2 font-semibold text-emerald-300">
+                                  <span>⭐</span>
+                                  <span>Aparece antes das empresas gratuitas</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-emerald-300 font-bold bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20">
+                                  <span>💬</span>
+                                  <span>Indicação no Chat Interno se você é Premium</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span>⭐</span>
+                                  <span>Prioridade média nas pesquisas do portal</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span>⭐</span>
+                                  <span>Cadastro de Vídeos & Promoções</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span>⭐</span>
+                                  <span>Botão WhatsApp em Destaque</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-emerald-300/90">
+                                  <span>⭐</span>
+                                  <span>Relatório completo (Cliques, Visualizações, Leads)</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-emerald-300/90 font-bold">
+                                  <span>⭐</span>
+                                  <span>Badge Premium & Card estilizado</span>
+                                </li>
                               </ul>
                             </div>
-                            <div>
-                              {/* Observation */}
-                              <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-[11px] text-emerald-200/90 leading-tight">
-                                🚀 <em>O plano Premium aumenta a visibilidade da sua empresa, coloca seu negócio na frente dos concorrentes e gera mais oportunidades de contato.</em>
+
+                            <div className="mt-6">
+                              <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-[11px] text-emerald-200/90 leading-relaxed">
+                                🚀 <em>Garante credibilidade, selo de verificação e prioridade sobre concorrentes gratuitos.</em>
                               </div>
 
                               {currentPlan === 'verificado' ? (
-                                <div className="mt-4 text-center text-xs font-black text-emerald-400 bg-emerald-500/10 py-2.5 rounded-xl uppercase tracking-wider">
-                                  Plano Ativo
+                                <div className="mt-4 text-center text-xs font-black text-emerald-300 bg-emerald-500/20 border border-emerald-500/40 py-3 rounded-2xl uppercase tracking-wider">
+                                  ✔ Seu Plano Atual
                                 </div>
                               ) : (
                                 <a 
                                   href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano Premium Confiança (R$ 39,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="mt-4 text-center text-xs font-black text-black bg-emerald-400 hover:bg-emerald-300 py-3.5 rounded-xl uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                                  className="w-full block mt-4 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
                                 >
-                                  🚀 Quero Aparecer Primeiro
+                                  🚀 Fazer Upgrade
                                 </a>
                               )}
                             </div>
                           </div>
 
                           {/* Destaque VIP */}
-                          <div className={`bg-[#0f1016] border rounded-3xl p-6 flex flex-col justify-between ${currentPlan === 'destaque' ? 'border-amber-400 ring-1 ring-amber-400/50 shadow-[0_0_15px_rgba(251,191,36,0.25)]' : 'border-amber-500/30'}`}>
+                          <div className={`bg-gradient-to-b from-[#2a1d08] via-[#1a140b] to-[#100d07] border-2 rounded-3xl p-6 flex flex-col justify-between shadow-[0_0_35px_rgba(245,158,11,0.25)] transition-all duration-300 relative ${currentPlan === 'destaque' ? 'border-amber-400 ring-2 ring-amber-400/50 shadow-[0_0_40px_rgba(245,158,11,0.45)]' : 'border-amber-400/80 hover:border-amber-400'}`}>
+                            
+                            {/* Floating Top Badge */}
+                            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-black px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.6)] flex items-center gap-1">
+                              <span>👑</span> MAIS POPULAR
+                            </div>
+
                             <div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-mono text-amber-400 uppercase font-extrabold tracking-widest">Nível 3</span>
-                                <span className="bg-amber-500/20 text-amber-300 text-[9px] font-black px-2 py-0.5 rounded-full border border-amber-500/40">
+                              <div className="flex items-center justify-between mt-1">
+                                <span className="text-[10px] font-mono text-amber-400 uppercase font-extrabold tracking-widest bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">Nível 3</span>
+                                <span className="bg-amber-500/20 text-amber-300 text-[10px] font-black px-2.5 py-1 rounded-full border border-amber-500/40 flex items-center gap-1 shadow-sm">
                                   ⭐ Premium VIP
                                 </span>
                               </div>
-                              <h4 className="text-lg font-black text-amber-400 mt-1 flex items-center gap-1.5">
+
+                              <h4 className="text-xl font-black text-amber-400 mt-3 flex items-center gap-1.5">
                                 ⭐ Premium Destaque VIP
                               </h4>
-                              <div className="text-2xl font-black text-amber-400 mt-1 font-mono flex items-baseline gap-1">
-                                R$ 59,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
+
+                              <div className="text-3xl font-black text-amber-400 mt-2 font-mono flex items-baseline gap-1">
+                                R$ 59,90 <span className="text-xs text-white/50 font-normal font-sans">/ MÊS</span>
                               </div>
-                              <ul className="text-xs text-white/90 space-y-2 mt-4">
-                                <li className="text-amber-400 font-bold">⭐ Empresa Verificada & Selo VIP</li>
-                                <li>⭐ Aparece antes das gratuitas e verificadas</li>
-                                <li className="text-amber-300 font-bold">💬 Indicação Especial no Chat Interno se você é Premium</li>
-                                <li>⭐ Prioridade Alta nas pesquisas</li>
-                                <li className="text-amber-300 font-bold">📸 Até 30 fotos</li>
-                                <li className="text-amber-300 font-bold">📦 Até 50 produtos</li>
-                                <li>⭐ Borda e Iluminação VIP no Portal</li>
-                                <li>⭐ Botão WhatsApp em Destaque Especial</li>
-                                <li>⭐ Catálogo Completo & Promoções</li>
-                                <li className="text-amber-300/90">⭐ Estatísticas completas (Visualizações, Cliques, WhatsApp, Relatórios)</li>
-                                <li className="text-amber-300/90 font-bold">⭐ Badge Premium & Card diferenciado</li>
+
+                              {/* Capacity Pills */}
+                              <div className="grid grid-cols-2 gap-2 mt-4 p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-[11px] font-bold text-amber-300 text-center">
+                                <div className="bg-amber-500/15 py-1.5 rounded-xl border border-amber-500/20">📸 Até 30 Fotos</div>
+                                <div className="bg-amber-500/15 py-1.5 rounded-xl border border-amber-500/20">📦 Até 50 Produtos</div>
+                              </div>
+
+                              <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-amber-500/20 pt-5">
+                                <li className="flex items-start gap-2 text-amber-400 font-bold">
+                                  <span>⭐</span>
+                                  <span>Empresa Verificada & Selo VIP Ouro</span>
+                                </li>
+                                <li className="flex items-start gap-2 font-semibold text-amber-300">
+                                  <span>⭐</span>
+                                  <span>Aparece antes das gratuitas e verificadas</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-amber-300 font-bold bg-amber-500/15 p-2 rounded-xl border border-amber-500/30 shadow-inner">
+                                  <span>💬</span>
+                                  <span>Indicação Especial no Chat Interno se você é Premium</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span>⭐</span>
+                                  <span>Prioridade Alta nas buscas do portal</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span>⭐</span>
+                                  <span>Borda e Iluminação VIP Exclusiva no Portal</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span>⭐</span>
+                                  <span>Botão WhatsApp em Destaque Especial</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-amber-300/90">
+                                  <span>⭐</span>
+                                  <span>Estatísticas e Relatórios de Desempenho</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-amber-300/90 font-bold">
+                                  <span>⭐</span>
+                                  <span>Badge Premium VIP & Card Iluminado</span>
+                                </li>
                               </ul>
                             </div>
-                            <div>
-                              {/* Observation */}
-                              <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-[11px] text-amber-200/90 leading-tight">
-                                🚀 <em>O plano Premium aumenta a visibilidade da sua empresa, coloca seu negócio na frente dos concorrentes e gera mais oportunidades de contato.</em>
+
+                            <div className="mt-6">
+                              <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-[11px] text-amber-200/90 leading-relaxed">
+                                🚀 <em>O plano de maior custo-benefício: posicionamento de alto destaque e grande capacidade no catálogo.</em>
                               </div>
 
                               {currentPlan === 'destaque' ? (
-                                <div className="mt-4 text-center text-xs font-black text-amber-400 bg-amber-500/10 py-2.5 rounded-xl uppercase tracking-wider">
-                                  Plano Ativo
+                                <div className="mt-4 text-center text-xs font-black text-amber-300 bg-amber-500/20 border border-amber-500/40 py-3 rounded-2xl uppercase tracking-wider">
+                                  ✔ Seu Plano Atual
                                 </div>
                               ) : (
                                 <a 
                                   href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano Premium Destaque VIP (R$ 59,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="mt-4 text-center text-xs font-black text-black bg-gradient-to-r from-amber-400 to-yellow-400 hover:brightness-110 py-3.5 rounded-xl uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                                  className="w-full block mt-4 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:brightness-110 text-black font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-[0_4px_25px_rgba(245,158,11,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
                                 >
-                                  🚀 Quero Aparecer Primeiro
+                                  🚀 Fazer Upgrade VIP
                                 </a>
                               )}
                             </div>
                           </div>
 
                           {/* Patrocinado Top 1 */}
-                          <div className={`bg-[#0f1016] border rounded-3xl p-6 flex flex-col justify-between ${currentPlan === 'patrocinado' ? 'border-red-500 ring-1 ring-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.3)]' : 'border-red-500/30'}`}>
+                          <div className={`bg-gradient-to-b from-[#330f16] via-[#1e0a11] to-[#12060a] border-2 rounded-3xl p-6 flex flex-col justify-between shadow-[0_0_35px_rgba(239,68,68,0.3)] transition-all duration-300 relative overflow-hidden ${currentPlan === 'patrocinado' ? 'border-red-400 ring-2 ring-red-400/50 shadow-[0_0_40px_rgba(239,68,68,0.5)]' : 'border-red-500/80 hover:border-red-400'}`}>
                             <div>
                               <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-mono text-red-400 uppercase font-extrabold tracking-widest">Nível Max</span>
-                                <span className="bg-red-500/20 text-red-300 text-[9px] font-black px-2 py-0.5 rounded-full border border-red-500/40">
+                                <span className="text-[10px] font-mono text-red-400 uppercase font-extrabold tracking-widest bg-red-500/10 px-2.5 py-1 rounded-full border border-red-500/20">Nível MAX</span>
+                                <span className="bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full shadow-md border border-red-400/50 flex items-center gap-1">
                                   🔥 Empresa Recomendada
                                 </span>
                               </div>
-                              <h4 className="text-lg font-black text-red-400 mt-1 flex items-center gap-1.5">
+
+                              <h4 className="text-xl font-black text-red-400 mt-3 flex items-center gap-1.5">
                                 🔥 Premium Patrocinado (1º Lugar)
                               </h4>
-                              <div className="text-2xl font-black text-red-400 mt-1 font-mono flex items-baseline gap-1">
-                                R$ 89,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
+
+                              <div className="text-3xl font-black text-red-400 mt-2 font-mono flex items-baseline gap-1">
+                                R$ 89,90 <span className="text-xs text-white/50 font-normal font-sans">/ MÊS</span>
                               </div>
-                              <ul className="text-xs text-white/90 space-y-2 mt-4">
-                                <li className="text-red-400 font-bold">🔥 1ª Posição Garantida (Top 1)</li>
-                                <li>⭐ Posição Fixa Escolhida & Borda Dourada Animada</li>
-                                <li className="text-yellow-300 font-black bg-yellow-500/10 p-1.5 rounded-lg border border-yellow-500/20">♾️ Fotos, Produtos & Vídeos ILIMITADOS (Exclusivo deste plano)</li>
-                                <li className="text-cyan-300 font-bold">📺 Aparece na TV On-line</li>
-                                <li className="text-pink-300 font-bold">📻 Comercial na Rádio On-line</li>
-                                <li className="text-emerald-300 font-bold">📲 Divulgação em Grupos de Facebook & WhatsApp diariamente (Seg a Sex: 3x ao dia - Manhã, Tarde e Noite)</li>
-                                <li className="text-red-300 font-bold">💬 Indicação Prioritária e Destaque no Chat Interno se você é Premium</li>
-                                <li>⭐ Botão WhatsApp em Destaque Absoluto</li>
-                                <li>⭐ Estatísticas Completas (Visualizações, Cliques, WhatsApp)</li>
-                                <li className="text-red-300/90 font-bold">⭐ Badge Premium & Card diferenciado</li>
+
+                              {/* Capacity Box */}
+                              <div className="mt-4 p-2.5 bg-gradient-to-r from-amber-500/20 via-red-500/20 to-amber-500/20 border border-amber-400/40 rounded-2xl text-center font-black text-amber-300 text-[11px] shadow-inner tracking-wider flex items-center justify-center gap-1.5">
+                                <span>♾️</span> FOTOS, PRODUTOS & VÍDEOS ILIMITADOS
+                              </div>
+
+                              <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-red-500/20 pt-5">
+                                <li className="flex items-start gap-2 text-red-400 font-black">
+                                  <span>🔥</span>
+                                  <span>1ª Posição Garantida na sua Categoria (Top 1)</span>
+                                </li>
+                                <li className="flex items-start gap-2 font-semibold text-red-300">
+                                  <span>⭐</span>
+                                  <span>Posição Fixa Escolhida & Borda Dourada Animada</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-cyan-300 font-bold">
+                                  <span>📺</span>
+                                  <span>Comercial exibido na TV On-line da plataforma</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-pink-300 font-bold">
+                                  <span>📻</span>
+                                  <span>Comercial veiculado na Rádio On-line</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-emerald-300 font-bold">
+                                  <span>📲</span>
+                                  <span>Divulgação em Grupos Facebook & WhatsApp (3x ao dia)</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-red-300 font-bold bg-red-500/15 p-2 rounded-xl border border-red-500/30">
+                                  <span>💬</span>
+                                  <span>Indicação Prioritária e Destaque Absoluto no Chat Interno</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span>⭐</span>
+                                  <span>Botão WhatsApp em Destaque Absoluto</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-red-300/90 font-bold">
+                                  <span>⭐</span>
+                                  <span>Badge Premium Supremo & Card Diferenciado</span>
+                                </li>
                               </ul>
                             </div>
-                            <div>
-                              {/* Observation */}
-                              <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-[11px] text-red-200/90 leading-tight">
-                                🚀 <em>O plano Premium aumenta a visibilidade da sua empresa, coloca seu negócio na frente dos concorrentes e gera mais oportunidades de contato.</em>
+
+                            <div className="mt-6">
+                              <div className="p-3.5 bg-red-500/10 border border-red-500/20 rounded-2xl text-[11px] text-red-200/90 leading-relaxed">
+                                🚀 <em>Máxima exposição multi-canal: TV, Rádio, Grupos Diários e 1º lugar absoluto no portal.</em>
                               </div>
 
                               {currentPlan === 'patrocinado' ? (
-                                <div className="mt-4 text-center text-xs font-black text-red-400 bg-red-500/10 py-2.5 rounded-xl uppercase tracking-wider">
-                                  Plano Ativo
+                                <div className="mt-4 text-center text-xs font-black text-red-300 bg-red-500/20 border border-red-500/40 py-3 rounded-2xl uppercase tracking-wider">
+                                  ✔ Seu Plano Atual
                                 </div>
                               ) : (
                                 <a 
                                   href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano Premium Patrocinado Top 1 (R$ 89,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="mt-4 text-center text-xs font-black text-white bg-gradient-to-r from-red-600 via-amber-600 to-yellow-500 hover:brightness-110 py-3.5 rounded-xl uppercase tracking-wider transition-all shadow-lg flex items-center justify-center gap-1.5 cursor-pointer"
+                                  className="w-full block mt-4 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-[0_4px_25px_rgba(239,68,68,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
                                 >
-                                  🚀 Quero Aparecer Primeiro
+                                  🚀 Fazer Upgrade Top 1
                                 </a>
                               )}
                             </div>
