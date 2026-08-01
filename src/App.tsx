@@ -891,6 +891,13 @@ function AppContent() {
   const [cashChangeFor, setCashChangeFor] = useState('');
   const [attachedProofName, setAttachedProofName] = useState('');
   const [isAdPortalOpen, setIsAdPortalOpen] = useState<boolean>(() => {
+    // If URL contains a share link ID parameter (?id=...), DO NOT open the advertiser portal on load!
+    try {
+      const fullUrl = window.location.href;
+      if (fullUrl.includes('?id=') || fullUrl.includes('&id=')) {
+        return false;
+      }
+    } catch (e) {}
     return localStorage.getItem('isAdPortalOpen') === 'true';
   });
   const [isAutoLoggingIn, setIsAutoLoggingIn] = useState<boolean>(() => {
@@ -1894,16 +1901,36 @@ function AppContent() {
 
   // --- Deep-linking URL check for specific company ID ---
   useEffect(() => {
-    if (displayedCompanies.length > 0) {
-      const fullUrl = window.location.href;
-      const searchPart = fullUrl.includes('?') ? fullUrl.split('?')[1] : '';
-      const urlParams = new URLSearchParams(searchPart);
-      const urlId = urlParams.get('id');
-      if (urlId) {
-        const found = displayedCompanies.find((c: any) => 
-          String(c.id) === urlId || 
-          slugify(c.name) === urlId
-        );
+    const fullUrl = window.location.href;
+    const searchPart = fullUrl.includes('?') ? fullUrl.split('?')[1] : '';
+    const urlParams = new URLSearchParams(searchPart);
+    const urlId = urlParams.get('id');
+
+    if (urlId) {
+      // 1. Force close the advertiser login modal so visitor sees the store profile immediately
+      setIsAdPortalOpen(false);
+
+      if (displayedCompanies.length > 0) {
+        const cleanUrlId = urlId.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        const found = displayedCompanies.find((c: any) => {
+          const cId = String(c.id || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const cAdvId = String(c.advertiserId || c.ownerId || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const cDocId = String(c.docId || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const cNameSlug = slugify(c.name || '').replace(/[^a-z0-9]/g, '');
+          const cNameClean = String(c.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const cEmailUser = c.email ? String(c.email).split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+
+          return (
+            cId === cleanUrlId ||
+            cAdvId === cleanUrlId ||
+            cDocId === cleanUrlId ||
+            cNameSlug === cleanUrlId ||
+            cNameClean === cleanUrlId ||
+            (cEmailUser && cEmailUser === cleanUrlId)
+          );
+        });
+
         if (found) {
           setActiveMiniSiteCompany(found);
           const urlItemId = urlParams.get('item');
@@ -1917,7 +1944,7 @@ function AppContent() {
         }
       }
     }
-  }, [displayedCompanies]);
+  }, [displayedCompanies, location]);
 
   const filteredCompaniesRaw = appData
     ? displayedCompanies.filter(c => {
@@ -9600,12 +9627,13 @@ function AppContent() {
                       <input 
                         type="text" 
                         readOnly 
-                        value={`${window.location.origin}/#/${tenantId || 'fortaleza'}?id=${currentAdvertiser.id}`}
+                        value={`${window.location.origin}/#/${tenantId || 'fortaleza'}?id=${currentAdvertiser?.company?.id || slugify(currentAdvertiser?.company?.name || '') || currentAdvertiser?.id}`}
                         className="flex-1 bg-transparent border-none outline-none text-xs text-white/90 font-mono px-2 py-1 select-all"
                       />
                       <button
                         onClick={() => {
-                          const shareUrl = `${window.location.origin}/#/${tenantId || 'fortaleza'}?id=${currentAdvertiser.id}`;
+                          const shareId = currentAdvertiser?.company?.id || slugify(currentAdvertiser?.company?.name || '') || currentAdvertiser?.id;
+                          const shareUrl = `${window.location.origin}/#/${tenantId || 'fortaleza'}?id=${shareId}`;
                           navigator.clipboard.writeText(shareUrl);
                           setCopiedAdLink(true);
                           setTimeout(() => setCopiedAdLink(false), 2500);
