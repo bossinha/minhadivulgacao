@@ -931,7 +931,10 @@ function AppContent() {
     photo2: '',
     photo3: '',
     photo4: '',
-    video: ''
+    video: '',
+    sizes: '',
+    colors: '',
+    options: ''
   });
   const [adDashboardTab, setAdDashboardTab] = useState<'metricas' | 'perfil' | 'catalogo' | 'plano'>(() => {
     return (localStorage.getItem('adDashboardTab') as any) || 'metricas';
@@ -1022,6 +1025,10 @@ function AppContent() {
 
   // --- Item Detail & Reviews States ---
   const [selectedItemForDetail, setSelectedItemForDetail] = useState<any | null>(null);
+  const [itemSelectedSize, setItemSelectedSize] = useState<string>('');
+  const [itemSelectedColor, setItemSelectedColor] = useState<string>('');
+  const [itemSelectedOptions, setItemSelectedOptions] = useState<string[]>([]);
+  const [itemNoteText, setItemNoteText] = useState<string>('');
   const [activeMediaIndex, setActiveMediaIndex] = useState<number>(0);
   const [detailModalTab, setDetailModalTab] = useState<'detalhes' | 'avaliacoes'>('detalhes');
   const [itemReviews, setItemReviews] = useState<any[]>([]);
@@ -1030,9 +1037,13 @@ function AppContent() {
   const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
-  // Reset activeMediaIndex when item changes
+  // Reset activeMediaIndex and item variation selections when item changes
   useEffect(() => {
     setActiveMediaIndex(0);
+    setItemSelectedSize('');
+    setItemSelectedColor('');
+    setItemSelectedOptions([]);
+    setItemNoteText('');
   }, [selectedItemForDetail]);
 
   // Load reviews for selectedItemForDetail
@@ -8240,7 +8251,7 @@ function AppContent() {
                       ) : (() => {
                         const cartItemsArr = Object.values(shoppingCart) as any[];
                         const subtotal = cartItemsArr.reduce((total: number, car: any) => {
-                          const val = car.item.price ? parseFloat(car.item.price) : 0;
+                          const val = car.computedUnitPrice ?? (car.item.price ? parseFloat(car.item.price) : 0);
                           return total + (val * car.count);
                         }, 0);
                         
@@ -8248,77 +8259,109 @@ function AppContent() {
                           <div className="mt-4 flex flex-col gap-4 flex-1">
                             {/* Items List */}
                             <div className="flex flex-col gap-3 max-h-64 overflow-y-auto pr-1">
-                              {cartItemsArr.map((car: any) => (
-                                <div key={car.item.id} className="bg-neutral-900 border border-white/5 rounded-xl p-3 flex justify-between items-center gap-2 hover:border-white/10 transition-all">
-                                  <div className="flex-1 min-w-0 pr-1">
-                                    <h4 className="text-xs font-bold text-white truncate">{car.item.name}</h4>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <span className="text-[10px] text-white/50 font-mono">
-                                        {car.item.price ? `R$ ${parseFloat(car.item.price).toFixed(2).replace('.', ',')}` : 'Grátis'}
-                                      </span>
+                              {cartItemsArr.map((car: any) => {
+                                const itemKey = car.cartKey || car.item.id;
+                                const itemUnitPrice = car.computedUnitPrice ?? (car.item.price ? parseFloat(car.item.price) : 0);
+                                const itemTotalPrice = itemUnitPrice * car.count;
+
+                                return (
+                                  <div key={itemKey} className="bg-neutral-900 border border-white/5 rounded-xl p-3 flex justify-between items-center gap-2 hover:border-white/10 transition-all">
+                                    <div className="flex-1 min-w-0 pr-1">
+                                      <h4 className="text-xs font-bold text-white truncate">{car.item.name}</h4>
                                       
-                                      {/* Controles de Quantidade (- / +) */}
-                                      <div className="flex items-center gap-1 bg-black/50 border border-white/10 rounded px-1.5 py-0.5">
-                                        <button
-                                          type="button"
-                                          title="Diminuir quantidade"
-                                          onClick={() => {
-                                            setShoppingCart(prev => {
-                                              const existing = prev[car.item.id];
-                                              if (!existing) return prev;
-                                              if (existing.count <= 1) {
-                                                const copy = { ...prev };
-                                                delete copy[car.item.id];
-                                                return copy;
-                                              }
-                                              return { ...prev, [car.item.id]: { ...existing, count: existing.count - 1 } };
-                                            });
-                                          }}
-                                          className="text-white/60 hover:text-white font-black text-xs px-1 cursor-pointer"
-                                        >
-                                          -
-                                        </button>
-                                        <span className="text-[10px] font-black text-amber-400 font-mono px-0.5">{car.count}</span>
-                                        <button
-                                          type="button"
-                                          title="Aumentar quantidade"
-                                          onClick={() => {
-                                            setShoppingCart(prev => ({
-                                              ...prev,
-                                              [car.item.id]: { ...prev[car.item.id], count: (prev[car.item.id]?.count || 0) + 1 }
-                                            }));
-                                          }}
-                                          className="text-white/60 hover:text-white font-black text-xs px-1 cursor-pointer"
-                                        >
-                                          +
-                                        </button>
+                                      {/* Variations summary badges */}
+                                      <div className="flex flex-wrap gap-1 mt-1">
+                                        {car.selectedSize && (
+                                          <span className="bg-amber-500/10 text-amber-300 border border-amber-500/20 px-1.5 py-0.5 rounded text-[9px] font-bold">
+                                            Tam: {car.selectedSize}
+                                          </span>
+                                        )}
+                                        {car.selectedColor && (
+                                          <span className="bg-blue-500/10 text-blue-300 border border-blue-500/20 px-1.5 py-0.5 rounded text-[9px] font-bold">
+                                            Cor: {car.selectedColor}
+                                          </span>
+                                        )}
+                                        {car.selectedOptions && car.selectedOptions.length > 0 && (
+                                          <span className="bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-1.5 py-0.5 rounded text-[9px] font-bold">
+                                            +{car.selectedOptions.length} opcional(is)
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      {car.itemNote && (
+                                        <p className="text-[10px] text-white/50 italic truncate mt-0.5">
+                                          Obs: "{car.itemNote}"
+                                        </p>
+                                      )}
+
+                                      <div className="flex items-center gap-2 mt-1.5">
+                                        <span className="text-[10px] text-white/50 font-mono">
+                                          {itemUnitPrice > 0 ? `R$ ${itemUnitPrice.toFixed(2).replace('.', ',')}` : 'Grátis'}
+                                        </span>
+                                        
+                                        {/* Controles de Quantidade (- / +) */}
+                                        <div className="flex items-center gap-1 bg-black/50 border border-white/10 rounded px-1.5 py-0.5">
+                                          <button
+                                            type="button"
+                                            title="Diminuir quantidade"
+                                            onClick={() => {
+                                              setShoppingCart(prev => {
+                                                const existing = prev[itemKey];
+                                                if (!existing) return prev;
+                                                if (existing.count <= 1) {
+                                                  const copy = { ...prev };
+                                                  delete copy[itemKey];
+                                                  return copy;
+                                                }
+                                                return { ...prev, [itemKey]: { ...existing, count: existing.count - 1 } };
+                                              });
+                                            }}
+                                            className="text-white/60 hover:text-white font-black text-xs px-1 cursor-pointer"
+                                          >
+                                            -
+                                          </button>
+                                          <span className="text-[10px] font-black text-amber-400 font-mono px-0.5">{car.count}</span>
+                                          <button
+                                            type="button"
+                                            title="Aumentar quantidade"
+                                            onClick={() => {
+                                              setShoppingCart(prev => ({
+                                                ...prev,
+                                                [itemKey]: { ...prev[itemKey], count: (prev[itemKey]?.count || 0) + 1 }
+                                              }));
+                                            }}
+                                            className="text-white/60 hover:text-white font-black text-xs px-1 cursor-pointer"
+                                          >
+                                            +
+                                          </button>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
 
-                                  <div className="flex items-center gap-2 flex-shrink-0">
-                                    <span className="text-xs font-black text-white font-mono">
-                                      {car.item.price ? `R$ ${(parseFloat(car.item.price) * car.count).toFixed(2).replace('.', ',')}` : 'Consulta'}
-                                    </span>
-                                    
-                                    {/* Botão para Excluir Item */}
-                                    <button
-                                      type="button"
-                                      title="Excluir este item da sacola"
-                                      onClick={() => {
-                                        setShoppingCart(prev => {
-                                          const copy = { ...prev };
-                                          delete copy[car.item.id];
-                                          return copy;
-                                        });
-                                      }}
-                                      className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/30 text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/50 transition-all cursor-pointer flex items-center justify-center shrink-0"
-                                    >
-                                      <Trash2 size={14} />
-                                    </button>
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                      <span className="text-xs font-black text-white font-mono">
+                                        {itemTotalPrice > 0 ? `R$ ${itemTotalPrice.toFixed(2).replace('.', ',')}` : 'Consulta'}
+                                      </span>
+                                      
+                                      {/* Botão para Excluir Item */}
+                                      <button
+                                        type="button"
+                                        title="Excluir este item da sacola"
+                                        onClick={() => {
+                                          setShoppingCart(prev => {
+                                            const copy = { ...prev };
+                                            delete copy[itemKey];
+                                            return copy;
+                                          });
+                                        }}
+                                        className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/30 text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/50 transition-all cursor-pointer flex items-center justify-center shrink-0"
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
 
                             {/* Divider line */}
@@ -8728,7 +8771,18 @@ function AppContent() {
                                 textMsg += `*📦 ITENS PEDIDOS:*\n`;
                                 
                                 cartItemsArr.forEach((c: any) => {
-                                  textMsg += `• ${c.count}x ${c.item.name} (${c.item.price ? `R$ ${parseFloat(c.item.price).toFixed(2).replace('.', ',')}` : 'Consulta'}) - R$ ${(parseFloat(c.item.price || '0') * c.count).toFixed(2).replace('.', ',')}\n`;
+                                  const unitVal = c.computedUnitPrice ?? (c.item.price ? parseFloat(c.item.price) : 0);
+                                  const totalVal = unitVal * c.count;
+                                  textMsg += `• ${c.count}x ${c.item.name}`;
+                                  if (c.selectedSize) textMsg += ` [Tam/Num: ${c.selectedSize}]`;
+                                  if (c.selectedColor) textMsg += ` [Cor: ${c.selectedColor}]`;
+                                  textMsg += ` - R$ ${totalVal.toFixed(2).replace('.', ',')}\n`;
+                                  if (c.selectedOptions && c.selectedOptions.length > 0) {
+                                    textMsg += `   └ ➕ Adicionais: ${c.selectedOptions.join(', ')}\n`;
+                                  }
+                                  if (c.itemNote && c.itemNote.trim()) {
+                                    textMsg += `   └ ✍️ Obs: ${c.itemNote.trim()}\n`;
+                                  }
                                 });
                                 
                                 textMsg += `====================================\n`;
@@ -10684,7 +10738,7 @@ function AppContent() {
                                 alert("Sua conta está suspensa ou bloqueada. Entre em contato com o suporte.");
                                 return;
                               }
-                              setItemForm({ name: '', desc: '', price: '', photo: '', photo2: '', photo3: '', photo4: '', video: '' });
+                              setItemForm({ name: '', desc: '', price: '', photo: '', photo2: '', photo3: '', photo4: '', video: '', sizes: '', colors: '', options: '' });
                               setEditingItemIndex(-1); // -1 triggers add new form
                             }}
                             className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest cursor-pointer shadow transition-all duration-150 ${(isAdExpired && !user?.isAdmin) ? 'bg-neutral-800 text-white/30 border border-white/5 cursor-not-allowed' : 'bg-[var(--primary)] hover:brightness-110 text-black'}`}
@@ -10828,6 +10882,89 @@ function AppContent() {
                             </div>
                           </div>
 
+                          {/* Variações, Numeração, Cores e Adicionais (Tênis, Roupas, Marmitarias, Lanchonetes) */}
+                          <div className="bg-neutral-950/80 border border-white/10 rounded-2xl p-4 flex flex-col gap-3 mt-2">
+                            <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                              <div>
+                                <h5 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                                  🏷️ Especificações e Variações (Tênis, Roupas, Cardápio, Lanchonete)
+                                </h5>
+                                <p className="text-[10px] text-white/50">Cadastre tamanhos/numeração, cores ou adicionais que o cliente pode escolher ao pedir.</p>
+                              </div>
+                            </div>
+
+                            {/* Quick Presets */}
+                            <div className="flex flex-wrap items-center gap-1.5 py-1">
+                              <span className="text-[9px] text-white/40 uppercase font-bold">Preencher rápido:</span>
+                              <button
+                                type="button"
+                                onClick={() => setItemForm(prev => ({ ...prev, sizes: '35, 36, 37, 38, 39, 40, 41, 42, 43, 44' }))}
+                                className="text-[9px] bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 px-2 py-1 rounded font-bold cursor-pointer transition-colors"
+                              >
+                                👟 Tamanhos Tênis (35 a 44)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setItemForm(prev => ({ ...prev, sizes: 'PP, P, M, G, GG, XG, XGG' }))}
+                                className="text-[9px] bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 px-2 py-1 rounded font-bold cursor-pointer transition-colors"
+                              >
+                                👕 Tamanhos Roupas (PP ao XGG)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setItemForm(prev => ({ ...prev, colors: 'Preto, Branco, Azul, Vermelho, Cinza, Rosa' }))}
+                                className="text-[9px] bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 px-2 py-1 rounded font-bold cursor-pointer transition-colors"
+                              >
+                                🎨 Cores Padrão
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setItemForm(prev => ({ ...prev, options: 'Molho Especial (+2.00), Bacon Extra (+3.50), Queijo Duplo (+4.00), Salada Extra (+3.00)' }))}
+                                className="text-[9px] bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 px-2 py-1 rounded font-bold cursor-pointer transition-colors"
+                              >
+                                🍔 Opcionais Lanchonete/Marmita
+                              </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[10px] text-white/60 font-bold uppercase">Tamanhos / Numeração</label>
+                                <input
+                                  type="text"
+                                  value={itemForm.sizes || ''}
+                                  onChange={(e) => setItemForm(prev => ({ ...prev, sizes: e.target.value }))}
+                                  placeholder="Ex: 37, 38, 39, 40, 41 ou P, M, G, GG"
+                                  className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-3 py-2 text-xs text-white"
+                                />
+                                <span className="text-[9px] text-white/30">Separados por vírgula</span>
+                              </div>
+
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[10px] text-white/60 font-bold uppercase">Cores Disponíveis</label>
+                                <input
+                                  type="text"
+                                  value={itemForm.colors || ''}
+                                  onChange={(e) => setItemForm(prev => ({ ...prev, colors: e.target.value }))}
+                                  placeholder="Ex: Preto, Branco, Azul, Vermelho"
+                                  className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-3 py-2 text-xs text-white"
+                                />
+                                <span className="text-[9px] text-white/30">Separadas por vírgula</span>
+                              </div>
+
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[10px] text-white/60 font-bold uppercase">Opcionais / Adicionais (+Preço)</label>
+                                <input
+                                  type="text"
+                                  value={itemForm.options || ''}
+                                  onChange={(e) => setItemForm(prev => ({ ...prev, options: e.target.value }))}
+                                  placeholder="Ex: Bacon Extra (+3.50), Salada (+4.00)"
+                                  className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-3 py-2 text-xs text-white"
+                                />
+                                <span className="text-[9px] text-white/30">Ex: Nome (+Valor)</span>
+                              </div>
+                            </div>
+                          </div>
+
                           <div className="flex gap-2.5 justify-end mt-4">
                             <button 
                               onClick={() => setEditingItemIndex(null)}
@@ -10889,7 +11026,10 @@ function AppContent() {
                                   photo2: (photo2 || '').trim(),
                                   photo3: (photo3 || '').trim(),
                                   photo4: (photo4 || '').trim(),
-                                  video: (video || '').trim()
+                                  video: (video || '').trim(),
+                                  sizes: (itemForm.sizes || '').trim(),
+                                  colors: (itemForm.colors || '').trim(),
+                                  options: (itemForm.options || '').trim()
                                 };
 
                                 let updatedItems = [...(currentAdvertiser.company.items || [])];
@@ -10982,7 +11122,10 @@ function AppContent() {
                                         photo2: it.photo2 || '',
                                         photo3: it.photo3 || '',
                                         photo4: it.photo4 || '',
-                                        video: it.video || ''
+                                        video: it.video || '',
+                                        sizes: it.sizes || '',
+                                        colors: it.colors || '',
+                                        options: it.options || ''
                                       });
                                       setEditingItemIndex(i);
                                     }}
@@ -11259,7 +11402,7 @@ function AppContent() {
 
                         {(siteType === 'loja' || siteType === 'cardapio') ? (
                           <div className="mt-4 bg-white/5 border border-white/5 rounded-2xl p-4">
-                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest block">Preço de Tabela</span>
+                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest block">Preço Base</span>
                             <span className="text-2xl font-black text-[var(--primary)] font-mono mt-1 block">
                               {selectedItemForDetail.price ? `R$ ${parseFloat(selectedItemForDetail.price).toFixed(2).replace('.', ',')}` : 'Sob Consulta'}
                             </span>
@@ -11277,6 +11420,157 @@ function AppContent() {
                             <span className="text-sm font-bold text-amber-400 font-mono mt-1 block">
                               📅 Escolha a data e o horário para agendar
                             </span>
+                          </div>
+                        )}
+
+                        {/* Interactive Item Options / Variations (Numeração, Tamanho, Cores, Opcionais, Observações) */}
+                        {selectedItemForDetail && (
+                          <div className="mt-4 flex flex-col gap-4 border-t border-white/5 pt-4">
+                            
+                            {/* 1. SELEÇÃO DE TAMANHO / NUMERAÇÃO */}
+                            {(() => {
+                              let rawSizes = selectedItemForDetail.sizes || '';
+                              let sizesArr: string[] = [];
+                              if (rawSizes.trim()) {
+                                sizesArr = rawSizes.split(',').map((s: string) => s.trim()).filter(Boolean);
+                              } else {
+                                const itemLower = (selectedItemForDetail.name + ' ' + (selectedItemForDetail.desc || '') + ' ' + (activeMiniSiteCompany?.company?.category || '')).toLowerCase();
+                                if (/tenis|tênis|sapato|calcado|calçado|sneaker|chuteira|sandalia|chinelo/.test(itemLower)) {
+                                  sizesArr = ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44'];
+                                } else if (/roupa|moda|vestuario|vestuário|camisa|camiseta|calca|calça|bermuda|blusa|jaqueta|vestido/.test(itemLower)) {
+                                  sizesArr = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'XGG'];
+                                }
+                              }
+
+                              if (sizesArr.length === 0) return null;
+
+                              return (
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-[11px] font-black uppercase tracking-wider text-amber-300 flex items-center justify-between">
+                                    <span>👟 Escolha o Tamanho / Numeração:</span>
+                                    {itemSelectedSize && <span className="text-[10px] text-white/50 font-normal">Selecionado: <strong className="text-white">{itemSelectedSize}</strong></span>}
+                                  </label>
+                                  <div className="flex flex-wrap gap-2">
+                                    {sizesArr.map((sz: string) => {
+                                      const isSelected = itemSelectedSize === sz;
+                                      return (
+                                        <button
+                                          key={sz}
+                                          type="button"
+                                          onClick={() => setItemSelectedSize(isSelected ? '' : sz)}
+                                          className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer border ${isSelected ? 'bg-[var(--primary)] text-black border-[var(--primary)] shadow-md shadow-[var(--primary)]/20 scale-105' : 'bg-neutral-900/80 hover:bg-neutral-800 text-white/80 border-white/10 hover:border-white/20'}`}
+                                        >
+                                          {sz}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+
+                            {/* 2. SELEÇÃO DE COR */}
+                            {(() => {
+                              let rawColors = selectedItemForDetail.colors || '';
+                              let colorsArr: string[] = [];
+                              if (rawColors.trim()) {
+                                colorsArr = rawColors.split(',').map((c: string) => c.trim()).filter(Boolean);
+                              } else {
+                                const itemLower = (selectedItemForDetail.name + ' ' + (selectedItemForDetail.desc || '') + ' ' + (activeMiniSiteCompany?.company?.category || '')).toLowerCase();
+                                if (/tenis|tênis|sapato|calcado|calçado|sneaker|roupa|moda|vestuario|vestuário|camisa|camiseta|calca|calça|bermuda|blusa|jaqueta|vestido/.test(itemLower)) {
+                                  colorsArr = ['Preto', 'Branco', 'Cinza', 'Azul', 'Vermelho', 'Rosa', 'Verde', 'Amarelo'];
+                                }
+                              }
+
+                              if (colorsArr.length === 0) return null;
+
+                              return (
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-[11px] font-black uppercase tracking-wider text-blue-300 flex items-center justify-between">
+                                    <span>🎨 Escolha a Cor:</span>
+                                    {itemSelectedColor && <span className="text-[10px] text-white/50 font-normal">Selecionada: <strong className="text-white">{itemSelectedColor}</strong></span>}
+                                  </label>
+                                  <div className="flex flex-wrap gap-2">
+                                    {colorsArr.map((col: string) => {
+                                      const isSelected = itemSelectedColor === col;
+                                      return (
+                                        <button
+                                          key={col}
+                                          type="button"
+                                          onClick={() => setItemSelectedColor(isSelected ? '' : col)}
+                                          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${isSelected ? 'bg-blue-500 text-white border-blue-400 shadow-md shadow-blue-500/20 scale-105' : 'bg-neutral-900/80 hover:bg-neutral-800 text-white/80 border-white/10 hover:border-white/20'}`}
+                                        >
+                                          {col}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+
+                            {/* 3. OPCIONAIS / ADICIONAIS / ACOMPANHAMENTOS */}
+                            {(() => {
+                              let rawOpts = selectedItemForDetail.options || '';
+                              let optsArr: string[] = [];
+                              if (rawOpts.trim()) {
+                                optsArr = rawOpts.split(',').map((o: string) => o.trim()).filter(Boolean);
+                              } else if (siteType === 'cardapio' || /lanchonete|marmitaria|restaurante|pizzaria|hamburgueria|comida|marmita/.test((activeMiniSiteCompany?.company?.category || '').toLowerCase())) {
+                                optsArr = ['Molho Especial (+2.00)', 'Bacon Extra (+3.50)', 'Queijo Duplo (+4.00)', 'Salada Acompanhamento (+4.00)'];
+                              }
+
+                              if (optsArr.length === 0) return null;
+
+                              return (
+                                <div className="flex flex-col gap-2 bg-white/5 border border-white/5 rounded-2xl p-3.5">
+                                  <label className="text-[11px] font-black uppercase tracking-wider text-emerald-300">
+                                    🍔 Adicionais / Opcionais:
+                                  </label>
+                                  <div className="flex flex-col gap-1.5">
+                                    {optsArr.map((optStr: string) => {
+                                      const isChecked = itemSelectedOptions.includes(optStr);
+                                      return (
+                                        <label
+                                          key={optStr}
+                                          className={`flex items-center justify-between p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${isChecked ? 'bg-emerald-500/15 border-emerald-500/40 text-white font-bold' : 'bg-black/20 border-white/5 hover:border-white/10 text-white/70'}`}
+                                        >
+                                          <div className="flex items-center gap-2">
+                                            <input
+                                              type="checkbox"
+                                              checked={isChecked}
+                                              onChange={() => {
+                                                if (isChecked) {
+                                                  setItemSelectedOptions(prev => prev.filter(o => o !== optStr));
+                                                } else {
+                                                  setItemSelectedOptions(prev => [...prev, optStr]);
+                                                }
+                                              }}
+                                              className="rounded border-white/20 text-emerald-500 focus:ring-0 accent-emerald-500 cursor-pointer"
+                                            />
+                                            <span>{optStr}</span>
+                                          </div>
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+
+                            {/* 4. OBSERVAÇÕES DO CLIENTE */}
+                            <div className="flex flex-col gap-1.5 bg-neutral-900/60 border border-white/5 rounded-2xl p-3.5">
+                              <label className="text-[11px] font-black uppercase tracking-wider text-white/70 flex items-center gap-1.5">
+                                ✍️ Observações do Pedido:
+                              </label>
+                              <input
+                                type="text"
+                                value={itemNoteText}
+                                onChange={(e) => setItemNoteText(e.target.value)}
+                                placeholder={siteType === 'cardapio' ? "Ex: Sem cebola, sem maionese, molho à parte..." : "Ex: Embalagem para presente, instruções..."}
+                                className="w-full bg-[#11111a] border border-white/10 hover:border-white/20 focus:border-[var(--primary)] outline-none rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-white/30"
+                              />
+                            </div>
+
                           </div>
                         )}
                       </div>
@@ -11528,10 +11822,27 @@ function AppContent() {
                       <>
                         <button
                           onClick={() => {
-                            const priceText = selectedItemForDetail.price 
-                              ? `R$ ${parseFloat(selectedItemForDetail.price).toFixed(2).replace('.', ',')}` 
-                              : 'Sob Consulta';
-                            const textMsg = `Olá! Tenho interesse no item listado no portal ${appData.siteInfo.name}: *${selectedItemForDetail.name}* (Valor: ${priceText}). Gostaria de mais informações ou solicitar o pedido.`;
+                            const baseVal = selectedItemForDetail.price ? parseFloat(selectedItemForDetail.price) : 0;
+                            let extraVal = 0;
+                            itemSelectedOptions.forEach(opt => {
+                              const match = opt.match(/\(\+?\s*R?\$?\s*([0-9.,]+)\)/i);
+                              if (match) {
+                                const p = parseFloat(match[1].replace(',', '.'));
+                                if (!isNaN(p)) extraVal += p;
+                              }
+                            });
+                            const totalUnit = baseVal + extraVal;
+                            const priceText = totalUnit > 0 ? `R$ ${totalUnit.toFixed(2).replace('.', ',')}` : 'Sob Consulta';
+
+                            let textMsg = `Olá! Tenho interesse no item listado no portal ${appData.siteInfo.name}:\n\n`;
+                            textMsg += `📌 *${selectedItemForDetail.name}*\n`;
+                            if (itemSelectedSize) textMsg += `👟 *Tamanho/Numeração:* ${itemSelectedSize}\n`;
+                            if (itemSelectedColor) textMsg += `🎨 *Cor:* ${itemSelectedColor}\n`;
+                            if (itemSelectedOptions.length > 0) textMsg += `➕ *Adicionais/Opcionais:* ${itemSelectedOptions.join(', ')}\n`;
+                            if (itemNoteText.trim()) textMsg += `✍️ *Observação:* ${itemNoteText.trim()}\n`;
+                            textMsg += `💰 *Valor Total:* ${priceText}\n\n`;
+                            textMsg += `Gostaria de mais informações ou confirmar o pedido.`;
+
                             window.open(`https://wa.me/${activeMiniSiteCompany.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
                           }}
                           className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-[1.02] text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/10 cursor-pointer transition-all duration-200"
@@ -11541,16 +11852,55 @@ function AppContent() {
 
                         <button
                           onClick={() => {
-                            setShoppingCart(prev => ({
-                              ...prev,
-                              [selectedItemForDetail.id]: { item: selectedItemForDetail, count: (prev[selectedItemForDetail.id]?.count || 0) + 1 }
-                            }));
+                            const baseVal = selectedItemForDetail.price ? parseFloat(selectedItemForDetail.price) : 0;
+                            let extraVal = 0;
+                            itemSelectedOptions.forEach(opt => {
+                              const match = opt.match(/\(\+?\s*R?\$?\s*([0-9.,]+)\)/i);
+                              if (match) {
+                                const p = parseFloat(match[1].replace(',', '.'));
+                                if (!isNaN(p)) extraVal += p;
+                              }
+                            });
+                            const totalUnit = baseVal + extraVal;
+
+                            const cartKey = `${selectedItemForDetail.id}_${itemSelectedSize}_${itemSelectedColor}_${[...itemSelectedOptions].sort().join('-')}_${itemNoteText.trim()}`;
+
+                            setShoppingCart(prev => {
+                              const existing = prev[cartKey];
+                              const count = (existing?.count || 0) + 1;
+                              return {
+                                ...prev,
+                                [cartKey]: {
+                                  cartKey,
+                                  item: selectedItemForDetail,
+                                  count,
+                                  selectedSize: itemSelectedSize,
+                                  selectedColor: itemSelectedColor,
+                                  selectedOptions: [...itemSelectedOptions],
+                                  itemNote: itemNoteText.trim(),
+                                  computedUnitPrice: totalUnit
+                                }
+                              };
+                            });
+
                             setSelectedItemForDetail(null);
                             alert("Item adicionado ao carrinho!");
                           }}
                           className="flex-1 inline-flex items-center justify-center gap-2 bg-[var(--primary)] hover:bg-[#ffe066] hover:scale-[1.02] text-black py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-[var(--primary)]/10 cursor-pointer transition-all duration-200"
                         >
-                          <ShoppingCart size={14} /> Adicionar {selectedItemForDetail.price ? `R$ ${parseFloat(selectedItemForDetail.price).toFixed(2).replace('.', ',')}` : ''}
+                          <ShoppingCart size={14} /> Adicionar ({(() => {
+                            const baseVal = selectedItemForDetail.price ? parseFloat(selectedItemForDetail.price) : 0;
+                            let extraVal = 0;
+                            itemSelectedOptions.forEach(opt => {
+                              const match = opt.match(/\(\+?\s*R?\$?\s*([0-9.,]+)\)/i);
+                              if (match) {
+                                const p = parseFloat(match[1].replace(',', '.'));
+                                if (!isNaN(p)) extraVal += p;
+                              }
+                            });
+                            const totalUnit = baseVal + extraVal;
+                            return totalUnit > 0 ? `R$ ${totalUnit.toFixed(2).replace('.', ',')}` : 'Consulta';
+                          })()})
                         </button>
                       </>
                     )}
