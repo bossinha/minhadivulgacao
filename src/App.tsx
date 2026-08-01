@@ -278,7 +278,7 @@ const NOTIFICATION_ACTIONS = [
 const DEFAULT_DATA = {
   theme: { primary: "#ff8a00", bg: "#090d16", text: "#ffffff", textDim: "#a0a0a0" },
   siteInfo: {
-    name: "Minha", suffix: "Divulgação", description: "A máquina de vendas definitiva para o seu negócio vender todos os dias na internet.",
+    name: "Minha", suffix: "Divulgação", description: "Sua maior vitrine digital em todo o Brasil.",
     cnpj: "62.133.196/0001-40", phone: "85 99290-8713", address: "Anúncios em Todo o Brasil",
     radioLink: "https://stream.zeno.fm/gsstolze3mjtv",
     heroTitle: "", heroSub: "", radioTitle: "", radioSub: "", ctaTitle: "", ctaSub: "",
@@ -5072,74 +5072,6 @@ function AppContent() {
             ))}
           </div>
 
-          {/* WhatsApp Screenshots gallery */}
-          {visibleWhatsappTestimonials && visibleWhatsappTestimonials.length > 0 && (
-            <div className="mt-14 pt-12 border-t border-white/5 select-none">
-              <div className="flex items-center gap-2 mb-8 justify-center sm:justify-start">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#25D366] animate-pulse" />
-                <h4 className="text-xs font-black text-[#25D366] tracking-widest uppercase font-mono text-center sm:text-left">
-                  Comprovações do WhatsApp (Clique para ampliar)
-                </h4>
-              </div>
-
-              <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-white/10">
-                {visibleWhatsappTestimonials.map((wt: any, idx: number) => {
-                  const imgUrl = typeof wt === 'string' ? wt : wt?.image;
-                  if (!imgUrl) return null;
-                  return (
-                    <div 
-                      key={idx} 
-                      className="flex-shrink-0 cursor-zoom-in group" 
-                      onClick={() => setSelectedTestimonialImage(imgUrl)}
-                    >
-                      <img 
-                        src={imgUrl} 
-                        alt="Depoimento WhatsApp" 
-                        className="h-56 sm:h-64 rounded-2xl border border-white/10 group-hover:border-[#25D366]/40 transition-all duration-300 shadow-xl object-contain bg-[#111116] p-1.5"
-                        referrerPolicy="no-referrer" 
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Testimonial Zoom lightbox overlay */}
-          {selectedTestimonialImage && (
-            <div 
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                width: '100vw',
-                height: '100vh',
-                background: 'rgba(0, 0, 0, 0.95)',
-                zIndex: 100000,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'zoom-out'
-              }}
-              onClick={() => setSelectedTestimonialImage(null)}
-            >
-              <button 
-                type="button"
-                className="absolute top-6 right-6 bg-white/10 hover:bg-white/20 text-white font-bold w-12 h-12 rounded-full flex items-center justify-center border-none cursor-pointer text-lg z-50 animate-pulse"
-                onClick={() => setSelectedTestimonialImage(null)}
-              >
-                ✕
-              </button>
-              <img 
-                src={selectedTestimonialImage} 
-                alt="Depoimento WhatsApp Ampliado" 
-                className="max-w-[90%] max-h-[80%] rounded-2xl border border-white/15 shadow-2xl object-contain bg-black"
-                onClick={(e) => e.stopPropagation()}
-                referrerPolicy="no-referrer"
-              />
-            </div>
-          )}
-
         </div>
       </section>
 
@@ -5158,7 +5090,7 @@ function AppContent() {
                 onError={(e) => { e.currentTarget.src = "https://i.postimg.cc/nVdYndN2/minha-divulgacao-png.png" }}
               />
               <p className="text-xs text-white/50 max-w-sm leading-relaxed mt-2">
-                {(appData.siteInfo.description || 'O melhor canal de divulgação comercial e entretenimento da região.').replace(/Grande Fortaleza/gi, 'todo o Brasil').replace(/Fortaleza/gi, 'Brasil')}
+                Sua maior vitrine digital em todo o Brasil.
               </p>
 
               {/* Social icons */}
@@ -5172,8 +5104,9 @@ function AppContent() {
             {/* Contact column */}
             <div className="md:col-span-3 flex flex-col gap-3 text-xs text-white/70">
               <h4 className="text-sm font-extrabold text-white uppercase tracking-wider mb-2">Comercial</h4>
-              <p className="font-semibold">{appData.siteInfo.phone}</p>
-              <p className="leading-relaxed leading-5 mt-1">{appData.siteInfo.address}</p>
+              <p className="font-semibold">85 99286-2177</p>
+              <p className="font-semibold">85 99290-8713</p>
+              <p className="leading-relaxed leading-5 mt-1">{appData.siteInfo.address || 'Fortaleza - Ceará - Brasil'}</p>
             </div>
 
             {/* Legal info column */}
@@ -8473,14 +8406,6 @@ function AppContent() {
                                   </button>
                                   <button 
                                     type="button"
-                                    onClick={() => setPaymentMethod('pix_qrcode')}
-                                    className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all border cursor-pointer ${paymentMethod === 'pix_qrcode' ? 'bg-neutral-900 text-[var(--primary)] border-[var(--primary)]/30' : 'bg-[#11111a] text-white/60 border-white/5 hover:border-white/10'}`}
-                                  >
-                                    <span>📱 PIX QR Code</span>
-                                    <span className="text-[9px] font-mono text-white/40 uppercase">Escanear</span>
-                                  </button>
-                                  <button 
-                                    type="button"
                                     onClick={() => setPaymentMethod('cartao_entrega')}
                                     className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all border cursor-pointer ${paymentMethod === 'cartao_entrega' ? 'bg-neutral-900 text-[var(--primary)] border-[var(--primary)]/30' : 'bg-[#11111a] text-white/60 border-white/5 hover:border-white/10'}`}
                                   >
@@ -8509,7 +8434,7 @@ function AppContent() {
                               </div>
 
                               {/* Conditional Payment Blocks */}
-                              {(paymentMethod === 'pix_chave' || paymentMethod === 'pix_qrcode') && (
+                              {paymentMethod === 'pix_chave' && (
                                 <div className="bg-neutral-900/60 border border-white/5 rounded-2xl p-4 flex flex-col gap-3">
                                   <div className="flex justify-between items-center border-b border-white/5 pb-2">
                                     <span className="text-[10px] text-emerald-400 font-extrabold uppercase tracking-wider">Dados de Pagamento PIX</span>
