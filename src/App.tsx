@@ -298,7 +298,7 @@ const DEFAULT_DATA = {
     segments: { tag: "Exclusividade categórica", title: "RESERVE SEU SETOR ANTES QUE SEU CONCORRENTE FAÇA", highlight: "Atenção: Apenas 1 empresa é permitida por categoria de destaque! Não seja deixado para trás.", callToAction: "👉 CLIQUE AQUI AGORA E BLOQUEIE SEU SEGMENTO ANTES QUE SEU MAIOR RIVAL COLOQUE A MARCA DELE PRIMEIRO" }
   },
   pricing: {
-    badge: "Exclusividade máxima garantida", title: "Plano Divulgação", price: "49,90", period: "MÊS",
+    badge: "Exclusividade máxima garantida", title: "Plano Divulgação", price: "59,90", period: "MÊS",
     features: [
       "Comercial exibido na TV Online da plataforma 24h por dia",
       "Divulgação contínua na Rádio Digital da plataforma",
@@ -1094,8 +1094,8 @@ function AppContent() {
             const loadedData = tData.data || DEFAULT_DATA;
             if (loadedData) {
               if (loadedData.pricing) {
-                if (!loadedData.pricing.price || loadedData.pricing.price === '39,90' || loadedData.pricing.price === '39.90' || loadedData.pricing.price === '147') {
-                  loadedData.pricing.price = '49,90';
+                if (!loadedData.pricing.price || loadedData.pricing.price === '39,90' || loadedData.pricing.price === '39.90' || loadedData.pricing.price === '49,90' || loadedData.pricing.price === '49.90' || loadedData.pricing.price === '147') {
+                  loadedData.pricing.price = '59,90';
                 }
                 if (!loadedData.pricing.title || loadedData.pricing.title === 'Plano Máquina de Clientes VIP') {
                   loadedData.pricing.title = 'Plano Divulgação';
@@ -2227,7 +2227,7 @@ function AppContent() {
       const topRecommended = sortCompaniesByPlanAndPriority(displayedCompanies.filter(c => c.active !== false)).slice(0, 3);
       setChatMessages([{ 
         sender: 'bot', 
-        text: `👋 Olá! Sou o Assistente Virtual do Portal Guia Comercial. Como posso te ajudar hoje?\n\n⭐ Empresas Recomendadas em Destaque:`,
+        text: `👋 Olá! Sou o Assistente do Portal Guia Comercial. Como posso te ajudar hoje?\n\n⭐ Empresas Recomendadas em Destaque:`,
         results: topRecommended
       }]);
     }
@@ -3757,8 +3757,8 @@ function AppContent() {
             </div>
             <div className="text-center">
               <div className="text-3xl md:text-5xl font-neutral font-black text-amber-500 tracking-tight">100%</div>
-              <div className="text-[11px] sm:text-[12px] text-white/75 font-bold tracking-widest font-mono uppercase mt-2">Atendimento IA</div>
-              <p className="text-[10px] text-white/40 mt-1 max-w-[160px] mx-auto font-sans">Conversões inteligentes 24h sem interrupção</p>
+              <div className="text-[11px] sm:text-[12px] text-white/75 font-bold tracking-widest font-mono uppercase mt-2">Atendimento Direto</div>
+              <p className="text-[10px] text-white/40 mt-1 max-w-[160px] mx-auto font-sans">Chat interno rápido com indicação de parceiros premium</p>
             </div>
             <div className="text-center">
               <div className="text-3xl md:text-5xl font-sans font-black text-white tracking-tight">24h</div>
@@ -4681,8 +4681,8 @@ function AppContent() {
                 <span><strong>As empresas Premium aparecem primeiro nas pesquisas.</strong></span>
               </div>
               <div className="bg-black/30 border border-amber-500/20 rounded-2xl p-3.5 flex items-start gap-2.5">
-                <span className="text-base">🤖</span>
-                <span><strong>As empresas Premium possuem prioridade nas recomendações do Atendente Virtual.</strong></span>
+                <span className="text-base">💬</span>
+                <span><strong>As empresas Premium possuem indicação no chat interno do portal!</strong></span>
               </div>
               <div className="bg-amber-500/20 border border-amber-500/40 rounded-2xl p-3.5 flex items-start gap-2.5 text-amber-200">
                 <span className="text-base">🚀</span>
@@ -4755,10 +4755,10 @@ function AppContent() {
                 <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-white/5 pt-5">
                   <li className="text-emerald-400 font-bold">⭐ Empresa Verificada</li>
                   <li className="font-semibold text-emerald-300">⭐ Aparece antes das empresas gratuitas</li>
-                  <li>⭐ Destaque no Atendente Virtual</li>
+                  <li className="text-emerald-300 font-bold">💬 Indicação no Chat Interno se você é Premium</li>
                   <li>⭐ Prioridade nas pesquisas</li>
-                  <li>⭐ Até 30 fotos</li>
-                  <li>⭐ Até 100 produtos</li>
+                  <li className="text-emerald-300 font-bold">📸 Até 20 fotos</li>
+                  <li className="text-emerald-300 font-bold">📦 Até 30 produtos</li>
                   <li>⭐ Cadastro de vídeos & Promoções</li>
                   <li>⭐ Botão WhatsApp destacado</li>
                   <li>⭐ Catálogo completo</li>
@@ -4800,15 +4800,16 @@ function AppContent() {
                   ⭐ Premium Destaque VIP
                 </h3>
                 <div className="text-3xl font-black text-amber-400 mt-2 font-mono flex items-baseline gap-1">
-                  R$ 49,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
+                  R$ 59,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
                 </div>
 
                 <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-white/5 pt-5">
                   <li className="text-amber-400 font-bold">⭐ Empresa Verificada & Selo VIP</li>
                   <li className="font-semibold text-amber-300">⭐ Aparece antes das gratuitas e verificadas</li>
-                  <li>⭐ Destaque Especial no Atendente Virtual</li>
+                  <li className="text-amber-300 font-bold">💬 Indicação Especial no Chat Interno se você é Premium</li>
                   <li>⭐ Prioridade Alta nas pesquisas</li>
-                  <li>⭐ Fotos, Produtos & Vídeos Ilimitados</li>
+                  <li className="text-amber-300 font-bold">📸 Até 30 fotos</li>
+                  <li className="text-amber-300 font-bold">📦 Até 50 produtos</li>
                   <li>⭐ Borda e Iluminação VIP no Portal</li>
                   <li>⭐ Botão WhatsApp em Destaque Especial</li>
                   <li>⭐ Catálogo Completo & Promoções</li>
@@ -4823,7 +4824,7 @@ function AppContent() {
                 </div>
 
                 <a 
-                  href={`https://wa.me/5585992862177?text=${encodeURIComponent('Olá! Vi na página inicial e quero contratar o Plano Premium Destaque VIP (R$ 49,90/mês) para minha empresa no portal.')}`}
+                  href={`https://wa.me/5585992862177?text=${encodeURIComponent('Olá! Vi na página inicial e quero contratar o Plano Premium Destaque VIP (R$ 59,90/mês) para minha empresa no portal.')}`}
                   target="_blank"
                   rel="noreferrer"
                   className="w-full block mt-4 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:brightness-110 text-black font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-lg transition-all cursor-pointer"
@@ -4846,16 +4847,17 @@ function AppContent() {
                   🔥 Premium Patrocinado (1º Lugar)
                 </h3>
                 <div className="text-3xl font-black text-red-400 mt-2 font-mono flex items-baseline gap-1">
-                  R$ 59,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
+                  R$ 89,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
                 </div>
 
                 <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-white/5 pt-5">
                   <li className="text-red-400 font-bold">🔥 1ª Posição Garantida (Top 1)</li>
                   <li className="font-semibold text-red-300">⭐ Posição Fixa Escolhida & Borda Dourada Animada</li>
-                  <li>⭐ Prioridade Máxima no Atendente Virtual IA</li>
-                  <li>⭐ Recomendação Direta no WhatsApp Chat</li>
-                  <li>⭐ Atendimento via IA Prioritário</li>
-                  <li>⭐ Fotos, Produtos & Vídeos Ilimitados</li>
+                  <li className="text-yellow-300 font-black bg-yellow-500/10 p-1.5 rounded-lg border border-yellow-500/20">♾️ Fotos, Produtos & Vídeos ILIMITADOS (Exclusivo deste plano)</li>
+                  <li className="text-cyan-300 font-bold">📺 Aparece na TV On-line</li>
+                  <li className="text-pink-300 font-bold">📻 Comercial na Rádio On-line</li>
+                  <li className="text-emerald-300 font-bold">📲 Divulgação em Grupos de Facebook & WhatsApp diariamente (Seg a Sex: 3x ao dia - Manhã, Tarde e Noite)</li>
+                  <li className="text-red-300 font-bold">💬 Indicação Prioritária e Destaque no Chat Interno se você é Premium</li>
                   <li>⭐ Botão WhatsApp em Destaque Absoluto</li>
                   <li>⭐ Estatísticas Completas (Visualizações, Cliques, WhatsApp)</li>
                   <li className="text-red-300/90 font-bold">⭐ Badge Premium & Card diferenciado</li>
@@ -4868,7 +4870,7 @@ function AppContent() {
                 </div>
 
                 <a 
-                  href={`https://wa.me/5585992862177?text=${encodeURIComponent('Olá! Vi na página inicial e quero contratar o Plano Premium Patrocinado Top 1 (R$ 59,90/mês) para minha empresa no portal.')}`}
+                  href={`https://wa.me/5585992862177?text=${encodeURIComponent('Olá! Vi na página inicial e quero contratar o Plano Premium Patrocinado Top 1 (R$ 89,90/mês) para minha empresa no portal.')}`}
                   target="_blank"
                   rel="noreferrer"
                   className="w-full block mt-4 bg-gradient-to-r from-red-600 via-amber-600 to-yellow-500 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-lg transition-all cursor-pointer"
@@ -7425,7 +7427,7 @@ function AppContent() {
             <div className="chat-header-info">
               <div className="chat-header-icon">💬</div>
               <div>
-                <div className="chat-header-title">Assistente Virtual</div>
+                <div className="chat-header-title">Assistente do Portal</div>
                 <div className="chat-header-status">
                   <div className="status-dot"></div>
                   Online agora
@@ -9412,7 +9414,7 @@ function AppContent() {
                       <div className="text-left">
                         <span className="text-[10px] bg-amber-500/20 text-amber-400 px-2.5 py-1 rounded font-black uppercase tracking-widest">⭐ Plano Premium VIP Ativo</span>
                         <p className="text-xs text-white/80 mt-2">
-                          Sua empresa possui <strong>prioridade máxima de exibição</strong> no portal e no Atendente Virtual!
+                          Sua empresa possui <strong>prioridade máxima de exibição</strong> no portal e no Chat Interno!
                         </p>
                       </div>
                     </div>
@@ -9563,17 +9565,17 @@ function AppContent() {
 
                             <div className="bg-[#11121d] border border-amber-500/20 p-4 rounded-2xl flex flex-col justify-between">
                               <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase font-mono">
-                                <span>🤖</span> Atendente Virtual
+                                <span>💬</span> Chat Interno
                               </div>
                               <p className="text-xs text-white/80 mt-2 leading-relaxed">
-                                Clientes buscando por <strong className="text-white">{currentAdvertiser.company.category}</strong> recebem recomendações diretas do Atendente Virtual.
+                                Clientes buscando por <strong className="text-white">{currentAdvertiser.company.category}</strong> recebem indicação no chat interno se você é Premium.
                               </p>
                               <button 
                                 type="button" 
                                 onClick={() => setIsCheckoutOpen(true)}
                                 className="mt-3 text-[10px] font-black text-amber-400 uppercase tracking-widest hover:underline text-left cursor-pointer"
                               >
-                                🔥 Ser Recomendado pelo Robô →
+                                🔥 Ser Indicado no Chat Interno →
                               </button>
                             </div>
                           </div>
@@ -9824,10 +9826,10 @@ function AppContent() {
                               <ul className="text-xs text-white/90 space-y-2 mt-4">
                                 <li className="text-emerald-400 font-bold">⭐ Empresa Verificada</li>
                                 <li>⭐ Aparece antes das empresas gratuitas</li>
-                                <li>⭐ Destaque no Atendente Virtual</li>
+                                <li className="text-emerald-300 font-bold">💬 Indicação no Chat Interno se você é Premium</li>
                                 <li>⭐ Prioridade nas pesquisas</li>
-                                <li>⭐ Até 30 fotos</li>
-                                <li>⭐ Até 100 produtos</li>
+                                <li className="text-emerald-300 font-bold">📸 Até 20 fotos</li>
+                                <li className="text-emerald-300 font-bold">📦 Até 30 produtos</li>
                                 <li>⭐ Cadastro de vídeos & Promoções</li>
                                 <li>⭐ Botão WhatsApp destacado</li>
                                 <li>⭐ Catálogo completo</li>
@@ -9871,14 +9873,15 @@ function AppContent() {
                                 ⭐ Premium Destaque VIP
                               </h4>
                               <div className="text-2xl font-black text-amber-400 mt-1 font-mono flex items-baseline gap-1">
-                                R$ 49,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
+                                R$ 59,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
                               </div>
                               <ul className="text-xs text-white/90 space-y-2 mt-4">
                                 <li className="text-amber-400 font-bold">⭐ Empresa Verificada & Selo VIP</li>
                                 <li>⭐ Aparece antes das gratuitas e verificadas</li>
-                                <li>⭐ Destaque Especial no Atendente Virtual</li>
+                                <li className="text-amber-300 font-bold">💬 Indicação Especial no Chat Interno se você é Premium</li>
                                 <li>⭐ Prioridade Alta nas pesquisas</li>
-                                <li>⭐ Fotos, Produtos & Vídeos Ilimitados</li>
+                                <li className="text-amber-300 font-bold">📸 Até 30 fotos</li>
+                                <li className="text-amber-300 font-bold">📦 Até 50 produtos</li>
                                 <li>⭐ Borda e Iluminação VIP no Portal</li>
                                 <li>⭐ Botão WhatsApp em Destaque Especial</li>
                                 <li>⭐ Catálogo Completo & Promoções</li>
@@ -9898,7 +9901,7 @@ function AppContent() {
                                 </div>
                               ) : (
                                 <a 
-                                  href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano Premium Destaque VIP (R$ 49,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
+                                  href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano Premium Destaque VIP (R$ 59,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="mt-4 text-center text-xs font-black text-black bg-gradient-to-r from-amber-400 to-yellow-400 hover:brightness-110 py-3.5 rounded-xl uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
@@ -9922,15 +9925,16 @@ function AppContent() {
                                 🔥 Premium Patrocinado (1º Lugar)
                               </h4>
                               <div className="text-2xl font-black text-red-400 mt-1 font-mono flex items-baseline gap-1">
-                                R$ 59,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
+                                R$ 89,90 <span className="text-xs text-white/50 font-normal">/ MÊS</span>
                               </div>
                               <ul className="text-xs text-white/90 space-y-2 mt-4">
                                 <li className="text-red-400 font-bold">🔥 1ª Posição Garantida (Top 1)</li>
                                 <li>⭐ Posição Fixa Escolhida & Borda Dourada Animada</li>
-                                <li>⭐ Prioridade Máxima no Atendente Virtual IA</li>
-                                <li>⭐ Recomendação Direta no WhatsApp Chat</li>
-                                <li>⭐ Atendimento via IA Prioritário</li>
-                                <li>⭐ Fotos, Produtos & Vídeos Ilimitados</li>
+                                <li className="text-yellow-300 font-black bg-yellow-500/10 p-1.5 rounded-lg border border-yellow-500/20">♾️ Fotos, Produtos & Vídeos ILIMITADOS (Exclusivo deste plano)</li>
+                                <li className="text-cyan-300 font-bold">📺 Aparece na TV On-line</li>
+                                <li className="text-pink-300 font-bold">📻 Comercial na Rádio On-line</li>
+                                <li className="text-emerald-300 font-bold">📲 Divulgação em Grupos de Facebook & WhatsApp diariamente (Seg a Sex: 3x ao dia - Manhã, Tarde e Noite)</li>
+                                <li className="text-red-300 font-bold">💬 Indicação Prioritária e Destaque no Chat Interno se você é Premium</li>
                                 <li>⭐ Botão WhatsApp em Destaque Absoluto</li>
                                 <li>⭐ Estatísticas Completas (Visualizações, Cliques, WhatsApp)</li>
                                 <li className="text-red-300/90 font-bold">⭐ Badge Premium & Card diferenciado</li>
@@ -9948,7 +9952,7 @@ function AppContent() {
                                 </div>
                               ) : (
                                 <a 
-                                  href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano Premium Patrocinado Top 1 (R$ 59,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
+                                  href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano Premium Patrocinado Top 1 (R$ 89,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="mt-4 text-center text-xs font-black text-white bg-gradient-to-r from-red-600 via-amber-600 to-yellow-500 hover:brightness-110 py-3.5 rounded-xl uppercase tracking-wider transition-all shadow-lg flex items-center justify-center gap-1.5 cursor-pointer"
@@ -10623,11 +10627,26 @@ function AppContent() {
                                   const currentCount = currentAdvertiser.company.items?.length || 0;
                                   const planType = getCompanyPlanType(currentAdvertiser.company);
                                   const isFree = planType === 'gratuito';
+                                  const isVerificado = planType === 'verificado';
+                                  const isDestaque = planType === 'destaque';
                                   const isInTrialPeriod = (currentAdvertiser.expiresAt && !isAdExpired) || user?.isAdmin;
-                                  if (isFree && currentCount >= 5 && !isInTrialPeriod && !user?.isAdmin) {
-                                    alert("Oops! Você atingiu o limite de 5 produtos do Plano Gratuito. Adquira o Plano Premium para ter até 100 produtos no catálogo e prioridade máxima no portal!");
-                                    setIsCheckoutOpen(true);
-                                    return;
+
+                                  if (!isInTrialPeriod && !user?.isAdmin) {
+                                    if (isFree && currentCount >= 5) {
+                                      alert("Oops! Você atingiu o limite de 5 produtos do Plano Gratuito. Adquira um Plano Premium para expandir seu catálogo!");
+                                      setIsCheckoutOpen(true);
+                                      return;
+                                    }
+                                    if (isVerificado && currentCount >= 30) {
+                                      alert("Oops! Você atingiu o limite de 30 produtos do Plano R$ 39,90. Faça upgrade para o Plano Destaque VIP (até 50 produtos) ou Patrocinado (Ilimitado)!");
+                                      setIsCheckoutOpen(true);
+                                      return;
+                                    }
+                                    if (isDestaque && currentCount >= 50) {
+                                      alert("Oops! Você atingiu o limite de 50 produtos do Plano R$ 59,90. Faça upgrade para o Plano Patrocinado (Produtos e Fotos Ilimitadas)!");
+                                      setIsCheckoutOpen(true);
+                                      return;
+                                    }
                                   }
                                 }
 
@@ -11343,7 +11362,7 @@ function AppContent() {
               <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mt-6 text-center select-none">
                 <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Valor do Plano</span>
                 <div className="text-2xl font-black text-[#ff8a00] mt-1">
-                  R$ {appData?.pricing?.price || '49,90'} <span className="text-xs text-white/40">/ {appData?.pricing?.period ? appData.pricing.period.replace(/^\/+/, '') : 'MÊS'}</span>
+                  R$ {appData?.pricing?.price || '59,90'} <span className="text-xs text-white/40">/ {appData?.pricing?.period ? appData.pricing.period.replace(/^\/+/, '') : 'MÊS'}</span>
                 </div>
               </div>
 
