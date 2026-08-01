@@ -8165,9 +8165,25 @@ function AppContent() {
                   {/* Option A: Shopping Cart (for store & menu) */}
                   {(siteType === 'loja' || siteType === 'cardapio') && (
                     <div className="bg-[#0b0c10] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-xl relative flex flex-col sticky top-6">
-                      <h3 className="text-sm font-black font-mono uppercase tracking-[0.2em] text-[var(--primary)] flex items-center gap-2">
-                        <ShoppingCart size={16} /> SACOLA DE PEDIDOS
-                      </h3>
+                      <div className="flex justify-between items-center pb-1">
+                        <h3 className="text-sm font-black font-mono uppercase tracking-[0.2em] text-[var(--primary)] flex items-center gap-2">
+                          <ShoppingCart size={16} /> SACOLA DE PEDIDOS
+                        </h3>
+                        {Object.keys(shoppingCart).length > 0 && (
+                          <button
+                            type="button"
+                            title="Esvaziar sacola completa"
+                            onClick={() => {
+                              if (window.confirm("Deseja mesmo esvaziar todos os itens da sacola?")) {
+                                setShoppingCart({});
+                              }
+                            }}
+                            className="text-[10px] text-red-400 hover:text-red-300 font-bold uppercase tracking-wider bg-red-500/10 hover:bg-red-500/20 px-2.5 py-1 rounded-lg border border-red-500/20 transition-all flex items-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 size={12} /> Limpar
+                          </button>
+                        )}
+                      </div>
                       
                       {Object.keys(shoppingCart).length === 0 ? (
                         <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
@@ -8184,16 +8200,76 @@ function AppContent() {
                         return (
                           <div className="mt-4 flex flex-col gap-4 flex-1">
                             {/* Items List */}
-                            <div className="flex flex-col gap-3 max-h-56 overflow-y-auto pr-1">
+                            <div className="flex flex-col gap-3 max-h-64 overflow-y-auto pr-1">
                               {cartItemsArr.map((car: any) => (
-                                <div key={car.item.id} className="bg-neutral-900 border border-white/5 rounded-xl p-3 flex justify-between items-center">
-                                  <div className="flex-1 min-w-0 pr-2">
+                                <div key={car.item.id} className="bg-neutral-900 border border-white/5 rounded-xl p-3 flex justify-between items-center gap-2 hover:border-white/10 transition-all">
+                                  <div className="flex-1 min-w-0 pr-1">
                                     <h4 className="text-xs font-bold text-white truncate">{car.item.name}</h4>
-                                    <p className="text-[10px] text-white/50 font-mono mt-0.5">{car.count}x • {car.item.price ? `R$ ${parseFloat(car.item.price).toFixed(2).replace('.', ',')}` : 'Grátis'}</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <span className="text-[10px] text-white/50 font-mono">
+                                        {car.item.price ? `R$ ${parseFloat(car.item.price).toFixed(2).replace('.', ',')}` : 'Grátis'}
+                                      </span>
+                                      
+                                      {/* Controles de Quantidade (- / +) */}
+                                      <div className="flex items-center gap-1 bg-black/50 border border-white/10 rounded px-1.5 py-0.5">
+                                        <button
+                                          type="button"
+                                          title="Diminuir quantidade"
+                                          onClick={() => {
+                                            setShoppingCart(prev => {
+                                              const existing = prev[car.item.id];
+                                              if (!existing) return prev;
+                                              if (existing.count <= 1) {
+                                                const copy = { ...prev };
+                                                delete copy[car.item.id];
+                                                return copy;
+                                              }
+                                              return { ...prev, [car.item.id]: { ...existing, count: existing.count - 1 } };
+                                            });
+                                          }}
+                                          className="text-white/60 hover:text-white font-black text-xs px-1 cursor-pointer"
+                                        >
+                                          -
+                                        </button>
+                                        <span className="text-[10px] font-black text-amber-400 font-mono px-0.5">{car.count}</span>
+                                        <button
+                                          type="button"
+                                          title="Aumentar quantidade"
+                                          onClick={() => {
+                                            setShoppingCart(prev => ({
+                                              ...prev,
+                                              [car.item.id]: { ...prev[car.item.id], count: (prev[car.item.id]?.count || 0) + 1 }
+                                            }));
+                                          }}
+                                          className="text-white/60 hover:text-white font-black text-xs px-1 cursor-pointer"
+                                        >
+                                          +
+                                        </button>
+                                      </div>
+                                    </div>
                                   </div>
-                                  <span className="text-xs font-black text-white font-mono flex-shrink-0">
-                                    {car.item.price ? `R$ ${(parseFloat(car.item.price) * car.count).toFixed(2).replace('.', ',')}` : 'Consulta'}
-                                  </span>
+
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    <span className="text-xs font-black text-white font-mono">
+                                      {car.item.price ? `R$ ${(parseFloat(car.item.price) * car.count).toFixed(2).replace('.', ',')}` : 'Consulta'}
+                                    </span>
+                                    
+                                    {/* Botão para Excluir Item */}
+                                    <button
+                                      type="button"
+                                      title="Excluir este item da sacola"
+                                      onClick={() => {
+                                        setShoppingCart(prev => {
+                                          const copy = { ...prev };
+                                          delete copy[car.item.id];
+                                          return copy;
+                                        });
+                                      }}
+                                      className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/30 text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/50 transition-all cursor-pointer flex items-center justify-center shrink-0"
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </div>
                                 </div>
                               ))}
                             </div>
