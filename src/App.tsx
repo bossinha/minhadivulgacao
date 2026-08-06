@@ -799,6 +799,7 @@ function AppContent() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [universalConfig, setUniversalConfig] = useState<any>({ 
     radioLink: '', 
+    horizontalTvLink: 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando',
     logoSpeed: 100, 
     flyerSpeed: 180, 
     testimonialSpeed: 120, 
@@ -820,7 +821,7 @@ function AppContent() {
   const [showRadio, setShowRadio] = useState(true);
   const [tenantHasRadioPlayer, setTenantHasRadioPlayer] = useState(false);
   const [hasAffiliateSystem, setHasAffiliateSystem] = useState(false);
-  const [hideAdvertiserAuth, setHideAdvertiserAuth] = useState(false);
+  const [hideAdvertiserAuth, setHideAdvertiserAuth] = useState(true);
   const [affiliates, setAffiliates] = useState<any[]>([]);
   const [isAffLoading, setIsAffLoading] = useState(false);
 
@@ -898,7 +899,7 @@ function AppContent() {
         return false;
       }
     } catch (e) {}
-    return localStorage.getItem('isAdPortalOpen') === 'true';
+    return false;
   });
   const [isAutoLoggingIn, setIsAutoLoggingIn] = useState<boolean>(() => {
     const email = localStorage.getItem('ad_email');
@@ -960,9 +961,9 @@ function AppContent() {
   // SEO Schema.org JSON-LD Structured Data Injection for Google Search Indexing
   useEffect(() => {
     const siteName = appData?.siteInfo?.name || 'Portal Guia Comercial';
-    const siteDesc = 'Cadastre sua empresa gratuitamente e seja encontrado por milhares de clientes na sua cidade.';
+    const siteDesc = 'Posicione sua empresa em destaque e receba clientes da sua cidade diretamente no WhatsApp.';
     
-    document.title = `${siteName} | Cadastre sua Empresa Grátis & Guia Comercial`;
+    document.title = `${siteName} | Divulgue sua Empresa e Domine o Mercado Local`;
 
     const schemaData = {
       "@context": "https://schema.org",
@@ -1155,7 +1156,7 @@ function AppContent() {
             setShowRadio(tData.showRadio !== false);
             setTenantHasRadioPlayer(tData.hasRadioPlayer === true);
             setHasAffiliateSystem(tData.hasAffiliateSystem === true);
-            setHideAdvertiserAuth(tData.hideAdvertiserAuth === true);
+            setHideAdvertiserAuth(tData.hideAdvertiserAuth !== false);
           } else {
             console.warn("Cidade não encontrada no banco");
             setAppData(null);
@@ -1272,7 +1273,7 @@ function AppContent() {
               setShowVideos(data.showVideos === true);
               setShowRadio(data.showRadio !== false);
               setTenantHasRadioPlayer(data.hasRadioPlayer === true);
-              setHideAdvertiserAuth(data.hideAdvertiserAuth === true);
+              setHideAdvertiserAuth(data.hideAdvertiserAuth !== false);
               if ((!tenantId || tenantId === 'login') && savedId !== 'fortaleza') {
                 navigate('/' + savedId);
               }
@@ -1291,6 +1292,7 @@ function AppContent() {
         const data = snap.data();
         setUniversalConfig({
           radioLink: data.radioLink || '',
+          horizontalTvLink: data.horizontalTvLink || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando',
           logoSpeed: data.logoSpeed || 100,
           flyerSpeed: data.flyerSpeed || 180,
           testimonialSpeed: data.testimonialSpeed || 120,
@@ -1359,7 +1361,7 @@ function AppContent() {
             setShowRadio(tenantData.showRadio !== false);
             setTenantHasRadioPlayer(tenantData.hasRadioPlayer === true);
             setHasAffiliateSystem(tenantData.hasAffiliateSystem === true);
-            setHideAdvertiserAuth(tenantData.hideAdvertiserAuth === true);
+            setHideAdvertiserAuth(tenantData.hideAdvertiserAuth !== false);
           
           // Auto navigate to the correct city if on login or wrong page
           if (tenantId === 'login' || tenantId === firebaseUser.uid) {
@@ -1518,7 +1520,7 @@ function AppContent() {
           setShowVideos(data.showVideos === true);
           setShowRadio(data.showRadio !== false);
           setTenantHasRadioPlayer(data.hasRadioPlayer === true);
-          setHideAdvertiserAuth(data.hideAdvertiserAuth === true);
+          setHideAdvertiserAuth(data.hideAdvertiserAuth !== false);
           setIsDevAreaOpen(true);
           alert("Login realizado com sucesso!");
           window.location.href = '#/' + id;
@@ -2393,6 +2395,17 @@ function AppContent() {
                   onChange={e => setUniversalConfig({ ...universalConfig, uploadVideoHelpUrl: e.target.value })}
                 />
                 <small style={{ color: '#666' }}>Direciona o anunciante para esta URL ao clicar no ícone de vídeo para upar mídias.</small>
+              </div>
+              <div className="dev-form-group">
+                <label>Link da TV Minha Divulgação (Digital Signage / Promoções 📺)</label>
+                <input 
+                  type="text" 
+                  className="dev-input" 
+                  placeholder="Ex: https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando"
+                  value={universalConfig.horizontalTvLink !== undefined ? universalConfig.horizontalTvLink : 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando'} 
+                  onChange={e => setUniversalConfig({ ...universalConfig, horizontalTvLink: e.target.value })}
+                />
+                <small style={{ color: '#25D366' }}>✓ Link da TV Minha Divulgação exibida no portal logo abaixo das Promoções Especiais do Comércio.</small>
               </div>
               <div className="dev-form-group">
                 <label>Contador de Visitas (Total)</label>
@@ -3571,11 +3584,11 @@ function AppContent() {
   
           {/* Main Headline & Subtitle */}
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-sans font-black text-white tracking-tight leading-[1.05] max-w-5xl select-none">
-            Cadastre sua empresa <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 font-black">gratuitamente</span>
+            Multiplique seus clientes e <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 font-black">domine o mercado local</span>
           </h1>
   
           <p className="text-base sm:text-xl md:text-2xl text-white/85 font-semibold max-w-3xl mt-5 leading-relaxed select-none">
-            Seja encontrado por milhares de clientes da sua cidade e aumente suas vendas diretas pelo WhatsApp.
+            Destaque sua empresa no Guia Comercial Oficial da sua cidade e receba pedidos diários diretamente no seu WhatsApp.
           </p>
 
           {/* Main Action Buttons */}
@@ -3588,16 +3601,16 @@ function AppContent() {
                 }}
                 className="group bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-400 hover:to-yellow-400 text-black hover:scale-105 hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] px-8 py-4.5 md:px-10 md:py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider text-center transition-all duration-300 shadow-2xl flex items-center justify-center gap-3 cursor-pointer w-full sm:w-auto shrink-0 border border-amber-300/30"
               >
-                🚀 Cadastrar Empresa Grátis
+                🚀 Anunciar Minha Empresa Agora
               </button>
             ) : (
               <a 
-                href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '') || ''}?text=${encodeURIComponent('Olá! Acessei o portal e gostaria de cadastrar minha empresa gratuitamente.')}`} 
+                href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '') || ''}?text=${encodeURIComponent('Olá! Acessei o portal e gostaria de anunciar minha empresa no Guia Comercial.')}`} 
                 target="_blank"
                 rel="noreferrer"
                 className="group bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black hover:scale-105 px-8 py-4.5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2.5 w-full sm:w-auto shrink-0 decoration-transparent"
               >
-                🚀 Cadastrar Empresa Grátis
+                🚀 Anunciar Minha Empresa Agora
               </a>
             )}
             
@@ -3615,7 +3628,7 @@ function AppContent() {
           {/* Advantages Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 sm:gap-4 mt-12 w-full max-w-5xl text-left select-none relative z-20">
             {[
-              { title: "Cadastro Gratuito", desc: "Sem taxas ou mensalidades" },
+              { title: "Visibilidade de Impacto", desc: "Destaque garantido na cidade" },
               { title: "WhatsApp Direto", desc: "Receba pedidos no seu celular" },
               { title: "Localização & Mapa", desc: "Endereço e rotas de acesso" },
               { title: "Redes Sociais", desc: "Instagram, Facebook e Site" },
@@ -4060,6 +4073,56 @@ function AppContent() {
                 </div>
               </div>
             )}
+
+            {/* TV MINHA DIVULGAÇÃO & DIGITAL SIGNAGE */}
+            <div className="mb-14 md:mb-20 pt-8 md:pt-12 border-t border-white/5">
+              <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 md:mb-10 gap-3">
+                <div>
+                  <span className="text-[var(--primary)] text-xs font-black font-mono tracking-[0.2em] uppercase">CANAL DE TRANSMISSÃO DIGITAL</span>
+                  <h2 className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight mt-1.5 flex items-center gap-2">
+                    📺 TV Minha Divulgação
+                  </h2>
+                </div>
+                <p className="text-xs sm:text-sm text-white/50 max-w-sm leading-relaxed">
+                  Transmissão contínua de ofertas, mídias e destaques das empresas e comércios locais!
+                </p>
+              </div>
+
+              {/* TV Frame Container - Fully Responsive for Mobile, Tablet, Notebook & PC */}
+              <div className="relative w-full max-w-4xl lg:max-w-5xl mx-auto bg-[#0a0a10] border-2 sm:border-4 border-[#1c1e2e] rounded-2xl sm:rounded-3xl p-2 sm:p-3.5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-hidden">
+                
+                {/* Top Bezel & Status Bar */}
+                <div className="flex items-center justify-between px-3 sm:px-4 py-2 bg-[#121422] rounded-t-xl sm:rounded-t-2xl border-b border-white/10 mb-2 sm:mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
+                    <span className="text-[10px] sm:text-[11px] font-mono font-black text-emerald-400 tracking-widest uppercase">🔴 CANAL AO VIVO — TV MINHA DIVULGAÇÃO</span>
+                  </div>
+                  <span className="text-[9px] sm:text-[10px] font-mono text-white/50 tracking-widest uppercase bg-white/5 px-2.5 py-0.5 rounded-full border border-white/10 hidden sm:inline-block">
+                    TRANSMISSÃO 16:9 • PROMOÇÕES
+                  </span>
+                </div>
+
+                {/* 16:9 Aspect Ratio Frame for Iframe */}
+                <div className="relative w-full aspect-[16/9] rounded-lg sm:rounded-xl overflow-hidden bg-black shadow-inner border border-white/10">
+                  <iframe 
+                    src={universalConfig?.horizontalTvLink || (appData && appData.siteInfo && appData.siteInfo.horizontalTvLink) || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando'} 
+                    title="TV Minha Divulgação"
+                    className="w-full h-full border-0 select-none"
+                    allow="autoplay; picture-in-picture"
+                  />
+                </div>
+
+                {/* Bottom Bar Controls - Sleek & Contained */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-2.5 sm:mt-3 px-3 sm:px-4 py-2 bg-[#121422]/90 rounded-b-xl sm:rounded-b-2xl border-t border-white/5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] sm:text-xs font-bold text-white/80">📺 Programação de Promoções e Ofertas do Comércio Local</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-300 bg-amber-500/10 px-3 py-1 rounded-lg border border-amber-500/20">
+                    <span>🟢 Transmissão Ativa</span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* 2. SEÇÃO: PARCEIROS OFICIAIS */}
             <div className="mb-20 pt-8 border-t border-white/5">
@@ -4687,351 +4750,12 @@ function AppContent() {
         </div>
       </section>
 
-      {/* Scout Pricing & Scarce Category Vacancy List */}
+      {/* Scout Category Vacancy List */}
       <section id="anuncie" className="w-full py-16 md:py-24 bg-[#0a0a10] border-b border-white/5 relative">
         <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6 z-10">
           
-          {/* Main Section Header for Plans */}
-          <div className="text-center max-w-3xl mx-auto mb-12 select-none">
-            <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase block mb-2">
-              ⭐ PLANOS DE ANÚNCIO & VISIBILIDADE
-            </span>
-            <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
-              Escolha o Plano Ideal Para Seu Negócio
-            </h2>
-            <p className="text-sm text-white/65 mt-3 leading-relaxed">
-              Do perfil gratuito para estar presente na cidade aos planos Premium para dominar a concorrência e aparecer em 1º lugar no portal.
-            </p>
-          </div>
-
-          {/* Conversion Triggers Banner */}
-          <div className="bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-amber-500/10 border border-amber-500/30 rounded-3xl p-6 mb-10 text-xs text-amber-200/90 shadow-2xl">
-            <div className="flex items-center gap-2 font-black text-amber-300 text-sm uppercase tracking-wide mb-3">
-              ⚡ POR QUE ANUNCIAR NO PLANO PREMIUM?
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 font-medium">
-              <div className="bg-black/30 border border-amber-500/20 rounded-2xl p-3.5 flex items-start gap-2.5">
-                <span className="text-base">🔴</span>
-                <span><strong>Sua empresa está atrás das empresas Premium.</strong></span>
-              </div>
-              <div className="bg-black/30 border border-amber-500/20 rounded-2xl p-3.5 flex items-start gap-2.5">
-                <span className="text-base">🔎</span>
-                <span><strong>As empresas Premium aparecem primeiro nas pesquisas.</strong></span>
-              </div>
-              <div className="bg-black/30 border border-amber-500/20 rounded-2xl p-3.5 flex items-start gap-2.5">
-                <span className="text-base">💬</span>
-                <span><strong>As empresas Premium possuem indicação no chat interno do portal!</strong></span>
-              </div>
-              <div className="bg-amber-500/20 border border-amber-500/40 rounded-2xl p-3.5 flex items-start gap-2.5 text-amber-200">
-                <span className="text-base">🚀</span>
-                <span><strong>Ative o Premium para aumentar sua visibilidade e vender mais!</strong></span>
-              </div>
-            </div>
-          </div>
-
-          {/* 4 Plans Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16 select-none items-stretch">
-            
-            {/* 1. Gratuito */}
-            <div className="bg-gradient-to-b from-[#141622] to-[#0d0e15] border border-white/10 hover:border-white/20 rounded-3xl p-6 flex flex-col justify-between shadow-xl transition-all duration-300 relative overflow-hidden group">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-white/50 uppercase font-extrabold tracking-widest bg-white/5 px-2.5 py-1 rounded-full border border-white/10">Nível 1</span>
-                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Básico</span>
-                </div>
-
-                <h3 className="text-xl font-black text-white mt-3 flex items-center gap-1.5">
-                  🟢 Gratuito
-                </h3>
-
-                <div className="text-3xl font-black text-white mt-2 font-mono flex items-baseline gap-1">
-                  R$ 0 <span className="text-xs text-white/40 font-normal font-sans">/ MÊS</span>
-                </div>
-
-                {/* Capacity Pills */}
-                <div className="grid grid-cols-2 gap-2 mt-4 p-2.5 bg-white/5 border border-white/5 rounded-2xl text-[11px] font-bold text-white/70 text-center">
-                  <div className="bg-white/5 py-1.5 rounded-xl">📸 5 Fotos</div>
-                  <div className="bg-white/5 py-1.5 rounded-xl">📦 5 Produtos</div>
-                </div>
-
-                <ul className="text-xs text-white/80 space-y-2.5 mt-5 border-t border-white/10 pt-5">
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400 font-bold">✓</span>
-                    <span>Perfil Básico da Empresa</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400 font-bold">✓</span>
-                    <span>Logo, Endereço e Horários</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400 font-bold">✓</span>
-                    <span>WhatsApp & Redes Sociais</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400 font-bold">✓</span>
-                    <span>Catálogo simples de itens</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-white/50">
-                    <span className="text-white/30 font-bold">✓</span>
-                    <span>Aparece nas buscas (após empresas Premium)</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="mt-6">
-                <div className="p-3 bg-white/5 border border-white/10 rounded-2xl text-[11px] text-white/50 leading-relaxed">
-                  💡 <em>Permite que sua empresa esteja cadastrada e visível no portal.</em>
-                </div>
-
-                <button 
-                  onClick={() => {
-                    setAuthMode('register');
-                    setIsAdPortalOpen(true);
-                  }}
-                  className="w-full mt-4 bg-white/10 hover:bg-white/20 text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl transition-all duration-200 border border-white/15 hover:border-white/30 cursor-pointer shadow-md active:scale-98"
-                >
-                  🟢 Cadastrar Empresa Grátis
-                </button>
-              </div>
-            </div>
-
-            {/* 2. Premium Confiança */}
-            <div className="bg-gradient-to-b from-[#0c2018] via-[#0f171c] to-[#0a1114] border-2 border-emerald-500/50 hover:border-emerald-400 rounded-3xl p-6 flex flex-col justify-between shadow-[0_0_25px_rgba(16,185,129,0.12)] hover:shadow-[0_0_35px_rgba(16,185,129,0.25)] transition-all duration-300 relative overflow-hidden group">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-emerald-400 uppercase font-extrabold tracking-widest bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">Nível 2</span>
-                  <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-black px-2.5 py-1 rounded-full border border-emerald-500/40 flex items-center gap-1 shadow-sm">
-                    ✔ Verificada
-                  </span>
-                </div>
-
-                <h3 className="text-xl font-black text-emerald-400 mt-3 flex items-center gap-1.5">
-                  ⭐ Premium Confiança
-                </h3>
-
-                <div className="text-3xl font-black text-emerald-400 mt-2 font-mono flex items-baseline gap-1">
-                  R$ 39,90 <span className="text-xs text-white/50 font-normal font-sans">/ MÊS</span>
-                </div>
-
-                {/* Capacity Pills */}
-                <div className="grid grid-cols-2 gap-2 mt-4 p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-[11px] font-bold text-emerald-300 text-center">
-                  <div className="bg-emerald-500/15 py-1.5 rounded-xl border border-emerald-500/20">📸 Até 20 Fotos</div>
-                  <div className="bg-emerald-500/15 py-1.5 rounded-xl border border-emerald-500/20">📦 Até 30 Produtos</div>
-                </div>
-
-                <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-emerald-500/20 pt-5">
-                  <li className="flex items-start gap-2 text-emerald-400 font-bold">
-                    <span>⭐</span>
-                    <span>Empresa Verificada com Selo de Confiança</span>
-                  </li>
-                  <li className="flex items-start gap-2 font-semibold text-emerald-300">
-                    <span>⭐</span>
-                    <span>Aparece antes das empresas gratuitas</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-emerald-300 font-bold bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20">
-                    <span>💬</span>
-                    <span>Indicação no Chat Interno se você é Premium</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span>⭐</span>
-                    <span>Prioridade média nas pesquisas do portal</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span>⭐</span>
-                    <span>Cadastro de Vídeos & Promoções</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span>⭐</span>
-                    <span>Botão WhatsApp em Destaque</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-emerald-300/90">
-                    <span>⭐</span>
-                    <span>Relatório completo (Cliques, Visualizações, Leads)</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-emerald-300/90 font-bold">
-                    <span>⭐</span>
-                    <span>Badge Premium & Card estilizado</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="mt-6">
-                <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-[11px] text-emerald-200/90 leading-relaxed">
-                  🚀 <em>Garante credibilidade, selo de verificação e prioridade sobre concorrentes gratuitos.</em>
-                </div>
-
-                <a 
-                  href={`https://wa.me/5585992862177?text=${encodeURIComponent('Olá! Vi na página inicial e quero contratar o Plano Premium Confiança (R$ 39,90/mês) para minha empresa no portal.')}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full block mt-4 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
-                >
-                  🚀 Quero Aparecer Primeiro
-                </a>
-              </div>
-            </div>
-
-            {/* 3. Premium Destaque VIP (Featured Card) */}
-            <div className="bg-gradient-to-b from-[#2a1d08] via-[#1a140b] to-[#100d07] border-2 border-amber-400 shadow-[0_0_35px_rgba(245,158,11,0.3)] hover:shadow-[0_0_50px_rgba(245,158,11,0.45)] rounded-3xl p-6 flex flex-col justify-between relative transition-all duration-300 group scale-[1.03] lg:-translate-y-1 z-10">
-              
-              {/* Floating Top Badge */}
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-black px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.6)] flex items-center gap-1">
-                <span>👑</span> MAIS POPULAR
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mt-1">
-                  <span className="text-[10px] font-mono text-amber-400 uppercase font-extrabold tracking-widest bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">Nível 3</span>
-                  <span className="bg-amber-500/20 text-amber-300 text-[10px] font-black px-2.5 py-1 rounded-full border border-amber-500/40 flex items-center gap-1 shadow-sm">
-                    ⭐ Premium VIP
-                  </span>
-                </div>
-
-                <h3 className="text-xl font-black text-amber-400 mt-3 flex items-center gap-1.5">
-                  ⭐ Premium Destaque VIP
-                </h3>
-
-                <div className="text-3xl font-black text-amber-400 mt-2 font-mono flex items-baseline gap-1">
-                  R$ 59,90 <span className="text-xs text-white/50 font-normal font-sans">/ MÊS</span>
-                </div>
-
-                {/* Capacity Pills */}
-                <div className="grid grid-cols-2 gap-2 mt-4 p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-[11px] font-bold text-amber-300 text-center">
-                  <div className="bg-amber-500/15 py-1.5 rounded-xl border border-amber-500/20">📸 Até 30 Fotos</div>
-                  <div className="bg-amber-500/15 py-1.5 rounded-xl border border-amber-500/20">📦 Até 50 Produtos</div>
-                </div>
-
-                <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-amber-500/20 pt-5">
-                  <li className="flex items-start gap-2 text-amber-400 font-bold">
-                    <span>⭐</span>
-                    <span>Empresa Verificada & Selo VIP Ouro</span>
-                  </li>
-                  <li className="flex items-start gap-2 font-semibold text-amber-300">
-                    <span>⭐</span>
-                    <span>Aparece antes das gratuitas e verificadas</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-amber-300 font-bold bg-amber-500/15 p-2 rounded-xl border border-amber-500/30 shadow-inner">
-                    <span>💬</span>
-                    <span>Indicação Especial no Chat Interno se você é Premium</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span>⭐</span>
-                    <span>Prioridade Alta nas buscas do portal</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span>⭐</span>
-                    <span>Borda e Iluminação VIP Exclusiva no Portal</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span>⭐</span>
-                    <span>Botão WhatsApp em Destaque Especial</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-amber-300/90">
-                    <span>⭐</span>
-                    <span>Estatísticas e Relatórios de Desempenho</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-amber-300/90 font-bold">
-                    <span>⭐</span>
-                    <span>Badge Premium VIP & Card Iluminado</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="mt-6">
-                <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-[11px] text-amber-200/90 leading-relaxed">
-                  🚀 <em>O plano de maior custo-benefício: posicionamento de alto destaque e grande capacidade no catálogo.</em>
-                </div>
-
-                <a 
-                  href={`https://wa.me/5585992862177?text=${encodeURIComponent('Olá! Vi na página inicial e quero contratar o Plano Premium Destaque VIP (R$ 59,90/mês) para minha empresa no portal.')}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full block mt-4 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:brightness-110 text-black font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-[0_4px_25px_rgba(245,158,11,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
-                >
-                  🚀 Quero Aparecer Primeiro
-                </a>
-              </div>
-            </div>
-
-            {/* 4. Premium Patrocinado Top 1 */}
-            <div className="bg-gradient-to-b from-[#330f16] via-[#1e0a11] to-[#12060a] border-2 border-red-500/80 hover:border-red-400 shadow-[0_0_35px_rgba(239,68,68,0.3)] hover:shadow-[0_0_50px_rgba(239,68,68,0.5)] rounded-3xl p-6 flex flex-col justify-between transition-all duration-300 relative overflow-hidden group">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-red-400 uppercase font-extrabold tracking-widest bg-red-500/10 px-2.5 py-1 rounded-full border border-red-500/20">Nível MAX</span>
-                  <span className="bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full shadow-md border border-red-400/50 flex items-center gap-1">
-                    🔥 Empresa Recomendada
-                  </span>
-                </div>
-
-                <h3 className="text-xl font-black text-red-400 mt-3 flex items-center gap-1.5">
-                  🔥 Premium Patrocinado (1º Lugar)
-                </h3>
-
-                <div className="text-3xl font-black text-red-400 mt-2 font-mono flex items-baseline gap-1">
-                  R$ 89,90 <span className="text-xs text-white/50 font-normal font-sans">/ MÊS</span>
-                </div>
-
-                {/* Capacity Box */}
-                <div className="mt-4 p-2.5 bg-gradient-to-r from-amber-500/20 via-red-500/20 to-amber-500/20 border border-amber-400/40 rounded-2xl text-center font-black text-amber-300 text-[11px] shadow-inner tracking-wider flex items-center justify-center gap-1.5">
-                  <span>♾️</span> FOTOS, PRODUTOS & VÍDEOS ILIMITADOS
-                </div>
-
-                <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-red-500/20 pt-5">
-                  <li className="flex items-start gap-2 text-red-400 font-black">
-                    <span>🔥</span>
-                    <span>1ª Posição Garantida na sua Categoria (Top 1)</span>
-                  </li>
-                  <li className="flex items-start gap-2 font-semibold text-red-300">
-                    <span>⭐</span>
-                    <span>Posição Fixa Escolhida & Borda Dourada Animada</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-cyan-300 font-bold">
-                    <span>📺</span>
-                    <span>Comercial exibido na TV On-line da plataforma</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-pink-300 font-bold">
-                    <span>📻</span>
-                    <span>Comercial veiculado na Rádio On-line</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-emerald-300 font-bold">
-                    <span>📲</span>
-                    <span>Divulgação em Grupos Facebook & WhatsApp (3x ao dia)</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-red-300 font-bold bg-red-500/15 p-2 rounded-xl border border-red-500/30">
-                    <span>💬</span>
-                    <span>Indicação Prioritária e Destaque Absoluto no Chat Interno</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span>⭐</span>
-                    <span>Botão WhatsApp em Destaque Absoluto</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-red-300/90 font-bold">
-                    <span>⭐</span>
-                    <span>Badge Premium Supremo & Card Diferenciado</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="mt-6">
-                <div className="p-3.5 bg-red-500/10 border border-red-500/20 rounded-2xl text-[11px] text-red-200/90 leading-relaxed">
-                  🚀 <em>Máxima exposição multi-canal: TV, Rádio, Grupos Diários e 1º lugar absoluto no portal.</em>
-                </div>
-
-                <a 
-                  href={`https://wa.me/5585992862177?text=${encodeURIComponent('Olá! Vi na página inicial e quero contratar o Plano Premium Patrocinado Top 1 (R$ 89,90/mês) para minha empresa no portal.')}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full block mt-4 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-[0_4px_25px_rgba(239,68,68,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
-                >
-                  🚀 Quero Aparecer em 1º Lugar
-                </a>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Scarcity Category Status - Section below plans */}
-          <div className="border-t border-white/10 pt-16 mt-8 select-none">
+          {/* Scarcity Category Status */}
+          <div className="select-none">
             <div className="max-w-3xl mb-8">
               <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase mb-2 block">VAGAS EXCLUSIVAS DE SEGMENTOS</span>
               <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
@@ -6292,7 +6016,7 @@ function AppContent() {
                                       }
                                     }}
                                   >
-                                    <option value="gratuito">⚪ Gratuito (Sem Destaque)</option>
+                                    <option value="gratuito">⚪ Plano Essencial (Sem Destaque)</option>
                                     <option value="verificado">✔ Verificado (Selo de Confiança)</option>
                                     <option value="destaque">⭐ Destaque VIP (Selo Estelar)</option>
                                     <option value="patrocinado">🔥 Patrocinado (Top 1º Lugar + Borda Dourada)</option>
@@ -6512,7 +6236,7 @@ function AppContent() {
                                   <small style={{ color: ad.hasPlan ? 'var(--primary)' : '#34d399', fontSize: '10.5px', marginTop: '2px' }}>
                                     {ad.hasPlan 
                                       ? 'Plano Premium VIP (Ativo)' 
-                                      : 'Cadastro Gratuito (Ativo)'
+                                      : 'Anúncio Essencial (Ativo)'
                                     }
                                   </small>
                                 </div>
@@ -9209,11 +8933,11 @@ function AppContent() {
                     <div className="flex flex-col gap-4">
                       <div>
                         <h2 className="text-xl font-extrabold text-white tracking-tight flex items-center gap-2">
-                          🚀 Cadastre Seu Negócio no Portal
+                          🚀 Anuncie e Destaque Sua Empresa no Portal
                         </h2>
                         <p className="text-xs text-white/50 mt-1">Sua empresa será listada automaticamente de forma profissional e interativa.</p>
                         <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-xl p-3.5 text-[11px] text-emerald-300 mt-3 font-medium leading-relaxed">
-                          🎁 <strong>Cadastro 100% Gratuito:</strong> Sua empresa será divulgada gratuitamente na vitrine oficial da cidade! Sem taxas obrigatórias para cadastrar seu negócio e produtos.
+                          ⚡ <strong>Presença Comercial Garantida:</strong> Sua empresa será divulgada na vitrine oficial da cidade para milhares de potenciais clientes todos os dias!
                         </div>
 
                         {/* Video Tutorial Box */}
@@ -9587,9 +9311,9 @@ function AppContent() {
                   ) : !currentAdvertiser?.company?.hasPlan ? (
                     <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                       <div className="text-left">
-                        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded font-black uppercase tracking-widest">✔ Cadastro Gratuito Ativo</span>
+                        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded font-black uppercase tracking-widest">✔ Anúncio Essencial Ativo</span>
                         <p className="text-xs text-white/80 mt-2">
-                          Sua empresa possui <strong>cadastro gratuito permanente</strong> no portal! Quer aparecer no topo e receber mais clientes no WhatsApp?
+                          Sua empresa possui <strong>anúncio ativo no portal</strong>! Quer aparecer no topo absoluto e multiplicar seus clientes no WhatsApp?
                         </p>
                       </div>
                       <button 
@@ -9706,7 +9430,7 @@ function AppContent() {
                             </h3>
                             <p className="text-xs text-white/70 mt-2 max-w-2xl leading-relaxed">
                               {currentPlan === 'gratuito' 
-                                ? 'As empresas com Plano Premium aparecem antes das gratuitas nas buscas do portal e no Atendente Virtual, recebendo até 10x mais contatos no WhatsApp!' 
+                                ? 'As empresas com Plano Premium aparecem antes nas buscas do portal e no Atendente Virtual, recebendo até 10x mais contatos no WhatsApp!' 
                                 : 'Sua empresa possui posição de alta visibilidade e prioridade máxima nas pesquisas dos clientes no portal!'}
                             </p>
                           </div>
@@ -9900,14 +9624,14 @@ function AppContent() {
                                   {currentPlan === 'patrocinado' ? '🔥 Plano Patrocinado (1º Lugar Absoluto)' :
                                    currentPlan === 'destaque' ? '⭐ Plano Destaque VIP' :
                                    currentPlan === 'verificado' ? '✔ Empresa Verificada' :
-                                   '🟢 Plano Gratuito (Perfil Básico)'}
+                                   '🟢 Plano Essencial (Perfil Comercial)'}
                                 </h3>
                               </div>
                               <p className="text-xs text-white/70 mt-1.5 max-w-2xl leading-relaxed">
                                 {currentPlan === 'patrocinado' ? 'Sua empresa está no topo absoluto de todas as pesquisas com selo animado e prioridade máxima!' :
-                                 currentPlan === 'destaque' ? 'Sua empresa aparece antes de todas as empresas gratuitas com selo estelar de destaque!' :
+                                 currentPlan === 'destaque' ? 'Sua empresa aparece com destaque estelar antes das listagens padrão do portal!' :
                                  currentPlan === 'verificado' ? 'Sua empresa transmite confiança total para clientes com o selo verde de Verificado.' :
-                                 'Sua empresa possui o perfil básico e está listada após as empresas Premium no portal.'}
+                                 'Sua empresa possui o perfil comercial ativo no guia e está visível para potenciais clientes.'}
                               </p>
                             </div>
 
@@ -9974,7 +9698,7 @@ function AppContent() {
                               </div>
 
                               <h4 className="text-xl font-black text-white mt-3 flex items-center gap-1.5">
-                                🟢 Gratuito
+                                🟢 Plano Essencial
                               </h4>
 
                               <div className="text-3xl font-black text-white mt-2 font-mono flex items-baseline gap-1">
@@ -9990,7 +9714,7 @@ function AppContent() {
                               <ul className="text-xs text-white/80 space-y-2.5 mt-5 border-t border-white/10 pt-5">
                                 <li className="flex items-start gap-2">
                                   <span className="text-emerald-400 font-bold">✓</span>
-                                  <span>Perfil Básico da Empresa</span>
+                                  <span>Perfil Comercial da Empresa</span>
                                 </li>
                                 <li className="flex items-start gap-2">
                                   <span className="text-emerald-400 font-bold">✓</span>
@@ -10006,14 +9730,14 @@ function AppContent() {
                                 </li>
                                 <li className="flex items-start gap-2 text-white/50">
                                   <span className="text-white/30 font-bold">✓</span>
-                                  <span>Aparece nas buscas (após empresas Premium)</span>
+                                  <span>Presença garantida no diretório da cidade</span>
                                 </li>
                               </ul>
                             </div>
 
                             <div className="mt-6">
                               <div className="p-3 bg-white/5 border border-white/10 rounded-2xl text-[11px] text-white/50 leading-relaxed">
-                                💡 <em>Permite que sua empresa esteja cadastrada e visível no portal.</em>
+                                💡 <em>Permite posicionar sua marca na vitrine comercial e receber clientes.</em>
                               </div>
 
                               {currentPlan === 'gratuito' && (
@@ -10055,7 +9779,7 @@ function AppContent() {
                                 </li>
                                 <li className="flex items-start gap-2 font-semibold text-emerald-300">
                                   <span>⭐</span>
-                                  <span>Aparece antes das empresas gratuitas</span>
+                                  <span>Aparece com Prioridade de Busca</span>
                                 </li>
                                 <li className="flex items-start gap-2 text-emerald-300 font-bold bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20">
                                   <span>💬</span>
@@ -10086,7 +9810,7 @@ function AppContent() {
 
                             <div className="mt-6">
                               <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-[11px] text-emerald-200/90 leading-relaxed">
-                                🚀 <em>Garante credibilidade, selo de verificação e prioridade sobre concorrentes gratuitos.</em>
+                                🚀 <em>Garante credibilidade, selo de verificação e prioridade sobre concorrentes locais.</em>
                               </div>
 
                               {currentPlan === 'verificado' ? (
@@ -10143,7 +9867,7 @@ function AppContent() {
                                 </li>
                                 <li className="flex items-start gap-2 font-semibold text-amber-300">
                                   <span>⭐</span>
-                                  <span>Aparece antes das gratuitas e verificadas</span>
+                                  <span>Aparece antes dos perfis básicos e verificados</span>
                                 </li>
                                 <li className="flex items-start gap-2 text-amber-300 font-bold bg-amber-500/15 p-2 rounded-xl border border-amber-500/30 shadow-inner">
                                   <span>💬</span>
@@ -11028,7 +10752,7 @@ function AppContent() {
 
                                   if (!isInTrialPeriod && !user?.isAdmin) {
                                     if (isFree && currentCount >= 5) {
-                                      alert("Oops! Você atingiu o limite de 5 produtos do Plano Gratuito. Adquira um Plano Premium para expandir seu catálogo!");
+                                      alert("Oops! Você atingiu o limite de 5 produtos do Plano Essencial. Adquira um Plano Premium para expandir seu catálogo!");
                                       setIsCheckoutOpen(true);
                                       return;
                                     }
