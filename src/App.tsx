@@ -4107,128 +4107,23 @@ function AppContent() {
                 </div>
 
                 {/* 16:9 Aspect Ratio Frame for Iframe */}
-                <div className="relative w-full aspect-[16/9] rounded-lg sm:rounded-xl overflow-hidden bg-black shadow-inner border border-white/10 group">
-                  {/* Audio overlay toggle banner if muted */}
-                  {tvMuted && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTvMuted(false);
-                        if (tvVolume === 0) setTvVolume(0.8);
-                        if (tvIframeRef.current?.contentWindow) {
-                          try {
-                            const targetVol = tvVolume || 0.8;
-                            tvIframeRef.current.contentWindow.postMessage({ type: 'SET_VOLUME', volume: targetVol, muted: false }, '*');
-                            tvIframeRef.current.contentWindow.postMessage({ action: 'unmute', volume: targetVol }, '*');
-                            tvIframeRef.current.contentWindow.postMessage({ action: 'setVolume', value: targetVol }, '*');
-                            tvIframeRef.current.contentWindow.postMessage({ event: 'command', func: 'unMute' }, '*');
-                            tvIframeRef.current.contentWindow.postMessage({ event: 'command', func: 'setVolume', args: [targetVol * 100] }, '*');
-                          } catch (e) {}
-                        }
-                      }}
-                      className="absolute top-3 left-1/2 -translate-x-1/2 z-20 bg-amber-500 hover:bg-amber-400 text-black font-black text-xs px-4 py-2 rounded-full shadow-[0_0_20px_rgba(245,158,11,0.6)] flex items-center gap-2 transition-all duration-200 cursor-pointer animate-bounce"
-                    >
-                      <Volume2 className="w-4 h-4" />
-                      <span>🔊 CLIQUE AQUI PARA LIGAR O ÁUDIO DA TV</span>
-                    </button>
-                  )}
-
+                <div className="relative w-full aspect-[16/9] rounded-lg sm:rounded-xl overflow-hidden bg-black shadow-inner border border-white/10">
                   <iframe 
                     ref={tvIframeRef}
-                    src={(() => {
-                      const baseUrl = universalConfig?.horizontalTvLink || (appData && appData.siteInfo && appData.siteInfo.horizontalTvLink) || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando';
-                      const sep = baseUrl.includes('?') ? '&' : '?';
-                      const volPercent = Math.round((tvMuted ? 0 : tvVolume) * 100);
-                      return `${baseUrl}${sep}autoplay=1&muted=${tvMuted ? 1 : 0}&mute=${tvMuted ? 1 : 0}&sound=${tvMuted ? 0 : 1}&volume=${volPercent}`;
-                    })()} 
+                    src={universalConfig?.horizontalTvLink || (appData && appData.siteInfo && appData.siteInfo.horizontalTvLink) || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando'} 
                     title="TV Minha Divulgação"
                     className="w-full h-full border-0 select-none"
-                    allow="autoplay *; encrypted-media; fullscreen; picture-in-picture; audio; microphone"
-                    allowFullScreen
+                    allow="autoplay; picture-in-picture; audio"
                   />
                 </div>
 
-                {/* Bottom Bar Controls - Sleek & Contained with Mute and Volume Controls */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 mt-2.5 sm:mt-3 px-3 sm:px-4 py-2.5 bg-[#121422]/90 rounded-b-xl sm:rounded-b-2xl border-t border-white/5">
+                {/* Bottom Bar Controls - Clean Title & Status */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-2.5 sm:mt-3 px-3 sm:px-4 py-2 bg-[#121422]/90 rounded-b-xl sm:rounded-b-2xl border-t border-white/5">
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] sm:text-xs font-bold text-white/80">📺 Programação de Promoções e Ofertas</span>
                   </div>
-
-                  {/* Audio Controls (Mute/Unmute + Volume Slider) */}
-                  <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap justify-center">
-                    {/* Mute / Unmute Button */}
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        const newMuted = !tvMuted;
-                        setTvMuted(newMuted);
-                        const targetVol = newMuted ? 0 : (tvVolume || 0.8);
-                        if (newMuted) {
-                          setTvVolume(0);
-                        } else if (tvVolume === 0) {
-                          setTvVolume(0.8);
-                        }
-                        if (tvIframeRef.current?.contentWindow) {
-                          try {
-                            tvIframeRef.current.contentWindow.postMessage({ type: 'SET_VOLUME', volume: targetVol, muted: newMuted }, '*');
-                            tvIframeRef.current.contentWindow.postMessage({ action: newMuted ? 'mute' : 'unmute', volume: targetVol }, '*');
-                            tvIframeRef.current.contentWindow.postMessage({ action: 'setVolume', value: targetVol }, '*');
-                            tvIframeRef.current.contentWindow.postMessage({ event: 'command', func: newMuted ? 'mute' : 'unMute' }, '*');
-                            tvIframeRef.current.contentWindow.postMessage({ event: 'command', func: 'setVolume', args: [targetVol * 100] }, '*');
-                          } catch (e) {}
-                        }
-                      }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all flex items-center gap-1.5 cursor-pointer border ${
-                        tvMuted 
-                          ? 'bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500/30' 
-                          : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
-                      }`}
-                      title={tvMuted ? "Desmutar Áudio da TV" : "Mutar Áudio da TV"}
-                    >
-                      {tvMuted ? <VolumeX className="w-3.5 h-3.5 text-red-400" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
-                      <span>{tvMuted ? '🔇 SEM SOM' : '🔊 ÁUDIO LIGADO'}</span>
-                    </button>
-
-                    {/* Volume Slider Control */}
-                    <div className="flex items-center gap-2 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">
-                      <span className="text-xs text-white/60">🔊</span>
-                      <input 
-                        type="range" 
-                        min="0" 
-                        max="1" 
-                        step="0.05"
-                        value={tvMuted ? 0 : tvVolume}
-                        onChange={(e) => {
-                          const val = parseFloat(e.target.value);
-                          setTvVolume(val);
-                          const isZero = val === 0;
-                          setTvMuted(isZero);
-                          if (tvIframeRef.current?.contentWindow) {
-                            try {
-                              tvIframeRef.current.contentWindow.postMessage({ type: 'SET_VOLUME', volume: val, muted: isZero }, '*');
-                              tvIframeRef.current.contentWindow.postMessage({ action: 'setVolume', value: val, muted: isZero }, '*');
-                              tvIframeRef.current.contentWindow.postMessage({ event: 'command', func: 'setVolume', args: [val * 100] }, '*');
-                              if (isZero) {
-                                tvIframeRef.current.contentWindow.postMessage({ action: 'mute' }, '*');
-                                tvIframeRef.current.contentWindow.postMessage({ event: 'command', func: 'mute' }, '*');
-                              } else {
-                                tvIframeRef.current.contentWindow.postMessage({ action: 'unmute' }, '*');
-                                tvIframeRef.current.contentWindow.postMessage({ event: 'command', func: 'unMute' }, '*');
-                              }
-                            } catch (e) {}
-                          }
-                        }}
-                        className="w-16 sm:w-20 accent-[var(--primary)] cursor-pointer h-1.5 bg-white/20 rounded-lg"
-                        title="Ajustar volume da TV"
-                      />
-                      <span className="text-[10px] font-mono text-white/70 w-7 text-right">
-                        {tvMuted ? '0%' : `${Math.round(tvVolume * 100)}%`}
-                      </span>
-                    </div>
-
-                    <div className="hidden md:flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
-                      <span>🟢 Transmissão Ativa</span>
-                    </div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-300 bg-amber-500/10 px-3 py-1 rounded-lg border border-amber-500/20">
+                    <span>🟢 Transmissão Ativa</span>
                   </div>
                 </div>
               </div>
@@ -4302,8 +4197,8 @@ function AppContent() {
                         {company.category}
                       </span>
 
-                      <h4 className="text-sm font-extrabold text-white mt-4 group-hover:text-[var(--primary)] transition-colors duration-200">{company.name}</h4>
-                      <p className="text-[11px] text-white/50 mt-1.5 leading-relaxed min-h-[2.5rem] line-clamp-2">{company.desc || 'Anunciante comercial verificado na plataforma.'}</p>
+                      <h4 className="text-base font-extrabold text-white mt-4 group-hover:text-[var(--primary)] transition-colors duration-200">{company.name}</h4>
+                      <p className="text-xs sm:text-sm font-bold text-white/90 mt-2 leading-relaxed min-h-[3rem] line-clamp-2">{company.desc || 'Anunciante comercial verificado na plataforma.'}</p>
                     </div>
 
                     {renderCardActionButtons(company, true)}
@@ -4365,8 +4260,8 @@ function AppContent() {
                         {company.category}
                       </span>
 
-                      <h4 className="text-sm font-extrabold text-white mt-4 group-hover:text-[var(--primary)] transition-colors duration-200">{company.name}</h4>
-                      <p className="text-[11px] text-white/45 mt-1.5 leading-relaxed min-h-[2.5rem] line-clamp-2">{company.desc || 'Parceiro local ativo na rede de anúncios.'}</p>
+                      <h4 className="text-base font-extrabold text-white mt-4 group-hover:text-[var(--primary)] transition-colors duration-200">{company.name}</h4>
+                      <p className="text-xs sm:text-sm font-bold text-white/90 mt-2 leading-relaxed min-h-[3rem] line-clamp-2">{company.desc || 'Parceiro local ativo na rede de anúncios.'}</p>
                     </div>
 
                     {renderCardActionButtons(company, true)}
@@ -4627,13 +4522,13 @@ function AppContent() {
                         </span>
                       </div>
 
-                      <h3 className="text-base font-extrabold text-white mt-4 line-clamp-1 flex items-center gap-1.5">
+                      <h3 className="text-lg font-black text-white mt-4 line-clamp-1 flex items-center gap-1.5">
                         {company.name}
                         {planType === 'verificado' && (
                           <span className="text-emerald-400 text-xs" title="Empresa Verificada">✔</span>
                         )}
                       </h3>
-                      <p className="text-xs text-white/50 mt-2 line-clamp-3 leading-relaxed min-h-[3.5rem]">{company.desc || 'Anunciante comercial verificado de alta qualidade e atendimento dedicado.'}</p>
+                      <p className="text-sm font-bold text-white/95 mt-2.5 line-clamp-3 leading-snug min-h-[3.8rem] tracking-wide">{company.desc || 'Anunciante comercial verificado de alta qualidade e atendimento dedicado.'}</p>
                     </div>
 
                   {/* Action Buttons */}
