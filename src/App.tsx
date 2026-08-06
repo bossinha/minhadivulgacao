@@ -4207,68 +4207,7 @@ function AppContent() {
               </div>
             </div>
 
-            {/* 4. SEÇÃO: ÚLTIMOS ANUNCIANTES (CARROSSEL EM MOVIMENTO) */}
-            <div>
-              <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 gap-4">
-                <div>
-                  <span className="text-emerald-400 text-xs font-black font-mono tracking-[0.2em] uppercase">PLATAFORMA EM CONSTANTE CRESCIMENTO</span>
-                  <h3 className="text-2xl sm:text-3.5xl font-sans font-extrabold text-white tracking-tight mt-1 flex items-center gap-2">
-                    🆕 Últimos Anunciantes Integrados
-                  </h3>
-                </div>
-                <div className="flex items-center gap-4 justify-between md:justify-end w-full md:w-auto">
-                  <p className="text-xs sm:text-sm text-white/50 max-w-sm hidden sm:block">
-                    Iniciando a sua campanha de mídia inteligente semanal em nosso portal.
-                  </p>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => scrollLatest('left')} 
-                      className="p-2.5 rounded-full bg-white/5 border border-white/5 hover:border-[var(--primary)] text-white hover:text-[var(--primary)] transition-all duration-300 active:scale-95"
-                      aria-label="Voltar"
-                    >
-                      <ChevronLeft size={16} />
-                    </button>
-                    <button 
-                      onClick={() => scrollLatest('right')} 
-                      className="p-2.5 rounded-full bg-white/5 border border-white/5 hover:border-[var(--primary)] text-white hover:text-[var(--primary)] transition-all duration-300 active:scale-95"
-                      aria-label="Avançar"
-                    >
-                      <ChevronRight size={16} />
-                    </button>
-                  </div>
-                </div>
-              </div>
 
-              {/* Responsive Carousel Track with Snap Alignment */}
-              <div 
-                ref={latestAnunciantesRef}
-                className="flex gap-6 overflow-x-auto pb-6 scrollbar-hide snap-x snap-mandatory scroll-smooth"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-              >
-                {(displayedCompanies || []).map((company: any) => (
-                  <div 
-                    key={company.id} 
-                    className="flex-shrink-0 w-[280px] sm:w-[315px] snap-start relative bg-gradient-to-b from-[#0f1016]/80 to-[#07070b] border border-white/5 hover:border-[var(--primary)]/20 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1.5 transition-all duration-300 shadow-xl select-none group"
-                  >
-                    <div>
-                      {/* Logo Frame */}
-                      <div className="w-16 h-16 rounded-full bg-white border border-white/5 overflow-hidden flex items-center justify-center shadow-lg p-0 mb-5 mt-2 group-hover:scale-105 transition-transform duration-300">
-                        <img src={company.logo} alt={company.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                      </div>
-
-                      <span className="text-[9px] text-white/55 font-bold uppercase tracking-widest bg-white/5 px-2.5 py-1 rounded-full select-none">
-                        {company.category}
-                      </span>
-
-                      <h4 className="text-base font-extrabold text-white mt-4 group-hover:text-[var(--primary)] transition-colors duration-200">{company.name}</h4>
-                      <p className="text-xs sm:text-sm font-bold text-white/90 mt-2 leading-relaxed min-h-[3rem] line-clamp-2">{company.desc || 'Parceiro local ativo na rede de anúncios.'}</p>
-                    </div>
-
-                    {renderCardActionButtons(company, true)}
-                  </div>
-                ))}
-              </div>
-            </div>
 
           </div>
         </section>
