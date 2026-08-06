@@ -4107,13 +4107,44 @@ function AppContent() {
                 </div>
 
                 {/* 16:9 Aspect Ratio Frame for Iframe */}
-                <div className="relative w-full aspect-[16/9] rounded-lg sm:rounded-xl overflow-hidden bg-black shadow-inner border border-white/10">
+                <div className="relative w-full aspect-[16/9] rounded-lg sm:rounded-xl overflow-hidden bg-black shadow-inner border border-white/10 group">
+                  {/* Audio overlay toggle banner if muted */}
+                  {tvMuted && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTvMuted(false);
+                        if (tvVolume === 0) setTvVolume(0.8);
+                        if (tvIframeRef.current?.contentWindow) {
+                          try {
+                            const targetVol = tvVolume || 0.8;
+                            tvIframeRef.current.contentWindow.postMessage({ type: 'SET_VOLUME', volume: targetVol, muted: false }, '*');
+                            tvIframeRef.current.contentWindow.postMessage({ action: 'unmute', volume: targetVol }, '*');
+                            tvIframeRef.current.contentWindow.postMessage({ action: 'setVolume', value: targetVol }, '*');
+                            tvIframeRef.current.contentWindow.postMessage({ event: 'command', func: 'unMute' }, '*');
+                            tvIframeRef.current.contentWindow.postMessage({ event: 'command', func: 'setVolume', args: [targetVol * 100] }, '*');
+                          } catch (e) {}
+                        }
+                      }}
+                      className="absolute top-3 left-1/2 -translate-x-1/2 z-20 bg-amber-500 hover:bg-amber-400 text-black font-black text-xs px-4 py-2 rounded-full shadow-[0_0_20px_rgba(245,158,11,0.6)] flex items-center gap-2 transition-all duration-200 cursor-pointer animate-bounce"
+                    >
+                      <Volume2 className="w-4 h-4" />
+                      <span>🔊 CLIQUE AQUI PARA LIGAR O ÁUDIO DA TV</span>
+                    </button>
+                  )}
+
                   <iframe 
                     ref={tvIframeRef}
-                    src={universalConfig?.horizontalTvLink || (appData && appData.siteInfo && appData.siteInfo.horizontalTvLink) || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando'} 
+                    src={(() => {
+                      const baseUrl = universalConfig?.horizontalTvLink || (appData && appData.siteInfo && appData.siteInfo.horizontalTvLink) || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando';
+                      const sep = baseUrl.includes('?') ? '&' : '?';
+                      const volPercent = Math.round((tvMuted ? 0 : tvVolume) * 100);
+                      return `${baseUrl}${sep}autoplay=1&muted=${tvMuted ? 1 : 0}&mute=${tvMuted ? 1 : 0}&sound=${tvMuted ? 0 : 1}&volume=${volPercent}`;
+                    })()} 
                     title="TV Minha Divulgação"
                     className="w-full h-full border-0 select-none"
-                    allow="autoplay; picture-in-picture"
+                    allow="autoplay *; encrypted-media; fullscreen; picture-in-picture; audio; microphone"
+                    allowFullScreen
                   />
                 </div>
 
@@ -4131,10 +4162,19 @@ function AppContent() {
                       onClick={() => {
                         const newMuted = !tvMuted;
                         setTvMuted(newMuted);
+                        const targetVol = newMuted ? 0 : (tvVolume || 0.8);
+                        if (newMuted) {
+                          setTvVolume(0);
+                        } else if (tvVolume === 0) {
+                          setTvVolume(0.8);
+                        }
                         if (tvIframeRef.current?.contentWindow) {
                           try {
-                            tvIframeRef.current.contentWindow.postMessage({ type: 'SET_VOLUME', volume: newMuted ? 0 : tvVolume, muted: newMuted }, '*');
-                            tvIframeRef.current.contentWindow.postMessage({ action: newMuted ? 'mute' : 'unmute', volume: newMuted ? 0 : tvVolume }, '*');
+                            tvIframeRef.current.contentWindow.postMessage({ type: 'SET_VOLUME', volume: targetVol, muted: newMuted }, '*');
+                            tvIframeRef.current.contentWindow.postMessage({ action: newMuted ? 'mute' : 'unmute', volume: targetVol }, '*');
+                            tvIframeRef.current.contentWindow.postMessage({ action: 'setVolume', value: targetVol }, '*');
+                            tvIframeRef.current.contentWindow.postMessage({ event: 'command', func: newMuted ? 'mute' : 'unMute' }, '*');
+                            tvIframeRef.current.contentWindow.postMessage({ event: 'command', func: 'setVolume', args: [targetVol * 100] }, '*');
                           } catch (e) {}
                         }
                       }}
@@ -4161,14 +4201,20 @@ function AppContent() {
                         onChange={(e) => {
                           const val = parseFloat(e.target.value);
                           setTvVolume(val);
-                          if (val === 0) {
-                            setTvMuted(true);
-                          } else if (tvMuted) {
-                            setTvMuted(false);
-                          }
+                          const isZero = val === 0;
+                          setTvMuted(isZero);
                           if (tvIframeRef.current?.contentWindow) {
                             try {
-                              tvIframeRef.current.contentWindow.postMessage({ type: 'SET_VOLUME', volume: val, muted: val === 0 }, '*');
+                              tvIframeRef.current.contentWindow.postMessage({ type: 'SET_VOLUME', volume: val, muted: isZero }, '*');
+                              tvIframeRef.current.contentWindow.postMessage({ action: 'setVolume', value: val, muted: isZero }, '*');
+                              tvIframeRef.current.contentWindow.postMessage({ event: 'command', func: 'setVolume', args: [val * 100] }, '*');
+                              if (isZero) {
+                                tvIframeRef.current.contentWindow.postMessage({ action: 'mute' }, '*');
+                                tvIframeRef.current.contentWindow.postMessage({ event: 'command', func: 'mute' }, '*');
+                              } else {
+                                tvIframeRef.current.contentWindow.postMessage({ action: 'unmute' }, '*');
+                                tvIframeRef.current.contentWindow.postMessage({ event: 'command', func: 'unMute' }, '*');
+                              }
                             } catch (e) {}
                           }
                         }}
