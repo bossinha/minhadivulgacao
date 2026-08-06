@@ -3648,7 +3648,7 @@ function AppContent() {
                   </span>
                   <h4 className="text-xs sm:text-sm font-black text-white leading-tight">{item.title}</h4>
                 </div>
-                <p className="text-[11px] text-white/60 font-medium pl-7">{item.desc}</p>
+                <p className="text-xs font-bold text-white/80 pl-7">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -3749,43 +3749,43 @@ function AppContent() {
             <div className="lg:col-span-5 flex flex-col gap-4 justify-center">
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-[#0c0d12]/90 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 shadow-lg hover:border-amber-500/30 transition-all duration-200">
-                  <span className="text-white/40 text-[9px] uppercase font-black tracking-widest font-mono">🏢 Empresas</span>
+                  <span className="text-white/60 text-[10px] uppercase font-black tracking-widest font-mono">🏢 Empresas</span>
                   <span className="text-xl sm:text-2xl font-black text-white font-sans">500+</span>
-                  <span className="text-[10px] text-white/50 mt-0.5 font-sans leading-tight">Lojas físicas e virtuais registradas</span>
+                  <span className="text-xs text-white/80 font-bold mt-0.5 font-sans leading-tight">Lojas físicas e virtuais registradas</span>
                 </div>
                 <div className="bg-[#0c0d12]/90 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 shadow-lg hover:border-blue-500/30 transition-all duration-200">
-                  <span className="text-white/40 text-[9px] uppercase font-black tracking-widest font-mono">🛠️ Prestadores</span>
+                  <span className="text-white/60 text-[10px] uppercase font-black tracking-widest font-mono">🛠️ Prestadores</span>
                   <span className="text-xl sm:text-2xl font-black text-white font-sans">200+</span>
-                  <span className="text-[10px] text-white/50 mt-0.5 font-sans leading-tight">Profissionais autônomos ativos</span>
+                  <span className="text-xs text-white/80 font-bold mt-0.5 font-sans leading-tight">Profissionais autônomos ativos</span>
                 </div>
                 <div className="bg-[#0c0d12]/90 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 shadow-lg transition-all duration-200">
-                  <span className="text-white/40 text-[9px] uppercase font-black tracking-widest font-mono">📦 Produtos</span>
+                  <span className="text-white/60 text-[10px] uppercase font-black tracking-widest font-mono">📦 Produtos</span>
                   <span className="text-xl sm:text-2xl font-black text-white font-sans">10K+</span>
-                  <span className="text-[10px] text-white/50 mt-0.5 font-sans leading-tight">Artigos cadastrados nos cardápios</span>
+                  <span className="text-xs text-white/80 font-bold mt-0.5 font-sans leading-tight">Artigos cadastrados nos cardápios</span>
                 </div>
                 <div className="bg-[#0c0d12]/90 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 shadow-lg transition-all duration-200">
-                  <span className="text-white/40 text-[9px] uppercase font-black tracking-widest font-mono">🛒 Pedidos</span>
+                  <span className="text-white/60 text-[10px] uppercase font-black tracking-widest font-mono">🛒 Pedidos</span>
                   <span className="text-xl sm:text-2xl font-black text-white font-sans">12K+</span>
-                  <span className="text-[10px] text-white/50 mt-0.5 font-sans leading-tight">Mensagens enviadas via WhatsApp</span>
+                  <span className="text-xs text-white/80 font-bold mt-0.5 font-sans leading-tight">Mensagens enviadas via WhatsApp</span>
                 </div>
                 <div className="bg-[#0c0d12]/90 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 shadow-lg transition-all duration-200">
-                  <span className="text-white/40 text-[9px] uppercase font-black tracking-widest font-mono">🇧🇷 Estados</span>
+                  <span className="text-white/60 text-[10px] uppercase font-black tracking-widest font-mono">🇧🇷 Estados</span>
                   <span className="text-xl sm:text-2xl font-black text-white font-sans">BR 27</span>
-                  <span className="text-[10px] text-white/50 mt-0.5 font-sans leading-tight">Estados de cobertura da plataforma</span>
+                  <span className="text-xs text-white/80 font-bold mt-0.5 font-sans leading-tight">Estados de cobertura da plataforma</span>
                 </div>
                 <div className="bg-[#0c0d12]/90 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 shadow-lg transition-all duration-200">
-                  <span className="text-white/40 text-[9px] uppercase font-black tracking-widest font-mono">🟢 Conexão</span>
+                  <span className="text-white/60 text-[10px] uppercase font-black tracking-widest font-mono">🟢 Conexão</span>
                   <span className="text-xl sm:text-2xl font-black text-emerald-400 font-sans flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_#10b981]" />
                     100%
                   </span>
-                  <span className="text-[10px] text-white/50 mt-0.5 font-sans leading-tight">Servidores e sinal ativo agora</span>
+                  <span className="text-xs text-white/80 font-bold mt-0.5 font-sans leading-tight">Servidores e sinal ativo agora</span>
                 </div>
               </div>
 
               {/* Verified Badge */}
-              <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl p-3 text-xs font-bold flex items-center gap-2 uppercase select-none shadow-md">
-                <span className="text-sm">🛡️</span>
+              <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl p-3 text-xs sm:text-sm font-extrabold flex items-center gap-2 uppercase select-none shadow-md">
+                <span className="text-base">🛡️</span>
                 Presente em todo o Brasil! Seguro, confiável e 100% online
               </div>
             </div>
@@ -3799,26 +3799,26 @@ function AppContent() {
           <div className="grid grid-cols-1 min-[340px]:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 md:gap-14 mt-24 md:mt-32 w-full max-w-5xl border-t border-white/5 pt-12 select-none">
             <div className="text-center group-hover:scale-105 transition-transform duration-300">
               <div className="text-3xl md:text-5xl font-sans font-black text-white tracking-tight">{(universalConfig.totalVisits || 12000).toLocaleString()}+</div>
-              <div className="text-[11px] sm:text-[12px] text-[var(--primary)] font-bold tracking-widest font-mono uppercase mt-2">Acessos Totais</div>
-              <p className="text-[10px] text-white/40 mt-1 max-w-[160px] mx-auto font-sans">Tráfego local constante e verificado diariamente</p>
+              <div className="text-xs sm:text-sm text-[var(--primary)] font-black tracking-widest font-mono uppercase mt-2">Acessos Totais</div>
+              <p className="text-xs font-bold text-white/70 mt-1.5 max-w-[180px] mx-auto font-sans leading-tight">Tráfego local constante e verificado diariamente</p>
             </div>
             <div className="text-center">
               <div className="text-3xl md:text-5xl font-sans font-black text-emerald-400 flex items-center justify-center gap-2 tracking-tight">
                 <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_15px_#10b981]" />
                 {onlineCount}
               </div>
-              <div className="text-[11px] sm:text-[12px] text-white/75 font-bold tracking-widest font-mono uppercase mt-2">Online Agora</div>
-              <p className="text-[10px] text-white/40 mt-1 max-w-[160px] mx-auto font-sans">Espectadores ativos em rádio e TV online</p>
+              <div className="text-xs sm:text-sm text-white/90 font-black tracking-widest font-mono uppercase mt-2">Online Agora</div>
+              <p className="text-xs font-bold text-white/70 mt-1.5 max-w-[180px] mx-auto font-sans leading-tight">Espectadores ativos em rádio e TV online</p>
             </div>
             <div className="text-center">
               <div className="text-3xl md:text-5xl font-neutral font-black text-amber-500 tracking-tight">100%</div>
-              <div className="text-[11px] sm:text-[12px] text-white/75 font-bold tracking-widest font-mono uppercase mt-2">Atendimento Direto</div>
-              <p className="text-[10px] text-white/40 mt-1 max-w-[160px] mx-auto font-sans">Chat interno rápido com indicação de parceiros premium</p>
+              <div className="text-xs sm:text-sm text-white/90 font-black tracking-widest font-mono uppercase mt-2">Atendimento Direto</div>
+              <p className="text-xs font-bold text-white/70 mt-1.5 max-w-[180px] mx-auto font-sans leading-tight">Chat interno rápido com indicação de parceiros premium</p>
             </div>
             <div className="text-center">
               <div className="text-3xl md:text-5xl font-sans font-black text-white tracking-tight">24h</div>
-              <div className="text-[11px] sm:text-[12px] text-[var(--primary)] font-bold tracking-widest font-mono uppercase mt-2">Sinal Ativo</div>
-              <p className="text-[10px] text-white/40 mt-1 max-w-[160px] mx-auto font-sans">Mídia transmitindo som e imagem continuamente</p>
+              <div className="text-xs sm:text-sm text-[var(--primary)] font-black tracking-widest font-mono uppercase mt-2">Sinal Ativo</div>
+              <p className="text-xs font-bold text-white/70 mt-1.5 max-w-[180px] mx-auto font-sans leading-tight">Mídia transmitindo som e imagem continuamente</p>
             </div>
           </div>
 
@@ -3877,7 +3877,7 @@ function AppContent() {
                     🔥 Ofertas Irrecusáveis da Semana
                   </h2>
                 </div>
-                <p className="text-sm text-white/50 max-w-sm leading-relaxed">
+                <p className="text-sm sm:text-base text-white/85 font-bold max-w-sm leading-relaxed">
                   Apenas ofertas reais e com descontos exclusivos de marcas verificadas no portal. Toque no card e garanta o seu benefício no WhatsApp antes que esgote!
                 </p>
               </div>
@@ -3930,7 +3930,7 @@ function AppContent() {
                   <h3 className="text-2xl sm:text-3.5xl font-sans font-black text-white leading-tight">
                     Aproveite esta oportunidade exclusiva
                   </h3>
-                  <p className="text-xs sm:text-base text-white/60 mt-4 leading-relaxed max-w-md font-medium">
+                  <p className="text-sm sm:text-base text-white/90 mt-4 leading-relaxed max-w-md font-extrabold">
                     Preço especial e atendimento preferencial garantidos para usuários do portal. Toque abaixo para abrir o canal direto com o anunciante.
                   </p>
 
