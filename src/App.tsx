@@ -812,6 +812,9 @@ function AppContent() {
   const [customRadioLink, setCustomRadioLink] = useState<string>('');
   const [allUsers, setAllUsers] = useState<any>(null);
   const [editingVideosFor, setEditingVideosFor] = useState<{id: string, city: string, videos: string[]} | null>(null);
+  const [tvMuted, setTvMuted] = useState(false);
+  const [tvVolume, setTvVolume] = useState(1);
+  const tvIframeRef = useRef<HTMLIFrameElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
@@ -4105,6 +4108,7 @@ function AppContent() {
                 {/* 16:9 Aspect Ratio Frame for Iframe */}
                 <div className="relative w-full aspect-[16/9] rounded-lg sm:rounded-xl overflow-hidden bg-black shadow-inner border border-white/10">
                   <iframe 
+                    ref={tvIframeRef}
                     src={universalConfig?.horizontalTvLink || (appData && appData.siteInfo && appData.siteInfo.horizontalTvLink) || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando'} 
                     title="TV Minha Divulgação"
                     className="w-full h-full border-0 select-none"
@@ -4112,13 +4116,72 @@ function AppContent() {
                   />
                 </div>
 
-                {/* Bottom Bar Controls - Sleek & Contained */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-2.5 sm:mt-3 px-3 sm:px-4 py-2 bg-[#121422]/90 rounded-b-xl sm:rounded-b-2xl border-t border-white/5">
+                {/* Bottom Bar Controls - Sleek & Contained with Mute and Volume Controls */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 mt-2.5 sm:mt-3 px-3 sm:px-4 py-2.5 bg-[#121422]/90 rounded-b-xl sm:rounded-b-2xl border-t border-white/5">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] sm:text-xs font-bold text-white/80">📺 Programação de Promoções e Ofertas do Comércio Local</span>
+                    <span className="text-[11px] sm:text-xs font-bold text-white/80">📺 Programação de Promoções e Ofertas</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-300 bg-amber-500/10 px-3 py-1 rounded-lg border border-amber-500/20">
-                    <span>🟢 Transmissão Ativa</span>
+
+                  {/* Audio Controls (Mute/Unmute + Volume Slider) */}
+                  <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap justify-center">
+                    {/* Mute / Unmute Button */}
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        const newMuted = !tvMuted;
+                        setTvMuted(newMuted);
+                        if (tvIframeRef.current?.contentWindow) {
+                          try {
+                            tvIframeRef.current.contentWindow.postMessage({ type: 'SET_VOLUME', volume: newMuted ? 0 : tvVolume, muted: newMuted }, '*');
+                            tvIframeRef.current.contentWindow.postMessage({ action: newMuted ? 'mute' : 'unmute', volume: newMuted ? 0 : tvVolume }, '*');
+                          } catch (e) {}
+                        }
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all flex items-center gap-1.5 cursor-pointer border ${
+                        tvMuted 
+                          ? 'bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500/30' 
+                          : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
+                      }`}
+                      title={tvMuted ? "Desmutar Áudio da TV" : "Mutar Áudio da TV"}
+                    >
+                      {tvMuted ? <VolumeX className="w-3.5 h-3.5 text-red-400" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
+                      <span>{tvMuted ? '🔇 SEM SOM' : '🔊 ÁUDIO LIGADO'}</span>
+                    </button>
+
+                    {/* Volume Slider Control */}
+                    <div className="flex items-center gap-2 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">
+                      <span className="text-xs text-white/60">🔊</span>
+                      <input 
+                        type="range" 
+                        min="0" 
+                        max="1" 
+                        step="0.05"
+                        value={tvMuted ? 0 : tvVolume}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          setTvVolume(val);
+                          if (val === 0) {
+                            setTvMuted(true);
+                          } else if (tvMuted) {
+                            setTvMuted(false);
+                          }
+                          if (tvIframeRef.current?.contentWindow) {
+                            try {
+                              tvIframeRef.current.contentWindow.postMessage({ type: 'SET_VOLUME', volume: val, muted: val === 0 }, '*');
+                            } catch (e) {}
+                          }
+                        }}
+                        className="w-16 sm:w-20 accent-[var(--primary)] cursor-pointer h-1.5 bg-white/20 rounded-lg"
+                        title="Ajustar volume da TV"
+                      />
+                      <span className="text-[10px] font-mono text-white/70 w-7 text-right">
+                        {tvMuted ? '0%' : `${Math.round(tvVolume * 100)}%`}
+                      </span>
+                    </div>
+
+                    <div className="hidden md:flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
+                      <span>🟢 Transmissão Ativa</span>
+                    </div>
                   </div>
                 </div>
               </div>
