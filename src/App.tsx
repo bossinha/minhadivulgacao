@@ -1603,6 +1603,7 @@ function AppContent() {
   const [activeFlyerIndex, setActiveFlyerIndex] = useState(0);
   const [activeHorizontalBannerIndex, setActiveHorizontalBannerIndex] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
   const getCompanySiteType = (comp: any) => {
     if (!comp) return 'loja';
@@ -4417,27 +4418,86 @@ function AppContent() {
             <h3 className="text-xs font-black font-mono text-amber-400 tracking-[0.2em] uppercase text-center mb-6">
               📂 CATEGORIAS POPULARES
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
-              {CATEGORIES.map((cat, idx) => {
-                const isSelected = selectedCategory === cat.name;
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setSelectedCategory(isSelected ? null : cat.name)}
-                    className={`p-3.5 rounded-2xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer ${
-                      isSelected 
-                        ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-black scale-[1.03] shadow-[0_0_15px_rgba(251,191,36,0.25)]' 
-                        : 'bg-[#11121c] border-white/10 text-white/80 hover:border-amber-400/40 hover:text-white hover:bg-neutral-800'
-                    }`}
-                  >
-                    <span className="text-2xl mb-1.5">{cat.icon}</span>
-                    <span className="text-[11px] font-extrabold leading-tight">{cat.name}</span>
-                  </button>
-                );
-              })}
-            </div>
+            
+            {(() => {
+              const mainCats = CATEGORIES.slice(0, 12);
+              const displayedCategories = showAllCategories 
+                ? CATEGORIES 
+                : (selectedCategory && !mainCats.some(c => c.name === selectedCategory) 
+                    ? [...mainCats, ...CATEGORIES.filter(c => c.name === selectedCategory)] 
+                    : mainCats);
+
+              return (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-3">
+                    {displayedCategories.map((cat, idx) => {
+                      const isSelected = selectedCategory === cat.name;
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            const newCat = isSelected ? null : cat.name;
+                            setSelectedCategory(newCat);
+                            setTimeout(() => {
+                              const resultsEl = document.getElementById('destaque');
+                              if (resultsEl) {
+                                resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                              }
+                            }, 50);
+                          }}
+                          className={`p-3.5 rounded-2xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer ${
+                            isSelected 
+                              ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-black scale-[1.03] shadow-[0_0_15px_rgba(251,191,36,0.25)]' 
+                              : 'bg-[#11121c] border-white/10 text-white/80 hover:border-amber-400/40 hover:text-white hover:bg-neutral-800'
+                          }`}
+                        >
+                          <span className="text-2xl mb-1.5">{cat.icon}</span>
+                          <span className="text-[11px] font-extrabold leading-tight">{cat.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {CATEGORIES.length > 12 && (
+                    <div className="text-center mt-5">
+                      <button
+                        type="button"
+                        onClick={() => setShowAllCategories(!showAllCategories)}
+                        className="inline-flex items-center gap-2 bg-[#121422] hover:bg-white/10 border border-white/15 hover:border-amber-400/50 text-amber-300 hover:text-amber-200 font-extrabold text-xs px-5 py-2.5 rounded-2xl transition-all duration-200 cursor-pointer shadow-md active:scale-95"
+                      >
+                        {showAllCategories ? (
+                          <>
+                            <span>🔼 Mostrar Apenas Principais Categorias</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>📂 Ver Todas as Categorias ({CATEGORIES.length})</span>
+                            <ChevronDown className="w-3.5 h-3.5 text-amber-400" />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
+
+          {/* Header for Category or Search Filter Results */}
+          {(selectedCategory || searchQuery) && filteredCompanies.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-6 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border border-amber-500/20 p-4 rounded-2xl">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🏷️</span>
+                <h3 className="text-sm font-extrabold text-white">
+                  {selectedCategory ? `Empresas Cadastradas em: ${selectedCategory}` : `Resultados da busca por "${searchQuery}"`}
+                </h3>
+              </div>
+              <span className="text-xs font-mono font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full">
+                {filteredCompanies.length} {filteredCompanies.length === 1 ? 'empresa cadastrada' : 'empresas cadastradas'}
+              </span>
+            </div>
+          )}
 
           {/* Grid of Results */}
           {filteredCompanies.length === 0 ? (
