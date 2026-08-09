@@ -814,7 +814,14 @@ function AppContent() {
   const [editingVideosFor, setEditingVideosFor] = useState<{id: string, city: string, videos: string[]} | null>(null);
   const [tvMuted, setTvMuted] = useState(false);
   const [tvVolume, setTvVolume] = useState(1);
+  const [tvKey, setTvKey] = useState(0);
+  const [isTvLoading, setIsTvLoading] = useState(true);
   const tvIframeRef = useRef<HTMLIFrameElement>(null);
+
+  const reloadTvPlayer = () => {
+    setIsTvLoading(true);
+    setTvKey(prev => prev + 1);
+  };
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
@@ -4101,19 +4108,44 @@ function AppContent() {
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
                     <span className="text-[10px] sm:text-[11px] font-mono font-black text-emerald-400 tracking-widest uppercase">🔴 CANAL AO VIVO — TV MINHA DIVULGAÇÃO</span>
                   </div>
-                  <span className="text-[9px] sm:text-[10px] font-mono text-white/50 tracking-widest uppercase bg-white/5 px-2.5 py-0.5 rounded-full border border-white/10 hidden sm:inline-block">
-                    TRANSMISSÃO 16:9 • PROMOÇÕES
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={reloadTvPlayer}
+                      className="text-[9px] sm:text-[10px] font-mono font-extrabold text-amber-300 bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/30 px-2.5 py-0.5 rounded-full transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-sm"
+                      title="Clique para recarregar o sinal da TV sem precisar atualizar a página (F5)"
+                    >
+                      <span>🔄 Recarregar TV</span>
+                    </button>
+                    <span className="text-[9px] sm:text-[10px] font-mono text-white/50 tracking-widest uppercase bg-white/5 px-2.5 py-0.5 rounded-full border border-white/10 hidden sm:inline-block">
+                      TRANSMISSÃO 16:9
+                    </span>
+                  </div>
                 </div>
 
                 {/* 16:9 Aspect Ratio Frame for Iframe */}
                 <div className="relative w-full aspect-[16/9] rounded-lg sm:rounded-xl overflow-hidden bg-black shadow-inner border border-white/10">
+                  {isTvLoading && (
+                    <div className="absolute inset-0 z-10 bg-[#0a0a10]/90 backdrop-blur-sm flex flex-col items-center justify-center gap-2 pointer-events-none">
+                      <div className="w-7 h-7 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                      <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest">Sincronizando Sinal da TV...</span>
+                    </div>
+                  )}
+
                   <iframe 
+                    key={`tv-frame-${tvKey}`}
                     ref={tvIframeRef}
-                    src={universalConfig?.horizontalTvLink || (appData && appData.siteInfo && appData.siteInfo.horizontalTvLink) || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando'} 
+                    src={(() => {
+                      const baseUrl = universalConfig?.horizontalTvLink || (appData && appData.siteInfo && appData.siteInfo.horizontalTvLink) || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando';
+                      const sep = baseUrl.includes('?') ? '&' : '?';
+                      return `${baseUrl}${sep}_t=${tvKey}`;
+                    })()} 
                     title="TV Minha Divulgação"
                     className="w-full h-full border-0 select-none"
-                    allow="autoplay; picture-in-picture; audio"
+                    loading="eager"
+                    allow="autoplay *; encrypted-media; fullscreen; picture-in-picture; audio"
+                    onLoad={() => setIsTvLoading(false)}
+                    onError={() => setIsTvLoading(false)}
                   />
                 </div>
 
@@ -4122,8 +4154,18 @@ function AppContent() {
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] sm:text-xs font-bold text-white/80">📺 Programação de Promoções e Ofertas</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-300 bg-amber-500/10 px-3 py-1 rounded-lg border border-amber-500/20">
-                    <span>🟢 Transmissão Ativa</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={reloadTvPlayer}
+                      className="text-[10px] font-mono font-bold text-emerald-300 hover:text-emerald-200 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg border border-emerald-500/30 transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                      title="Recarregar player da TV"
+                    >
+                      <span>🔄 Atualizar Player</span>
+                    </button>
+                    <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-300 bg-amber-500/10 px-3 py-1 rounded-lg border border-amber-500/20">
+                      <span>🟢 Transmissão Ativa</span>
+                    </div>
                   </div>
                 </div>
               </div>
