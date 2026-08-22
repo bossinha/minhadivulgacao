@@ -3472,53 +3472,49 @@ function AppContent() {
 
           {/* Clean Menu - Desktop */}
           <div className="hidden lg:flex items-center gap-6 text-xs font-bold uppercase tracking-wider text-white/70">
-            <a href="#destaque" onClick={(e) => { e.preventDefault(); scrollToSection('destaque'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Destaques</a>
-            {visibleFlyers.length > 0 && (
-              <a href="#promocoes" onClick={(e) => { e.preventDefault(); scrollToSection('promocoes'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Promoções</a>
-            )}
-            <a href="#filtro-empresas" onClick={(e) => { e.preventDefault(); scrollToSection('filtro-empresas'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Anunciantes</a>
-            {showRadio && (
-              <a href="#radio-tv" onClick={(e) => { e.preventDefault(); scrollToSection('radio-tv'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Rádio & TV</a>
-            )}
-            <a href="#servicos" onClick={(e) => { e.preventDefault(); scrollToSection('servicos'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Serviços</a>
-            <a href="#depoimentos" onClick={(e) => { e.preventDefault(); scrollToSection('depoimentos'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Depoimentos</a>
+            <a href="#inicio" onClick={(e) => { e.preventDefault(); scrollToSection('inicio'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Início</a>
+            <a href="#filtro-empresas" onClick={(e) => { e.preventDefault(); scrollToSection('filtro-empresas'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Buscar Empresas</a>
+            <a href="#categorias" onClick={(e) => { e.preventDefault(); scrollToSection('categorias'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Categorias</a>
+            <a href="#tv-destaque" onClick={(e) => { e.preventDefault(); scrollToSection('tv-destaque'); }} className="hover:text-[var(--primary)] transition-colors duration-200">TV & Rádio</a>
           </div>
 
           {/* Action Buttons - Desktop */}
-          {!hideAdvertiserAuth && (
-            <div className="hidden lg:flex items-center gap-3 font-jakarta">
+          <div className="hidden lg:flex items-center gap-3 font-jakarta">
+            <a 
+              href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Gostaria%20de%20divulgar%20minha%20empresa%20no%20Guia%20Comercial%20Minha%20Divulga%C3%A7%C3%A3o."
+              target="_blank"
+              rel="noreferrer"
+              className="bg-[var(--primary)] hover:brightness-110 text-black px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-300 shadow shadow-[var(--primary)]/20 cursor-pointer flex items-center gap-1.5 decoration-transparent"
+            >
+              🚀 Divulgue Sua Empresa
+            </a>
+            {!hideAdvertiserAuth && (
               <button 
                 onClick={() => { setAuthMode('login'); setIsAdPortalOpen(true); }}
                 className="bg-neutral-950 hover:bg-neutral-900 border border-white/20 text-white/90 hover:text-white px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 flex items-center gap-1.5 cursor-pointer"
               >
                 <User size={13} /> Entrar (Login)
               </button>
-              <button 
-                onClick={() => { setAuthMode('register'); setIsAdPortalOpen(true); }}
-                className="bg-[var(--primary)] hover:brightness-110 text-black px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-300 shadow shadow-[var(--primary)]/20 cursor-pointer flex items-center gap-1.5"
-              >
-                🚀 Cadastre-se (Criar Conta)
-              </button>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Mobile Menu Trigger & Quick Actions */}
           <div className="flex lg:hidden items-center gap-2">
+            <a 
+              href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Gostaria%20de%20divulgar%20minha%20empresa%20no%20Guia%20Comercial%20Minha%20Divulga%C3%A7%C3%A3o."
+              target="_blank"
+              rel="noreferrer"
+              className="bg-[var(--primary)] text-black px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-wide cursor-pointer shrink-0 decoration-transparent"
+            >
+              🚀 Divulgar
+            </a>
             {!hideAdvertiserAuth && (
-              <>
-                <button 
-                  onClick={() => { setAuthMode('login'); setIsAdPortalOpen(true); }}
-                  className="bg-neutral-900 border border-white/10 text-white px-2.5 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wide cursor-pointer flex items-center gap-1 shrink-0"
-                >
-                  <User size={11} /> Entrar
-                </button>
-                <button 
-                  onClick={() => { setAuthMode('register'); setIsAdPortalOpen(true); }}
-                  className="bg-[var(--primary)] text-black px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-wide cursor-pointer shrink-0"
-                >
-                  🚀 Cadastrar
-                </button>
-              </>
+              <button 
+                onClick={() => { setAuthMode('login'); setIsAdPortalOpen(true); }}
+                className="bg-neutral-900 border border-white/10 text-white px-2.5 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wide cursor-pointer flex items-center gap-1 shrink-0"
+              >
+                <User size={11} /> Entrar
+              </button>
             )}
             <button 
               type="button"
@@ -3540,327 +3536,124 @@ function AppContent() {
               className="absolute top-16 md:top-20 left-0 right-0 bg-[#07080e]/95 backdrop-blur-xl border-b border-white/10 px-6 py-8 flex flex-col gap-6 z-40 shadow-2xl lg:hidden font-jakarta"
             >
               <div className="flex flex-col gap-4 text-sm font-bold uppercase tracking-wider">
-                <a href="#destaque" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('destaque'); }} className="text-white hover:text-[var(--primary)] py-2">⭐ Destaques</a>
-                {visibleFlyers.length > 0 && (
-                  <a href="#promocoes" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('promocoes'); }} className="text-white hover:text-[var(--primary)] py-2">🔥 Promoções</a>
-                )}
-                <a href="#filtro-empresas" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('filtro-empresas'); }} className="text-white hover:text-[var(--primary)] py-2">🔍 Empresas</a>
-                {showRadio && (
-                  <a href="#radio-tv" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('radio-tv'); }} className="text-white hover:text-[var(--primary)] py-2">📻 Rádio & TV</a>
-                )}
-                <a href="#servicos" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('servicos'); }} className="text-white hover:text-[var(--primary)] py-2">🛠️ Serviços</a>
-                <a href="#depoimentos" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('depoimentos'); }} className="text-white hover:text-[var(--primary)] py-2">💬 Depoimentos</a>
+                <a href="#inicio" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('inicio'); }} className="text-white hover:text-[var(--primary)] py-2">🏠 Início</a>
+                <a href="#filtro-empresas" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('filtro-empresas'); }} className="text-white hover:text-[var(--primary)] py-2">🔍 Buscar Empresas</a>
+                <a href="#categorias" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('categorias'); }} className="text-white hover:text-[var(--primary)] py-2">📂 Categorias</a>
+                <a href="#tv-destaque" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('tv-destaque'); }} className="text-white hover:text-[var(--primary)] py-2">📺 TV & Rádio Ao Vivo</a>
               </div>
-              {!hideAdvertiserAuth && (
-                <div className="flex flex-col gap-3 pt-4 border-t border-white/5">
+              <div className="flex flex-col gap-3 pt-4 border-t border-white/5">
+                <a 
+                  href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Gostaria%20de%20divulgar%20minha%20empresa%20no%20Guia%20Comercial%20Minha%20Divulga%C3%A7%C3%A3o."
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full text-center bg-[var(--primary)] text-black px-5 py-3 rounded-xl font-extrabold text-xs uppercase tracking-widest block cursor-pointer decoration-transparent"
+                >
+                  🚀 Divulgue Sua Empresa
+                </a>
+                {!hideAdvertiserAuth && (
                   <button 
                     onClick={() => { setIsMobileMenuOpen(false); setAuthMode('login'); setIsAdPortalOpen(true); }}
                     className="w-full text-center bg-neutral-950 border border-white/10 text-white px-5 py-3 rounded-xl font-extrabold text-xs uppercase tracking-widest block cursor-pointer"
                   >
-                    🔑 Entrar (Login)
+                    🔑 Entrar na Conta
                   </button>
-                  <button 
-                    onClick={() => { setIsMobileMenuOpen(false); setAuthMode('register'); setIsAdPortalOpen(true); }}
-                    className="w-full text-center bg-[var(--primary)] text-black px-5 py-3 rounded-xl font-extrabold text-xs uppercase tracking-widest block cursor-pointer"
-                  >
-                    🚀 Cadastre-se (Criar Conta)
-                  </button>
-                </div>
-              )}
+                )}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-32 md:pt-44 pb-24 overflow-hidden bg-black border-b border-white/5 bg-[radial-gradient(120%_120%_at_50%_10%,#030303_40%,rgba(251,191,36,0.09)_100%)]">
+      <section id="inicio" className="relative pt-32 md:pt-40 pb-16 md:pb-20 overflow-hidden bg-black border-b border-white/5 bg-[radial-gradient(120%_120%_at_50%_10%,#030303_40%,rgba(251,191,36,0.09)_100%)]">
         {/* Tech Grid Overlay */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:40px_40px] opacity-100 pointer-events-none" />
         
-        {/* Subtle Ambient Pulsing Lights */}
-        <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-[var(--primary)]/5 rounded-full blur-[150px] animate-pulse pointer-events-none" />
-        <div className="absolute top-1/3 right-1/4 w-[355px] h-[355px] bg-emerald-500/5 rounded-full blur-[130px] animate-pulse pointer-events-none" />
+        {/* Ambient Lights */}
+        <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-[var(--primary)]/5 rounded-full blur-[150px] pointer-events-none" />
+        <div className="absolute top-1/3 right-1/4 w-[355px] h-[355px] bg-amber-500/5 rounded-full blur-[130px] pointer-events-none" />
 
-        <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6 z-10 flex flex-col items-center text-center">
+        <div className="relative w-full max-w-5xl mx-auto px-4 md:px-6 z-10 flex flex-col items-center text-center">
           
-          {/* Live Badge indicator */}
-          <motion.div 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2.5 bg-neutral-950/90 border border-amber-500/40 backdrop-blur-2xl px-5 py-2.5 rounded-full text-[10px] sm:text-xs font-black tracking-[0.2em] uppercase text-amber-400 mb-6 md:mb-8 font-mono shadow-[0_4px_30px_rgba(251,191,36,0.2)] select-none"
-          >
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2.5 bg-neutral-950/90 border border-amber-500/40 px-5 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-[0.2em] uppercase text-amber-400 mb-6 font-mono shadow-[0_4px_30px_rgba(251,191,36,0.2)] select-none">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
-            Guia Comercial Digital & Divulgação Local
-          </motion.div>
+            Guia Comercial Digital
+          </div>
   
           {/* Main Headline & Subtitle */}
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-sans font-black text-white tracking-tight leading-[1.05] max-w-5xl select-none">
-            Multiplique seus clientes e <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 font-black">domine o mercado local</span>
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-sans font-black text-white tracking-tight leading-[1.1] max-w-4xl select-none">
+            Encontre ou divulgue sua empresa no <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500">Guia Comercial Digital</span>
           </h1>
   
-          <p className="text-base sm:text-xl md:text-2xl text-white/85 font-semibold max-w-3xl mt-5 leading-relaxed select-none">
-            Destaque sua empresa no Guia Comercial Oficial da sua cidade e receba pedidos diários diretamente no seu WhatsApp.
+          <p className="text-sm sm:text-lg md:text-xl text-white/85 font-semibold max-w-2xl mt-4 leading-relaxed select-none">
+            Sua empresa visível para clientes da sua região. Presença digital inclusa na assinatura do Plano Completo.
           </p>
 
-          {/* Main Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 w-full sm:w-auto relative z-20">
-            {!hideAdvertiserAuth ? (
-              <button 
-                onClick={() => { 
-                  setAuthMode('register'); 
-                  setIsAdPortalOpen(true); 
-                }}
-                className="group bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-400 hover:to-yellow-400 text-black hover:scale-105 hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] px-8 py-4.5 md:px-10 md:py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider text-center transition-all duration-300 shadow-2xl flex items-center justify-center gap-3 cursor-pointer w-full sm:w-auto shrink-0 border border-amber-300/30"
-              >
-                🚀 Anunciar Minha Empresa Agora
-              </button>
-            ) : (
-              <a 
-                href={`https://wa.me/${appData?.siteInfo?.phone?.replace(/[^0-9]/g, '') || ''}?text=${encodeURIComponent('Olá! Acessei o portal e gostaria de anunciar minha empresa no Guia Comercial.')}`} 
-                target="_blank"
-                rel="noreferrer"
-                className="group bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black hover:scale-105 px-8 py-4.5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2.5 w-full sm:w-auto shrink-0 decoration-transparent"
-              >
-                🚀 Anunciar Minha Empresa Agora
-              </a>
-            )}
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mt-8 w-full sm:w-auto relative z-20">
+            <a 
+              href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Gostaria%20de%20divulgar%20minha%20empresa%20no%20Guia%20Comercial%20Minha%20Divulga%C3%A7%C3%A3o."
+              target="_blank"
+              rel="noreferrer"
+              className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-400 hover:to-yellow-400 text-black hover:scale-105 hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-wider text-center transition-all duration-300 shadow-2xl flex items-center justify-center gap-2.5 cursor-pointer w-full sm:w-auto shrink-0 border border-amber-300/30 decoration-transparent"
+            >
+              🚀 Divulgue Sua Empresa
+            </a>
             
             <button 
               onClick={() => { 
                 const el = document.getElementById('filtro-empresas');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="bg-white/10 hover:bg-white/15 text-white border border-white/20 hover:border-white/40 px-8 py-4.5 md:px-10 md:py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2.5 cursor-pointer w-full sm:w-auto shrink-0"
+              className="bg-white/10 hover:bg-white/15 text-white border border-white/20 hover:border-white/40 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2.5 cursor-pointer w-full sm:w-auto shrink-0"
             >
-              🔍 Encontrar Empresas
+              🔍 Buscar Empresas
             </button>
           </div>
 
-          {/* Advantages Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 sm:gap-4 mt-12 w-full max-w-5xl text-left select-none relative z-20">
-            {[
-              { title: "Visibilidade de Impacto", desc: "Destaque garantido na cidade" },
-              { title: "WhatsApp Direto", desc: "Receba pedidos no seu celular" },
-              { title: "Localização & Mapa", desc: "Endereço e rotas de acesso" },
-              { title: "Redes Sociais", desc: "Instagram, Facebook e Site" },
-              { title: "Catálogo de Produtos", desc: "Cardápio e serviços online" },
-              { title: "Horário Comercial", desc: "Aberto / Fechado em tempo real" },
-              { title: "Fotos da Empresa", desc: "Sua estrutura em destaque" },
-              { title: "Perfil Profissional", desc: "Estilo Google Empresas" }
-            ].map((item, idx) => (
-              <div key={idx} className="bg-[#0b0c12]/90 border border-white/10 hover:border-amber-500/40 rounded-2xl p-4 flex flex-col justify-between shadow-lg backdrop-blur-md transition-all duration-200 hover:-translate-y-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center text-xs font-black shrink-0">
-                    ✔
-                  </span>
-                  <h4 className="text-xs sm:text-sm font-black text-white leading-tight">{item.title}</h4>
-                </div>
-                <p className="text-xs font-bold text-white/80 pl-7">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* DUAL COLUMN WORK: INTERACTIVE SELECTION + NATIONAL STATS WIDGET (FROM IMAGE 2) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 mt-16 w-full max-w-6xl text-left select-none relative z-20">
-            
-            {/* Left Column: Search & Interactive Filter */}
-            <div className="lg:col-span-7 flex flex-col justify-center">
-              <div className="bg-neutral-900/95 border border-white/10 rounded-3xl p-5 sm:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.6)] backdrop-blur-md relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-500" />
-                
-                <span className="text-[10px] sm:text-xs font-black text-amber-500 tracking-[0.2em] uppercase block mb-2 font-mono">🔍 SISTEMA DE BUSCA NACIONAL</span>
-                <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-snug mb-5">
-                  Selecione sua Região e Encontre Negócios
-                </h3>
-
-                {/* Tab selectors exactly like the image tabs */}
-                <div className="flex bg-black/40 border border-white/5 rounded-2xl p-1 mb-5">
-                  <button 
-                    type="button"
-                    onClick={() => {
-                      setSelectedTypeFilter('loja');
-                    }}
-                    className={`flex-1 py-3 px-4 rounded-xl text-xs font-extrabold tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${selectedTypeFilter === 'loja' ? 'bg-amber-500 text-black shadow-lg font-black' : 'text-white/55 hover:text-white/80 font-bold'}`}
-                  >
-                    🏪 LOJAS COMERCIAIS
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={() => {
-                      setSelectedTypeFilter('servico');
-                    }}
-                    className={`flex-1 py-3 px-4 rounded-xl text-xs font-extrabold tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${selectedTypeFilter === 'servico' ? 'bg-blue-600 text-white shadow-lg font-black' : 'text-white/55 hover:text-white/80 font-bold'}`}
-                  >
-                    🛠️ PRESTADORES DE SERVIÇOS
-                  </button>
-                </div>
-
-                {/* Custom input fields */}
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="flex-1 relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 text-base">📍</span>
-                    <select
-                      value={selectedStateFilter}
-                      onChange={(e) => setSelectedStateFilter(e.target.value)}
-                      className="w-full bg-[#111116] border border-white/10 hover:border-white/20 focus:border-amber-500 outline-none rounded-xl pl-11 pr-8 py-3.5 text-xs sm:text-sm text-white font-extrabold appearance-none cursor-pointer transition-all"
-                    >
-                      <option value="">Selecione seu estado</option>
-                      {BRAZIL_STATES.map(st => (
-                        <option key={st.uf} value={st.uf}>{st.name} ({st.uf})</option>
-                      ))}
-                    </select>
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none text-[10px]">▼</span>
-                  </div>
-                  
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const el = document.getElementById('filtro-empresas');
-                      if (el) el.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-black text-xs sm:text-sm uppercase tracking-wider px-6 py-3.5 rounded-xl transition-all duration-200 shrink-0 flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:shadow-orange-500/20"
-                  >
-                    🔍 Buscar
-                  </button>
-                </div>
-
-                {/* Action button triggers for direct smooth scroll */}
-                <div className="grid grid-cols-2 gap-3 mt-5 pt-4 border-t border-white/5">
-                  <button 
-                    type="button"
-                    onClick={() => {
-                      setSelectedTypeFilter('loja');
-                      const el = document.getElementById('filtro-empresas');
-                      if (el) el.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider text-white bg-gradient-to-r from-amber-600 to-orange-600 hover:scale-[1.02] transition-all cursor-pointer shadow-md"
-                  >
-                    🏪 Encontrar Lojas
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={() => {
-                      setSelectedTypeFilter('servico');
-                      const el = document.getElementById('filtro-empresas');
-                      if (el) el.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:scale-[1.02] transition-all cursor-pointer shadow-md"
-                  >
-                    🛠️ Encontrar Serviços
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column: Dynamic National Statistics Block (From Image 2) */}
-            <div className="lg:col-span-5 flex flex-col gap-4 justify-center">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-[#0c0d12]/90 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 shadow-lg hover:border-amber-500/30 transition-all duration-200">
-                  <span className="text-white/60 text-[10px] uppercase font-black tracking-widest font-mono">🏢 Empresas</span>
-                  <span className="text-xl sm:text-2xl font-black text-white font-sans">500+</span>
-                  <span className="text-xs text-white/80 font-bold mt-0.5 font-sans leading-tight">Lojas físicas e virtuais registradas</span>
-                </div>
-                <div className="bg-[#0c0d12]/90 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 shadow-lg hover:border-blue-500/30 transition-all duration-200">
-                  <span className="text-white/60 text-[10px] uppercase font-black tracking-widest font-mono">🛠️ Prestadores</span>
-                  <span className="text-xl sm:text-2xl font-black text-white font-sans">200+</span>
-                  <span className="text-xs text-white/80 font-bold mt-0.5 font-sans leading-tight">Profissionais autônomos ativos</span>
-                </div>
-                <div className="bg-[#0c0d12]/90 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 shadow-lg transition-all duration-200">
-                  <span className="text-white/60 text-[10px] uppercase font-black tracking-widest font-mono">📦 Produtos</span>
-                  <span className="text-xl sm:text-2xl font-black text-white font-sans">10K+</span>
-                  <span className="text-xs text-white/80 font-bold mt-0.5 font-sans leading-tight">Artigos cadastrados nos cardápios</span>
-                </div>
-                <div className="bg-[#0c0d12]/90 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 shadow-lg transition-all duration-200">
-                  <span className="text-white/60 text-[10px] uppercase font-black tracking-widest font-mono">🛒 Pedidos</span>
-                  <span className="text-xl sm:text-2xl font-black text-white font-sans">12K+</span>
-                  <span className="text-xs text-white/80 font-bold mt-0.5 font-sans leading-tight">Mensagens enviadas via WhatsApp</span>
-                </div>
-                <div className="bg-[#0c0d12]/90 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 shadow-lg transition-all duration-200">
-                  <span className="text-white/60 text-[10px] uppercase font-black tracking-widest font-mono">🇧🇷 Estados</span>
-                  <span className="text-xl sm:text-2xl font-black text-white font-sans">BR 27</span>
-                  <span className="text-xs text-white/80 font-bold mt-0.5 font-sans leading-tight">Estados de cobertura da plataforma</span>
-                </div>
-                <div className="bg-[#0c0d12]/90 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 shadow-lg transition-all duration-200">
-                  <span className="text-white/60 text-[10px] uppercase font-black tracking-widest font-mono">🟢 Conexão</span>
-                  <span className="text-xl sm:text-2xl font-black text-emerald-400 font-sans flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_#10b981]" />
-                    100%
-                  </span>
-                  <span className="text-xs text-white/80 font-bold mt-0.5 font-sans leading-tight">Servidores e sinal ativo agora</span>
-                </div>
-              </div>
-
-              {/* Verified Badge */}
-              <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl p-3 text-xs sm:text-sm font-extrabold flex items-center gap-2 uppercase select-none shadow-md">
-                <span className="text-base">🛡️</span>
-                Presente em todo o Brasil! Seguro, confiável e 100% online
-              </div>
-            </div>
-
-          </div>
-
-          {/* Spacer */}
-          <div className="w-full h-1 bg-white/5 my-12" />
-
-          {/* Animated quick stats bar - SEÇÃO DE AUTORIDADE E NÚMEROS */}
-          <div className="grid grid-cols-1 min-[340px]:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 md:gap-14 mt-24 md:mt-32 w-full max-w-5xl border-t border-white/5 pt-12 select-none">
-            <div className="text-center group-hover:scale-105 transition-transform duration-300">
-              <div className="text-3xl md:text-5xl font-sans font-black text-white tracking-tight">{(universalConfig.totalVisits || 12000).toLocaleString()}+</div>
-              <div className="text-xs sm:text-sm text-[var(--primary)] font-black tracking-widest font-mono uppercase mt-2">Acessos Totais</div>
-              <p className="text-xs font-bold text-white/70 mt-1.5 max-w-[180px] mx-auto font-sans leading-tight">Tráfego local constante e verificado diariamente</p>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-5xl font-sans font-black text-emerald-400 flex items-center justify-center gap-2 tracking-tight">
-                <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_15px_#10b981]" />
-                {onlineCount}
-              </div>
-              <div className="text-xs sm:text-sm text-white/90 font-black tracking-widest font-mono uppercase mt-2">Online Agora</div>
-              <p className="text-xs font-bold text-white/70 mt-1.5 max-w-[180px] mx-auto font-sans leading-tight">Espectadores ativos em rádio e TV online</p>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-5xl font-neutral font-black text-amber-500 tracking-tight">100%</div>
-              <div className="text-xs sm:text-sm text-white/90 font-black tracking-widest font-mono uppercase mt-2">Atendimento Direto</div>
-              <p className="text-xs font-bold text-white/70 mt-1.5 max-w-[180px] mx-auto font-sans leading-tight">Chat interno rápido com indicação de parceiros premium</p>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-5xl font-sans font-black text-white tracking-tight">24h</div>
-              <div className="text-xs sm:text-sm text-[var(--primary)] font-black tracking-widest font-mono uppercase mt-2">Sinal Ativo</div>
-              <p className="text-xs font-bold text-white/70 mt-1.5 max-w-[180px] mx-auto font-sans leading-tight">Mídia transmitindo som e imagem continuamente</p>
-            </div>
-          </div>
-
-          {/* ÁREA “MOVIMENTO DA PLATAFORMA” - Sensação de Portal extremamente ativo */}
-          <div className="w-full max-w-4xl mt-12 bg-gradient-to-r from-neutral-950/90 to-[#0e0f14]/80 border border-white/5 shadow-2xl rounded-2xl p-4.5 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4 text-left select-none overflow-hidden relative">
-            <div className="absolute top-0 bottom-0 left-0 w-1 bg-gradient-to-b from-[var(--primary)] to-amber-500" />
-            
-            <div className="flex items-center gap-3">
-              <span className="bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20 text-[10px] font-black tracking-widest px-3 py-1.5 rounded-lg font-mono flex items-center gap-1.5 shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] animate-ping" />
-                DENTRO DO PORTAL
-              </span>
-              <div className="font-mono text-white/35 text-[10px] sm:text-xs tracking-wider shrink-0 uppercase font-black">
-                Atividades Ao Vivo:
-              </div>
-            </div>
-
-            <div className="flex-1 w-full overflow-hidden flex items-center text-xs md:text-sm text-neutral-200">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activePlatformActivityIndex}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.35 }}
-                  className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 px-3 w-full"
+          {/* Direct Search Bar */}
+          <div className="w-full max-w-3xl mt-10 bg-neutral-900/90 border border-white/10 rounded-2xl p-4 sm:p-5 shadow-2xl backdrop-blur-md text-left">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40 text-sm">📍</span>
+                <select
+                  value={selectedStateFilter}
+                  onChange={(e) => setSelectedStateFilter(e.target.value)}
+                  className="w-full bg-[#111116] border border-white/10 hover:border-white/20 focus:border-amber-500 outline-none rounded-xl pl-10 pr-8 py-3 text-xs sm:text-sm text-white font-bold appearance-none cursor-pointer transition-all"
                 >
-                  <span className="text-emerald-400 font-bold text-[10px] sm:text-xs font-mono bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded shrink-0 self-start sm:self-auto">
-                    {platformActivitiesList[activePlatformActivityIndex].time}
-                  </span>
-                  <span className="font-semibold text-white/90 truncate leading-relaxed">
-                    {platformActivitiesList[activePlatformActivityIndex].text}
-                  </span>
-                </motion.div>
-              </AnimatePresence>
+                  <option value="">Todos os Estados (Brasil)</option>
+                  {BRAZIL_STATES.map(st => (
+                    <option key={st.uf} value={st.uf}>{st.name} ({st.uf})</option>
+                  ))}
+                </select>
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none text-[10px]">▼</span>
+              </div>
+
+              <div className="flex-1 relative">
+                <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-white/40">
+                  <Search size={16} />
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="Nome da empresa ou ramo..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-[#111116] border border-white/10 hover:border-white/20 focus:border-amber-500 outline-none rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm text-white font-medium transition-all"
+                />
+              </div>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById('filtro-empresas');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="bg-amber-500 hover:bg-amber-400 text-black font-black text-xs sm:text-sm uppercase tracking-wider px-6 py-3 rounded-xl transition-all duration-200 shrink-0 flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+              >
+                🔍 Buscar
+              </button>
             </div>
           </div>
 
@@ -4085,17 +3878,17 @@ function AppContent() {
               </div>
             )}
 
-            {/* TV MINHA DIVULGAÇÃO & DIGITAL SIGNAGE */}
-            <div className="mb-14 md:mb-20 pt-8 md:pt-12 border-t border-white/5">
+            {/* TV MINHA DIVULGAÇÃO & RÁDIO AO VIVO */}
+            <div id="tv-destaque" className="mb-14 md:mb-20 pt-8 md:pt-12 border-t border-white/5 scroll-mt-24">
               <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 md:mb-10 gap-3">
                 <div>
-                  <span className="text-[var(--primary)] text-xs font-black font-mono tracking-[0.2em] uppercase">CANAL DE TRANSMISSÃO DIGITAL</span>
+                  <span className="text-[var(--primary)] text-xs font-black font-mono tracking-[0.2em] uppercase">CANAL OFICIAL DE TRANSMISSÃO</span>
                   <h2 className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight mt-1.5 flex items-center gap-2">
-                    📺 TV Minha Divulgação
+                    📺 TV Minha Divulgação — Promoções e Destaques
                   </h2>
                 </div>
-                <p className="text-xs sm:text-sm text-white/50 max-w-sm leading-relaxed">
-                  Transmissão contínua de ofertas, mídias e destaques das empresas e comércios locais!
+                <p className="text-xs sm:text-sm text-white/60 max-w-md leading-relaxed">
+                  Canal oficial de promoções, mídias e ofertas especiais das empresas cadastradas.
                 </p>
               </div>
 
@@ -4168,6 +3961,53 @@ function AppContent() {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* COMPACT RÁDIO MINHA DIVULGAÇÃO */}
+              <div className="w-full max-w-4xl lg:max-w-5xl mx-auto mt-6 bg-[#0a0a10] border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+                <div className="flex items-center gap-4">
+                  <button 
+                    type="button"
+                    onClick={handleRadioTogglePlay}
+                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shrink-0 ${radioPlaying ? 'bg-red-600 text-white hover:bg-red-500 shadow-red-500/20' : 'bg-[var(--primary)] text-black hover:scale-105 shadow-[rgb(251,191,36)]/20'} shadow-lg cursor-pointer`}
+                  >
+                    {radioPlaying ? <Pause size={24} /> : <Play size={24} className="translate-x-0.5" />}
+                  </button>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${radioPlaying ? 'bg-red-500 animate-pulse' : 'bg-white/20'}`} />
+                      <h4 className="text-sm font-extrabold text-white">📻 Rádio Minha Divulgação — Ao Vivo</h4>
+                    </div>
+                    <p className="text-xs text-white/50 mt-0.5">Ouça nossa programação e ofertas em tempo real.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 w-full sm:w-64">
+                  <button 
+                    type="button"
+                    onClick={() => setRadioVolume(prev => prev === 0 ? 0.8 : 0)}
+                    className="text-white/60 hover:text-white"
+                  >
+                    {radioVolume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                  </button>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="1" 
+                    step="0.01"
+                    value={radioVolume}
+                    onChange={(e) => setRadioVolume(parseFloat(e.target.value))}
+                    className="flex-1 accent-[var(--primary)] h-1.5 rounded-full cursor-pointer bg-neutral-800"
+                  />
+                  <span className="text-[10px] font-mono text-white/40">{Math.round(radioVolume * 100)}%</span>
+                </div>
+
+                <audio 
+                  ref={radioAudioRef}
+                  src={activeReferralPartner?.radioLink || customRadioLink || universalConfig.radioLink || (appData && appData.siteInfo && appData.siteInfo.radioLink)}
+                  onPlay={() => setRadioPlaying(true)}
+                  onPause={() => setRadioPlaying(false)}
+                />
               </div>
             </div>
 
@@ -4523,409 +4363,37 @@ function AppContent() {
         </div>
       </section>
 
-      {/* Live Radio & TV Streaming Broadcast */}
-      {showRadio && (
-      <section id="radio-tv" className="relative w-full py-16 md:py-24 bg-[#0a0a10] border-b border-white/5 overflow-hidden">
-        
-        {/* Background graphics */}
-        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[150px] pointer-events-none" />
-        <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[400px] h-[400px] bg-[var(--primary)]/5 rounded-full blur-[150px] pointer-events-none" />
-
-        <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6">
-          
-          {/* Section Header */}
-          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16">
-            <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase">Transmissões Digitais</span>
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">
-              {activeReferralPartner?.radioTitle ? activeReferralPartner.radioTitle : (
-                appData?.siteInfo?.radioTitle ? appData.siteInfo.radioTitle : "Rádio & TV Online Ao Vivo"
-              )}
-            </h2>
-            <p className="text-sm text-white/50 mt-3">
-              {activeReferralPartner?.radioSub ? activeReferralPartner.radioSub : (
-                appData?.siteInfo?.radioSub ? appData.siteInfo.radioSub : "Acompanhe nossa programação musical completa em áudio de alta definição e assista aos melhores spots de anúncios na nossa TV interativa."
-              )}
-            </p>
+      {/* Call to Action Section */}
+      <section className="w-full py-16 md:py-20 bg-gradient-to-b from-[#0a0a10] to-black border-b border-white/5 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-amber-500/5 rounded-full blur-[140px] pointer-events-none" />
+        <div className="relative w-full max-w-5xl mx-auto px-4 md:px-6 text-center z-10 select-none">
+          <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 px-4 py-1.5 rounded-full text-xs font-mono font-bold uppercase tracking-widest mb-6">
+            🚀 Faça Parte do Guia
           </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            
-            {/* CUSTOM RADIO CONTAINER - Left Column */}
-            <div className="lg:col-span-5 bg-black/40 border border-white/10 rounded-3xl p-6 md:p-8 flex flex-col items-center shadow-2xl">
-              
-              <div className="w-full flex justify-between items-center mb-6">
-                <span className="text-[10px] text-white/50 tracking-widest font-mono uppercase bg-white/5 px-2.5 py-1 rounded-full">
-                  Sinal Digital HD
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${radioPlaying ? 'bg-red-500 animate-pulse' : 'bg-white/20'}`} />
-                  <span className="text-[10px] text-white/80 font-bold uppercase tracking-widest">RÁDIO AO VIVO</span>
-                </div>
-              </div>
-
-              {/* Golden Vinyl Disk sleeve */}
-              <div className="relative w-44 h-44 my-4 flex items-center justify-center">
-                {/* Spinning Golden Vinyl Disk */}
-                <div 
-                  className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-500 via-yellow-600 to-amber-400 p-0.5 shadow-2xl"
-                  style={{ 
-                    animation: 'spin 15s linear infinite',
-                    animationPlayState: radioPlaying ? 'running' : 'paused',
-                    boxShadow: radioPlaying ? '0 0 30px rgba(251, 191, 36, 0.25)' : 'none'
-                  }}
-                >
-                  <div className="w-full h-full rounded-full bg-neutral-950 flex items-center justify-center border border-white/10 relative">
-                    <div className="absolute inset-4 rounded-full border border-white/5" />
-                    <div className="absolute inset-8 rounded-full border border-white/5" />
-                    <div className="absolute inset-12 rounded-full border border-white/10" />
-                    
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-400 p-1 flex items-center justify-center">
-                      <div className="w-full h-full rounded-full bg-black flex items-center justify-center font-black text-[8px] text-[var(--primary)] font-mono">
-                        MD FM
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className={`absolute inset-10 rounded-full bg-[var(--primary)]/25 blur-xl pointer-events-none transition-opacity duration-500 ${radioPlaying ? 'opacity-100' : 'opacity-0'}`} />
-              </div>
-
-              <p className="text-xs text-[var(--primary)] font-extrabold tracking-widest uppercase mt-4 mb-1">
-                Minha Divulgação Rádio
-              </p>
-              <span className="text-[10px] text-white/50 tracking-wider font-mono uppercase text-center">
-                Ouça nossa programação ao vivo.
-              </span>
-
-              {/* Custom controls wrapper */}
-              <div className="w-full mt-8 border-t border-white/5 pt-6 flex flex-col items-center">
-                
-                {/* Play Button */}
-                <button 
-                  type="button"
-                  onClick={handleRadioTogglePlay}
-                  className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ${radioPlaying ? 'bg-red-600 text-white hover:bg-red-500 shadow-red-500/10' : 'bg-[var(--primary)] text-black hover:scale-105 shadow-[rgb(251,191,36)]/10'} shadow-xl`}
-                >
-                  {radioPlaying ? <Pause size={28} /> : <Play size={28} className="translate-x-0.5" />}
-                </button>
-
-                {/* Custom volume controller */}
-                <div className="w-full flex items-center gap-3 mt-6 px-4">
-                  <button 
-                    type="button"
-                    onClick={() => setRadioVolume(prev => prev === 0 ? 0.8 : 0)}
-                    className="text-white/60 hover:text-white"
-                  >
-                    {radioVolume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                  </button>
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="1" 
-                    step="0.01"
-                    value={radioVolume}
-                    onChange={(e) => setRadioVolume(parseFloat(e.target.value))}
-                    className="flex-1 accent-[var(--primary)] opacity-70 hover:opacity-100 h-1 rounded-full cursor-pointer bg-neutral-800"
-                  />
-                  <span className="text-[10px] font-mono text-white/40">{Math.round(radioVolume * 100)}%</span>
-                </div>
-
-                <audio 
-                  ref={radioAudioRef}
-                  src={activeReferralPartner?.radioLink || customRadioLink || universalConfig.radioLink || (appData && appData.siteInfo && appData.siteInfo.radioLink)}
-                  onPlay={() => setRadioPlaying(true)}
-                  onPause={() => setRadioPlaying(false)}
-                />
-
-                <div className="flex items-end gap-1 h-6 mt-6 select-none">
-                  {[0.1, 0.3, 0.2, 0.5, 0.4, 0.6, 0.3, 0.5, 0.2, 0.1, 0.4].map((delay, i) => (
-                    <div 
-                      key={i} 
-                      className={`w-1 bg-[#ff8a00]/60 rounded-full ${radioPlaying ? 'animate-pulse' : 'h-1'}`}
-                      style={{ 
-                        animationDuration: radioPlaying ? '0.8s' : undefined,
-                        animationDelay: radioPlaying ? `${delay}s` : undefined,
-                        height: radioPlaying ? '100%' : '4px'
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* TV ONLINE STREAMING Broadcast - Right Column */}
-            {showVideos && (
-              <div className="lg:col-span-7 flex flex-col items-center">
-                
-                {/* TV Showcase framing */}
-                <div className="w-full max-w-[340px] aspect-[9/16] rounded-[40px] overflow-hidden border-[12px] border-[#1d1d26] bg-black shadow-2xl relative">
-                  
-                  {/* live indicator badge overlay */}
-                  <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1.5 rounded-full text-[9px] font-black tracking-widest uppercase z-20 flex items-center gap-1.5 shadow-lg shadow-black/25 select-none">
-                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-                    TV Online Ao Vivo
-                  </div>
-
-                  {/* simulated online users count indicator overlay */}
-                  <div className="absolute bottom-4 left-4 bg-emerald-950/90 backdrop-blur-md border border-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-[9px] font-bold tracking-widest uppercase z-10 flex items-center gap-1 leading-none select-none">
-                    <Users size={10} /> {visitorCount} online
-                  </div>
-
-                  {/* TV playoverlay trigger */}
-                  <AnimatePresence>
-                    {isMuted && (
-                      <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-black/75 backdrop-blur-sm flex flex-col items-center justify-center z-20 cursor-pointer p-6 text-center select-none" 
-                        onClick={() => setIsMuted(false)}
-                      >
-                        <div className="w-16 h-16 rounded-full bg-[var(--primary)] text-black flex items-center justify-center text-xl shadow-lg mb-4">
-                          🔇
-                        </div>
-                        <span className="text-white font-extrabold text-xs uppercase tracking-wider">Clique para Ativar Som da TV</span>
-                        <span className="text-white/40 text-[9px] tracking-widest font-mono uppercase mt-2">Transmissão comercial ativa</span>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Video Player */}
-                  <video 
-                    ref={videoRef}
-                    autoPlay 
-                    playsInline 
-                    muted={isMuted}
-                    onEnded={handleVideoEnd}
-                    onTimeUpdate={handleTimeUpdate}
-                    className="w-full h-full object-cover"
-                  />
-
-                  {/* Floating Mute Trigger controls */}
-                  <button 
-                    type="button"
-                    className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-black/60 border border-white/10 hover:border-white/30 text-white flex items-center justify-center cursor-pointer z-10 transition-all text-xs" 
-                    onClick={() => setIsMuted(!isMuted)}
-                  >
-                    {isMuted ? '🔇' : '🔊'}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-      )}
-
-      {/* Professional Services Presentation */}
-      <section id="servicos" className="w-full py-20 md:py-28 bg-[#050508] border-b border-white/5 relative">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[var(--primary)]/5 rounded-full blur-[140px] pointer-events-none" />
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-          
-          {/* Section Header */}
-          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16 md:mb-20 select-none">
-            <span className="text-[var(--primary)] text-xs font-black font-mono tracking-[0.2em] uppercase">SOLUÇÕES DE ALTA PERFORMANCE</span>
-            <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mt-2">
-              💼 Nossas Áreas de Divulgação
-            </h2>
-            <p className="text-sm sm:text-base text-white/50 mt-4 leading-relaxed">
-              Formatos de mídia integrada que garantem audiência contínua, visibilidade empresarial e conversão direta para o seu caixa.
-            </p>
-          </div>
-
-          {/* Grid List */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {SERVICES_DATA.map((service, idx) => {
-              const ServiceIcon = service.icon;
-              return (
-                <motion.div 
-                  key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.05, duration: 0.4 }}
-                  className="bg-gradient-to-b from-[#0f1016] to-[#08080c] border border-white/5 hover:border-[var(--primary)]/30 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1.5 transition-all duration-300 shadow-xl select-none group relative overflow-hidden"
-                >
-                  <div className="absolute top-0 left-0 w-full h-1 bg-[var(--primary)] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
-                  <div>
-                    {/* Icon Wrapper */}
-                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${service.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-[0_4px_15px_rgba(0,0,0,0.4)]`}>
-                      <ServiceIcon size={22} className="stroke-[2.5]" />
-                    </div>
-
-                    <h4 className="text-base font-black text-white group-hover:text-[var(--primary)] transition-colors duration-200">{service.title}</h4>
-                    <p className="text-xs text-white/50 mt-3 leading-relaxed font-semibold">{service.desc}</p>
-                  </div>
-
-                  {/* Action query indicator */}
-                  <div className="w-full border-t border-white/5 mt-6 pt-4 text-left">
-                    <span className="text-[9px] text-[var(--primary)] font-black uppercase tracking-widest inline-flex items-center gap-1 group-hover:gap-2 transition-all">
-                      VERIFICAR SINAL ATIVO <ChevronRight size={10} className="stroke-[3]" />
-                    </span>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-
-          {/* Section footer info */}
-          <div className="mt-20 bg-gradient-to-r from-amber-500/5 to-transparent border border-white/5 rounded-[28px] p-8 md:p-12 flex flex-col md:flex-row justify-between items-center gap-8 max-w-5xl mx-auto select-none">
-            <div className="text-center md:text-left">
-              <h4 className="text-xl font-black text-white">
-                {activeReferralPartner?.ctaTitle ? activeReferralPartner.ctaTitle : (
-                  appData?.siteInfo?.ctaTitle ? appData.siteInfo.ctaTitle : "Pronto para dominar seu segmento comercial?"
-                )}
-              </h4>
-              <p className="text-xs sm:text-sm text-white/60 mt-2 max-w-lg leading-relaxed">
-                {activeReferralPartner?.ctaSub ? activeReferralPartner.ctaSub : (
-                  appData?.siteInfo?.ctaSub ? appData.siteInfo.ctaSub : "Não perca vendas para seu maior concorrente da região. Fale agora mesmo com nossa central comercial no WhatsApp!"
-                )}
-              </p>
-            </div>
-            <a 
-              href={`https://wa.me/${(activeReferralPartner?.whatsapp || appData?.siteInfo?.social?.wa || appData?.pricing?.waLink || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Olá! Acessei o portal ${activeReferralPartner?.customTitle || appData?.siteInfo?.name || ''} e gostaria de falar com um consultor sobre anúncios.`)}`}
-              target="_blank" 
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
+            Divulgue sua empresa para milhares de clientes
+          </h2>
+          <p className="text-sm sm:text-base text-white/70 max-w-2xl mx-auto mt-4 leading-relaxed font-semibold">
+            Presença no Guia Comercial Digital, banners rotativos e canal oficial de transmissão com link direto para o seu WhatsApp.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
+            <a
+              href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Gostaria%20de%20divulgar%20minha%20empresa%20no%20Guia%20Comercial%20Minha%20Divulga%C3%A7%C3%A3o."
+              target="_blank"
               rel="noreferrer"
-              className="bg-[var(--primary)] hover:bg-[#ffe066] text-black hover:scale-105 hover:shadow-[0_0_20px_rgba(251,191,36,0.3)] px-8 py-4 rounded-full font-black text-xs uppercase tracking-widest text-center transition-all duration-300 flex items-center gap-2"
+              className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all duration-300 shadow-xl hover:scale-105 cursor-pointer w-full sm:w-auto decoration-transparent"
             >
-              <Smartphone size={14} /> Falar com Consultor
+              🚀 Divulgue Sua Empresa (WhatsApp)
+            </a>
+            <a
+              href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Acessei%20o%20portal%20Minha%20Divulga%C3%A7%C3%A3o%20e%20gostaria%20de%20tirar%20d%C3%BAvidas."
+              target="_blank"
+              rel="noreferrer"
+              className="bg-white/10 hover:bg-white/15 text-white border border-white/20 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto decoration-transparent"
+            >
+              💬 Falar no WhatsApp
             </a>
           </div>
-
-        </div>
-      </section>
-
-      {/* Scout Category Vacancy List */}
-      <section id="anuncie" className="w-full py-16 md:py-24 bg-[#0a0a10] border-b border-white/5 relative">
-        <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6 z-10">
-          
-          {/* Scarcity Category Status */}
-          <div className="select-none">
-            <div className="max-w-3xl mb-8">
-              <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase mb-2 block">VAGAS EXCLUSIVAS DE SEGMENTOS</span>
-              <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                Categorias Oficiais e Vagas
-              </h3>
-              <p className="text-sm text-white/65 mt-2 leading-relaxed">
-                {appData.sections.segments.highlight} Garantimos exclusividade categórica em algumas categorias para parceiros masters, confira o andamento:
-              </p>
-            </div>
-
-            {/* Table display segments */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {appData.segmentsList.map(seg => (
-                <div 
-                  key={seg.name} 
-                  className="bg-[#0f1016]/40 border border-white/5 rounded-2xl p-4 flex justify-between items-center hover:bg-black/50 transition-all duration-200"
-                >
-                  <div>
-                    <h4 className="text-sm font-extrabold text-white">{seg.name}</h4>
-                    <p className="text-[10px] text-white/45 mt-1 uppercase font-mono font-bold">{seg.status === "Ocupado" ? "Sponsor Exclusivo" : "Categoria Livre"}</p>
-                  </div>
-                  <span className={`text-[9px] font-black tracking-widest uppercase px-2.5 py-1 rounded-full ${seg.status === "Ocupado" ? 'bg-amber-950/80 text-amber-500 border border-amber-500/20' : 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/20'}`}>
-                    {seg.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <div 
-              onClick={() => setIsCheckoutOpen(true)}
-              className="mt-8 bg-black/40 hover:bg-black/60 border border-white/5 hover:border-[var(--primary)]/30 rounded-2xl p-4.5 cursor-pointer transition-all duration-300 text-center"
-            >
-              <span className="text-xs text-[var(--primary)] font-black uppercase tracking-widest font-mono">
-                ⚡ {appData.sections.segments.callToAction || 'Anuncie para dominar seu segmento comercial!'}
-              </span>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* Partner Outcomes and Reviews */}
-      <section id="depoimentos" className="w-full py-20 md:py-28 bg-[#050508] border-b border-white/5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-radial-gradient from-emerald-500/5 via-transparent to-transparent opacity-40 pointer-events-none" />
-        <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6">
-          
-          {/* Section Header */}
-          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16 select-none">
-            <span className="text-[var(--primary)] text-xs font-black font-mono tracking-[0.2em] uppercase">MÍDIA E AUTORIDADE</span>
-            <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mt-2">
-              📊 Resultados de Alto Impacto
-            </h2>
-            <p className="text-sm text-white/50 mt-3 leading-relaxed max-w-xl">
-              Nossos indicadores comprovam o crescimento e a conversão de novos clientes que as marcas parceiras obtêm todos os dias.
-            </p>
-          </div>
-
-          {/* Premium Animated Credibility Metrics Grid */}
-          <div className="grid grid-cols-1 min-[340px]:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-16 select-none">
-            <div className="bg-[#0f1016]/60 border border-white/5 hover:border-[var(--primary)]/20 rounded-3xl p-6 flex flex-col justify-between hover:bg-black/40 transition-all duration-300">
-              <span className="text-3xl sm:text-4xl font-mono font-black text-[var(--primary)]">98.2%</span>
-              <div>
-                <h4 className="text-xs sm:text-sm font-extrabold text-white mt-4">Satisfação Comercial</h4>
-                <p className="text-[10px] sm:text-xs text-white/40 mt-1 leading-normal font-semibold">Empresas que divulgam e renovam seus anúncios mensais.</p>
-              </div>
-            </div>
-            <div className="bg-[#0f1016]/60 border border-white/5 hover:border-emerald-500/20 rounded-3xl p-6 flex flex-col justify-between hover:bg-black/40 transition-all duration-300">
-              <span className="text-3xl sm:text-4xl font-mono font-black text-emerald-400">+45 Mil</span>
-              <div>
-                <h4 className="text-xs sm:text-sm font-extrabold text-white mt-4">Leads de WhatsApp</h4>
-                <p className="text-[10px] sm:text-xs text-white/40 mt-1 leading-normal font-semibold">Contatos comerciais diretos disparados para os anunciantes.</p>
-              </div>
-            </div>
-            <div className="bg-[#0f1016]/60 border border-white/5 hover:border-blue-500/20 rounded-3xl p-6 flex flex-col justify-between hover:bg-black/40 transition-all duration-300">
-              <span className="text-3xl sm:text-4xl font-mono font-black text-blue-400">+100</span>
-              <div>
-                <h4 className="text-xs sm:text-sm font-extrabold text-white mt-4">Parceiros Ativos</h4>
-                <p className="text-[10px] sm:text-xs text-white/40 mt-1 leading-normal font-semibold">Marcas locais anunciando estrategicamente em rádio e TV.</p>
-              </div>
-            </div>
-            <div className="bg-[#0f1016]/60 border border-white/5 hover:border-purple-500/20 rounded-3xl p-6 flex flex-col justify-between hover:bg-black/40 transition-all duration-300">
-              <span className="text-3xl sm:text-4xl font-mono font-black text-purple-400">24h/Dia</span>
-              <div>
-                <h4 className="text-xs sm:text-sm font-extrabold text-white mt-4">Sinal Sem Quedas</h4>
-                <p className="text-[10px] sm:text-xs text-white/40 mt-1 leading-normal font-semibold">Exposição contínua e sem quedas em nossa central multimídia.</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center mb-14 select-none">
-            <span className="text-[var(--primary)] text-xs font-black font-mono tracking-[0.2em] uppercase">PROVA SOCIAL E CREDIBILIDADE</span>
-            <h3 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">💬 O que nossos clientes dizem</h3>
-            <p className="text-xs sm:text-sm text-white/50 mt-3 max-w-lg mx-auto">Relatos reais de empresários locais que expandiram sua visibilidade e multiplicaram suas vendas anunciando conosco.</p>
-          </div>
- 
-          {/* Written reviews carousel track / grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 select-none">
-            {appData.testimonials.map((t, idx) => (
-              <div 
-                key={idx}
-                className="bg-gradient-to-b from-[#0f1016] to-[#08080c] border border-white/5 hover:border-[var(--primary)]/20 rounded-[28px] p-7 flex flex-col justify-between hover:-translate-y-1.5 hover:shadow-[0_12px_30px_rgba(251,191,36,0.03)] transition-all duration-300"
-              >
-                <div>
-                  {/* Stars indicator rating */}
-                  <div className="flex gap-1 text-amber-400 mb-5">
-                    {[...Array(5)].map((_, i) => <Star key={i} size={14} fill="currentColor" />)}
-                  </div>
-                  <p className="text-xs sm:text-sm text-white/75 italic leading-relaxed font-semibold">"{t.content}"</p>
-                </div>
- 
-                {/* Author details card */}
-                <div className="flex items-center gap-3.5 mt-8 border-t border-white/5 pt-6">
-                  <div className="relative">
-                    <img src={t.avatar} alt={t.author} className="w-12 h-12 rounded-full object-cover border-2 border-white/10 shadow-md" referrerPolicy="no-referrer" />
-                    <span className="absolute -bottom-1 -right-1 bg-emerald-500 border-2 border-black w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] text-white">✓</span>
-                  </div>
-                  <div>
-                    <h5 className="text-xs sm:text-sm font-extrabold text-white">{t.author}</h5>
-                    <p className="text-[10px] text-[var(--primary)] tracking-wider uppercase font-extrabold mt-0.5">{t.role || 'Parceiro Oficial'}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
         </div>
       </section>
 
