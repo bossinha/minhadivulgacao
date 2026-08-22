@@ -818,6 +818,43 @@ function AppContent() {
   const [isTvLoading, setIsTvLoading] = useState(true);
   const tvIframeRef = useRef<HTMLIFrameElement>(null);
 
+  const sendTvVolume = (vol: number, muted: boolean) => {
+    try {
+      const cw = tvIframeRef.current?.contentWindow;
+      if (cw) {
+        cw.postMessage({ type: 'SET_VOLUME', volume: vol, muted }, '*');
+        cw.postMessage({ action: 'setVolume', volume: vol, muted }, '*');
+        cw.postMessage({ type: 'volume', value: vol, muted }, '*');
+        cw.postMessage({ event: 'command', func: 'setVolume', args: [vol * 100] }, '*');
+        if (muted || vol === 0) {
+          cw.postMessage({ type: 'MUTE' }, '*');
+          cw.postMessage({ event: 'command', func: 'mute', args: [] }, '*');
+        } else {
+          cw.postMessage({ type: 'UNMUTE' }, '*');
+          cw.postMessage({ event: 'command', func: 'unMute', args: [] }, '*');
+        }
+      }
+    } catch (err) {
+      console.error('Error sending volume to TV iframe:', err);
+    }
+  };
+
+  const handleTvVolumeChange = (newVol: number) => {
+    setTvVolume(newVol);
+    if (newVol > 0 && tvMuted) {
+      setTvMuted(false);
+      sendTvVolume(newVol, false);
+    } else {
+      sendTvVolume(newVol, tvMuted);
+    }
+  };
+
+  const handleTvMuteToggle = () => {
+    const newMuted = !tvMuted;
+    setTvMuted(newMuted);
+    sendTvVolume(tvVolume, newMuted);
+  };
+
   const reloadTvPlayer = () => {
     setIsTvLoading(true);
     setTvKey(prev => prev + 1);
@@ -3931,22 +3968,61 @@ function AppContent() {
                     src={(() => {
                       const baseUrl = universalConfig?.horizontalTvLink || (appData && appData.siteInfo && appData.siteInfo.horizontalTvLink) || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando';
                       const sep = baseUrl.includes('?') ? '&' : '?';
-                      return `${baseUrl}${sep}_t=${tvKey}`;
+                      const volParam = `vol=${Math.round(tvVolume * 100)}&muted=${tvMuted ? 1 : 0}&autoplay=1&fs=0&fullscreen=0`;
+                      return `${baseUrl}${sep}_t=${tvKey}&${volParam}`;
                     })()} 
                     title="TV Minha Divulgação"
                     className="w-full h-full border-0 select-none"
                     loading="eager"
-                    allow="autoplay *; encrypted-media; fullscreen; picture-in-picture; audio"
-                    onLoad={() => setIsTvLoading(false)}
+                    allow="autoplay *; encrypted-media; audio"
+                    allowFullScreen={false}
+                    onLoad={() => {
+                      setIsTvLoading(false);
+                      sendTvVolume(tvVolume, tvMuted);
+                    }}
                     onError={() => setIsTvLoading(false)}
                   />
                 </div>
 
-                {/* Bottom Bar Controls - Clean Title & Status */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-2.5 sm:mt-3 px-3 sm:px-4 py-2 bg-[#121422]/90 rounded-b-xl sm:rounded-b-2xl border-t border-white/5">
+                {/* Bottom Bar Controls - Volume & Status */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-2.5 sm:mt-3 px-3 sm:px-4 py-2.5 bg-[#121422]/90 rounded-b-xl sm:rounded-b-2xl border-t border-white/5">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] sm:text-xs font-bold text-white/80">📺 Programação de Promoções e Ofertas</span>
+                    <span className="text-[11px] sm:text-xs font-bold text-white/80">📺 TV Minha Divulgação</span>
+                    <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Ao Vivo</span>
                   </div>
+
+                  {/* Volume Control Bar */}
+                  <div className="flex items-center gap-3 w-full sm:w-auto bg-black/40 px-3 py-1.5 rounded-xl border border-white/10">
+                    <button
+                      type="button"
+                      onClick={handleTvMuteToggle}
+                      className="text-white/70 hover:text-white transition-colors cursor-pointer"
+                      title={tvMuted || tvVolume === 0 ? "Ativar som da TV" : "Silenciar TV"}
+                    >
+                      {tvMuted || tvVolume === 0 ? (
+                        <VolumeX size={16} className="text-red-400" />
+                      ) : (
+                        <Volume2 size={16} className="text-amber-400" />
+                      )}
+                    </button>
+
+                    <div className="flex items-center gap-2 flex-1 sm:w-36">
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value={tvMuted ? 0 : tvVolume}
+                        onChange={(e) => handleTvVolumeChange(parseFloat(e.target.value))}
+                        className="w-full accent-[var(--primary)] h-1.5 rounded-full cursor-pointer bg-neutral-800"
+                        title="Ajustar volume da TV"
+                      />
+                      <span className="text-[10px] font-mono text-white/60 min-w-[28px] text-right">
+                        {tvMuted ? '0%' : `${Math.round(tvVolume * 100)}%`}
+                      </span>
+                    </div>
+                  </div>
+
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -3954,11 +4030,8 @@ function AppContent() {
                       className="text-[10px] font-mono font-bold text-emerald-300 hover:text-emerald-200 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg border border-emerald-500/30 transition-all flex items-center gap-1 cursor-pointer active:scale-95"
                       title="Recarregar player da TV"
                     >
-                      <span>🔄 Atualizar Player</span>
+                      <span>🔄 Atualizar Sinal</span>
                     </button>
-                    <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-300 bg-amber-500/10 px-3 py-1 rounded-lg border border-amber-500/20">
-                      <span>🟢 Transmissão Ativa</span>
-                    </div>
                   </div>
                 </div>
               </div>
