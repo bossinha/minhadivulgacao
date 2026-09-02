@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { HashRouter, Routes, Route, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -475,7 +475,7 @@ interface AppData {
 const IMGBB_API_KEY = "b84e5dcba9b322fbb2c1adde190bfe95";
 
 export const uploadToImgBB = async (file: File): Promise<string> => {
-  const apiKey = (import.meta.env as any).VITE_IMGBB_API_KEY || IMGBB_API_KEY;
+  const apiKey = (import.meta as any).env?.VITE_IMGBB_API_KEY || IMGBB_API_KEY;
   const formData = new FormData();
   formData.append("image", file);
 
@@ -665,6 +665,9 @@ function AppContent() {
         }
       });
       setAdvertiserCompanies(ads);
+      try {
+        localStorage.setItem(`cached_ads_${tid}`, JSON.stringify(ads));
+      } catch (e) {}
     } catch (err) {
       console.error("Error loading advertisers", err);
     } finally {
@@ -862,7 +865,16 @@ function AppContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
-  const [appData, setAppData] = useState<AppData | null>(null);
+  const [appData, setAppData] = useState<AppData | null>(() => {
+    try {
+      const pathSlug = slugify(window.location.pathname.replace(/^\/+/, '') || 'fortaleza');
+      const cached = localStorage.getItem(`cached_app_data_${pathSlug}`);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (e) {}
+    return DEFAULT_DATA;
+  });
   const [isBlocked, setIsBlocked] = useState(false);
   const [showVideos, setShowVideos] = useState(false);
   const [showRadio, setShowRadio] = useState(true);
@@ -871,6 +883,14 @@ function AppContent() {
   const [hideAdvertiserAuth, setHideAdvertiserAuth] = useState(true);
   const [affiliates, setAffiliates] = useState<any[]>([]);
   const [isAffLoading, setIsAffLoading] = useState(false);
+
+  // Auto-clear TV loading spinner after safety timeout
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsTvLoading(false);
+    }, 3500);
+    return () => clearTimeout(timer);
+  }, [tvKey]);
 
   // --- Modal states to replace window.prompt for sandboxed iframes ---
   const [showAddCityModal, setShowAddCityModal] = useState(false);
@@ -901,7 +921,16 @@ function AppContent() {
   const [activeReferralPartner, setActiveReferralPartner] = useState<any>(null);
 
   // --- Advertiser & Mini-Site States ---
-  const [advertiserCompanies, setAdvertiserCompanies] = useState<any[]>([]);
+  const [advertiserCompanies, setAdvertiserCompanies] = useState<any[]>(() => {
+    try {
+      const pathSlug = slugify(window.location.pathname.replace(/^\/+/, '') || 'fortaleza');
+      const cached = localStorage.getItem(`cached_ads_${pathSlug}`);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (e) {}
+    return [];
+  });
   const [isAdLoading, setIsAdLoading] = useState(false);
   const [activeMiniSiteCompany, setActiveMiniSiteCompany] = useState<any | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -1150,7 +1179,6 @@ function AppContent() {
   useEffect(() => {
     if (location.pathname !== '/login') {
       const fetchCity = async () => {
-        setIsLoading(true);
         try {
           const targetTenantId = tenantId || 'fortaleza';
           const id = slugify(targetTenantId);
@@ -1185,6 +1213,9 @@ function AppContent() {
               }
             }
             setAppData(loadedData);
+            try {
+              localStorage.setItem(`cached_app_data_${id}`, JSON.stringify(loadedData));
+            } catch (e) {}
             setCustomRadioLink(tData.customRadioLink || '');
             fetchAdvertisers(targetTenantId);
             fetchReviews(targetTenantId);
@@ -1206,7 +1237,7 @@ function AppContent() {
             setHideAdvertiserAuth(tData.hideAdvertiserAuth !== false);
           } else {
             console.warn("Cidade nÃ£o encontrada no banco");
-            setAppData(null);
+            fetchAdvertisers(targetTenantId);
           }
         } catch (e) {
           console.error(e);
@@ -1216,7 +1247,7 @@ function AppContent() {
       };
       fetchCity();
     } else {
-      // Clear data if at root or login and not logged in
+      // Clear data if at login and not logged in
       if (!localStorage.getItem('tenantId')) {
         setAppData(null);
       }
@@ -1439,10 +1470,12 @@ function AppContent() {
           }
         }
       } else {
-        // Only clear if not a manual tenant
+        // Only clear user if not a manual tenant
         if (!localStorage.getItem('tenantId')) {
           setUser(null);
-          setAppData(null);
+          if (location.pathname === '/login') {
+            setAppData(null);
+          }
         }
       }
       setIsAuthChecking(false);
@@ -3305,7 +3338,15 @@ function AppContent() {
     );
   }
 
-  if (isLoading || isAuthChecking) {
+  if (location.pathname === '/login' && isAuthChecking) {
+    return (
+      <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Inter' }}>
+        <p>Carregando...</p>
+      </div>
+    );
+  }
+
+  if (!appData && (isLoading || isAuthChecking)) {
     return (
       <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Inter' }}>
         <p>Carregando...</p>
@@ -3496,10 +3537,11 @@ function AppContent() {
               alt={activeReferralPartner?.customTitle || activeReferralPartner?.name || "Minha DivulgaÃ§Ã£o"} 
               className={`h-10 md:h-12 ${(activeReferralPartner?.logo || appData?.siteInfo?.logo) ? 'w-10 md:w-12 rounded-full object-cover border border-white/10' : 'w-auto object-contain'} transition-transform duration-300 group-hover:scale-105`} 
               referrerPolicy="no-referrer"
+              decoding="async"
             />
             <div className="flex flex-col select-none">
               <span className="font-sans font-extrabold text-sm md:text-base leading-none text-white tracking-tight uppercase group-hover:text-[var(--primary)] transition-colors duration-200">
-                {activeReferralPartner?.customTitle || activeReferralPartner?.name || appData.siteInfo.name} <span className="text-[var(--primary)]">{activeReferralPartner ? "" : appData.siteInfo.suffix}</span>
+                {activeReferralPartner?.customTitle || activeReferralPartner?.name || (appData?.siteInfo?.name || "Minha")} <span className="text-[var(--primary)]">{activeReferralPartner ? "" : (appData?.siteInfo?.suffix || "DivulgaÃ§Ã£o")}</span>
               </span>
               <span className="text-[9px] text-white/40 tracking-widest font-mono uppercase mt-0.5">
                 {activeReferralPartner ? `Divulgador: ${activeReferralPartner.name}` : "Portal de MÃ­dia"}
@@ -3973,7 +4015,7 @@ function AppContent() {
                     })()} 
                     title="TV Minha DivulgaÃ§Ã£o"
                     className="w-full h-full border-0 select-none"
-                    loading="eager"
+                    loading="lazy"
                     allow="autoplay *; encrypted-media; audio"
                     allowFullScreen={false}
                     onLoad={() => {
@@ -4109,6 +4151,8 @@ function AppContent() {
                           alt={c.name} 
                           className="max-h-full max-w-full object-contain filter drop-shadow-[0_2px_10px_rgba(255,255,255,0.05)]" 
                           referrerPolicy="no-referrer"
+                          loading="lazy"
+                          decoding="async"
                         />
                       </div>
                     ));
@@ -4145,7 +4189,7 @@ function AppContent() {
                     <div>
                       {/* Logo Frame */}
                       <div className="w-16 h-16 rounded-full bg-white border border-white/10 overflow-hidden flex items-center justify-center shadow-lg p-0 mb-5 mt-2 group-hover:scale-105 transition-transform duration-300">
-                        <img src={company.logo} alt={company.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <img src={company.logo} alt={company.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
                       </div>
 
                       <span className="text-[9px] text-[var(--primary)] font-black uppercase tracking-widest bg-[var(--primary)]/10 px-2.5 py-1 rounded-full select-none">
@@ -4383,7 +4427,7 @@ function AppContent() {
                     <div>
                       {/* Logo Frame */}
                       <div className="w-20 h-20 rounded-full bg-white border border-white/15 overflow-hidden flex items-center justify-center shadow-lg p-0 mb-5 mt-2">
-                        <img src={company.logo} alt={company.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <img src={company.logo} alt={company.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
                       </div>
 
                       <div className="flex flex-wrap gap-1.5 items-center">
@@ -4482,6 +4526,8 @@ function AppContent() {
                 alt="Minha DivulgaÃ§Ã£o" 
                 className={`h-10 md:h-12 ${appData?.siteInfo?.logo ? 'w-10 md:w-12 rounded-full object-cover border border-white/10' : 'w-auto object-contain'} self-start`} 
                 referrerPolicy="no-referrer"
+                loading="lazy"
+                decoding="async"
                 onError={(e) => { e.currentTarget.src = "https://i.postimg.cc/nVdYndN2/minha-divulgacao-png.png" }}
               />
               <p className="text-xs text-white/50 max-w-sm leading-relaxed mt-2">
@@ -4490,9 +4536,9 @@ function AppContent() {
 
               {/* Social icons */}
               <div className="flex gap-3.5 mt-4">
-                <a href={appData.siteInfo.social.fb} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 hover:border-blue-500 hover:text-blue-500 flex items-center justify-center transition-all text-xs font-black font-mono">FB</a>
-                <a href={appData.siteInfo.social.ig} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 hover:border-pink-500 hover:text-pink-500 flex items-center justify-center transition-all text-xs font-black font-mono">IG</a>
-                <a href={getWaLinkWithReferral(appData.siteInfo.social.wa)} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-xl bg-[#25D366] hover:brightness-110 flex items-center justify-center transition-all text-xs font-black font-mono text-white">WA</a>
+                <a href={appData?.siteInfo?.social?.fb || "#"} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 hover:border-blue-500 hover:text-blue-500 flex items-center justify-center transition-all text-xs font-black font-mono">FB</a>
+                <a href={appData?.siteInfo?.social?.ig || "#"} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 hover:border-pink-500 hover:text-pink-500 flex items-center justify-center transition-all text-xs font-black font-mono">IG</a>
+                <a href={getWaLinkWithReferral(appData?.siteInfo?.social?.wa || "https://wa.me/5585992908713")} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-xl bg-[#25D366] hover:brightness-110 flex items-center justify-center transition-all text-xs font-black font-mono text-white">WA</a>
               </div>
             </div>
 
@@ -6919,7 +6965,7 @@ function AppContent() {
                         border: pType === 'patrocinado' ? '1px solid rgba(245, 158, 11, 0.6)' : pType === 'destaque' ? '1px solid rgba(251, 191, 36, 0.4)' : pType === 'verificado' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255, 255, 255, 0.08)'
                       }}>
                         <div className="chat-result-info">
-                          <img src={c.logo} className="chat-result-logo" referrerPolicy="no-referrer" alt={c.name} />
+                          <img src={c.logo} className="chat-result-logo" referrerPolicy="no-referrer" alt={c.name} loading="lazy" decoding="async" />
                           <div className="chat-result-details">
                             <div className="chat-result-name" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                               {c.name}
@@ -7080,7 +7126,7 @@ function AppContent() {
                 {/* Profile Floating Elements */}
                 <div className="absolute bottom-[-40px] left-6 sm:left-12 flex items-end gap-4 sm:gap-6 z-20">
                   <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-white border-2 border-[var(--primary)] overflow-hidden flex items-center justify-center shadow-2xl p-0">
-                    <img src={company.logo} alt={company.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    <img src={company.logo} alt={company.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
                   </div>
                   <div className="mb-2">
                     <span className="bg-[var(--primary)] text-black text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow">
@@ -7348,7 +7394,7 @@ function AppContent() {
                               >
                                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-neutral-950 overflow-hidden flex-shrink-0 flex items-center justify-center border border-white/10">
                                   {item.photo ? (
-                                    <img src={item.photo} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                    <img src={item.photo} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
                                   ) : (
                                     <ImageIcon className="text-white/20" size={24} />
                                   )}
@@ -7458,7 +7504,7 @@ function AppContent() {
                             >
                               <div className="w-20 h-20 rounded-xl bg-neutral-950 overflow-hidden flex-shrink-0 flex items-center justify-center border border-white/10">
                                 {item.photo ? (
-                                  <img src={item.photo} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                  <img src={item.photo} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
                                 ) : (
                                   <Briefcase className="text-white/20" size={24} />
                                 )}
@@ -7519,7 +7565,7 @@ function AppContent() {
                             >
                               <div className="w-20 h-20 rounded-xl bg-neutral-950 overflow-hidden flex-shrink-0 flex items-center justify-center border border-white/10">
                                 {item.photo ? (
-                                  <img src={item.photo} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                  <img src={item.photo} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
                                 ) : (
                                   <Calendar className="text-white/20" size={24} />
                                 )}
@@ -9080,96 +9126,2281 @@ function AppContent() {
                                 onClick={() => setIsCheckoutOpen(true)}
                                 className="mt-3 text-[10px] font-black text-amber-400 uppercase tracking-widest hover:underline text-left cursor-pointer"
                               >
-                        xœì}msÜÈ™Ø÷û-Z'½œwRKÑ"•Ií2‘DZäê\Q)RĞœÁ
-ŒñÂqYu©”“TÛç·TÅçŠN¹ø|vİ~‰su.§ê>ÿÉşïOÈót  3CŠÒ²í¥f0@w£ûéçı…Ñ¾~óó_“=æmK74ªÛÄ²ÉFŸzpÁc|ùê?şôÏHa»[ïúg[ë…÷İ­ëÆaÑ-’Îş,÷·Óú·É“Ş°}œ¶K>q|»~–ûÈ]Œh&uİÇtÀÖæzø ş©j¶éV[Ä¬¾¶‰Ù‹}]&=:¬.Í¾Nj€n¯úì[Mlô9éÚ‹.ş©õÕ›}^Agzµul’“ó?8,ùÜw=ãà¤ÚeŞcVáèãã{ìØ«>k6†ÇÏ	ÿ,F]nÛòª]ÛÔ‰?2G£.#CµW†Õ«0Ã¹õ¯ßüäßÿé?&O×§¦ñšÿæü™+İÔœyğ—ãÃš0Nl>d ?ŠŸ¶eÏ­ŸìÈ=›t gw¢÷eæPS¯.58Jsn½£1×µ]yxïÃœF?¼]ÿé?Óø¾Ï\ò€ÜÎp8Ë=OíIrç5ßq˜åuôCæx†Ëœšf†Ô:©i¦¡½rÿ‚’/¾ ¨×¯˜¶íT8¨o“Fmia#Öj)—˜õ ^tÃağï5´¤¡åç?$÷}~$Œt†Ô1f%è «Q^\F­¿=:pàÛrs §]k‘H³uĞ³ultƒõ l@º|®A(	B_}ùWd×vqşXJ6¨Çz¶cĞI7Äì)	“ó­S‡Z¯¶­»6„	z EgDgdtÙ³=jn[0ã|®ƒOszĞJ‚¦tîáÉØ5©EÖÖÖÈ|Ï¡oxö<¹Gæ 1§°)p^-%®ß5œy²JæG»1tØïü-ìÆü”¯øîÁšÀµªØA°zÑ7ÙjÎeşì?“}zL”€¾ æra­g‰0»¦Ï2ñ¥hR¼G^Ş<­Tr¨,©şu¾78Œc¦Wšgşá®şù´ĞR×—jx$Å—ƒ™*ƒŸ¥¹k˜†wBö4Ûad×±{HuÈ}û¸”@Ò€s[õìªC{€‡ İ\j<‡u§ø6µ–«`Ç~Ê=·£óÑHqû ïUÍRrLòTÁÑáŸû?ÃH·ª1ÂÆN—™È +œÄ2ğ¼Ûo„;ÈÁõyP ˆÄ¤q’-éá@Áù—l1İpÛuÄ  Dïrqb•ÜEœ2¸‡Ô©T«€PÔ9Yx>:•bÒ¸#§.ö}öçwëØ…t5êı¶ôáØDİøñ¹­HNù®‡Ë&
-ØÄe>áÓ]ÄK.¡&ür"ğ9ÈqQB¨0AwÆih;@1	_°Ol»g²Ò×N©d‡g·ïÖ«jCúÚé½<}®aèF6<®¶Éğ¤Ú¬-G§îÀ7MróTº¾|1ÉúYi T
-JËF½ÕHğø€Ó’Ğqõ—Ã‘9Şè§p´ˆ!Q{wXÎ»„?„=ãwìWÒëÙË39Ø¦Ö•+¿¶5fâÙObä}RkòÕ/ß’Gç¿Õ:v'üö7¨¹OãÔ¯Å¤!V~¾U	WÁH›F¤ˆ:…¤hü	ĞíHÃæqPG'‡Ğ$Àİ‡£jßĞu Ãj£¶¬ÂdI.~ûb¨Ä¸€é-Á§W)|Õ}`yñ ×dG0ƒÇR`Qsò—ÑtĞ°÷fâ2–8d=Çû³az¿).É®wbÂFœ «^yÆ€~½$gÅ×gØTóhÉßë1×ã"şFŸi¯LÃõJÂ:ĞÀÛ2øì/eÑÒÇ£ª7òØ˜0Cm)áÙ4`î:ço=ş‰Kh ;éì.ìS.¦Cğ	KåÈcJ/Ş$}5®&çü’ô@£nGm@‡•
-2]dmT¤ ¬‚°½b'k§ØoÍĞÏTˆ£! ¶ o`¶qş0ÍÔ†{¯€R°ñéé¶ÅTæ‡mœü/g‘ıV#sw E(ö¿Êû„Ö1Làeh›U"'Ô9RÇ8£® xAiæm´°Âcºèè$sê[…vc^Ñ-9ÆW¿ú`¾ü…”)æ¬ÄúÇŞo]ŒhÒ.3ÏÔŸV`šE;½#ùÁåÛ *8z'C”}ù3sŠÏØÖÚÖN+¡¸Ìëè›Ôíwmêèû´ËqMIÌğ'µNÔv€äiz8|Àw‡¦<¨§JKwÅ
- f¹Xa³GúÈ$­v£×÷,àĞªM8{¡`B&àYÍw\Û©m¡_miTõ#7]Ûòİ³?W„M›¯h öŠÀ’-.Ç´kc‡”KÍÑq[O¾‹ú!P€¥s² éhFJ¨Ò?.|'ãòÙB%Û¬\œ²´JpŠc›Ü"÷™ÅÎ¿ÔÛÍaªNiâè	móŸ'·n‘Š8¢Ù´R®Í#	]5é1oCqğÂ>`‡J®™'ó	q˜ç;V.ë·Êqƒ¸PbB¤æñÅ"Ÿ2ŠüÃ­P©‹¨gÎwf¢l6[M-RŞn~ÜºªƒŸò„öö¸*pü¥—Cõ ê”fRşn)aî‡R–\Eg(E/#ÃJ¹¤´;iF>¡0A]k¨ıI
-¥y[Ò’«ŸAãz¹ø\{¶çò1ëÿNãtª,W›Ûf›¥ ÍwûĞèĞğĞ±„)1tã­!õ[3,€ÙùH·#ğÖîè'RişËÉC¿‚S§ëÚ¦ïÙ*â4´±!qãé÷}ÆÇã–K>Üfp™<İŞ´k8fÆ÷Çÿêçd+Ğ¥>¢ŠÃR¼ù_ÁÜ¶\—Yš’rE¨¨?EÅ+
-\©’šY…JJuÑ]4ğJz\XÈœŠG±Ñ1Ó E&{1-5ìÛù[tòì¡Mh ¨Ş÷lùF½™û}ßpáĞà4M¸Ï> ‹Rnœ¿=†Ë7”¶¨°ö2ôè8xxNÄ!ÂŞ…E)›ö˜…ªİAÛm¤mŸpF)xŒÏ‰ëÙüÛÖA-4&s[¸PTh&Ò.&VÌkİéÂnõ[SšXbä¡íº¾ABç-@€2AbÅ={¾÷;{h¸ç_²`^CÛãGÁp£)Ö´µjˆâ{¨Lê;ì Õš7tWëõ#Z€t¾¼²|çNkåv«ùñÇ÷ğ¬¬İ<…W°uöÙ“mä’@.³¼ÊËóüíò]Ÿ96_	Š6š :l`ø±ÃêV³rsÜæ^ÈZİ«YpRÏÄƒ:èÇ‚øÔD|zãå‚\ø÷¨İÚÜ  Ö+™}mÎ²a1LL*ôH¹¦uG®i¤OE¶i¤jÍÆ’2ÜÇHÚSÎ)²è,×êÈohjd„?%ì.‘˜ÿ
-ôRqíHZ.ŞÌÕ¨É€ë©5ZÏ‹—T†`¹TÀY'‰]{™á³$wëtz­og}ŸZ“7ŠÜaPF)¥M3~Lw\Ğ {âÎÜy§‘ÁË9.EYC]»ÑÁ­
-‡úË·ä“ÎşöÃOwöÈæp@{Û÷·novàË-ò´óx¿óÉÖ#²±óhwk{ûiG†ôÕØ	ß,­³æüEÀæ3¢
-Okò%n**%…ÊøÔÿ[BUÇo¼ëcõÖÇ™ànÎß
-& øÁq~F©w·nïjM~4éštÆß<¤WäĞ8râ/÷^­Ìÿşï³\ÎB‰…	YW\X-à¥,=ğòGö±Ü’˜ÉÏ§æ»^µ¤>°WÚ—ZĞ_şeÙíUH’™¢q{ÜaÜˆ‘¦õáîsˆËêŞ˜åšİ­ûæ”EÁ5‚Ú>6Ó±€Àê= ˆ½¾}Ä)D9Óêˆ®9t˜E†è¤O/m’©€¤êÈMpDâb6Û´mÖAª»òŠ‹¢J$Öï€ÀBÆª’çFzJiÇš	–ùÙ<k6ñer´K1Òsl&Sz@¸6C€·°&[ƒ,Óeü(Ëı›.m%~õó˜ÊåB#æ¹</BÚ1ê²@8I\Æ“0L½3ğµ}`ûÙ7ïç6ÇpA˜6òoŒ[LDş-	et°@ ™§õ×gúI _”C—§/Sbl7Rş/5o·Zº¿¡7Xs9R÷ÇÕú8Ób/ø‘ø™ç/…˜§ÿ'7%¡	ë ~m‰ÄÅVƒ[ÅÓöj†wR]iÌK]û”TÿRé¨\Øï³ˆŞ¤\z£¨€åÙ3,
-¡WF–Õ8Ãœ0"“…«©ÌeHß$íÕ´”ëÕäÌ­ßÄĞlU×e¹Æ,Çãª †´‡ö”Øí,¹ô5Ğ³ª$ò9·caãoÔ…e7‹‰wRx£'7I#g›“Š÷¥€¶lg@ƒ‰¹€æÖëäÑùÙ›å¦r-'ì¦YlÍ^Ã±ÀíHº_"ÜCˆŒù7%ÌrB1§­yş|1ı
-š×E;é~ÿ_¿ùÙÈ2Ğ6• Ó	ø;`×±u_uÅ3šÔÂd ×Jƒ ôh¬zÂ7öh9—ÙGQ@å¬æË‹À¯;r@GÌt›[ÿêW?++7¦-nD§!cuY"ôU[’‡vÏ^$[ œ;ÿÑ>µŒ0DÀüf.IfOn·­£¬ms+Õ7u=6¨wşÖ8!®1šŒã0Uë]¬H’™›b}BoÒiQ
- Æ-®=
-ü»g JN'(8ÿ=#Ä1×C½S)SŠ‚ãıøCC’RDà›\
-ŸäÍË;|ıæ§oÉ]6@ÜÎmà®Ø(8dŒc?4<ùµ‘š¡–•ua²‘ùùnzšg5‰+k™9;·[fÄ¾%™¤hSÆŒb#
-sºÇ­É)Njjö"gÅê¨€]Å¥s6ÁÈ‚TÑ¶ºRÌHeĞĞZæJè/Ø8h~Œ.‚B@›ÍæR¨@@ñ|Â³Æ‹Æ‹Öòğø…ÓëÒJóöbsey±Ùº³Ø¨5[è=#CÊ%¥#D‚×2Ä®ãO¶İÈœl{áy\%‘R>Şcƒ~jŠø*–ÑTÄIx?ª(,’ZàHmÑšXm¡ Y×lä:æKf¼Ô¨V«®ŠM¹”Š™¿õå«URiš¦S®Äl1<w©ê•ü´SÓ*YÚwï¨)Z–?HEK
-wUµËØéFó’˜_†~D‚¡¸v¦ãÿ–Àü§ÔÑL?•¿S)âhsî(hsR[>KNN@PI ÀFe…®qOlîÛŠ–â O€ÓŞ…€*ğ`×Ìt±Ó‰¹'ï<Jàÿ<+Ü;“×3D²Ø–ï+=%\L~úeWRdc² ¥²Cvhkç¿#pô:z¥uC“@ÒnÜ•§ÜHxlüÙ?¸7ß t‚~UÜ;şüKÙ.¹…ø}`‡É?°7¾o{æ‘Ş“"_›«€1€Ì]ìû?AÙW(ëĞÛŞdM*AÊ²ÅtÂİEòQİ]¸"+sY$—»ERÃ-`f]^\]ÑÒü>ê6gÇU'v/ğ3ŸDáùË¿ä
-ÏO¸¾h½ÃôÈ×qQ„÷ ê
-•4‚„%b£\»ëğ`!ÍæšæÓÖ¨q±úÏ¤Öè 	7¶r‰»Ş}¨R<¿<Ê	Ûì"èk†NŸí~òÃ¸Wn:î)¦W­„Òz}pş;w%¡/}F$T”J˜ÇAÕTb°•‹wÂV2æ	Ûx®.¨WB2/•¸*Ğn&n]oŒñÀ¿°DäBx-Ãá"õ¬ñbixü¢•«ŸÍˆd"”Gß‡×µ;+c*ç²94TNGˆ8ì}&2è*²Âè'l—crˆG*ÏÊÎĞ¢M½±KOºÔè†y	½ññLìíÈÎĞZ¸X^Yl64ZËªv†»B"ê6á¶)DWÓ…¥Fæ´––“&…Ñó+)ƒÂ(¢ÔœPø#w5mxW«Göí¡ğÛ—*ıÒD/ˆf¶X0#&;ğªÍz®à2Ãj²ê1¿P"ä²¹LFW.e¨ásÔöù	âÛÒÌ†–Û˜y5[‘­–«bü$à=É£ÎöÙİÙıìaçÉLØÇ™ÛŠT³»–1ö·Œ¹(*CÅô’L–˜ŠÚÓ˜ŠŠ1¦3%7fd$ŠYM ]_E+Q"+ıìlDq*u©V¢¼RÓÚˆ–¿á6"¥xiuûPêĞNcŠÍLnI"¤‘e¨=µehºiV¡å+lJlóìmB©,NïÄ"tKØƒ³Şñ™j¨¦0EgårAAJÛ)Z\Ò‘!Xh¤ywœ#Ô‘0%Ï_‘Q(‘ß! è¦ ¸DûĞ–;dÜ£ğn(ê˜Í¬0ğÁ½ô} >Lk´múÃ
-À 1ÍÖ±fú®qÈ€w?Ô—Ï5EGáİ#”·mÁØŞù—®H	ÎÈÈŠF«³ÁYıwByÆÖâİØ‰ğH¶¢à¨|ø¦¢i™ëñdDS‰vOıŠ )jÅh¾‹ÊÂ(ìêÈaÓgğ;yõ˜Qv;'(Ì3DR-HQbÃ· *äBFq•àšŒbùÔë®\‹.ÚX”PWBÁı›h.šMâ¼‹3eëw—®¸¡HQwEŒEñ,ºhQhÎÊbÔn7š·#‹Ãp”ĞbÔjÜnĞY[ŒÚwo¯àÿ…-qVq)éÔ²±¼-iRp­À|›cÊxæI›ÂBYDJ¸heŒ
-áÂ¨›F‰w"ƒÂ£Î÷¦1)äT\º`ÎQÉ¥û—Èù åªİ! Ÿñj„MjâÂ6Qò¾8—o~afÙ?0uxÀd'_¸TCDìÍfh†X¹úfYÍÔìuLZŠÊª!‹ç2Ë–sàK‚ÏcN$VA+®-”—%ÍHï«Ì(ı?şùOøqhª~°³¿³·HvŸìl~Ÿ03ëù7·àÓöÃíGÛûÍ½+d-ˆíÎìmáÙmZ¹D¥¿.«¢hşËïb%Î?…íS1<'Îe½OßËA”î‚µ¹Ñº<ÀBš[.pu}ƒ[S„ÎsÓîşíğ¤ûï.¢D;¡Ö9GöÇÒa£¼ÇF×Ğ1…-ÙJv¬*Çû°&C`Ué¢èw¶,CLV>Å²ü¿É—åšoR±0OÎßê†.ÎUğ•ŸtEşOÙÙ4}³ú]È'?´]<5ÖµíWp’"Íy¥}L(&¡ï.œ Ìu™°¿Eœ¼ÄúŞ×¾Ìp,aqò0IÚ`"%QXN&m†ûF`ÂEx×ğôÎL{>ÈJ;4;lÌáù?|ËCLşÎ³‹­xßô6‡G¢ôĞÉaÄM|Ó3ªµ¨¹
-Ts1 ‹!vÜ4DÎ18ÏQ=“Q +4$_¨­!¥>º@sC”_X­ûµ¡á¢ãªÕJ(Ÿ­ù³ÀòPllz´Ë06Ä”´WŞÖÀáê
-Y&úy¦õM÷ünK”6WÑQòÀ0ÙÒ¯\eSÒ³ §š4Ùx"»x›³2+¹ˆTd=w„:¬(3XzTú¯"ÿÒıXu¡¥Ô-}w0V\§¨¿ãBb>rÕÖ]^äZ¡ØÃxÊmÁ>É1‘€•w(Ô°†¾'# ¢„5NAv˜©é³5>—tb[ m \;­°‚âºñ&
-íÂèd°š 5>™ì
-ºñæ2o#=ßJÖğp•ÖÆTäS ¤V«áS‹*4D,Ç*9Ÿ
-Wh‘à­òw‘“¼³…œÁ±[d½dĞ³¨¹ÛlÒtÍİ(Óá­ùnh©+nûê)ªVI»a,T›ŒkN‹a«>.-»g7=GêŸ
-æœÙÜÜ\¸šùˆ^ê1®9l¬«ÔŸı»FõÎózo‘ÌÏKÿêî#z}¶Ómš³-N?PbUÔ°ƒËL¦IÑCpè+t8Ü¤½WÓ‚Q˜K¾ø‚<{¾Ps?U*p}tzà'ëœÌGA_ğÌ=…»@ô{ñ‚;W^¼˜»b,ƒq@*üIxãø4Æ!J*…”ŠÑR¸î«€Up“v‚›3nßÿEQÃØª«òÍÀê2±»Ïè0…f4aöuä;Î%ÀJg+^X}¼[H5Áhl1X'¬õ«şé?&;>æ@«l=‹*Z†Öçu¾]Û¢"çÀß‚ÚŒîÖB—(eOo‹Æå
-©×•è%÷RòƒÈ&œw"º9Ùiú)<"¶\Î:j.…ÜŒÁe>yÌwåÛJD•OG‰íÆ¦Îzc“²ßá¨ ¥	ˆ#¶i$¶bô’8}ÖX]¯+`nl\éÇœµ¹­ãU²k¼~M•[$æaF¼ƒytF¢Û‹dÛB7ˆó·/4¡š:ŸH¤p»\z!šÃ¾ïÓ¥·
-Øl,…h]nöº’ÀæäaF¼ ±!¢êäoqğ1ƒZ)3ò‘â:$2ó¦ı9¿b¼ûUSàb]«ÒMz¸“ü¦ŠøkÎj=„oaQo8	Oyj²cq¿²ÊÏåŒÅ¹ ÓnPÇ1¬>&tÜeºıÖÈD‘›F§ôÃŸsÇ‰ó·ğ&"ûK™€ö¡¡ñiüõßàÊ`u%(ŠƒøbÅáIeEs©‡SYäY¯ß˜pZøÜsşÜ8é¼h·„wÁ|ü€tFWpˆ¨fZÑÔĞnä›ü>şF]”f£‹îùÕOY}¤câŞÚršiÉØCÃz…Ö+L4C°ˆ©|öä¡šò†ßAó&ûlhÚT¿ï{À›£òŞ×æ ÿ)pÎä`¾ÁLß¤Îœ¼Û#îùšÆ\¨˜ï˜œŠ\5JƒÁÅ«f§FiÎdï.áÀø¯K·ZàÈ^>ÁŸoØ&#” (‘#ŒC…¦ 'š€B5 …²é}Ã9×œN²©?®º"·b*p=‡HÅ?âş×…jë*Ú1^)|:Ğ)áßğÓnô®Ïzº]:'F-{è¹s`ßˆ¿`].\Qœr$fÇU RõG&zq™_Å.°Ëk<SìP!ûÙ¤Û‡ÄXDÁ^•ƒàÓg+ºSœşÄ;º>­iÏ°®Å‹bDpĞ½ÆévÍp”F9`H'P}î:†¥Cd;öÔy™Ràê¬Æ•¨ˆX†e Ù»¶®#…Œõ»ÆéVR{Âœ•®c8ä|¯rş¼ÉDÃ(g¯ùÌ|$Áÿo‹¾#9 Fùo5á(‘¦bn}¤¿ùacô	{éøÜúîù[¤à	Væë7?ùõÌíW»îÃ-€RãnO#T{5Y¹
-ÁùOÀÙ¡›‡€ã˜Šì)}mØ€cw©îÀÛ/\ówê¨÷á‘§Û5»7‰ûO„öÙƒE¿¿Y±v˜îšëˆòoñÔpÍ73(ÜMÆÑ‡ÒS|O8^©yög/ /•5¿Cÿ ãQ•¯qX¼)¹ –dÅæÖ÷ğÔ8M,0áñô%j\İéı'»ığÅŞ~gk»¦ÃÑ)ï’îzp #tñm=¼Z%øi¦^éÛ¸!Ò¤+"èËæyfÇÉ˜Â<{MÉW6Pß´¯‹b¾>Ü°â×ìßxSB—É%–ÇÓ+ğ0ı@jİ¬ykdÏ`Y&)ú¸‹#ğd…k(Å	:sµb¨rì#wí´]|Sés>ù)¿jgWPíŒKO¸ä|_•ÓÇ×5^‹gŠNzÁ.{>Ó™iƒ£ÅÓÒò¼ÓÅg5+õxz®‚¬TŞ¢AeÆ¯ßüô÷˜››uÈ#8ôŠ®ìÇäÙ²<‡õ0Í#¦¥.˜á0“4Ç1‰xÛrÌfå«¸…Qa8$Os…	á‚}b†'æb±—àWÌ¯¦êõ0¨ÏŒ•s!‡#z%Ò“. /¡9…ë<$s±g”ÃbzÙ|6|ß,8¿>=„İßşØT¨º+†è•	Ğcã (^°5ÌÅÿ"[Œ|Cq³ù[ £'*ZIM¹*jIãøß0E¶sÂÀé" ¯bD·X´YÇsË{º*FwÓ»t¿8%Œøİ7<~@+«0İv”ã.©<ğÃRcû ®:%{†y8#Ôëv;2f]ˆ;—HÍu<RmU›Êñ9"÷àOÌù~0;ûÆĞÆƒÎ™UT¤fPCûaänÿt’³.Äû%"y¿yØA!™FRe†à­TÕâcmU‘'Ÿ[ÿNÜÍÆî˜ËîƒÉ;x¼û¯¡ø;y\èŒäˆõôeWãÀd9×ßîDÇ
-àçŒPëwŸZšM*;C‘áJqvı.µ^-’mÿq‘Ü¿¯”ÓCÃ[¿ºæë2f]ˆ¹qÕ®1w^SãëŞ±O)ÊSö'¥¯’‹E–ÅÒä§ÛõØpm®Qk4'@(ËµFõL¡%ë9˜*ÈJÑ™iÀÅ“ìZ\Ìšu‘ù"Z¹kÔ’×f$2J~Îÿ½+MĞlÚ«µSêX©(@4f5Ü¾u<D[,æÈ»áDŞ«áÕaÉÓ„R ¸2·çS<%ÌõÎß×w‡Ìr)õ®ißgT§5Î°j¿×³yvîÆ"/L ‡aÙ_êpƒÅLvmN
-ló|Ç’×¤‹q£8|Íƒ…üRpçßW™Ò¯N6:ÜTŞ®]Û!ôĞvĞY•1KëSâÙhH‚ÿkt€…yl,ğ!xu´f¡*r1Êó³x&F„ÇËÂ¥ì Ïm€Ì‡6/QTñŸIFõœEK´nkOØ`uøPÑ»‹dF«íÎ/fl’¡K_Y†Uêd¥"vL5Oøô‘#ÃëÃ®Øöÿkp.aTƒš.POëÃ{Ã2ÀdĞ•ÇñMæÊ¶üˆ®Ü&¾ÉEJÇÍC«oÍS!àõ#@ĞY]„¿É{ñ˜E-o;³—ğ7y/Œã7·ãe¾Oø£`ä½iˆ¡˜İ[ô£roeVsXÈÅ*Œ€¨Ø „äTºÅ®%%º¾RÅ¨®Dw‹ìÔ8²¼Ÿ-zÙ¾»ÑgôåÀ^ÎJî8›fålikÀÑŠ¥6×SB–íèíÜJˆjøÛ„òª!¹å¥ŠĞ×±0Ù%ôÅˆKÍC¤Ÿ}.D|‘-ÿ!SäÙÎÛçüÏm=C/­O*ÌqäL Ò;Ûd5¸Ùv*s ŸóÜ˜?Ôq†¢$ÓêÜ"Áş_rzÃš¦z´9Ñk9cN*ëÿY)ÇpFvM9Oñ@-eŒAÊ-ºáÒ.,ØÚ©1²èqÇ¬U)Ö7t™yTÒéd%,‡†2PZªÉ¯º&˜b‚Î¨¢«¤ş°=ÉhaÁ5³—/‰9ñ5!÷ÈÜ 9µxÆğ9¬”ğõ›Ÿş3áÒ1a@ô}üGæÔM¸[²¤0YÎ¯¢¦½£#Ÿ{h°#Q¾«ÂWq¡D/Ø‹ù°xfõ¨Í˜%š
-ÙµQŞ¬ŞÆ­Â¾&ÕHEååcÕïŠ*ƒa=±BıR8ÛåD…ß"¶å¹õ§†+NmXo÷ü·‡…5Å…Tó'<¾Ï¾Õ8h6š·s¥üôZ§g@«GÕg­ş²É•M§†À:Àr¦Xk‚p]”}•³ÅU›·Iÿ„3Âi2ó5—	ë¬­Ø7tàõI¬Æn6ˆDg”A§@X"y-æ»Æ '×º&ËMÈ)a˜PT¹5ßr‡°}dØ·=Ö¢¹Òh,7WZí•¥*]iÓ•®¾üñA—İÃ‰¯ñšéŞ­Ã[Ó{xëh­¹Ü˜—&tD¢ã­Ííâ™¦
-©/ÇQp_ücw?G`Ğp”Rh"•sF
-C ¸P—kğj°x D^ØÚ¨(ÕÂ"¡»¶ih'X6´Õ½„\™Ù¸© ğAÌ7ŸPeĞDD@6[Éó‡¡EÎJUyÁSé©˜º|J}é,dw Ş>;tD°ºxX£ß«Í¹uI½B~(Û‡QiÅù3™Ûqãq†§¬Iª<t|‚-20¬jPsmÙaƒç…óEÙÏw—:3®2 ¢¶AX%¨ü¨áKúÏ²¨¯;ärsÎ'
-+K‰‘®›¢Ñ%,ŞÍW\\Yj_Ÿ­p2§rD€{lÅù@5^B´Xs ú\¼™Ü/¨ÒlîOòR³­ULùAv‘GÔœŒ®Ù\$,StV]Ø%ÊÎÃK~¡÷&¶£ë$È5z„š¬ÿ*Mœ±)Sà«È,©P[wÑÎEzi|—_Û|dJWp¡a¬B4Ğ[{Qè”¡™>1 ÿê@€İEâF‰çmŸØC!« ]6Š‰(…ƒS¦¼'¼ß`Vû˜™…˜AR®HÁ³©Ø‚fbš­=HÁ¤ fTë›P ›€‰ú+§št~>íÂOÀthÁEÎ¾Å>¶bŸÛ±ÏKâó! qp;M¹â# Û	>G(W”´“¾3Ìu+7•jsá;¨óÁÙ¶ÇàFcX ñ"Y¬
-Q:;}°Uã"JX+´±¶bEİCJ”¸*©’H×n×}‡ò/À“›§2È½Gæc"üJ#^°¾ŞÎ“æƒ™X¶‡cÚGLŸ'«¼§²ê™ù³—Å«œT+å¾IQ'd×Ü†¸vÚ\:FhŠ(Üä„¤Br^¬ƒ)(P$WÏÀÌç J¬o=è¬¨IO
-¨Ü8½¡„@‹µ;²’S­qÕD¹ºîÅÂ@,±˜0†ìÅDv¥%ê²I 8(_ıÏ_ ¥Õ©Ã9ä	›ïı F îY 6…6Bü(Á@ağÎ®`'H=ªcƒÕu$wªõû.Â×3ğ¨2²§Tğ>Ãg*N9QÇ*<˜"ï¤€–&=¥xÑ¹9î;ö€ŸÛ#@~4™G±Ñ $J`1öLc°ˆuè\ßôÔªÎ}XnGïÃix
-r°İTÍ^u9PÏÙº û€]œî—ïÔî4H¥Ü3u‰uşÇs@adhcù¨÷Ò,lË~ß¢³Ş+¢³	‹„lø§VvırÎš<Ó¶ÒGMÈhSŸ´m«·È–°H<: VÖ†GíüËCfÀeæiïÏ‘{ˆËÌ«¼Íà$ñún£”ÚuQğ­Y>P‡L^ô-YöML@ÁL%©õVL¸„rƒ_S(­6›ò¶—DëñÕ.‚Ö‹%›e—p+[»íCÃ?ÒŠÜQ„âœkàïâF¹äyŠ*¹½ï½$“0Ğc_—‚ˆî‚¬E—ÄP\YÔÚz×˜´u˜´õ£ÒÖÄVªK75J-Qï›ƒ7?|ÜÒ~×¸¥}¸¥ıã–öÅâ–ö5nÉn×¸E†[–Ş5nYºÜ²ôã–¥‹Å-K×¸%»]ã…’OÏ¿DÙt#É-Zßak§¾…!ÿ.57lëÀèÕ|+¸Xü)3‡ŸÁÑ;x»Ãè ı¸ÿ²ŠƒvÜıH8JºÉv†,ÀL8s*l‘L9›E2?äN‹/Äƒ/¸ÇÍ¼
-æBÿ!¤#ÿh…GŠ6™˜CM»o
-—<:÷gÈñšÁÓ>ør§f8e‘MêÇh5ˆÎ4;ğ‡á~2CŠn·ò—‘C!_¿ùÑ¯°”Ã`¾7´€CÉ…‘‚ÀëkjJ€ISr ÿš8Œß Q>¥„œ-’Çş@ ı­îC»jèe¸¤²ş;­>OlHáßGÔ ß‹_RKëÃxÌ-
-$ãs+p7ZnÔW²İÏbP-îf´”áfÔF¿|™³ÏÎÀ“{©DNñ»úË*)Ù%.P¹ˆ
-4QÛÿ‰»3¹C¦†ÀÀARÆa#tÿƒÁ‚vì/+,ŒZ@ÆÜzà£Å"ceİŠC´Æ!Úö	4æ…·Ã¤ğdhë,°3ÀÂQL¯,½»x9¯¦`>Ä#ù]˜²‹¥0<WrŠ8À#‡s|RO0vFöF²¨%±îK9ìÛ®H££:º½ª9r+:q³é§<¿e´*tKn//’ömøïcøoş»³H–ğ_şkÁmøoi^Še/e:â%p›_m%â`Úcş˜‰;CN©ñI£Ø‚”qÌX8_OŸôë7?yCöCW%H¥½L(¬“Èjƒû®ˆìî.øÿ£Eò	üşûÿï“i¢ÜÑLD[‘+5\‡ˆø}ï ~1A.Hew‘+¬ÒQÃ.Y$÷LdºH:¯}s‘<eÎ€™}ä¬«†=±]:-”}ghÃIìr)Á¥qXIŞû®¡åG0Aiİ	>FQ-€Á°&ëË|Ôª5 1T³-¬‘íP¸Ø®-ãÅïúèêK6Q–‡«KâÖ=j¢÷ïè^¸:-4¥„îœR²uB®¨Ôİï¢~øó0M(¢sZd—™ Ø$a*ğ‹k8eõš¡ œ¥²îvfîLÏ`øz\ˆT×Ôqí†‚|RF½1®àà4[UÁ1Š#à	&Qqd(9Æ™N”]b¼FIÕÜeh;Ú"äº¼¶CÁf¢,’´X3sgb’¥¡íÃó/oREDá4_™“'¨åfÌ)÷ª:Ê/ğØ…|×ŒÎ]!÷v}æ¤g~ğgnÄOÔêÑ tÎc—°P]Î	Ï<‚k;£3˜É,oÀ_ŸÄü“È+U`´eå#f¶PêNuË„eÉñìbˆ|¨„g–®TıI%íC– 6–0 c¤¥°›5l÷r×Ÿ4_äU$NÅ#«ã%dó²æ©KŠPÅ€&Ûÿ xÌ¤T$¢™îšzwl3IÛñw¨¦î'ï3x‹ÄAì¥ˆ\rBâĞû/ôÔ	Ì´äŒ¬‘|ÈçÃ3Å‡ù¶nğÑJ­ñn˜rÚdÀ,Ì.#ĞÚfMEOœĞÌWRœÓÇ•Ç¼HE¼ŸBnùØî M¦Hg<á¢CüA»Š®
-@[€Ç Q¬˜u
-M6ôĞ&†¢ ½.¼“WÏI‹ ööƒœg€ß<€«ühÜXu¯f2«çõ–*/,Ââ5ğÖ°¢Çİàb~Òi¥%#î€Sè4fÀê9ÔóÏ/ÓˆÜº
-Pîï0ú©T›€(Z3ÓıéÁ¥zÛ¶öƒš»0[‡.3p”1láò	„û9¨H$=ò„¸;<µ|Ã ®¯‘eÕnFØº7ÈS[;ÿfã³z†¸É4H¹uF–£$Y<Ã/ÿºåº“[›5¾ïc}r8öâ7ÀjÃˆ
-°”ÔÒQá#*?.Mr=j<İóFŸi¯€;E‡2•J£¦Š2°©°óáòÇ <cÚ™ïB»‘±On¢
-íN£FĞóßÀáÈêAq•ğ¦èø<İŞ%Ø‚ß’åQg¼ìû.õ[3,|Ê6>.¼ÿÛ½{ÖI™ı&-çlÒ²t“;°öÁ¸¸KÂ-¡î{¼'ò{è¶Àâ;â¤Ö”6ĞĞAxÏMôIó‹›§›˜YË>ª,œ½$«¤RPÍs$Ï/<K÷ü:/Õ±R5‘F§d} 	I‚‘«yöô`õÊ”ø(YÈ#ˆæÿ”}¬Ë.\(ÛA;ì =aKaKå;¼>+1ßÒ2•J–	§L?¡Š¸’©•.ÓS¤éªd«×Â¾äçX+2™Ô Ğ·ùqZ#Ïjµšâ©{®&¹MÅáÇgWún¿ •jx„™ ò”f™À²£ÎDìè3r´ÆŠˆ4«$‘ˆ–¨{4}å#"\WK;¥ Øåë–aS©]†íë—a›°€¶i‹ˆa›M!1l³)&ÆßkÆµ•f]TŒ÷Xî€ñ#6†Ê±‹X˜Â¦VßTåh¨ô¬Š¯cë\â Î¬8U0»lÓ€Ò|„ Ä¹î°šÕĞïšBŠYéŒ' ¦kZ°Ú¯F•ä•r5­°¥êZñÊŠˆõÉ¯p¥XÎ*öf;š;ç£ƒ%«[¹¢„Q	%­z1+l´âƒHîÖ)]Ü
-[ÒLt;f&zö­Öòfûöíç#k\jtéòçJ¶ ¢LÑ³5É*W}õ«„…«à
-VaS±MS#!»Şú·‰`?A»‡ùøİf /ª”ñä’[BÅ7ØÀİ…	ïSVÔXiîmy›$-ñ$Í=•4RêÔíG!•9•=¡$É
-Le«}ğÉ¶±Â×o~öå´Åb2êÄ´çÖ”aé”X˜ıqh»®o€¤`õQñ$!¶ı¨¨ÁD¥av~Œ†Õ¸à2Ö‡™[üC8âÅšFÏğĞY„+¶b…#µ/ágWT|A#¢Û·‡C<âÅÓñ=¢É‚’$‡iµ7%ÀkAOåÖÚ€+ ^ó
-ğ‹ÄX…ó‡
-Q^æÃ€ÅNĞı%Ğ1gc…Öš­f;Ïd9;ÊPä/Ë<AÄ ŠëQ–ïÃXŒV›×:R(_–ÕçQµÙÂªk­´_BŒ¨d•X«º}Ç°^Uò‚kÙJ³EÂâ‰´—xG,ÓÆ«°…ŸñŠgø•çéV­hVX	LÁ	›ìì$&¾åÎ¶Ñ›)9Ä²µsa‚•3å¨pìJqåüÆtÉ§À—™®+1Ìr¾…ÄæÖ£“#İh ¢é(Ùì’j<Û²ÚhM§€¥]öÀ´©WAÀÆŒc¦WZ5‡q×µÊ|“.,Î+mQ*Ş©;¬ä>Yä{•DjˆGÍG´’µwÂ–¨C£øLh@LU¬uûğXT‹MY&l!˜”xP"¬XvÜÀH>ßš¨ƒö¨ƒöD,:X*ÛA`$€çcfõÇ#<³¨?Úàù¸Q@½ƒÈ$ =$lŠ=¨©V°ei'Å§Êdb‹Ë®£âyñbh‘äy6ÆÈÙÇ¡Ÿcë—ëÂ¦†¥EÙ%<ª(ˆíÂP_9?FÑ¸[Œ†i€ Îí£‡!ğÎì5å© Q±ÏÑD3}ÃAE¡á¹7·°PÊ6­ôÖØÆ‘Ğ(¥ÊØXâºRy²öúq‚¹‡ï¼`‘*LOk«mR‹M8ƒ’jå¼!Ëª–±MfÃM¨ÙsD›Ìª#šªmG´¶ğˆ6…G´YX{D›ÍG´ÙY~‚7½ 3¶Ù[‚~'9´³±‰vQvÖ!ÑT±EvF™èÌÔj$ÚØ‚cF N—Ï¿ÔM‰GmEvlåM>¢¥?›ÌdXp¨¬Õ'ñB¨)<ô‹OÈs”òË/UÆğ#Ú„æŸ`ÀËá¦Wo§2'×2xbüˆ¿ò²ÖÈ ‹]š)‡¬–°P~Sql Lo*Õ[Æı™÷¦î»çn}`ãÖ×£§îÖ;–1 lÅózY‹”5wÇ~>uáÜj_÷Àv6™'˜Û¡ÆeÁÑÃŞîsÄï<a‡;Š,Kë¤‘D¹÷„[x $à¨JÅõ‹D°äğ‘|DœšÃ»]DÃT=£ë‘V¬™Ü™U2ß¨5Ábª ğl,`c/¸X¡šg²G†eà¥Œ`ØÇzÜ÷S'¦€£‡ ‘41ı¢¨q‚5Â›BÓ06şWIŸ½{Ênaêjoç	Ğ‘Bõ;˜z•¸Üa”œ­£C^ÂÍÅµÌmª‘…ÑXÂ[.5ÒbĞ~)ò*¯5ı€­r#¶§±]nÄ¥éG\R‘ƒAş€J
-ìR@ğ=`¤çSG'^Ÿq ˆ6¸%Ú°7ú›hÂN´Æã´uÀÎ=;¤¡w2ã/øˆ÷·6zgÁIÃï7%°>£Ÿü;ÀÂÁåI‰·@‚×1+ñ©ÄH†¢ƒ«3xâu¡zNßwÔ¬@¯3·2bûßå9^çEtÑøÏµ.›ÏˆÉCZ¾âÛÆ4?•3ôVÏêÄ:ÃÇÜ¡ix‰g5Ÿß.×ŸİûÖóú,azÔ\Ï×<)8Ps8æ.u<79ø½lî4x3ş L*}Œ÷L¹2K¤öäá£ÖWe³]‰uOÕ <*ó‡bËÆ—/ÄØµË3NÿœşïÔË09ğÑÑQ-9u†@Z¿y<pö29¡3	¦“lg@‡XËL{Z	N
-ß/Õ%›üÕ³'y«øƒÓ¿ĞĞ¤' £:åwª¾V>Ij¯‚›’ÖÛ»#Î--ÿáÔ\;=%öj†w²
-,Ô˜¨@—¸­9~;6<YWqãòS0~ª‘’j¯êwà3ü«;ö=:ÕN^WŸµšÀÕ‘aÿ¤Šş…rS>÷o@Û¨2HRîH³ÀY›Ÿ}«ÑmhÍFn.x]øÀ./dğ‚Û§:Lµ•áà0“r˜ôAè«ü³cáç~õÙò2Ú3ì•cĞŒiáVy²K-f’ÊCvàÕ÷íavÖêq÷
-ñúê,ú
-·>÷«·—Ä|Â$#q¿‹¤sEôfY>JŞV£dÔ0døz}ß‡a·ÚäSÄ·3Í»§	!Ï7#~SÍE-sÆ§À£#CdIuÌÑqiæ¢’yˆ| k	+Vœdb„t»k Ac‘—û§„£–ğMú«;× ´ëÚ¦ $÷0D:Õª³ª!MWIM€µµ9Ä
-ˆh¿Cp4WÃÔß!CCƒeÀnªÁG¥î@{¼‹Â»½Z
-vQ!@HmûÒb_Vã»—1é.ætlSft‘;'Y Xã["ıôù•Œ‡ìnsó‹Ù˜œ_ÎrßŠ\¦¸oWîPÙÛ’?÷
-Ë–¼„£X>Ró Ë}¾Ğµ,ç©œÈZÄü%,ÎŠVDH„çOÒ-$îî¨÷i/ğX[*òX+t×Ê/_0Ê ¿‡â,ÒéA‘»T‘b/‹È Ü‡›w`[á¼:Ùïûƒ® ’—vÿt$÷Gµf¾cxzc¢ãİµ=ÏÀù6õ@Àèõñß~pÈûˆß¥¬[˜Îÿu5L³ñˆQñJ»ÛqÌ9ÄÜı½+÷Çå_¹É^â‡+Ïµ,Üsõã"ì:²«“RTTp*E]ŒVşôåQµÉ—wÄ‘š½1,X©V\!t.“»É†ØûæiZËÂ¹&tw¸Gæó2Í¹5Lyyµ¨9éÄâWÛù³—ù+R„ìÅn—aèDËáÌ©‰ÆjE!p7Tj—íâÙ<h[gIùÉ4ã}*8øæ ­Û)ÓôÅÕrÜBÅ³Î­‹"QJñ2s‰Üé¸˜ŠÆ©é@ŒŠÆ‰éK^dñ&Xòi„É›–’ŠVDO§àjòÏ‡Ì–g¯*c[* 
-‚ç;F®OAÂ/·aW¥`b,WSõlÀîü‰á€‚—G%ÏHVe‡ğÍ€™µDy.ÄH17 ô±¯@`~‚äª~ŸOLMhæ8 I†ÕÛ82„I¢†>RY%À"‡Èƒ<O>…Ã¸¥Jöa‘É-şÀ­Qk4ÈË“Ì.©9KÏ®¬"!|‡ˆiÉ`+pñ9qGùøùÒàY9=/åÛşTœdëÔ„·ªÌëğİì3WæfÁ½ „İÂy¶¹+@¡a?Î#„ÕÚš£"ƒ,ãœ+€o™ˆÌ'¡ûAQÂærPªXˆ0_[°œ5è³Aá†óÉ|ÅiGƒ‰‚Í`cË	 '4è!5ªÙï×>Æfşnw²Ã'Vn;·İŸå'«‘mrqÜ	¢-äÚm+D½EõÌÔbãŠªíáx{} {„JJUP›1n:Ì.ÀPa–nÕL[ãĞR³AĞ3,à¢Ò?©×ç	TÇêS·3õeU²æ€ë&æğòæi0¡³{†¾‰"I×Š0×üüÙ-|îËV¢cf˜t³è¡Ñ£@¤jši»6uôÚ‘ƒ Ë•`brLÏ7rÃLWñ$†'öÑpä{•™Ä»tb‘´Æ,ÈÅÜ0ŒéÏ‹W"1.ÏF’÷/ĞÕ¸Z(C¥ªé„rj³ì	ïÂÀñŒ˜pvòŸ)"İÑ‚Ë%Ç‚tæÒh¾ˆi&x(ØâÈ86^p(gİù˜…†ÉÜ±ZbPt_€êö¹Ü†BıØ8¶Bu©0Ès„o‘Ü†i‰ºü†§&ëÜËó£¿GG£èD`•Ó*/ß°6÷€i°w“…»ß+»ãy¿ç*rÊ§ÊœBj@ˆMô buîÛúI	aNVÚÌ<8A–Ë_0x¸LÖJY[æE.ãtî“Î*ÙÜÚï<ütk/´%ŒsA¦¹pWTsK‘E‘— ÎA~+qÎt¦tM#f5ƒ¹ŒNÏîDüÍÁc}˜‚Éa*´ğC˜~ûÅë6Ùó]$‘£à~–»¹fkQßËæXÖX)VÔSÊ¨M¬8«‚2sçRx£1®ÌŒ†\•—çf–ÓÈgøl6ŠÊ"[q”úİ~{<•€ôÉ®†j]=TL®r‘i°`ŞıvÑ´3³Â„³v©’Bád‘?;Ë!Z˜ÌŒ³$C‡UÑ€;ÉëDñëy²Ê#Ûƒå#Ob%=ªf‰ÈÃøQŒWÜ‚¹ËÎ'OA“Ï¨TF.ŞˆŸMûs:³J^Ö@> CÃ/›ñËÃÄ™¥\.e*Ê*z--Í‚‚ q¯x)l¬`qnQ:a™sÈşü$<ùP8¾QäÀÏb€©ŸŸÜ$7ã‰0
-n—äÆÀ”Ñó{vµ®ozTRŒJ¾Z
-Y’ĞÆs=iRÃÖ{k°²zpÎ7Â#<9ĞgØ¾‰`íë7?û¯d:ˆ¶mçü70V<qÎ:öÀpİb_™€Å¹ûÁö‹Å||+|µ€àdË†
-‰N±¸±A&tÎß:†äFãs—Õ¢š
-ÒAóÄ<›ÅàœëNß£N¢¤(¾Tb5oÃjç‹¢õâ¨ú0|ì"ş	t±Ù–³hôüà¯²›eÀÊóÊk®°hÍÙÛz¸uşŸÎÿÃÈr Õ=ê<ştköhëIGüPôò¼'©Ç¨hááĞ£=úe-'è&–F5ŠıñÛ;²<{>è•ÕĞë4œJ^%j7Æˆ¾@5…÷›ˆ©‰z3jÜ·m`+-iH¬rÊõ‘ù¡}ÄóiäĞı@k=ÿû(ïQ:¥…Ñ­2‰ó„õlç$xY>•À…Ø_ÜŒ:àCÃıÂ;ÿşãÒ!õì/4jb>^üÈ|p-F_1ç­ï{Ìp(Ü˜Ç4(\Ü´ë5`Ê…êšOA±öWl_ŸÍ·—‘jßæ?æWøß;øw©Áÿ6ùßÿÛæ—æ²ø»Êß¨Ğ~1°uúÅ!LÚ,e‹O·Â[¥âØ±ÁZ|h}àÃ“]Ó‡{>Ç¢0èÇĞg²
-»»øVüÏ#üó	ÿÃÿ~/øû‰ÒËà\–²„Gø3Kå]M’H}TÜ±ÉõNÅ
-£¨Ÿ¼ÚµM5%'NÁÛ¢\êY-ùÄ8%şúÍOŞD¤İIa²*üªzö»@½j¤5",TmÄ˜§åF\¸FRèi±n¯B'c[½ì´Œ<Aar`Ôğ'Öƒù«å`T¬\!hš("È;„-hÇë‚€ÌüÖ‚!)Ol÷u¹bIÊ¹3UÌéÆ]Kİ×êÙJÂÚÊb$•Äa·œl§–§[¼{@ÄP}­˜"R´”[C[èm[’üà)ëHÊ.H/7O“³+vPÈS‡1\=ü”¡<N{²&S¯d”Æ]I”Æ¹3¹¿¶Šİ_ÓM5(¶R U&×6Õ~³Ìúªt›dbí!!´(´RâÀÆÎ“Y3ÿ"oc÷Oë¨Âş‹û'æÿÅlJ ÑxBO‹ Z‹k×"Àˆ W{ƒ°Ï@A1½Äü}Àğÿ´aX¯)~è¼öMü÷)Ì‚™}şãÛ¥Á5ñ› 'ƒ@si,v4ıo `À.„ÅşÑßÇ´g¶39CÍ1Íl8jZ£æ#¿O,õ’2¶‹²œä7	S-6	pÕØj˜Ò»ç«ù
-e0Ö0¹‹å¬¹ö{BÆš£‚åOñãO¨Jc¤Ã‡>ºğ\sĞQCº]#;»Û;;Û{¤N:›Û±/;v;?í<Úz¼¿“ï2õW³Şzù|u"Ù¹
-cLÎVãTJ0ÕÁX‚¥æÏ¦j;Áí)j¡QÌôlÀªei}Ûbû˜0¬Tíôkoû€VàòĞxıš_ìÓA×wz>Ã/ÀÀTÏldYÖ9É9—\¿gó€ÙÀzöC†ödRù¨Uk48#J±´ÉÖ1 ¸XT\ş®ÏŒÏm²éM®/…·ïQO:bıÀøŞ …%3˜øá8ËÚÛ
-1¯|èÙ0©ax,ğ©ŠœĞ×o~øsTµÂBVõ‘sõ²Ø·pu›Š‹h/„
-qò‡ŞçLÅÀñ’ñcü[`åÖ#•,'_†•ã«Y–“³š”]’Ê3D8€ÇX© òC*Å8¥Ø*d ÂåüS¥Ü3<G‰«K	Ş*âØBvI´é³—Á¥ëY\K4}¼Sf¯†5ô½R„¬º†kŞµË0ëØ4±Wk£m+YØ€åçy,ËV5DüÑğeReZJĞreè°Cœş²6gx©Šà€—È§¶åÏKNkÄãçÅ`vy9gWò	ÅôÙ£ƒü¤çt$Œ$)Ô2w7Ò|wq6æÇÒğ˜$~/Sÿ4İK¯…M(cBLZF<¯Z-¼]™lbûÀ¢%ˆîïm=yŠ¾D¿ØÚ#›;dãá6H@[RH‰«HO½İ˜ó6#Æ-*·”· Ä}õ«şé?Nº¥apÆ.Óİ–±sŠ0©H‘Âw“ŸÛCjúl+Û"°TÈ1"Ãâš¥°‡
-«LÖc^w¯p4¸sØæ¬æÉ~÷ÈÜÖñ*Ùã•›€'¡‹ÜÙu@±*¬ËÉ€WçƒnË+ã3[ƒ.ÈK=¸›{Dy†x1€u|±_ø€|ªã)YDTl9uPótDÎ3Û¾‡a<ÑHœŒ)ÙàŸñÚ¹ñÕŒ…½×Û<H0·¼6¢ÜI´ôsyX,Œr»¿J:O;·CV*Ò-Z`âX·¾,ïGîøA•N¯ç°wƒ%ÛÖ¦\)ŒIO#[Xx7š±;%…Ï	œßÓBˆ¼$ñ])Áš©—öÜz”Šáomòèü·ºA•Ü²óŒìÇÓ6Š;lÊ	P^5îìàªÒbù¡gÍô²ª“åZc&g
-ç\NúG€Å,]æÂŸ—iG%oÙé³æ"i-’ö"YZ$ËÏW-EñGh!,ğ”b‡XtN´W
-,`¨Ëx`˜&We¸äîyD½~ŸÄŠ@¡§zã¨Ä
-g.iº1ÑFÑÖJ·ÇÑ ©NÇ7¤¢.WI¼vs³1§4š‚h!×2Køî[õX.7cm*M¡ñL2C¿kÕ©;u†ìä"ÁÁ„OXåBÌ‰`^Êâø‰F*UTÉ¯$râŞòğˆ¬€d®ƒV(wß”0QûÉXÖ´¢ŒÁ„#âú¬Qk´'(l’éƒì§ep"7\qnı«/ÿJU0Îª">q’áGÀ6Â>´çÖÃèV#«"ğêpÙ°tªV_<#„7¢ìñS"ìÖ\=´µóßë>˜áØÉÄŒcÀm”¸>%öĞ°œ‘kw6
-­½Á£f%ÓQ(¥P„^!ÙˆÛÂ”ü˜´á÷÷H'wÀ¼
-€ |NÍv(É›š+Gø¨g3ô³Q)ö.#äIUZ"iŸ„Ì“æŒï¾„Ö'ól¥œ}c."ü¯ ì\ß.¯˜Rgxù`>*ÜN¼ñé
-QŞãg6á[%ñƒ°Y¢ßş¶Ç-5•ù¡W½ÿd^<œx«R«PJ578jEì º5¨w¶R\VØn«Yò±×ÅyMÜqQY®4óÕZVc¾ÂVB¿[\˜0ŞJ€J‰[Å	±h—'2‰‘™ˆ"é”Î>ax@;µŸšh°ÎMC†&WŞˆXß8gÑ|ÈRğçâ/{¦ª²W ¡¢ÍRÁ-º­ Ş{éµ‘o=@ÖWªÖV«HŸá\—Î¨Ê“í•(_ÂcŒóÓ˜z0P)òŒ÷sİj³Y ÃÎËl¦øÌ63@ğQõ€×ô6Â‘rÕìeŒI2àùˆl¼áˆU•ˆsr¸)³`rN]*._…¥Ë…%@ìŒÌñhà¯„ìTš_ãI¡9bÉâİdìU–ğË$åí7ˆ+Â²…Eq`!HL['—"¤‡Z¤v’çoÎ^ÑÁï„J¿qo`ìF”p|M,Õ8mOI}YÀ#)j,§g±£h¥¢q„ú˜0jd“¯œ’È*/8Uâ’3UV#¶z‰Ô‰­å¸÷ÿÈÉª2'±†—uÚVä}
-¹Òÿ  ÿÿì]ÍrÇ¾ç)F´ª   ’-¢H«dŠRèH&,J¶«HZZ K`¥Å´»àiT%‡\R©T~*U*ŠNÎ%U9çÊ7ÑøÒ=3û?³;KQ²¥""´Ø™ééù¦§ûëÔ‡CËe]C^T:ñ¸(¼ÔµíiK}æKAÅ¶ğ€ßd2õóH™EqoÅš¨[†"PK6¨ZzÌœ‚›d^ÛÁ‚gëˆFìD[çöøi22òRabRù
-X‘LêĞ×HqJœÂ. ó¼ìÀ¼X¹ñ
-:$yšÎ4N¥Òƒjî¾wCî„Ëé#™y$‡äˆ9q6{Œ­ÑÁÅŒ“ğ:/;Ìñ9SUø÷Ú5ı9‚5‚¤¥å~‡¼ aá‚oôGtŠÔ…è€‰;}d’`nç?Ò[ŸÁnóİMQÃ‡>KDæš¸$‹Ì1—6-4n)\¾Dr^n>—X±jXxMgPÌŞËÊÒE”;nÎM¯!qí`Œ’Ï÷“âÚn§ØGÓi%2oÚúJâËb­±i8}Ó. |Ó‡RåGÈğN>ÑwAfÉìeËk‰0%ü ’wıê\ö…‡Æuëèêe:}Æ¡ãDq@7æ4:ùY¼Î½:[&¯»ÓŞØòGóWÕIÈÀ?ª„öÙwFà&–gü)ÿşäú 4z\­ÍàÜ?Ápº¸áSq4°²ZkxÓç»UØ(®ÕŠÒT$ëĞşCój…/ÕA¯N*ÂøQ©‡mÒìãØ`&&ÿÅÊ­—/a\Ûƒ‘†x…i:êš¢© KSeóĞ-'Ø³Ê6WºeĞ0gÊè.°Ò•½laÁ™S':‹BÉÚŞİÂ¥ÎÿÌ4%äby¬Ï'!ÈY8<í€ƒŒDİT©h·Nh£¸¯šk-q¨%oÚ7=^ÓÓH3Ò7üşˆ ~ÒWÔ6¦ëR·:w$Õ 9Ü3«ä\èv—x¡>u]P¦Ó1Á‚‰A	&µC«œaáŸiÂ•@SáÎÈ¡àØÖÕsr…ª?üÅJ[#c`y˜ ‚Åì¤ÛRÊ™8CôŒı1R©rØÔtÌ¤{ÙèCÒh4ºç‚HÀZøe¿ùÇïI—»>¹…~×zPE×³Qõ³úH©´ƒr~æ»”¢Á™g\$»> ¦SÂ/–M1îÒËıQ&~;­NÚÅ³Ò„ßåšˆGNÇï9g"Ç(8ExC„F;öùëkä^Ì2äqRmPcÓqœX›EĞp×Ü!óªÌ^,Â<`M¤öŒÃ4&Xv)ºwó{
-€•H`†G—Õ§#ßŸxfóØhŒÍ¦"ùX~Øâ›{ßµ×šÃ:Æ­ÏnáKo\?4Læã‡ÛølD¿*º€Üú”‚ó<?¤nf/á:g9l—¬•†›«¿O–ÛwVVW¢=\jõŒöÚA"áÑŞóÅ‹Ç>`şœø¡˜~nBA‚©2ø·D¼l:,N™Ëp¹•j‘«Ÿ€n7†æî‹)&ß‹ç=bdïB0A²¾¾w{2QOœËÏ*©3µpzàà+©.Pğ‹SÖ©3g•L^W%‚Vc}[6ß¶LòšpÁÄ¯ŸÃ.¢Zy1½Èµ şÅ'*5bxä×Üß%°tx8‚*kaåÂ²µöaQ1¼íxJ¥ÕrñE¼¹(9,o/Vhò;Ë†µªòkÄag¤gŒ#‹hoŞ`4óuƒ|ÆëAiá\‡z#äàJ‡rÏ6ZktD4¢TÜ`ö½b²¼|$3«“¥öå¤M¼°rÕÂ–*-Ë5è%kY™cÊ;Wµwa/„ÑŠI-Ûåö"¨÷ƒS›Yî/¬dó`c&£Šå˜øèA–ÈI+™¬â
-`áç
-`ı ë¶É+t•óì»BW=J™œ|ˆø*j{y|XK”ÿ±`œÈ7)ÔoQ¢†÷
-mÂ–¼í¶	ïÄt˜ÓÄÒX½+L£„-ïYUb@7éÍÏÊ§™Ş¬•?-–ÑDú>^kÁİ2®3˜„[F„TgúÊuÌ}Rƒ}¯6÷«û·ö½ù‡·ö¯ãßêà”Fı`¡¶_kZZš‰•¤Ç¸˜$C§ÙÓ{KQæÂ:r6*:ìNì,ØğeuR«E]º U¼¥b*¨]àV
-ˆò±cÁ„B´6C§&1lk±+í3¸Ê“@†WË¦y,`\DÌàîG&fa*À‰ø¥ØàñÕ€Ñ}gß)ÀÒAµ0LOzõ·?¡÷ÂÙ&<•¤–ªæ/¯È¼HÓŒ'Æ™Gê»tÚ™Ò52†ät•ú7™Gªğtœ‡»tÁÜ.'+|óÏ¿“ùˆ$²QD¦”ôV—*JPM¿5sOèn‘h÷æŸÈb=œz²¸Êdoşõ¿dfuÉ#œ¬ØpúÌJŠ]|ƒ9FFMËA\ÄÙÓ)ÎÏC®¸nÌ¨™O¦ÔÕñjƒR 4.ˆ]jx…|bŸ+ä“Wı/ùhÑ7\ÿ7æ)‚ÕòoĞ÷,³:?‘-§p)8%"sĞ àWkb¹[¬Ô‚Ò+R‘‚GƒÈˆN& 6¡õ¡²š'€¢0,fƒñšî‰($àİ:{»ƒÄãxé‡,¥¢r_P±¸Õ…7†¯ĞÑË«ÃïÖñÃÑQøÏé<ÎzFçF/&WLª½2%0)ìd‹”)Cl‡¨$Y·ëP°;D"âz7L¡RœŞ]Ôëhº>^˜Á¨ˆ‹Tc
-^Ô&)|Òğ9bœ<`>i ™®;ƒïºŸë¼áÔá¡ÙŠÖÇ|ÚW±)³»4—TõRj\¡œ+”#ÿõÛwÄjûöF˜A'ï} ¾¨¦‹µJ‡EÙÍrEùu‰x½9¦(æÔ/±1áœÔÁí·Ğ?¾Ùe\¼}3¬c=óCğ|@‹O§>£¡Kº¬GH†ªÀöÜ·{ãìf‘Ñ·üS˜ìi½oğZ7-¥o˜æç_0,FãÀê¶ØŠÂÎÖÚ vıç—N03•‹‰ª¾_ÜÕÚÊ2†.3Œ£—4v\7§F'Ë+±÷I«×ê/µ”œÅÁŠƒ„¦"véÍâ™µ8ëÄ*gH“ê!1šG2è»iSX«?KÖáUr$‹E–y0öòFÏ£6€!˜ÇÈ•Á_á]mIxW‚- ÕN¯‘©5©à±Xw²Ì÷¹ÎÎÛõoƒEsu–TZrh%î ÅÔ,£…@ÔÔ3+	²#Ş5`	V´" şÍşÈáÅÔr-—tmÃ¡äëí®D}Éi5ÖG+Y¢%oo `ŒÑëZoV$…±FXqšûVÏtñlrEJ¶m“RAù&¹ƒ™¬0xŞ©Ëó’&…^.G“Ê€?Ú·Jâl™4ñ˜Õ‹ˆL9^gnºY1z2±^–Œ"ì›*V%=
-,İÁ©Ç-†Ù.œ£GŒk¯Õ×Z•™šA0ñ–HÃ,+Ît-Š´¸ÁùŠøEü™‹¿Ûo.4™­QÂƒó?ìV”ÌƒÒƒX¹\ Æıê!Ù¤S¦lSİÉd@Í“#ƒT	Ç‹7n’şH` x7r%0\şFÖ`€„]EËŸX‡ì!QSfF£1±N¾r±+î[Îs¥£İº5ª"^=·¿q–Êx±ÊdÃö7æ‚¡èZ'Ê8ğlà:ç™'´÷'$€YØ¾(©e\óĞt]Óíb4ÃéÆœCƒKòG¤`Q} ŸG°›˜|6êÓíæ1 ä1ä¾|O¡”yƒÓã
-#DQ¼İC×8ÅäŸsŸ…£µımÉ*âÊ0 ômÄªÀl;\9íc0¬ÊâA2Ö]âÄ¸xé”Pb£ÔÂ°’bBĞ•¢Ò5ÏÄTÆı†÷õéÄ2şµábÏ°Nh#ï”4¥¸W{9hë,$¢1uhl$¬ù‹¨µß&œÆ®,ŸÓ=E(£½ÜE„Hg™$ğ¼%6›á&Œ¡îj‘1H'RíN!ÑR¼ãØ§ò_GˆLã²Á·`‹ê&P˜PB¼ñXv8ea±è ’oÚŠB‰fmr<ËòÒJN–$§µ\‘qz„â–d÷à´lÛšx–'Ó Rı™Ëœ y´‡ö’ÜÍ3ã8Æ‘54|ê6úĞô5ÜAãØµDÉ•ª¶LÀ¦«Ëï4E—ÑÄÃ|³V'¸ùUR˜ŞM˜€s„ŠØ&´kNL²ÜÈ¤0§²_ßˆËY–m]“"3›ÇqtY6cLxƒ$é´Cá•ø&W‘Qšh ’½Vá¦,ø+åV[¨Jb×/ÎG¶în=z¼µMvH÷ö=¤™l>º-Sã¶¤ ¢´Gvf2èß¾Ù^[[¾¹º¼ôé§•Úœ:*Üë‹ó×À—?5-t<1†"¤Öî	ÛºbD„sş?§oQÆ)®ØZHwOSv€ãÒ#Ìo|·ˆæ3hßÂpû±9	w-Ï ÇÖtÜ@;cvD8ƒÒÆw/‘¨x×´*ª‘âe˜_œ#Æ”D‡b\\Mf|Ïˆ¤÷}ê©­·¸Éy+W“b«ÍO¯^ş–şV8øİ`ğ3²o”±Şˆ¼h2F…áù§63ebÇğcĞ
-æ]`DìH³;ãğ+xÏ7&ÂRÔ,×ël&µ¹¼ü£uu,3)‘\Áö¨Š×è4åÑ<B@aX0ËğÅÍk2#¶Z¡r/É­ÎyVæD1°Ì~õ   ÿÿ ÉÏeó
+                                ğŸ”¥ Ser Indicado no Chat Interno â†’
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Stat Counters Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                          <div className="bg-[#11111a] border border-white/10 p-4 rounded-2xl flex flex-col justify-between">
+                            <div className="text-[10px] text-white/50 font-bold uppercase tracking-wider">ğŸ‘ï¸ VisualizaÃ§Ãµes</div>
+                            <div className="text-2xl font-black text-white mt-2 font-mono">{views}</div>
+                            <div className="text-[9px] text-emerald-400 mt-1">Acessos no perfil</div>
+                          </div>
+                          <div className="bg-[#11111a] border border-white/10 p-4 rounded-2xl flex flex-col justify-between">
+                            <div className="text-[10px] text-white/50 font-bold uppercase tracking-wider">ğŸ’¬ Cliques WhatsApp</div>
+                            <div className="text-2xl font-black text-emerald-400 mt-2 font-mono">{currentAdvertiser.company.clicksWa || Math.floor(views * 0.4)}</div>
+                            <div className="text-[9px] text-white/40 mt-1">Contatos diretos</div>
+                          </div>
+                          <div className="bg-[#11111a] border border-white/10 p-4 rounded-2xl flex flex-col justify-between">
+                            <div className="text-[10px] text-white/50 font-bold uppercase tracking-wider">ğŸ” Buscas e ApariÃ§Ãµes</div>
+                            <div className="text-2xl font-black text-amber-400 mt-2 font-mono">{currentAdvertiser.company.searchImpressions || Math.floor(views * 3.2 + 12)}</div>
+                            <div className="text-[9px] text-white/40 mt-1">ExibiÃ§Ãµes em buscas</div>
+                          </div>
+                          <div className="bg-[#11111a] border border-white/10 p-4 rounded-2xl flex flex-col justify-between">
+                            <div className="text-[10px] text-white/50 font-bold uppercase tracking-wider">â­ PosiÃ§Ã£o na Categoria</div>
+                            <div className="text-lg font-black text-white mt-2 font-mono">
+                              #{rankInfo.position} de {rankInfo.totalInCat}
+                            </div>
+                            <div className="text-[9px] text-amber-400 mt-1">
+                              {currentPlan === 'gratuito' ? 'FaÃ§a upgrade para subir' : 'PosiÃ§Ã£o prioritÃ¡ria'}
+                            </div>
+                          </div>
+                          <div className="bg-[#11111a] border border-white/10 p-4 rounded-2xl flex flex-col justify-between col-span-2 sm:col-span-1">
+                            <div className="text-[10px] text-white/50 font-bold uppercase tracking-wider">ğŸ“ˆ Taxa de ConversÃ£o</div>
+                            <div className="text-2xl font-black text-blue-400 mt-2 font-mono">
+                              {views ? `${((Math.floor(views * 0.4) / views) * 100).toFixed(1)}%` : '100%'}
+                            </div>
+                            <div className="text-[9px] text-white/40 mt-1">Visitantes â†’ Cliques</div>
+                          </div>
+                        </div>
+
+                        {/* Visibility Score Progress Box */}
+                        <div className="bg-gradient-to-r from-[#13141f] via-[#1a1c2d] to-[#13141f] border border-white/10 p-6 rounded-3xl shadow-xl">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                            <div>
+                              <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                                ğŸš€ Score de Visibilidade do Perfil: <span className="text-[var(--primary)] font-mono text-xl">{score}%</span>
+                              </h3>
+                              <p className="text-xs text-white/60 mt-1">
+                                Quanto maior o seu score, mais alto sua empresa aparece nas buscas do portal e do Google!
+                              </p>
+                            </div>
+                            <div className="shrink-0">
+                              <span className={`text-xs font-black uppercase px-3 py-1.5 rounded-full ${
+                                score >= 80 ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-400' :
+                                score >= 50 ? 'bg-amber-500/20 border border-amber-500/40 text-amber-400' :
+                                'bg-red-500/20 border border-red-500/40 text-red-400'
+                              }`}>
+                                {score >= 80 ? 'ğŸ”¥ Excelente Visibilidade' : score >= 50 ? 'âš¡ MÃ©dia Visibilidade' : 'âš ï¸ Baixa Visibilidade'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Progress Bar */}
+                          <div className="w-full h-3 bg-black/50 border border-white/10 rounded-full overflow-hidden p-0.5">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                score >= 80 ? 'bg-gradient-to-r from-emerald-500 to-teal-400' :
+                                score >= 50 ? 'bg-gradient-to-r from-amber-500 to-yellow-400' :
+                                'bg-gradient-to-r from-red-500 to-orange-500'
+                              }`}
+                              style={{ width: `${score}%` }}
+                            />
+                          </div>
+
+                          {/* Practical Suggestions Checklist */}
+                          <div className="mt-6">
+                            <h4 className="text-xs font-bold text-white/70 uppercase tracking-widest mb-3">
+                              Dicas PrÃ¡ticas para Aumentar sua PontuaÃ§Ã£o:
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                              {checklist.map((item) => (
+                                <div 
+                                  key={item.id} 
+                                  className={`p-3 rounded-xl border flex items-center justify-between text-xs ${
+                                    item.done 
+                                      ? 'bg-emerald-500/5 border-emerald-500/20 text-white/90' 
+                                      : 'bg-white/5 border-white/10 text-white/60'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    <span className={item.done ? 'text-emerald-400 font-bold' : 'text-white/30'}>
+                                      {item.done ? 'âœ…' : 'â­•'}
+                                    </span>
+                                    <span>{item.label}</span>
+                                  </div>
+                                  {!item.done ? (
+                                    <button 
+                                      type="button"
+                                      onClick={() => setAdDashboardTab(item.action as any)}
+                                      className="text-[10px] font-extrabold uppercase bg-[var(--primary)] text-black px-2.5 py-1 rounded-lg hover:brightness-110 shrink-0 ml-2 cursor-pointer"
+                                    >
+                                      +{item.bonus}%
+                                    </button>
+                                  ) : (
+                                    <span className="text-[10px] text-emerald-400 font-mono font-bold">+{item.bonus}%</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Tab 4: Meu Plano & BenefÃ­cios */}
+                  {adDashboardTab === 'plano' && (() => {
+                    const currentPlan = getCompanyPlanType(currentAdvertiser.company);
+                    return (
+                      <div className="flex flex-col gap-6">
+                        {/* Current Active Plan Header & Conversion Triggers */}
+                        <div className="bg-gradient-to-r from-[#11121c] via-[#161726] to-[#11121c] border border-amber-500/30 p-6 rounded-3xl flex flex-col gap-5 shadow-2xl relative overflow-hidden">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                            <div>
+                              <span className="text-[10px] text-amber-400 font-mono font-black uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                                â­ Status do Seu NegÃ³cio
+                              </span>
+                              <div className="flex items-center gap-3 mt-2">
+                                <h3 className="text-2xl font-black text-white capitalize">
+                                  {currentPlan === 'patrocinado' ? 'ğŸ”¥ Plano Patrocinado (1Âº Lugar Absoluto)' :
+                                   currentPlan === 'destaque' ? 'â­ Plano Destaque VIP' :
+                                   currentPlan === 'verificado' ? 'âœ” Empresa Verificada' :
+                                   'ğŸŸ¢ Plano Essencial (Perfil Comercial)'}
+                                </h3>
+                              </div>
+                              <p className="text-xs text-white/70 mt-1.5 max-w-2xl leading-relaxed">
+                                {currentPlan === 'patrocinado' ? 'Sua empresa estÃ¡ no topo absoluto de todas as pesquisas com selo animado e prioridade mÃ¡xima!' :
+                                 currentPlan === 'destaque' ? 'Sua empresa aparece com destaque estelar antes das listagens padrÃ£o do portal!' :
+                                 currentPlan === 'verificado' ? 'Sua empresa transmite confianÃ§a total para clientes com o selo verde de Verificado.' :
+                                 'Sua empresa possui o perfil comercial ativo no guia e estÃ¡ visÃ­vel para potenciais clientes.'}
+                              </p>
+                            </div>
+
+                            <a 
+                              href={`https://wa.me/5585992862177?text=${encodeURIComponent(`OlÃ¡! Quero ativar o Plano Premium para minha empresa (${currentAdvertiser?.company?.name}) para aparecer em 1Âº lugar!`)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:brightness-110 text-black px-7 py-4 rounded-2xl font-black text-xs uppercase tracking-wider text-center shadow-xl shadow-amber-500/20 shrink-0 cursor-pointer flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
+                            >
+                              ğŸš€ Quero Aparecer Primeiro
+                            </a>
+                          </div>
+
+                          {/* Conversion Triggers Banner */}
+                          {currentPlan === 'gratuito' && (
+                            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 text-xs text-amber-200/90 flex flex-col gap-2">
+                              <div className="flex items-center gap-2 font-black text-amber-300 text-xs uppercase tracking-wide">
+                                âš¡ GATILHOS DE VISIBILIDADE & VANTAGEM COMPETITIVA:
+                              </div>
+                              <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-1 font-medium">
+                                <li className="flex items-center gap-1.5">
+                                  <span>ğŸ”´</span>
+                                  <span><strong>Sua empresa estÃ¡ atrÃ¡s das empresas Premium.</strong></span>
+                                </li>
+                                <li className="flex items-center gap-1.5">
+                                  <span>ğŸ”</span>
+                                  <span><strong>As empresas Premium aparecem primeiro nas pesquisas.</strong></span>
+                                </li>
+                                <li className="flex items-center gap-1.5">
+                                  <span>ğŸ¤–</span>
+                                  <span><strong>As empresas Premium possuem prioridade nas recomendaÃ§Ãµes do Atendente Virtual.</strong></span>
+                                </li>
+                                <li className="flex items-center gap-1.5 text-emerald-300 font-bold">
+                                  <span>ğŸš€</span>
+                                  <span>Ative o Premium para aumentar sua visibilidade e fechar mais vendas!</span>
+                                </li>
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Modern Badges Showcase */}
+                          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
+                            <span className="text-[10px] text-white/40 uppercase font-bold tracking-widest mr-2">Selos de Destaque Oficial:</span>
+                            <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] px-3 py-1 rounded-full font-black flex items-center gap-1 shadow">
+                              â­ Premium
+                            </span>
+                            <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] px-3 py-1 rounded-full font-black flex items-center gap-1 shadow">
+                              âœ” Verificada
+                            </span>
+                            <span className="bg-red-500/20 text-red-300 border border-red-500/40 text-[11px] px-3 py-1 rounded-full font-black flex items-center gap-1 shadow">
+                              ğŸ”¥ Empresa Recomendada
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Four Tiers Comparison Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+                          {/* Gratuito */}
+                          <div className={`bg-gradient-to-b from-[#141622] to-[#0d0e15] border rounded-3xl p-6 flex flex-col justify-between shadow-xl transition-all duration-300 relative overflow-hidden ${currentPlan === 'gratuito' ? 'border-white/40 ring-2 ring-white/20' : 'border-white/10 opacity-80'}`}>
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-mono text-white/50 uppercase font-extrabold tracking-widest bg-white/5 px-2.5 py-1 rounded-full border border-white/10">NÃ­vel 1</span>
+                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider">BÃ¡sico</span>
+                              </div>
+
+                              <h4 className="text-xl font-black text-white mt-3 flex items-center gap-1.5">
+                                ğŸŸ¢ Plano Essencial
+                              </h4>
+
+                              <div className="text-3xl font-black text-white mt-2 font-mono flex items-baseline gap-1">
+                                R$ 0 <span className="text-xs text-white/40 font-normal font-sans">/ MÃŠS</span>
+                              </div>
+
+                              {/* Capacity Pills */}
+                              <div className="grid grid-cols-2 gap-2 mt-4 p-2.5 bg-white/5 border border-white/5 rounded-2xl text-[11px] font-bold text-white/70 text-center">
+                                <div className="bg-white/5 py-1.5 rounded-xl">ğŸ“¸ 5 Fotos</div>
+                                <div className="bg-white/5 py-1.5 rounded-xl">ğŸ“¦ 5 Produtos</div>
+                              </div>
+
+                              <ul className="text-xs text-white/80 space-y-2.5 mt-5 border-t border-white/10 pt-5">
+                                <li className="flex items-start gap-2">
+                                  <span className="text-emerald-400 font-bold">âœ“</span>
+                                  <span>Perfil Comercial da Empresa</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span className="text-emerald-400 font-bold">âœ“</span>
+                                  <span>Logo, EndereÃ§o e HorÃ¡rios</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span className="text-emerald-400 font-bold">âœ“</span>
+                                  <span>WhatsApp & Redes Sociais</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span className="text-emerald-400 font-bold">âœ“</span>
+                                  <span>CatÃ¡logo simples de itens</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-white/50">
+                                  <span className="text-white/30 font-bold">âœ“</span>
+                                  <span>PresenÃ§a garantida no diretÃ³rio da cidade</span>
+                                </li>
+                              </ul>
+                            </div>
+
+                            <div className="mt-6">
+                              <div className="p-3 bg-white/5 border border-white/10 rounded-2xl text-[11px] text-white/50 leading-relaxed">
+                                ğŸ’¡ <em>Permite posicionar sua marca na vitrine comercial e receber clientes.</em>
+                              </div>
+
+                              {currentPlan === 'gratuito' && (
+                                <div className="mt-4 text-center text-xs font-black text-white/70 bg-white/10 border border-white/10 py-3 rounded-2xl uppercase tracking-wider">
+                                  âœ” Seu Plano Atual
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Verificado - ConfianÃ§a */}
+                          <div className={`bg-gradient-to-b from-[#0c2018] via-[#0f171c] to-[#0a1114] border-2 rounded-3xl p-6 flex flex-col justify-between shadow-[0_0_25px_rgba(16,185,129,0.12)] transition-all duration-300 relative overflow-hidden ${currentPlan === 'verificado' ? 'border-emerald-400 ring-2 ring-emerald-400/50 shadow-[0_0_30px_rgba(16,185,129,0.3)]' : 'border-emerald-500/40 hover:border-emerald-400'}`}>
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-mono text-emerald-400 uppercase font-extrabold tracking-widest bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">NÃ­vel 2</span>
+                                <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-black px-2.5 py-1 rounded-full border border-emerald-500/40 flex items-center gap-1 shadow-sm">
+                                  âœ” Verificada
+                                </span>
+                              </div>
+
+                              <h4 className="text-xl font-black text-emerald-400 mt-3 flex items-center gap-1.5">
+                                â­ Premium ConfianÃ§a
+                              </h4>
+
+                              <div className="text-3xl font-black text-emerald-400 mt-2 font-mono flex items-baseline gap-1">
+                                R$ 39,90 <span className="text-xs text-white/50 font-normal font-sans">/ MÃŠS</span>
+                              </div>
+
+                              {/* Capacity Pills */}
+                              <div className="grid grid-cols-2 gap-2 mt-4 p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-[11px] font-bold text-emerald-300 text-center">
+                                <div className="bg-emerald-500/15 py-1.5 rounded-xl border border-emerald-500/20">ğŸ“¸ AtÃ© 20 Fotos</div>
+                                <div className="bg-emerald-500/15 py-1.5 rounded-xl border border-emerald-500/20">ğŸ“¦ AtÃ© 30 Produtos</div>
+                              </div>
+
+                              <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-emerald-500/20 pt-5">
+                                <li className="flex items-start gap-2 text-emerald-400 font-bold">
+                                  <span>â­</span>
+                                  <span>Empresa Verificada com Selo de ConfianÃ§a</span>
+                                </li>
+                                <li className="flex items-start gap-2 font-semibold text-emerald-300">
+                                  <span>â­</span>
+                                  <span>Aparece com Prioridade de Busca</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-emerald-300 font-bold bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20">
+                                  <span>ğŸ’¬</span>
+                                  <span>IndicaÃ§Ã£o no Chat Interno se vocÃª Ã© Premium</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span>â­</span>
+                                  <span>Prioridade mÃ©dia nas pesquisas do portal</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span>â­</span>
+                                  <span>Cadastro de VÃ­deos & PromoÃ§Ãµes</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span>â­</span>
+                                  <span>BotÃ£o WhatsApp em Destaque</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-emerald-300/90">
+                                  <span>â­</span>
+                                  <span>RelatÃ³rio completo (Cliques, VisualizaÃ§Ãµes, Leads)</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-emerald-300/90 font-bold">
+                                  <span>â­</span>
+                                  <span>Badge Premium & Card estilizado</span>
+                                </li>
+                              </ul>
+                            </div>
+
+                            <div className="mt-6">
+                              <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-[11px] text-emerald-200/90 leading-relaxed">
+                                ğŸš€ <em>Garante credibilidade, selo de verificaÃ§Ã£o e prioridade sobre concorrentes locais.</em>
+                              </div>
+
+                              {currentPlan === 'verificado' ? (
+                                <div className="mt-4 text-center text-xs font-black text-emerald-300 bg-emerald-500/20 border border-emerald-500/40 py-3 rounded-2xl uppercase tracking-wider">
+                                  âœ” Seu Plano Atual
+                                </div>
+                              ) : (
+                                <a 
+                                  href={`https://wa.me/5585992862177?text=${encodeURIComponent(`OlÃ¡! Quero fazer o UPGRADE para o Plano Premium ConfianÃ§a (R$ 39,90/mÃªs) da empresa ${currentAdvertiser.company.name}.`)}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="w-full block mt-4 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                                >
+                                  ğŸš€ Fazer Upgrade
+                                </a>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Destaque VIP */}
+                          <div className={`bg-gradient-to-b from-[#2a1d08] via-[#1a140b] to-[#100d07] border-2 rounded-3xl p-6 flex flex-col justify-between shadow-[0_0_35px_rgba(245,158,11,0.25)] transition-all duration-300 relative ${currentPlan === 'destaque' ? 'border-amber-400 ring-2 ring-amber-400/50 shadow-[0_0_40px_rgba(245,158,11,0.45)]' : 'border-amber-400/80 hover:border-amber-400'}`}>
+                            
+                            {/* Floating Top Badge */}
+                            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-black px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.6)] flex items-center gap-1">
+                              <span>ğŸ‘‘</span> MAIS POPULAR
+                            </div>
+
+                            <div>
+                              <div className="flex items-center justify-between mt-1">
+                                <span className="text-[10px] font-mono text-amber-400 uppercase font-extrabold tracking-widest bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">NÃ­vel 3</span>
+                                <span className="bg-amber-500/20 text-amber-300 text-[10px] font-black px-2.5 py-1 rounded-full border border-amber-500/40 flex items-center gap-1 shadow-sm">
+                                  â­ Premium VIP
+                                </span>
+                              </div>
+
+                              <h4 className="text-xl font-black text-amber-400 mt-3 flex items-center gap-1.5">
+                                â­ Premium Destaque VIP
+                              </h4>
+
+                              <div className="text-3xl font-black text-amber-400 mt-2 font-mono flex items-baseline gap-1">
+                                R$ 59,90 <span className="text-xs text-white/50 font-normal font-sans">/ MÃŠS</span>
+                              </div>
+
+                              {/* Capacity Pills */}
+                              <div className="grid grid-cols-2 gap-2 mt-4 p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-[11px] font-bold text-amber-300 text-center">
+                                <div className="bg-amber-500/15 py-1.5 rounded-xl border border-amber-500/20">ğŸ“¸ AtÃ© 30 Fotos</div>
+                                <div className="bg-amber-500/15 py-1.5 rounded-xl border border-amber-500/20">ğŸ“¦ AtÃ© 50 Produtos</div>
+                              </div>
+
+                              <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-amber-500/20 pt-5">
+                                <li className="flex items-start gap-2 text-amber-400 font-bold">
+                                  <span>â­</span>
+                                  <span>Empresa Verificada & Selo VIP Ouro</span>
+                                </li>
+                                <li className="flex items-start gap-2 font-semibold text-amber-300">
+                                  <span>â­</span>
+                                  <span>Aparece antes dos perfis bÃ¡sicos e verificados</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-amber-300 font-bold bg-amber-500/15 p-2 rounded-xl border border-amber-500/30 shadow-inner">
+                                  <span>ğŸ’¬</span>
+                                  <span>IndicaÃ§Ã£o Especial no Chat Interno se vocÃª Ã© Premium</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span>â­</span>
+                                  <span>Prioridade Alta nas buscas do portal</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span>â­</span>
+                                  <span>Borda e IluminaÃ§Ã£o VIP Exclusiva no Portal</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span>â­</span>
+                                  <span>BotÃ£o WhatsApp em Destaque Especial</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-amber-300/90">
+                                  <span>â­</span>
+                                  <span>EstatÃ­sticas e RelatÃ³rios de Desempenho</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-amber-300/90 font-bold">
+                                  <span>â­</span>
+                                  <span>Badge Premium VIP & Card Iluminado</span>
+                                </li>
+                              </ul>
+                            </div>
+
+                            <div className="mt-6">
+                              <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-[11px] text-amber-200/90 leading-relaxed">
+                                ğŸš€ <em>O plano de maior custo-benefÃ­cio: posicionamento de alto destaque e grande capacidade no catÃ¡logo.</em>
+                              </div>
+
+                              {currentPlan === 'destaque' ? (
+                                <div className="mt-4 text-center text-xs font-black text-amber-300 bg-amber-500/20 border border-amber-500/40 py-3 rounded-2xl uppercase tracking-wider">
+                                  âœ” Seu Plano Atual
+                                </div>
+                              ) : (
+                                <a 
+                                  href={`https://wa.me/5585992862177?text=${encodeURIComponent(`OlÃ¡! Quero fazer o UPGRADE para o Plano Premium Destaque VIP (R$ 59,90/mÃªs) da empresa ${currentAdvertiser.company.name}.`)}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="w-full block mt-4 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:brightness-110 text-black font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-[0_4px_25px_rgba(245,158,11,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                                >
+                                  ğŸš€ Fazer Upgrade VIP
+                                </a>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Patrocinado Top 1 */}
+                          <div className={`bg-gradient-to-b from-[#330f16] via-[#1e0a11] to-[#12060a] border-2 rounded-3xl p-6 flex flex-col justify-between shadow-[0_0_35px_rgba(239,68,68,0.3)] transition-all duration-300 relative overflow-hidden ${currentPlan === 'patrocinado' ? 'border-red-400 ring-2 ring-red-400/50 shadow-[0_0_40px_rgba(239,68,68,0.5)]' : 'border-red-500/80 hover:border-red-400'}`}>
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-mono text-red-400 uppercase font-extrabold tracking-widest bg-red-500/10 px-2.5 py-1 rounded-full border border-red-500/20">NÃ­vel MAX</span>
+                                <span className="bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full shadow-md border border-red-400/50 flex items-center gap-1">
+                                  ğŸ”¥ Empresa Recomendada
+                                </span>
+                              </div>
+
+                              <h4 className="text-xl font-black text-red-400 mt-3 flex items-center gap-1.5">
+                                ğŸ”¥ Premium Patrocinado (1Âº Lugar)
+                              </h4>
+
+                              <div className="text-3xl font-black text-red-400 mt-2 font-mono flex items-baseline gap-1">
+                                R$ 89,90 <span className="text-xs text-white/50 font-normal font-sans">/ MÃŠS</span>
+                              </div>
+
+                              {/* Capacity Box */}
+                              <div className="mt-4 p-2.5 bg-gradient-to-r from-amber-500/20 via-red-500/20 to-amber-500/20 border border-amber-400/40 rounded-2xl text-center font-black text-amber-300 text-[11px] shadow-inner tracking-wider flex items-center justify-center gap-1.5">
+                                <span>â™¾ï¸</span> FOTOS, PRODUTOS & VÃDEOS ILIMITADOS
+                              </div>
+
+                              <ul className="text-xs text-white/90 space-y-2.5 mt-5 border-t border-red-500/20 pt-5">
+                                <li className="flex items-start gap-2 text-red-400 font-black">
+                                  <span>ğŸ”¥</span>
+                                  <span>1Âª PosiÃ§Ã£o Garantida na sua Categoria (Top 1)</span>
+                                </li>
+                                <li className="flex items-start gap-2 font-semibold text-red-300">
+                                  <span>â­</span>
+                                  <span>PosiÃ§Ã£o Fixa Escolhida & Borda Dourada Animada</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-cyan-300 font-bold">
+                                  <span>ğŸ“º</span>
+                                  <span>Comercial exibido na TV On-line da plataforma</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-pink-300 font-bold">
+                                  <span>ğŸ“»</span>
+                                  <span>Comercial veiculado na RÃ¡dio On-line</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-emerald-300 font-bold">
+                                  <span>ğŸ“²</span>
+                                  <span>DivulgaÃ§Ã£o em Grupos Facebook & WhatsApp (3x ao dia)</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-red-300 font-bold bg-red-500/15 p-2 rounded-xl border border-red-500/30">
+                                  <span>ğŸ’¬</span>
+                                  <span>IndicaÃ§Ã£o PrioritÃ¡ria e Destaque Absoluto no Chat Interno</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                  <span>â­</span>
+                                  <span>BotÃ£o WhatsApp em Destaque Absoluto</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-red-300/90 font-bold">
+                                  <span>â­</span>
+                                  <span>Badge Premium Supremo & Card Diferenciado</span>
+                                </li>
+                              </ul>
+                            </div>
+
+                            <div className="mt-6">
+                              <div className="p-3.5 bg-red-500/10 border border-red-500/20 rounded-2xl text-[11px] text-red-200/90 leading-relaxed">
+                                ğŸš€ <em>MÃ¡xima exposiÃ§Ã£o multi-canal: TV, RÃ¡dio, Grupos DiÃ¡rios e 1Âº lugar absoluto no portal.</em>
+                              </div>
+
+                              {currentPlan === 'patrocinado' ? (
+                                <div className="mt-4 text-center text-xs font-black text-red-300 bg-red-500/20 border border-red-500/40 py-3 rounded-2xl uppercase tracking-wider">
+                                  âœ” Seu Plano Atual
+                                </div>
+                              ) : (
+                                <a 
+                                  href={`https://wa.me/5585992862177?text=${encodeURIComponent(`OlÃ¡! Quero fazer o UPGRADE para o Plano Premium Patrocinado Top 1 (R$ 89,90/mÃªs) da empresa ${currentAdvertiser.company.name}.`)}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="w-full block mt-4 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-[0_4px_25px_rgba(239,68,68,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                                >
+                                  ğŸš€ Fazer Upgrade Top 1
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Sub-Tab 1: Profile Edits */}
+                  {adDashboardTab === 'perfil' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                      {/* Form area */}
+                      <div className="lg:col-span-2 flex flex-col gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Nome da Empresa</label>
+                            <input 
+                              type="text"
+                              value={currentAdvertiser.company.name}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, name: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            />
+                          </div>
+                          
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">WhatsApp Comercial (com DDD)</label>
+                            <input 
+                              type="text"
+                              value={currentAdvertiser.company.wa}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/[^0-9]/g, '');
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, wa: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Categoria</label>
+                            <select 
+                              value={(appData?.categories || []).some((cat: any) => cat.name === currentAdvertiser.company.category) ? currentAdvertiser.company.category : "__custom__"}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === "__custom__") {
+                                  setCurrentAdvertiser((prev: any) => ({
+                                    ...prev,
+                                    company: { ...prev.company, category: '' }
+                                  }));
+                                } else {
+                                  setCurrentAdvertiser((prev: any) => ({
+                                    ...prev,
+                                    company: { ...prev.company, category: val }
+                                  }));
+                                }
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            >
+                              {(appData?.categories || []).map((cat: any) => (
+                                <option key={cat.name} value={cat.name}>{cat.name}</option>
+                              ))}
+                              <option value="__custom__">âœï¸ Outro (Digitar nicho personalizado...)</option>
+                            </select>
+
+                            {! (appData?.categories || []).some((cat: any) => cat.name === currentAdvertiser.company.category) && (
+                              <div className="flex flex-col gap-1.5 mt-2">
+                                <label className="text-[9px] text-[var(--primary)] uppercase font-black">Escreva o Nome do seu Nicho *</label>
+                                <input 
+                                  type="text"
+                                  value={currentAdvertiser.company.category}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setCurrentAdvertiser((prev: any) => ({
+                                      ...prev,
+                                      company: { ...prev.company, category: val }
+                                    }));
+                                  }}
+                                  placeholder="Ex: Pizzaria, Fretes, Ar Condicionado, InformÃ¡tica..."
+                                  className="w-full bg-[#11111a] border border-[var(--primary)]/50 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                                  required
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Estilo de Atendimento / Funcionalidade</label>
+                            <select 
+                              value={currentAdvertiser.company.type || 'loja'}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, type: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            >
+                              <option value="loja">ğŸ›ï¸ Loja Virtual / Vendas Online (Com PreÃ§os, Carrinho e Pedidos no WhatsApp)</option>
+                              <option value="cardapio">ğŸ” CardÃ¡pio / Pizzaria (Com PreÃ§os, Carrinho e Pedidos no WhatsApp)</option>
+                              <option value="servico">ğŸ› ï¸ Prestador de ServiÃ§os (Sem PreÃ§os/Carrinho, com BotÃ£o e Pedido de OrÃ§amento)</option>
+                              <option value="agendamento">ğŸ“… Agendamento de HorÃ¡rios (Sem PreÃ§os/Carrinho, com FormulÃ¡rio de Agendamento)</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex justify-between items-center">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Link da Foto Logo (URL)</label>
+                              <DirectFileUploadButton 
+                                label="ğŸ“· Escolher do Celular" 
+                                onUploadSuccess={(url) => setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, logo: url }
+                                }))} 
+                              />
+                            </div>
+                            <input 
+                              type="text"
+                              value={currentAdvertiser.company.logo}
+                              placeholder="Cole a URL ou escolha a foto do celular acima"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, logo: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            />
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Link do Instagram (instagram.com/...)</label>
+                            <input 
+                              type="text"
+                              value={currentAdvertiser.company.ig}
+                              placeholder="https://..."
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, ig: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Link do Site Oficial (Website)</label>
+                            <input 
+                              type="text"
+                              value={currentAdvertiser.company.website || ''}
+                              placeholder="https://seu-site.com"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, website: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            />
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Link do Facebook (facebook.com/...)</label>
+                            <input 
+                              type="text"
+                              value={currentAdvertiser.company.fb || ''}
+                              placeholder="https://facebook.com/sua-pagina"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, fb: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">AÃ§Ã£o do BotÃ£o Principal (Site)</label>
+                            <select 
+                              value={currentAdvertiser.company.primaryButtonAction || 'minisite'}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, primaryButtonAction: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            >
+                              <option value="minisite">Abrir Mini-Site / CatÃ¡logo Interno ğŸ“²</option>
+                              <option value="site">Abrir Site Oficial Externo (Website) ğŸŒ</option>
+                              <option value="instagram">Instagram Comercial ğŸ“¸</option>
+                              <option value="facebook">PÃ¡gina do Facebook ğŸ‘¥</option>
+                            </select>
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Texto Personalizado do BotÃ£o</label>
+                            <input 
+                              type="text"
+                              value={currentAdvertiser.company.primaryButtonText || ''}
+                              placeholder="Ex: Abrir Instagram (Vazio = PadrÃ£o)"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, primaryButtonText: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Estado (UF) *</label>
+                            <select 
+                              value={currentAdvertiser.company.state || currentAdvertiser.company.uf || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { 
+                                    ...prev.company, 
+                                    state: val.toUpperCase(),
+                                    uf: val.toUpperCase() 
+                                  }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              required
+                            >
+                              <option value="">Selecione o Estado</option>
+                              {BRAZIL_STATES.map(st => (
+                                <option key={st.uf} value={st.uf}>{st.uf} - {st.name}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Cidade *</label>
+                            <input 
+                              type="text"
+                              value={currentAdvertiser.company.city || ''}
+                              placeholder="Ex: Fortaleza, SÃ£o Paulo..."
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, city: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase font-bold">ApresentaÃ§Ã£o / Quem Somos</label>
+                          <textarea 
+                            value={currentAdvertiser.company.desc}
+                            rows={3}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, desc: val }
+                              }));
+                            }}
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white resize-none"
+                          />
+                        </div>
+
+                        <div className="border-t border-white/5 pt-5 mt-3">
+                          <h4 className="text-xs font-black text-[var(--primary)] uppercase tracking-wider mb-4">ğŸ’³ Recebimento de Pedidos (Pix & Entrega)</h4>
+                          <p className="text-[11px] text-white/50 mb-4">Insira os dados do seu Pix para que seus clientes possam pagar direto pelo catÃ¡logo virtual (Mini-Site) ou cardÃ¡pio digital.</p>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Chave PIX para Recebimento</label>
+                              <input 
+                                type="text"
+                                placeholder="Ex: seu_email@email.com, celular ou chave aleatÃ³ria"
+                                value={currentAdvertiser.company.pixKey || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setCurrentAdvertiser((prev: any) => ({
+                                    ...prev,
+                                    company: { ...prev.company, pixKey: val }
+                                  }));
+                                }}
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+                            
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Nome do Titular (Recebedor)</label>
+                              <input 
+                                type="text"
+                                placeholder="Ex: Fulano de Tal da Silva"
+                                value={currentAdvertiser.company.pixName || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setCurrentAdvertiser((prev: any) => ({
+                                    ...prev,
+                                    company: { ...prev.company, pixName: val }
+                                  }));
+                                }}
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Tipo da Chave</label>
+                              <select 
+                                value={currentAdvertiser.company.pixType || 'Celular'}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setCurrentAdvertiser((prev: any) => ({
+                                    ...prev,
+                                    company: { ...prev.company, pixType: val }
+                                  }));
+                                }}
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              >
+                                <option value="Celular">Celular</option>
+                                <option value="E-mail">E-mail</option>
+                                <option value="CPF">CPF</option>
+                                <option value="CNPJ">CNPJ</option>
+                                <option value="Chave AleatÃ³ria">Chave AleatÃ³ria</option>
+                              </select>
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">InstituiÃ§Ã£o / Banco (Opcional)</label>
+                              <input 
+                                type="text"
+                                placeholder="Ex: Nubank, ItaÃº, BB..."
+                                value={currentAdvertiser.company.pixBank || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setCurrentAdvertiser((prev: any) => ({
+                                    ...prev,
+                                    company: { ...prev.company, pixBank: val }
+                                  }));
+                                }}
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Taxa de Entrega (R$ - Opcional)</label>
+                              <input 
+                                type="number"
+                                step="0.01"
+                                placeholder="Ex: 5.00 ou 0 para grÃ¡tis"
+                                value={currentAdvertiser.company.deliveryFee || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setCurrentAdvertiser((prev: any) => ({
+                                    ...prev,
+                                    company: { ...prev.company, deliveryFee: val }
+                                  }));
+                                }}
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <button 
+                          onClick={async () => {
+                            if (isAdExpired && !user?.isAdmin) {
+                              alert("Sua conta estÃ¡ suspensa ou bloqueada. Entre em contato com o suporte para reativar seu acesso.");
+                              return;
+                            }
+                            if (!currentAdvertiser.company.name.trim() || !currentAdvertiser.company.wa.trim() || !(currentAdvertiser.company.state || currentAdvertiser.company.uf) || !currentAdvertiser.company.city?.trim()) {
+                              alert("Por favor, preencha todos os campos obrigatÃ³rios (Nome, WhatsApp, Estado e Cidade).");
+                              return;
+                            }
+                            setIsAdLoading(true);
+                            try {
+                              const docRef = doc(db, 'advertisers', currentAdvertiser.id);
+                              
+                              // Save exact state with proof of credentials matching security rules
+                              await setDoc(docRef, {
+                                email: currentAdvertiser.email,
+                                password: currentAdvertiser.password,
+                                tenantId: currentAdvertiser.tenantId,
+                                expiresAt: currentAdvertiser.expiresAt || '',
+                                createdAt: currentAdvertiser.createdAt || '',
+                                company: {
+                                  ...currentAdvertiser.company,
+                                  name: currentAdvertiser.company.name.trim(),
+                                  desc: currentAdvertiser.company.desc.trim(),
+                                  city: currentAdvertiser.company.city.trim(),
+                                  state: (currentAdvertiser.company.state || currentAdvertiser.company.uf).trim().toUpperCase(),
+                                  uf: (currentAdvertiser.company.state || currentAdvertiser.company.uf).trim().toUpperCase(),
+                                  expiresAt: currentAdvertiser.expiresAt || '',
+                                  createdAt: currentAdvertiser.createdAt || ''
+                                }
+                              });
+                              
+                              // sync local state list
+                              await fetchAdvertisers(tenantId || 'fortaleza');
+                              alert("Perfil do Anunciante salvo e atualizado online com total sucesso!");
+                            } catch (err) {
+                              console.error("Failed to update profile:", err);
+                              alert("Erro ao tentar atualizar os dados do seu negÃ³cio.");
+                            } finally {
+                              setIsAdLoading(false);
+                            }
+                          }}
+                          disabled={isAdLoading}
+                          className="w-full sm:w-auto self-start px-8 py-3.5 bg-[var(--primary)] hover:brightness-110 text-black rounded-xl font-bold text-xs uppercase tracking-widest cursor-pointer shadow-lg"
+                        >
+                          {isAdLoading ? "Salvando..." : "ğŸ’¾ Salvar AlteraÃ§Ãµes"}
+                        </button>
+                      </div>
+
+                      {/* Card preview area (right) */}
+                      <div className="bg-neutral-900/40 border border-white/5 rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-center text-center">
+                        <span className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider mb-5">VisualizaÃ§Ã£o PrÃ©via do CartÃ£o</span>
+                        
+                        <div className="bg-[#0f1016] border border-white/10 rounded-3xl p-6 w-full max-w-[280px] flex flex-col justify-between shadow-xl relative select-none">
+                          <div>
+                            <div className="w-16 h-16 rounded-full bg-white border border-white/15 overflow-hidden flex items-center justify-center shadow-lg mx-auto mb-4 p-0">
+                              <img 
+                                src={currentAdvertiser.company.logo || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150'} 
+                                alt="Previa" 
+                                className="w-full h-full object-cover" 
+                                onError={(e) => { (e.target as any).src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150' }}
+                                referrerPolicy="no-referrer" 
+                              />
+                            </div>
+                            <span className="text-[9px] text-[var(--primary)] font-black uppercase tracking-widest bg-[var(--primary)]/10 px-2 rounded-full mb-2 inline-block">
+                              {currentAdvertiser.company.category}
+                            </span>
+                            <h4 className="text-sm font-extrabold text-white mt-1 line-clamp-1">{currentAdvertiser.company.name || 'Nova Empresa'}</h4>
+                            <p className="text-[10px] text-white/50 mt-1.5 leading-relaxed line-clamp-2 min-h-[2.5rem]">{currentAdvertiser.company.desc || 'Parceiro comercial ativo na rede.'}</p>
+                          </div>
+                          
+                          <div className="mt-4 pt-4 border-t border-white/5 flex flex-col gap-1.5">
+                            <span className="w-full bg-amber-500/10 text-amber-400 text-[8px] font-black uppercase tracking-widest py-2 rounded-xl text-center">
+                              Ativo no Portal
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sub-Tab 2: Catalog Management list */}
+                  {adDashboardTab === 'catalogo' && (
+                    <div className="flex flex-col gap-6">
+                      
+                      {/* Add Button and Title */}
+                      <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl">
+                        <div>
+                          <h3 className="text-sm font-bold text-white uppercase tracking-wider">Itens do CatÃ¡logo Virtual</h3>
+                          <p className="text-[11px] text-white/50">Inclua seus produtos, serviÃ§os ou opÃ§Ãµes de cardÃ¡pio.</p>
+                        </div>
+                        {editingItemIndex === null && (
+                          <button 
+                            onClick={() => {
+                              if (isAdExpired && !user?.isAdmin) {
+                                alert("Sua conta estÃ¡ suspensa ou bloqueada. Entre em contato com o suporte.");
+                                return;
+                              }
+                              setItemForm({ name: '', desc: '', price: '', photo: '', photo2: '', photo3: '', photo4: '', video: '', sizes: '', colors: '', options: '' });
+                              setEditingItemIndex(-1); // -1 triggers add new form
+                            }}
+                            className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest cursor-pointer shadow transition-all duration-150 ${(isAdExpired && !user?.isAdmin) ? 'bg-neutral-800 text-white/30 border border-white/5 cursor-not-allowed' : 'bg-[var(--primary)] hover:brightness-110 text-black'}`}
+                            disabled={isAdExpired && !user?.isAdmin}
+                          >
+                            <Plus size={14} /> Adicionar Item
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Editing Item Form Inline Overlay */}
+                      {editingItemIndex !== null && (
+                        <div className="bg-neutral-900 border border-[var(--primary)]/20 rounded-3xl p-6 flex flex-col gap-4">
+                          <h4 className="text-sm font-black text-white uppercase tracking-wider border-b border-white/5 pb-2">
+                            {editingItemIndex === -1 ? 'â• Cadastrar Novo Item' : 'âœï¸ Editar Item'}
+                          </h4>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Nome do Produto / ServiÃ§o / Prato *</label>
+                              <input 
+                                type="text"
+                                value={itemForm.name}
+                                onChange={(e) => setItemForm(prev => ({ ...prev, name: e.target.value }))}
+                                placeholder="Feijoada Completa, Camiseta Slim, Consulta..."
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">Valor (R$) *</label>
+                              <input 
+                                type="text"
+                                value={itemForm.price}
+                                onChange={(e) => setItemForm(prev => ({ ...prev, price: e.target.value }))}
+                                placeholder="59.90 (Apenas nÃºmeros e ponto)"
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white font-mono"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] text-white/50 uppercase font-bold">DescriÃ§Ã£o Curta</label>
+                              <input 
+                                type="text"
+                                value={itemForm.desc}
+                                onChange={(e) => setItemForm(prev => ({ ...prev, desc: e.target.value }))}
+                                placeholder="Ingredientes, tamanhos disponÃ­veis, etc"
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                              <div className="flex justify-between items-center">
+                                <label className="text-[10px] text-white/50 uppercase font-bold">Foto Principal / Foto 1 (Opcional)</label>
+                                <DirectFileUploadButton 
+                                  label="ğŸ“· Foto 1" 
+                                  onUploadSuccess={(url) => setItemForm(prev => ({ ...prev, photo: url }))} 
+                                />
+                              </div>
+                              <input 
+                                type="text"
+                                value={itemForm.photo}
+                                onChange={(e) => setItemForm(prev => ({ ...prev, photo: e.target.value }))}
+                                placeholder="Cole a URL ou escolha do celular acima"
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Additional Photos & Video */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 border-t border-white/5 pt-4">
+                            <div className="flex flex-col gap-1.5">
+                              <div className="flex justify-between items-center">
+                                <label className="text-[10px] text-white/50 uppercase font-bold">Foto 2 (Opcional)</label>
+                                <DirectFileUploadButton 
+                                  label="ğŸ“· Foto 2" 
+                                  onUploadSuccess={(url) => setItemForm(prev => ({ ...prev, photo2: url }))} 
+                                />
+                              </div>
+                              <input 
+                                type="text"
+                                value={itemForm.photo2 || ''}
+                                onChange={(e) => setItemForm(prev => ({ ...prev, photo2: e.target.value }))}
+                                placeholder="https://..."
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                              <div className="flex justify-between items-center">
+                                <label className="text-[10px] text-white/50 uppercase font-bold">Foto 3 (Opcional)</label>
+                                <DirectFileUploadButton 
+                                  label="ğŸ“· Foto 3" 
+                                  onUploadSuccess={(url) => setItemForm(prev => ({ ...prev, photo3: url }))} 
+                                />
+                              </div>
+                              <input 
+                                type="text"
+                                value={itemForm.photo3 || ''}
+                                onChange={(e) => setItemForm(prev => ({ ...prev, photo3: e.target.value }))}
+                                placeholder="https://..."
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                              <div className="flex justify-between items-center">
+                                <label className="text-[10px] text-white/50 uppercase font-bold">Foto 4 (Opcional)</label>
+                                <DirectFileUploadButton 
+                                  label="ğŸ“· Foto 4" 
+                                  onUploadSuccess={(url) => setItemForm(prev => ({ ...prev, photo4: url }))} 
+                                />
+                              </div>
+                              <input 
+                                type="text"
+                                value={itemForm.photo4 || ''}
+                                onChange={(e) => setItemForm(prev => ({ ...prev, photo4: e.target.value }))}
+                                placeholder="https://..."
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                              <div className="flex justify-between items-center">
+                                <label className="text-[10px] text-white/50 uppercase font-bold">Link do VÃ­deo (Opcional)</label>
+                                <a 
+                                  href={universalConfig.uploadVideoHelpUrl || 'https://streamable.com/'} 
+                                  onClick={(e) => handleOpenUploadHelper(e, universalConfig.uploadVideoHelpUrl || 'https://streamable.com/', 'portal_upload_video')} 
+                                  rel="noreferrer"
+                                  className="text-[10px] text-emerald-400 hover:underline flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 decoration-transparent"
+                                >
+                                  ğŸ¥ VÃ­deo
+                                </a>
+                              </div>
+                              <input 
+                                type="text"
+                                value={itemForm.video || ''}
+                                onChange={(e) => setItemForm(prev => ({ ...prev, video: e.target.value }))}
+                                placeholder="Ex: https://streamable.com/..."
+                                className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                              />
+                            </div>
+                          </div>
+
+                          {/* VariaÃ§Ãµes, NumeraÃ§Ã£o, Cores e Adicionais (TÃªnis, Roupas, Marmitarias, Lanchonetes) */}
+                          <div className="bg-neutral-950/80 border border-white/10 rounded-2xl p-4 flex flex-col gap-3 mt-2">
+                            <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                              <div>
+                                <h5 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                                  ğŸ·ï¸ EspecificaÃ§Ãµes e VariaÃ§Ãµes (TÃªnis, Roupas, CardÃ¡pio, Lanchonete)
+                                </h5>
+                                <p className="text-[10px] text-white/50">Cadastre tamanhos/numeraÃ§Ã£o, cores ou adicionais que o cliente pode escolher ao pedir.</p>
+                              </div>
+                            </div>
+
+                            {/* Quick Presets */}
+                            <div className="flex flex-wrap items-center gap-1.5 py-1">
+                              <span className="text-[9px] text-white/40 uppercase font-bold">Preencher rÃ¡pido:</span>
+                              <button
+                                type="button"
+                                onClick={() => setItemForm(prev => ({ ...prev, sizes: '35, 36, 37, 38, 39, 40, 41, 42, 43, 44' }))}
+                                className="text-[9px] bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 px-2 py-1 rounded font-bold cursor-pointer transition-colors"
+                              >
+                                ğŸ‘Ÿ Tamanhos TÃªnis (35 a 44)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setItemForm(prev => ({ ...prev, sizes: 'PP, P, M, G, GG, XG, XGG' }))}
+                                className="text-[9px] bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 px-2 py-1 rounded font-bold cursor-pointer transition-colors"
+                              >
+                                ğŸ‘• Tamanhos Roupas (PP ao XGG)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setItemForm(prev => ({ ...prev, colors: 'Preto, Branco, Azul, Vermelho, Cinza, Rosa' }))}
+                                className="text-[9px] bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 px-2 py-1 rounded font-bold cursor-pointer transition-colors"
+                              >
+                                ğŸ¨ Cores PadrÃ£o
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setItemForm(prev => ({ ...prev, options: 'Molho Especial (+2.00), Bacon Extra (+3.50), Queijo Duplo (+4.00), Salada Extra (+3.00)' }))}
+                                className="text-[9px] bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 px-2 py-1 rounded font-bold cursor-pointer transition-colors"
+                              >
+                                ğŸ” Opcionais Lanchonete/Marmita
+                              </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[10px] text-white/60 font-bold uppercase">Tamanhos / NumeraÃ§Ã£o</label>
+                                <input
+                                  type="text"
+                                  value={itemForm.sizes || ''}
+                                  onChange={(e) => setItemForm(prev => ({ ...prev, sizes: e.target.value }))}
+                                  placeholder="Ex: 37, 38, 39, 40, 41 ou P, M, G, GG"
+                                  className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-3 py-2 text-xs text-white"
+                                />
+                                <span className="text-[9px] text-white/30">Separados por vÃ­rgula</span>
+                              </div>
+
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[10px] text-white/60 font-bold uppercase">Cores DisponÃ­veis</label>
+                                <input
+                                  type="text"
+                                  value={itemForm.colors || ''}
+                                  onChange={(e) => setItemForm(prev => ({ ...prev, colors: e.target.value }))}
+                                  placeholder="Ex: Preto, Branco, Azul, Vermelho"
+                                  className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-3 py-2 text-xs text-white"
+                                />
+                                <span className="text-[9px] text-white/30">Separadas por vÃ­rgula</span>
+                              </div>
+
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[10px] text-white/60 font-bold uppercase">Opcionais / Adicionais (+PreÃ§o)</label>
+                                <input
+                                  type="text"
+                                  value={itemForm.options || ''}
+                                  onChange={(e) => setItemForm(prev => ({ ...prev, options: e.target.value }))}
+                                  placeholder="Ex: Bacon Extra (+3.50), Salada (+4.00)"
+                                  className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-3 py-2 text-xs text-white"
+                                />
+                                <span className="text-[9px] text-white/30">Ex: Nome (+Valor)</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2.5 justify-end mt-4">
+                            <button 
+                              onClick={() => setEditingItemIndex(null)}
+                              className="px-5 py-2.5 bg-neutral-950 border border-white/10 hover:bg-neutral-900 text-white rounded-xl text-xs font-bold uppercase tracking-wider cursor-pointer"
+                            >
+                              Cancelar
+                            </button>
+                            
+                            <button 
+                              onClick={async () => {
+                                if (isAdExpired && !user?.isAdmin) {
+                                  alert("Sua conta estÃ¡ suspensa ou bloqueada. Entre em contato com o suporte.");
+                                  return;
+                                }
+                                const { name, price, desc, photo, photo2, photo3, photo4, video } = itemForm;
+                                if (!name || !price) {
+                                  alert("Preencha ao menos o Nome e o PreÃ§o do item.");
+                                  return;
+                                }
+
+                                if (isNaN(Number(price))) {
+                                  alert("O valor deve ser um nÃºmero decimal, use ponto no centavo (ex: 39.90)");
+                                  return;
+                                }
+
+                                if (editingItemIndex === -1) {
+                                  const currentCount = currentAdvertiser.company.items?.length || 0;
+                                  const planType = getCompanyPlanType(currentAdvertiser.company);
+                                  const isFree = planType === 'gratuito';
+                                  const isVerificado = planType === 'verificado';
+                                  const isDestaque = planType === 'destaque';
+                                  const isInTrialPeriod = (currentAdvertiser.expiresAt && !isAdExpired) || user?.isAdmin;
+
+                                  if (!isInTrialPeriod && !user?.isAdmin) {
+                                    if (isFree && currentCount >= 5) {
+                                      alert("Oops! VocÃª atingiu o limite de 5 produtos do Plano Essencial. Adquira um Plano Premium para expandir seu catÃ¡logo!");
+                                      setIsCheckoutOpen(true);
+                                      return;
+                                    }
+                                    if (isVerificado && currentCount >= 30) {
+                                      alert("Oops! VocÃª atingiu o limite de 30 produtos do Plano R$ 39,90. FaÃ§a upgrade para o Plano Destaque VIP (atÃ© 50 produtos) ou Patrocinado (Ilimitado)!");
+                                      setIsCheckoutOpen(true);
+                                      return;
+                                    }
+                                    if (isDestaque && currentCount >= 50) {
+                                      alert("Oops! VocÃª atingiu o limite de 50 produtos do Plano R$ 59,90. FaÃ§a upgrade para o Plano Patrocinado (Produtos e Fotos Ilimitadas)!");
+                                      setIsCheckoutOpen(true);
+                                      return;
+                                    }
+                                  }
+                                }
+
+                                const newItem = {
+                                  id: editingItemIndex === -1 ? `item_${Date.now()}` : ((currentAdvertiser.company.items || [])[editingItemIndex]?.id || `item_${Date.now()}`),
+                                  name: name.trim(),
+                                  price: Number(price).toString(),
+                                  desc: desc.trim(),
+                                  photo: photo.trim(),
+                                  photo2: (photo2 || '').trim(),
+                                  photo3: (photo3 || '').trim(),
+                                  photo4: (photo4 || '').trim(),
+                                  video: (video || '').trim(),
+                                  sizes: (itemForm.sizes || '').trim(),
+                                  colors: (itemForm.colors || '').trim(),
+                                  options: (itemForm.options || '').trim()
+                                };
+
+                                let updatedItems = [...(currentAdvertiser.company.items || [])];
+                                if (editingItemIndex === -1) {
+                                  updatedItems.push(newItem);
+                                } else {
+                                  updatedItems[editingItemIndex] = newItem;
+                                }
+
+                                const updatedAdvertiser = {
+                                  ...currentAdvertiser,
+                                  company: {
+                                    ...currentAdvertiser.company,
+                                    items: updatedItems
+                                  }
+                                };
+
+                                setIsAdLoading(true);
+                                try {
+                                  const docRef = doc(db, 'advertisers', currentAdvertiser.id);
+                                  await setDoc(docRef, {
+                                    email: currentAdvertiser.email,
+                                    password: currentAdvertiser.password,
+                                    tenantId: currentAdvertiser.tenantId,
+                                    expiresAt: currentAdvertiser.expiresAt || '',
+                                    createdAt: currentAdvertiser.createdAt || '',
+                                    company: {
+                                      ...updatedAdvertiser.company,
+                                      expiresAt: currentAdvertiser.expiresAt || '',
+                                      createdAt: currentAdvertiser.createdAt || ''
+                                    }
+                                  });
+                                  
+                                  setCurrentAdvertiser(updatedAdvertiser);
+                                  await fetchAdvertisers(tenantId || 'fortaleza');
+                                  setEditingItemIndex(null);
+                                  alert("Item salvo e publicado online de forma automÃ¡tica!");
+                                } catch (err) {
+                                  console.error("Save item failed", err);
+                                  alert("Ocorreu um erro ao tentar salvar o item.");
+                                } finally {
+                                  setIsAdLoading(false);
+                                }
+                              }}
+                              disabled={isAdLoading}
+                              className="px-6 py-2.5 bg-[#25D366] hover:bg-[#20ba59] text-white rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer"
+                            >
+                              {isAdLoading ? "Salvando..." : "âœ… Salvar Item"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Items Grid List */}
+                      {editingItemIndex === null && (
+                        (!currentAdvertiser.company.items || currentAdvertiser.company.items.length === 0) ? (
+                          <div className="text-center py-16 bg-neutral-900/20 rounded-2xl border border-dashed border-white/5 flex flex-col items-center justify-center">
+                            <span className="text-3xl">ğŸ“­</span>
+                            <h4 className="text-sm font-bold text-white mt-3">VocÃª ainda nÃ£o possui nenhum produto ou serviÃ§o</h4>
+                            <p className="text-xs text-white/40 max-w-xs mt-1">Adicione itens digitais para ativar seu catÃ¡logo interativo com shopping-cart do portal.</p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {(currentAdvertiser.company.items || []).map((it: any, i: number) => (
+                              <div key={it.id || i} className="bg-[#12131a] border border-white/5 rounded-2xl p-4 flex gap-4 items-center justify-between">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className="w-12 h-12 bg-neutral-950 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center border border-white/10">
+                                    {it.photo ? (
+                                      <img src={it.photo} alt={it.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                    ) : (
+                                      <ImageIcon className="text-white/20" size={18} />
+                                    )}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <h4 className="text-xs font-bold text-white truncate">{it.name}</h4>
+                                    <span className="text-[10px] font-black text-[var(--primary)] font-mono">
+                                      R$ {parseFloat(it.price).toFixed(2).replace('.', ',')}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex gap-2 flex-shrink-0">
+                                  <button 
+                                    onClick={() => {
+                                      setItemForm({
+                                        name: it.name,
+                                        desc: it.desc || '',
+                                        price: it.price,
+                                        photo: it.photo || '',
+                                        photo2: it.photo2 || '',
+                                        photo3: it.photo3 || '',
+                                        photo4: it.photo4 || '',
+                                        video: it.video || '',
+                                        sizes: it.sizes || '',
+                                        colors: it.colors || '',
+                                        options: it.options || ''
+                                      });
+                                      setEditingItemIndex(i);
+                                    }}
+                                    className="p-2 rounded bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+                                  >
+                                    Editar
+                                  </button>
+                                  
+                                  <button 
+                                    onClick={async () => {
+                                      if (!confirm("Tem certeza que deseja excluir este item?")) return;
+                                      
+                                      const updatedItems = (currentAdvertiser.company.items || []).filter((_: any, idx: number) => idx !== i);
+                                      const updatedAdvertiser = {
+                                        ...currentAdvertiser,
+                                        company: {
+                                          ...currentAdvertiser.company,
+                                          items: updatedItems
+                                        }
+                                      };
+
+                                      setIsAdLoading(true);
+                                      try {
+                                        const docRef = doc(db, 'advertisers', currentAdvertiser.id);
+                                        await setDoc(docRef, {
+                                          email: currentAdvertiser.email,
+                                          password: currentAdvertiser.password,
+                                          tenantId: currentAdvertiser.tenantId,
+                                          expiresAt: currentAdvertiser.expiresAt || '',
+                                          createdAt: currentAdvertiser.createdAt || '',
+                                          company: {
+                                            ...updatedAdvertiser.company,
+                                            expiresAt: currentAdvertiser.expiresAt || '',
+                                            createdAt: currentAdvertiser.createdAt || ''
+                                          }
+                                        });
+                                        
+                                        setCurrentAdvertiser(updatedAdvertiser);
+                                        await fetchAdvertisers(tenantId || 'fortaleza');
+                                        alert("Item excluÃ­do com sucesso.");
+                                      } catch (err) {
+                                        console.error("Delete failed", err);
+                                        alert("Falha ao tentar excluir o item.");
+                                      } finally {
+                                        setIsAdLoading(false);
+                                      }
+                                    }}
+                                    className="p-2 rounded bg-red-600/10 hover:bg-red-600 hover:text-white text-red-400 transition-colors"
+                                  >
+                                    Excluir
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {selectedItemForDetail && (() => {
+          const avgRating = itemReviews.length > 0 
+            ? (itemReviews.reduce((sum, r) => sum + r.rating, 0) / itemReviews.length).toFixed(1)
+            : '0.0';
+          const siteType = getCompanySiteType(activeMiniSiteCompany);
+          
+          // Build media array for 1-4 photos and 1 video
+          const mediaList: Array<{ type: 'image' | 'video'; url: string }> = [];
+          if (selectedItemForDetail.photo) mediaList.push({ type: 'image', url: selectedItemForDetail.photo });
+          if (selectedItemForDetail.photo2) mediaList.push({ type: 'image', url: selectedItemForDetail.photo2 });
+          if (selectedItemForDetail.photo3) mediaList.push({ type: 'image', url: selectedItemForDetail.photo3 });
+          if (selectedItemForDetail.photo4) mediaList.push({ type: 'image', url: selectedItemForDetail.photo4 });
+          if (selectedItemForDetail.video) mediaList.push({ type: 'video', url: selectedItemForDetail.video });
+
+          // Safe guard the active media index in case list length changed or item is empty
+          const currentMedia = mediaList[activeMediaIndex] || mediaList[0] || null;
+
+          const getVideoEmbedUrl = (url: string) => {
+            if (!url) return null;
+            if (url.includes('youtube.com') || url.includes('youtu.be')) {
+              let videoId = '';
+              if (url.includes('youtu.be/')) {
+                videoId = url.split('youtu.be/')[1]?.split(/[?#]/)[0];
+              } else {
+                try {
+                  const urlParts = url.split('?');
+                  if (urlParts[1]) {
+                    const urlParams = new URLSearchParams(urlParts[1]);
+                    videoId = urlParams.get('v') || '';
+                  }
+                } catch (e) {}
+              }
+              if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+            }
+            if (url.includes('streamable.com/')) {
+              const videoId = url.split('streamable.com/')[1]?.split(/[?#]/)[0];
+              if (videoId) return `https://streamable.com/e/${videoId}`;
+            }
+            if (url.includes('vimeo.com/')) {
+              const videoId = url.split('vimeo.com/')[1]?.split(/[?#]/)[0];
+              if (videoId) return `https://player.vimeo.com/video/${videoId}`;
+            }
+            return null;
+          };
+
+          return (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/90 backdrop-blur-md z-[2100] overflow-y-auto flex items-center justify-center p-4 font-sans"
+            >
+              <div className="bg-[#0b0c10] border border-white/10 rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden relative flex flex-col md:flex-row md:h-[550px]">
+                
+                {/* Product Image Panel (Left/Top) */}
+                <div className="w-full md:w-[280px] h-64 md:h-full bg-neutral-950 flex-shrink-0 relative overflow-hidden flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/10 pb-14 md:pb-16">
+                  {currentMedia ? (
+                    currentMedia.type === 'video' ? (
+                      (() => {
+                        const embedUrl = getVideoEmbedUrl(currentMedia.url);
+                        if (embedUrl) {
+                          return (
+                            <iframe
+                              src={embedUrl}
+                              className="w-full h-full border-0 absolute inset-0 pb-14 md:pb-16 animate-fade-in"
+                              allow="autoplay; fullscreen; picture-in-picture"
+                              allowFullScreen
+                            />
+                          );
+                        } else {
+                          return (
+                            <video
+                              src={currentMedia.url}
+                              controls
+                              className="w-full h-full object-contain absolute inset-0 bg-black pb-14 md:pb-16"
+                              playsInline
+                            />
+                          );
+                        }
+                      })()
+                    ) : (
+                      <img 
+                        src={currentMedia.url} 
+                        alt={selectedItemForDetail.name} 
+                        className="w-full h-full object-cover" 
+                        referrerPolicy="no-referrer" 
+                      />
+                    )
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-2 text-white/20">
+                      <ShoppingBag size={48} />
+                      <span className="text-[10px] uppercase tracking-wider font-bold">Sem imagem</span>
+                    </div>
+                  )}
+
+                  {/* Media Selector Overlay / Thumbnails */}
+                  {mediaList.length > 1 && (
+                    <div className="absolute bottom-0 left-0 right-0 h-14 md:h-16 flex items-center justify-center gap-1.5 z-20 px-2 bg-black/80 border-t border-white/5 overflow-x-auto">
+                      {mediaList.map((media, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setActiveMediaIndex(idx)}
+                          className={`w-10 h-10 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 relative flex items-center justify-center bg-black ${activeMediaIndex === idx ? 'border-[var(--primary)] scale-105' : 'border-white/10 hover:border-white/30'}`}
+                        >
+                          {media.type === 'video' ? (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-emerald-400 gap-0.5">
+                              <Play size={12} className="fill-emerald-400" />
+                              <span className="text-[6px] font-black uppercase tracking-widest leading-none">VÃ­deo</span>
+                            </div>
+                          ) : (
+                            <img 
+                              src={media.url} 
+                              alt={`Foto ${idx + 1}`} 
+                              className="w-full h-full object-cover" 
+                              referrerPolicy="no-referrer"
+                            />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-14 md:bottom-16 h-8 bg-gradient-to-t from-[#0b0c10]/40 to-transparent pointer-events-none" />
+                </div>
+
+                {/* Content Panel (Right/Bottom) */}
+                <div className="flex-1 p-6 sm:p-8 flex flex-col h-full overflow-hidden justify-between">
+                  
+                  {/* Top Header - Tabs & Control Buttons */}
+                  <div className="flex flex-col gap-4 flex-shrink-0">
+                     <div className="flex justify-between items-center">
+                      {/* Tabs Selector */}
+                      <div className="flex gap-2 bg-white/5 p-1 rounded-full">
+                        <button
+                          onClick={() => {
+                            setDetailModalTab('detalhes');
+                            setIsReviewFormOpen(false);
+                          }}
+                          className={`px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all duration-150 ${detailModalTab === 'detalhes' ? 'bg-[var(--primary)] text-black' : 'text-white/60 hover:text-white'}`}
+                        >
+                          Detalhes
+                        </button>
+                        <button
+                          onClick={() => setDetailModalTab('avaliacoes')}
+                          className={`px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all duration-150 ${detailModalTab === 'avaliacoes' ? 'bg-[var(--primary)] text-black' : 'text-white/60 hover:text-white'}`}
+                        >
+                          AvaliaÃ§Ãµes ({itemReviews.length})
+                        </button>
+                      </div>
+
+                      {/* Action Controls */}
+                      <div className="flex items-center gap-2">
+                        {/* Share Link Button */}
+                        <button
+                          onClick={() => {
+                            const baseUrl = window.location.origin + window.location.pathname + window.location.hash.split('?')[0];
+                            const itemUrl = `${baseUrl}?id=${activeMiniSiteCompany?.id || ''}&item=${selectedItemForDetail.id}`;
+                            navigator.clipboard.writeText(itemUrl);
+                            setShareCopied(true);
+                            setTimeout(() => setShareCopied(false), 2000);
+                          }}
+                          className="p-2.5 bg-white/5 hover:bg-white/10 hover:scale-105 border border-white/10 text-white rounded-full transition-all flex items-center justify-center cursor-pointer relative"
+                          title="Compartilhar link"
+                        >
+                          {shareCopied ? (
+                            <span className="text-[9px] font-black text-[var(--primary)] absolute -top-8 bg-black/90 px-2 py-1 rounded border border-white/10 whitespace-nowrap">Link Copiado!</span>
+                          ) : null}
+                          <Share2 size={14} />
+                        </button>
+
+                        {/* Close Button */}
+                        <button
+                          onClick={() => setSelectedItemForDetail(null)}
+                          className="p-2.5 bg-white/5 hover:bg-white/10 hover:scale-105 border border-white/10 text-white rounded-full transition-all flex items-center justify-center cursor-pointer"
+                          aria-label="Fechar"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Scrollable Center Body */}
+                  <div className="flex-1 overflow-y-auto my-4 pr-1 min-h-[180px]">
+                    
+                    {/* TAB A: DETALHES */}
+                    {detailModalTab === 'detalhes' && (
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-[8px] sm:text-[9px] font-black tracking-widest uppercase bg-[var(--primary)]/10 text-[var(--primary)] px-2.5 py-1 rounded border border-[var(--primary)]/20">
+                            {activeMiniSiteCompany?.company?.name || 'Item do CatÃ¡logo'}
+                          </span>
+                          {itemReviews.length > 0 && (
+                            <div className="flex items-center gap-1 bg-amber-500/10 text-amber-400 px-2 py-1 rounded border border-amber-500/25">
+                              <Star size={10} className="fill-amber-400" />
+                              <span className="text-[10px] font-bold">{avgRating}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <h3 className="text-xl sm:text-2xl font-black text-white leading-tight">
+                          {selectedItemForDetail.name}
+                        </h3>
+
+                        <p className="text-xs sm:text-sm text-white/60 leading-relaxed font-normal whitespace-pre-line">
+                          {selectedItemForDetail.desc || 'Nenhuma descriÃ§Ã£o detalhada disponÃ­vel para este item comercial.'}
+                        </p>
+
+                        {(siteType === 'loja' || siteType === 'cardapio') ? (
+                          <div className="mt-4 bg-white/5 border border-white/5 rounded-2xl p-4">
+                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest block">PreÃ§o Base</span>
+                            <span className="text-2xl font-black text-[var(--primary)] font-mono mt-1 block">
+                              {selectedItemForDetail.price ? `R$ ${parseFloat(selectedItemForDetail.price).toFixed(2).replace('.', ',')}` : 'Sob Consulta'}
+                            </span>
+                          </div>
+                        ) : siteType === 'servico' ? (
+                          <div className="mt-4 bg-white/5 border border-white/5 rounded-2xl p-4">
+                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest block">CondiÃ§Ã£o Comercial</span>
+                            <span className="text-sm font-bold text-amber-400 font-mono mt-1 block">
+                              ğŸ“‹ Solicite orÃ§amento sem compromisso
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="mt-4 bg-white/5 border border-white/5 rounded-2xl p-4">
+                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest block">Atendimento por Agendamento</span>
+                            <span className="text-sm font-bold text-amber-400 font-mono mt-1 block">
+                              ğŸ“… Escolha a data e o horÃ¡rio para agendar
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Interactive Item Options / Variations (NumeraÃ§Ã£o, Tamanho, Cores, Opcionais, ObservaÃ§Ãµes) */}
+                        {selectedItemForDetail && (
+                          <div className="mt-4 flex flex-col gap-4 border-t border-white/5 pt-4">
+                            
+                            {/* 1. SELEÃ‡ÃƒO DE TAMANHO / NUMERAÃ‡ÃƒO */}
+                            {(() => {
+                              let rawSizes = selectedItemForDetail.sizes || '';
+                              let sizesArr: string[] = [];
+                              if (rawSizes.trim()) {
+                                sizesArr = rawSizes.split(',').map((s: string) => s.trim()).filter(Boolean);
+                              } else {
+                                const itemLower = (selectedItemForDetail.name + ' ' + (selectedItemForDetail.desc || '') + ' ' + (activeMiniSiteCompany?.company?.category || '')).toLowerCase();
+                                if (/tenis|tÃªnis|sapato|calcado|calÃ§ado|sneaker|chuteira|sandalia|chinelo/.test(itemLower)) {
+                                  sizesArr = ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44'];
+                                } else if (/roupa|moda|vestuario|vestuÃ¡rio|camisa|camiseta|calca|calÃ§a|bermuda|blusa|jaqueta|vestido/.test(itemLower)) {
+                                  sizesArr = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'XGG'];
+                                }
+                              }
+
+                              if (sizesArr.length === 0) return null;
+
+                              return (
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-[11px] font-black uppercase tracking-wider text-amber-300 flex items-center justify-between">
+                                    <span>ğŸ‘Ÿ Escolha o Tamanho / NumeraÃ§Ã£o:</span>
+                                    {itemSelectedSize && <span className="text-[10px] text-white/50 font-normal">Selecionado: <strong className="text-white">{itemSelectedSize}</strong></span>}
+                                  </label>
+                                  <div className="flex flex-wrap gap-2">
+                                    {sizesArr.map((sz: string) => {
+                                      const isSelected = itemSelectedSize === sz;
+                                      return (
+                                        <button
+                                          key={sz}
+                                          type="button"
+                                          onClick={() => setItemSelectedSize(isSelected ? '' : sz)}
+                                          className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer border ${isSelected ? 'bg-[var(--primary)] text-black border-[var(--primary)] shadow-md shadow-[var(--primary)]/20 scale-105' : 'bg-neutral-900/80 hover:bg-neutral-800 text-white/80 border-white/10 hover:border-white/20'}`}
+                                        >
+                                          {sz}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+
+                            {/* 2. SELEÃ‡ÃƒO DE COR */}
+                            {(() => {
+                              let rawColors = selectedItemForDetail.colors || '';
+                              let colorsArr: string[] = [];
+                              if (rawColors.trim()) {
+                                colorsArr = rawColors.split(',').map((c: string) => c.trim()).filter(Boolean);
+                              } else {
+                                const itemLower = (selectedItemForDetail.name + ' ' + (selectedItemForDetail.desc || '') + ' ' + (activeMiniSiteCompany?.company?.category || '')).toLowerCase();
+                                if (/tenis|tÃªnis|sapato|calcado|calÃ§ado|sneaker|roupa|moda|vestuario|vestuÃ¡rio|camisa|camiseta|calca|calÃ§a|bermuda|blusa|jaqueta|vestido/.test(itemLower)) {
+                                  colorsArr = ['Preto', 'Branco', 'Cinza', 'Azul', 'Vermelho', 'Rosa', 'Verde', 'Amarelo'];
+                                }
+                              }
+
+                              if (colorsArr.length === 0) return null;
+
+                              return (
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-[11px] font-black uppercase tracking-wider text-blue-300 flex items-center justify-between">
+                                    <span>ğŸ¨ Escolha a Cor:</span>
+                                    {itemSelectedColor && <span className="text-[10px] text-white/50 font-normal">Selecionada: <strong className="text-white">{itemSelectedColor}</strong></span>}
+                                  </label>
+                                  <div className="flex flex-wrap gap-2">
+                                    {colorsArr.map((col: string) => {
+                                      const isSelected = itemSelectedColor === col;
+                                      return (
+                                        <button
+                                          key={col}
+                                          type="button"
+                                          onClick={() => setItemSelectedColor(isSelected ? '' : col)}
+                                          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${isSelected ? 'bg-blue-500 text-white border-blue-400 shadow-md shadow-blue-500/20 scale-105' : 'bg-neutral-900/80 hover:bg-neutral-800 text-white/80 border-white/10 hover:border-white/20'}`}
+                                        >
+                                          {col}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+
+                            {/* 3. OPCIONAIS / ADICIONAIS / ACOMPANHAMENTOS */}
+                            {(() => {
+                              let rawOpts = selectedItemForDetail.options || '';
+                              let optsArr: string[] = [];
+                              if (rawOpts.trim()) {
+                                optsArr = rawOpts.split(',').map((o: string) => o.trim()).filter(Boolean);
+                              } else if (siteType === 'cardapio' || /lanchonete|marmitaria|restaurante|pizzaria|hamburgueria|comida|marmita/.test((activeMiniSiteCompany?.company?.category || '').toLowerCase())) {
+                                optsArr = ['Molho Especial (+2.00)', 'Bacon Extra (+3.50)', 'Queijo Duplo (+4.00)', 'Salada Acompanhamento (+4.00)'];
+                              }
+
+                              if (optsArr.length === 0) return null;
+
+                              return (
+                                <div className="flex flex-col gap-2 bg-white/5 border border-white/5 rounded-2xl p-3.5">
+                                  <label className="text-[11px] font-black uppercase tracking-wider text-emerald-300">
+                                    ğŸ” Adicionais / Opcionais:
+                                  </label>
+                                  <div className="flex flex-col gap-1.5">
+                                    {optsArr.map((optStr: string) => {
+                                      const isChecked = itemSelectedOptions.includes(optStr);
+                                      return (
+                                        <label
+                                          key={optStr}
+                                          className={`flex items-center justify-between p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${isChecked ? 'bg-emerald-500/15 border-emerald-500/40 text-white font-bold' : 'bg-black/20 border-white/5 hover:border-white/10 text-white/70'}`}
+                                        >
+                                          <div className="flex items-center gap-2">
+                                            <input
+                                              type="checkbox"
+                                              checked={isChecked}
+                                              onChange={() => {
+                                                if (isChecked) {
+                                                  setItemSelectedOptions(prev => prev.filter(o => o !== optStr));
+                                                } else {
+                                                  setItemSelectedOptions(prev => [...prev, optStr]);
+                                                }
+                                              }}
+                                              className="rounded border-white/20 text-emerald-500 focus:ring-0 accent-emerald-500 cursor-pointer"
+                                            />
+                                            <span>{optStr}</span>
+                                          </div>
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+
+                            {/* 4. OBSERVAÃ‡Ã•ES DO CLIENTE */}
+                            <div className="flex flex-col gap-1.5 bg-neutral-900/60 border border-white/5 rounded-2xl p-3.5">
+                              <label className="text-[11px] font-black uppercase tracking-wider text-white/70 flex items-center gap-1.5">
+                                âœï¸ ObservaÃ§Ãµes do Pedido:
+                              </label>
+                              <input
+                                type="text"
+                                value={itemNoteText}
+                                onChange={(e) => setItemNoteText(e.target.value)}
+                                placeholder={siteType === 'cardapio' ? "Ex: Sem cebola, sem maionese, molho Ã  parte..." : "Ex: Embalagem para presente, instruÃ§Ãµes..."}
+                                className="w-full bg-[#11111a] border border-white/10 hover:border-white/20 focus:border-[var(--primary)] outline-none rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-white/30"
+                              />
+                            </div>
+
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* TAB B: AVALIAÃ‡Ã•ES */}
+                    {detailModalTab === 'avaliacoes' && (
+                      <div className="flex flex-col h-full">
+                        
+                        {/* Rating Aggregation Info Header */}
+                        <div className="bg-white/5 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                          <div>
+                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest">AvaliaÃ§Ã£o MÃ©dia</span>
+                            <div className="flex items-baseline gap-2 mt-1">
+                              <span className="text-3xl font-black text-white">{avgRating}</span>
+                              <span className="text-[11px] text-white/45">/ 5.0</span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-1 sm:items-end">
+                            <div className="flex gap-0.5">
+                              {[1, 2, 3, 4, 5].map((s) => {
+                                const numVal = parseFloat(avgRating);
+                                const isFilled = s <= Math.round(numVal);
+                                return (
+                                  <Star 
+                                    key={s} 
+                                    size={14} 
+                                    className={isFilled ? "text-amber-400 fill-amber-400" : "text-white/10"} 
+                                  />
+                                );
+                              })}
+                            </div>
+                            <span className="text-[11px] text-white/50">{itemReviews.length} avaliaÃ§Ãµes publicadas</span>
+                          </div>
+                        </div>
+
+                        {/* Form or Review List */}
+                        {!isReviewFormOpen ? (
+                          <div className="flex flex-col flex-1 mt-4">
+                            {itemReviews.length === 0 ? (
+                              <div className="text-center py-8 flex flex-col items-center justify-center flex-1 bg-white/[0.02] rounded-2xl border border-dashed border-white/5">
+                                <span className="text-2xl">â­</span>
+                                <h4 className="text-white/70 font-bold text-xs mt-3">Nenhuma avaliaÃ§Ã£o cadastrada ainda</h4>
+                                <p className="text-white/40 text-[11px] mt-1">Seja vocÃª o primeiro a deixar a sua opiniÃ£o sobre este item!</p>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col gap-3 mt-1 max-h-[190px] overflow-y-auto pr-1">
+                                {itemReviews.map((rev) => (
+                                  <div key={rev.id} className="bg-white/5 border border-white/5 rounded-2xl p-4 flex flex-col gap-2">
+                                    <div className="flex justify-between items-start gap-3">
+                                      <div>
+                                        <span className="text-xs font-black text-white block">{rev.author}</span>
+                                        <span className="text-[9px] text-white/40 block mt-0.5">
+                                          {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString('pt-BR') : ''}
+                                        </span>
+                                      </div>
+                                      <div className="flex gap-0.5">
+                                        {[1, 2, 3, 4, 5].map((s) => (
+                                          <Star 
+                                            key={s} 
+                                            size={11} 
+                                            className={s <= rev.rating ? "text-amber-400 fill-amber-400" : "text-white/25"} 
+                                          />
+                                        ))}
+                                      </div>
+                                    </div>
+                                    {rev.comment && (
+                                      <p className="text-xs text-white/80 leading-relaxed italic border-l-2 border-[var(--primary)]/20 pl-2.5 mt-1 bg-white/[0.01] py-1 rounded">
+                                        "{rev.comment}"
+                                      </p>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Button to open form */}
+                            <button 
+                              onClick={() => setIsReviewFormOpen(true)}
+                              className="mt-4 text-xs font-black text-[var(--primary)] hover:brightness-110 flex items-center gap-1.5 bg-[var(--primary)]/10 px-4 py-2.5 rounded-xl border border-[var(--primary)]/20 w-fit self-center uppercase tracking-wider cursor-pointer"
+                            >
+                              + Deixar avaliaÃ§Ã£o
+                            </button>
+                          </div>
+                        ) : (
+                          /* Add Review Form Overlay inside reviews tab */
+                          <div className="bg-white/5 border border-white/5 rounded-2xl p-4 sm:p-5 mt-4 flex flex-col gap-3">
+                            <h4 className="text-xs font-black text-white uppercase tracking-wider">âœï¸ Escrever AvaliaÃ§Ã£o</h4>
+                            
+                            {/* Star selector */}
+                            <div className="flex flex-col items-center py-1">
+                              <span className="text-[10px] text-white/40 uppercase font-bold tracking-wider">Sua Nota</span>
+                              <div className="flex gap-2 mt-1">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <button 
+                                    key={s} 
+                                    onClick={() => setNewReviewForm(prev => ({ ...prev, rating: s }))}
+                                    className="hover:scale-125 transition-transform p-1 cursor-pointer"
+                                    type="button"
+                                  >
+                                    <Star 
+                                      size={24} 
+                                      className={s <= newReviewForm.rating ? "text-amber-400 fill-amber-400" : "text-white/10"} 
+                                    />
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Inputs */}
+                            <div className="flex flex-col gap-3">
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] text-white/40 uppercase font-bold tracking-wider">Seu Nome *</label>
+                                <input 
+                                  type="text" 
+                                  placeholder="Como vocÃª gostaria de aparecer" 
+                                  value={newReviewForm.author} 
+                                  onChange={(e) => setNewReviewForm(prev => ({ ...prev, author: e.target.value }))} 
+                                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--primary)]" 
+                                />
+                              </div>
+
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] text-white/40 uppercase font-bold tracking-wider">ComentÃ¡rio (Opcional)</label>
+                                <textarea 
+                                  placeholder="O que vocÃª achou deste produto / serviÃ§o?" 
+                                  value={newReviewForm.comment} 
+                                  onChange={(e) => setNewReviewForm(prev => ({ ...prev, comment: e.target.value }))} 
+                                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--primary)] h-16 resize-none" 
+                                />
+                              </div>
+                            </div>
+
+                            {/* Action buttons */}
+                            <div className="flex gap-2 justify-end mt-2">
+                              <button 
+                                onClick={() => setIsReviewFormOpen(false)} 
+                                className="px-4 py-2 bg-transparent hover:bg-white/5 text-white/60 hover:text-white rounded-xl text-[10px] uppercase tracking-wider font-bold cursor-pointer"
+                              >
+                                Cancelar
+                              </button>
+                              <button 
+                                onClick={async () => {
+                                  if (!newReviewForm.author.trim()) {
+                                    alert("Por favor, preencha o seu nome.");
+                                    return;
+                                  }
+                                  setIsSubmittingReview(true);
+                                  try {
+                                    const reviewId = `review_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                                    const docRef = doc(db, 'reviews', reviewId);
+                                    await setDoc(docRef, {
+                                      companyId: activeMiniSiteCompany.id || '',
+                                      itemId: selectedItemForDetail.id,
+                                      rating: newReviewForm.rating,
+                                      author: newReviewForm.author.trim(),
+                                      comment: newReviewForm.comment.trim(),
+                                      createdAt: new Date().toISOString()
+                                    });
+                                    setIsReviewFormOpen(false);
+                                    setNewReviewForm({ rating: 5, author: '', comment: '' });
+                                    alert("AvaliaÃ§Ã£o registrada com sucesso!");
+                                  } catch (e) {
+                                    console.error("Failed to save review", e);
+                                    alert("Ocorreu um erro ao tentar salvar sua avaliaÃ§Ã£o.");
+                                  } finally {
+                                    setIsSubmittingReview(false);
+                                  }
+                                }}
+                                disabled={isSubmittingReview}
+                                className="px-4 py-2 bg-[var(--primary)] hover:brightness-110 text-black rounded-xl text-[10px] uppercase tracking-widest font-black cursor-pointer"
+                              >
+                                {isSubmittingReview ? "Gravando..." : "âœ… Publicar"}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* Footer Panel - Sticky Actions */}
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/5 flex-shrink-0">
+                    {siteType === 'servico' ? (
+                      <div className="flex flex-col sm:flex-row gap-2.5 w-full">
+                        <button
+                          onClick={() => {
+                            const textMsg = `OlÃ¡! Gostaria de solicitar um orÃ§amento para o serviÃ§o: *${selectedItemForDetail.name}* no portal ${appData.siteInfo.name}`;
+                            window.open(`https://wa.me/${activeMiniSiteCompany.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
+                          }}
+                          className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-[1.02] text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/10 cursor-pointer transition-all duration-200"
+                        >
+                          <MessageSquare size={14} /> Soliicitar no WhatsApp
+                        </button>
+                        <button
+                          onClick={() => {
+                            const servName = selectedItemForDetail.name;
+                            setSelectedItemForDetail(null);
+                            setTimeout(() => {
+                              const selectEl = document.getElementById('quote-service-select') as HTMLSelectElement;
+                              if (selectEl) selectEl.value = servName;
+                              const formEl = document.getElementById('quote-side-form');
+                              if (formEl) {
+                                formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                const inputEl = document.getElementById('quote-sender-name') as HTMLInputElement;
+                                if (inputEl) inputEl.focus();
+                              }
+                            }, 150);
+                          }}
+                          className="flex-1 inline-flex items-center justify-center gap-2 bg-[var(--primary)] hover:brightness-110 hover:scale-[1.02] text-black py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-[var(--primary)]/10 cursor-pointer transition-all duration-200"
+                        >
+                          <FileText size={14} /> Preencher FormulÃ¡rio
+                        </button>
+                      </div>
+                    ) : siteType === 'agendamento' ? (
+                      <div className="flex flex-col sm:flex-row gap-2.5 w-full">
+                        <button
+                          onClick={() => {
+                            const textMsg = `OlÃ¡! Gostaria de agendar um horÃ¡rio para o serviÃ§o: *${selectedItemForDetail.name}* no portal ${appData.siteInfo.name}`;
+                            window.open(`https://wa.me/${activeMiniSiteCompany.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
+                          }}
+                          className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-[1.02] text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/10 cursor-pointer transition-all duration-200"
+                        >
+                          <MessageSquare size={14} /> Agendar no WhatsApp
+                        </button>
+                        <button
+                          onClick={() => {
+                            const servName = selectedItemForDetail.name;
+                            setSelectedItemForDetail(null);
+                            setTimeout(() => {
+                              const selectEl = document.getElementById('booking-service-select') as HTMLSelectElement;
+                              if (selectEl) selectEl.value = servName;
+                              const formEl = document.getElementById('booking-sender-name');
+                              if (formEl) {
+                                formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                formEl.focus();
+                              }
+                            }, 150);
+                          }}
+                          className="flex-1 inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 hover:scale-[1.02] text-black py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-amber-400/10 cursor-pointer transition-all duration-200"
+                        >
+                          <Calendar size={14} /> Preencher Agendamento
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => {
+                            const baseVal = selectedItemForDetail.price ? parseFloat(selectedItemForDetail.price) : 0;
+                            let extraVal = 0;
+                            itemSelectedOptions.forEach(opt => {
+                              const match = opt.match(/\(\+?\s*R?\$?\s*([0-9.,]+)\)/i);
+                              if (match) {
+                                const p = parseFloat(match[1].replace(',', '.'));
+                                if (!isNaN(p)) extraVal += p;
+                              }
+                            });
+                            const totalUnit = baseVal + extraVal;
+                            const priceText = totalUnit > 0 ? `R$ ${totalUnit.toFixed(2).replace('.', ',')}` : 'Sob Consulta';
+
+                            let textMsg = `OlÃ¡! Tenho interesse no item listado no portal ${appData.siteInfo.name}:\n\n`;
+                            textMsg += `ğŸ“Œ *${selectedItemForDetail.name}*\n`;
+                            if (itemSelectedSize) textMsg += `ğŸ‘Ÿ *Tamanho/NumeraÃ§Ã£o:* ${itemSelectedSize}\n`;
+                            if (itemSelectedColor) textMsg += `ğŸ¨ *Cor:* ${itemSelectedColor}\n`;
+                            if (itemSelectedOptions.length > 0) textMsg += `â• *Adicionais/Opcionais:* ${itemSelectedOptions.join(', ')}\n`;
+                            if (itemNoteText.trim()) textMsg += `âœï¸ *ObservaÃ§Ã£o:* ${itemNoteText.trim()}\n`;
+                            textMsg += `ğŸ’° *Valor Total:* ${priceText}\n\n`;
+                            textMsg += `Gostaria de mais informaÃ§Ãµes ou confirmar o pedido.`;
+
+                            window.open(`https://wa.me/${activeMiniSiteCompany.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
+                          }}
+                          className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-[1.02] text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/10 cursor-pointer transition-all duration-200"
+                        >
+                          <MessageSquare size={14} /> Pedir pelo WhatsApp
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            const baseVal = selectedItemForDetail.price ? parseFloat(selectedItemForDetail.price) : 0;
+                            let extraVal = 0;
+                            itemSelectedOptions.forEach(opt => {
+                              const match = opt.match(/\(\+?\s*R?\$?\s*([0-9.,]+)\)/i);
+                              if (match) {
+                                const p = parseFloat(match[1].replace(',', '.'));
+                                if (!isNaN(p)) extraVal += p;
+                              }
+                            });
+                            const totalUnit = baseVal + extraVal;
+
+                            const cartKey = `${selectedItemForDetail.id}_${itemSelectedSize}_${itemSelectedColor}_${[...itemSelectedOptions].sort().join('-')}_${itemNoteText.trim()}`;
+
+                            setShoppingCart(prev => {
+                              const existing = prev[cartKey];
+                              const count = (existing?.count || 0) + 1;
+                              return {
+                                ...prev,
+                                [cartKey]: {
+                                  cartKey,
+                                  item: selectedItemForDetail,
+                                  count,
+                                  selectedSize: itemSelectedSize,
+                                  selectedColor: itemSelectedColor,
+                                  selectedOptions: [...itemSelectedOptions],
+                                  itemNote: itemNoteText.trim(),
+                                  computedUnitPrice: totalUnit
+                                }
+                              };
+                            });
+
+                            setSelectedItemForDetail(null);
+                            alert("Item adicionado ao carrinho!");
+                          }}
+                          className="flex-1 inline-flex items-center justify-center gap-2 bg-[var(--primary)] hover:bg-[#ffe066] hover:scale-[1.02] text-black py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-[var(--primary)]/10 cursor-pointer transition-all duration-200"
+                        >
+                          <ShoppingCart size={14} /> Adicionar ({(() => {
+                            const baseVal = selectedItemForDetail.price ? parseFloat(selectedItemForDetail.price) : 0;
+                            let extraVal = 0;
+                            itemSelectedOptions.forEach(opt => {
+                              const match = opt.match(/\(\+?\s*R?\$?\s*([0-9.,]+)\)/i);
+                              if (match) {
+                                const p = parseFloat(match[1].replace(',', '.'));
+                                if (!isNaN(p)) extraVal += p;
+                              }
+                            });
+                            const totalUnit = baseVal + extraVal;
+                            return totalUnit > 0 ? `R$ ${totalUnit.toFixed(2).replace('.', ',')}` : 'Consulta';
+                          })()})
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                </div>
+
+              </div>
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isCheckoutOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/95 backdrop-blur-md z-[2000] overflow-y-auto flex items-center justify-center p-4 font-sans"
+          >
+            <div className="bg-[#0b0c10] border border-white/10 rounded-3xl w-full max-w-md shadow-2xl p-6 sm:p-8 flex flex-col relative">
+              {/* Close Button */}
+              <button 
+                onClick={() => setIsCheckoutOpen(false)}
+                className="absolute top-5 right-5 text-white/50 hover:text-white hover:scale-105 transition-all p-2 bg-white/5 hover:bg-white/10 rounded-full cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+
+              <div className="text-center">
+                <span className="text-[10px] text-[var(--primary)] font-black uppercase tracking-widest bg-[var(--primary)]/10 px-3 py-1 rounded-full inline-block mb-3">
+                  â­ Adquirir Plano VIP
+                </span>
+                <h3 className="text-xl font-black text-white">Checkout do Plano</h3>
+                <p className="text-xs text-white/50 mt-1">Liberar Cadastro Ilimitado e Destaque no Portal</p>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mt-6 text-center select-none">
+                <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Valor do Plano</span>
+                <div className="text-2xl font-black text-[#ff8a00] mt-1">
+                  R$ {appData?.pricing?.price || '59,90'} <span className="text-xs text-white/40">/ {appData?.pricing?.period ? appData.pricing.period.replace(/^\/+/, '') : 'MÃŠS'}</span>
+                </div>
+              </div>
+
+              {/* QR Code */}
+              <div className="mt-6 flex flex-col items-center">
+                <div className="w-48 h-48 bg-white border-4 border-white/10 rounded-2xl overflow-hidden flex items-center justify-center shadow-lg p-2">
+                  {appData?.pricing.pixQrCodeLink ? (
+                    <img 
+                      src={appData.pricing.pixQrCodeLink} 
+                      alt="QR Code Pix" 
+                      className="w-full h-full object-contain"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="text-center text-xs text-black flex flex-col items-center justify-center p-3">
+                      <span className="text-2xl">âš¡</span>
+                      <span className="mt-2 font-black font-sans text-gray-800">QR Code PIX</span>
+                      <span className="text-[10px] leading-tight text-gray-500 mt-1">O administrador ainda nÃ£o cadastrou o link da imagem do QR Code. PeÃ§a a chave copia e cola abaixo.</span>
+                    </div>
+                  )}
+                </div>
+                <span className="text-[10px] text-white/45 font-bold uppercase tracking-widest mt-2 font-mono">QR Code Pix</span>
+              </div>
+
+              {/* Copy and Paste Box */}
+              <div className="mt-5">
+                <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest block mb-2 text-center">Pix Copia e Cola</span>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    readOnly 
+                    value={appData?.pricing.pixCopiaCola || 'Chave PIX nÃ£o configurada no painel.'} 
+                    className="flex-1 bg-[#12131a] border border-white/10 rounded-xl px-4 py-3 text-xs text-white font-mono outline-none text-ellipsis"
+                  />
+                  <button 
+                    onClick={() => {
+                      if (appData?.pricing.pixCopiaCola) {
+                        navigator.clipboard.writeText(appData.pricing.pixCopiaCola);
+                        setPixCopied(true);
+                        setTimeout(() => setPixCopied(false), 2000);
+                      } else {
+                        alert("Chave PIX nÃ£o configurada pelo administrador.");
+                      }
+                    }}
+                    className={`px-4 rounded-xl font-bold text-xs uppercase tracking-wider cursor-pointer transition-all ${pixCopied ? 'bg-emerald-500 text-white' : 'bg-white/10 hover:bg-white/15 text-white'}`}
+                  >
+                    {pixCopied ? 'Copiado!' : 'Copiar'}
+                  </button>
+                </div>
+              </div>
+
+              {/* JÃ EFETUEI O PAGAMENTO CTA */}
+              <a 
+                href={`https://wa.me/${(appData?.pricing.waLink || '5585992862177').replace(/[^0-9]/g, '')}?text=${encodeURIComponent('OlÃ¡! JÃ¡ efetuei o pagamento do plano de anÃºncios via PIX, aqui estÃ¡ o comprovante! Desejo ativar meu perfil premium.')}`}
+                target="_blank" 
+                rel="noreferrer"
+                onClick={() => setIsCheckoutOpen(false)}
+                className="w-full text-center bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest block mt-6 shadow-xl shadow-emerald-500/10 cursor-pointer transition-all"
+              >
+                ğŸš€ JÃ¡ Efetuei o Pagamento
+              </a>
+
+              <div className="text-center mt-3">
+                <small style={{ fontSize: '11px', color: '#ff4444', fontWeight: 'bold' }}>
+                  âš ï¸ Envie o comprovante pelo botÃ£o acima para ativar imediatamente!
+                </small>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
