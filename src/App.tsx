@@ -2248,19 +2248,37 @@ function AppContent() {
   }, [appData]);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
+    const ONE_HOUR_MS = 60 * 60 * 1000; // Intervalo de 1 em 1 hora (3.600.000 ms)
+    let intervalId: any = null;
+
+    const triggerNotification = () => {
       addNotification();
-      const scheduleNext = () => {
-        // Notification simulation delay: 45 to 75 seconds (averaging ~1 minute)
-        const delay = Math.floor(Math.random() * 30000) + 45000;
-        setTimeout(() => {
-          addNotification();
-          scheduleNext();
-        }, delay);
-      };
-      scheduleNext();
-    }, 15000); // 15 seconds delay before the first simulation notification on load
-    return () => clearTimeout(timeout);
+      try {
+        localStorage.setItem('last_fictional_notification', String(Date.now()));
+      } catch (e) {}
+    };
+
+    const lastTime = parseInt(localStorage.getItem('last_fictional_notification') || '0', 10);
+    const now = Date.now();
+    const timeSinceLast = now - lastTime;
+
+    // Se já foi exibido recentemente, aguarda o restante do tempo para completar 1 hora; se for primeira vez, aguarda 1 hora
+    let initialDelay = ONE_HOUR_MS;
+    if (lastTime > 0 && timeSinceLast < ONE_HOUR_MS) {
+      initialDelay = ONE_HOUR_MS - timeSinceLast;
+    }
+
+    const timeoutId = setTimeout(() => {
+      triggerNotification();
+      intervalId = setInterval(() => {
+        triggerNotification();
+      }, ONE_HOUR_MS);
+    }, initialDelay);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [addNotification]);
 
   // --- Video Logic ---
