@@ -1702,6 +1702,8 @@ function AppContent() {
   const [isRadioBuffering, setIsRadioBuffering] = useState(false);
   const radioAudioRef = useRef<HTMLAudioElement | null>(null);
   const radioWatchdogRef = useRef<any>(null);
+  const hasAutoPlayedRadioRef = useRef(false);
+  const userManuallyPausedRef = useRef(false);
   const [activeFlyerIndex, setActiveFlyerIndex] = useState(0);
   const [activeHorizontalBannerIndex, setActiveHorizontalBannerIndex] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -1965,10 +1967,12 @@ function AppContent() {
     if (!radioAudioRef.current) return;
     const audio = radioAudioRef.current;
     if (radioPlaying) {
+      userManuallyPausedRef.current = true;
       audio.pause();
       setRadioPlaying(false);
       setIsRadioBuffering(false);
     } else {
+      userManuallyPausedRef.current = false;
       // Prioritize radio audio clarity by muting TV sound
       setTvMuted(true);
       setIsMuted(true);
@@ -1994,6 +1998,80 @@ function AppContent() {
       }
     }
   };
+
+  // Reprodução automática da rádio no primeiro gesto (rolar a página, toque, clique ou tecla)
+  useEffect(() => {
+    if (!showRadio) return;
+
+    let hasCleanedUp = false;
+
+    const startRadioOnFirstInteraction = () => {
+      // Se já tocou ou o usuário pausou manualmente, remove os ouvintes
+      if (hasAutoPlayedRadioRef.current || userManuallyPausedRef.current) {
+        removeInteractionListeners();
+        return;
+      }
+
+      const audio = radioAudioRef.current;
+      if (!audio) return;
+
+      if (!audio.src || !audio.src.includes('://')) {
+        audio.src = baseRadioStreamUrl;
+      }
+
+      setTvMuted(true);
+      setIsMuted(true);
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            if (hasCleanedUp) return;
+            hasAutoPlayedRadioRef.current = true;
+            setRadioPlaying(true);
+            setIsRadioBuffering(false);
+            removeInteractionListeners();
+          })
+          .catch((e) => {
+            // Se o navegador ainda restringir (esperando clique/toque direto), continua ouvindo os eventos
+            console.warn("Autoplay da radio aguardando interação:", e);
+          });
+      }
+    };
+
+    const removeInteractionListeners = () => {
+      window.removeEventListener('scroll', startRadioOnFirstInteraction);
+      window.removeEventListener('click', startRadioOnFirstInteraction);
+      window.removeEventListener('touchstart', startRadioOnFirstInteraction);
+      window.removeEventListener('touchmove', startRadioOnFirstInteraction);
+      window.removeEventListener('pointerdown', startRadioOnFirstInteraction);
+      window.removeEventListener('wheel', startRadioOnFirstInteraction);
+      window.removeEventListener('keydown', startRadioOnFirstInteraction);
+      document.removeEventListener('scroll', startRadioOnFirstInteraction);
+    };
+
+    window.addEventListener('scroll', startRadioOnFirstInteraction, { passive: true });
+    window.addEventListener('click', startRadioOnFirstInteraction, { passive: true });
+    window.addEventListener('touchstart', startRadioOnFirstInteraction, { passive: true });
+    window.addEventListener('touchmove', startRadioOnFirstInteraction, { passive: true });
+    window.addEventListener('pointerdown', startRadioOnFirstInteraction, { passive: true });
+    window.addEventListener('wheel', startRadioOnFirstInteraction, { passive: true });
+    window.addEventListener('keydown', startRadioOnFirstInteraction, { passive: true });
+    document.addEventListener('scroll', startRadioOnFirstInteraction, { passive: true });
+
+    // Tentativa imediata caso o navegador já tenha permitido som ou link específico de rádio
+    try {
+      const urlParams = new URLSearchParams(window.location.search || (window.location.hash.includes('?') ? window.location.hash.split('?')[1] : ''));
+      if (urlParams.get('radio') === '1' || urlParams.get('play') === '1' || urlParams.get('ouvir') === '1') {
+        startRadioOnFirstInteraction();
+      }
+    } catch (e) {}
+
+    return () => {
+      hasCleanedUp = true;
+      removeInteractionListeners();
+    };
+  }, [showRadio, baseRadioStreamUrl]);
 
   // Anti-stall watchdog: If audio is playing but stalled/buffering for > 4.5s, auto-reconnect
   useEffect(() => {
