@@ -2034,3 +2034,30 @@
     transform: translate3d(-50%, 0, 0);
   }
 }
+
+@keyframes radio-equalizer {
+  0%, 100% {
+    height: 4px;
+    opacity: 0.6;
+  }
+  50% {
+    height: 18px;
+    opacity: 1;
+  }
+}
+
+.animate-radio-bar-1 {
+  animation: radio-equalizer 0.8s ease-in-out infinite;
+}
+
+.animate-radio-bar-2 {
+  animation: radio-equalizer 1.2s ease-in-out infinite 0.2s;
+}
+
+.animate-radio-bar-3 {
+  animation: radio-equalizer 0.7s ease-in-out infinite 0.4s;
+}
+
+.animate-radio-bar-4 {
+  animation: radio-equalizer 1s ease-in-out infinite 0.1s;
+}

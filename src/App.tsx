@@ -58,7 +58,9 @@ import {
   Share2,
   Heart,
   Globe,
-  Instagram
+  Instagram,
+  RefreshCw,
+  Wifi
 } from 'lucide-react';
 
 import { auth, db, googleProvider } from './lib/firebase';
@@ -1676,7 +1678,9 @@ function AppContent() {
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<'all' | 'loja' | 'servico'>('all');
   const [radioPlaying, setRadioPlaying] = useState(false);
   const [radioVolume, setRadioVolume] = useState(0.8);
+  const [isRadioBuffering, setIsRadioBuffering] = useState(false);
   const radioAudioRef = useRef<HTMLAudioElement | null>(null);
+  const radioWatchdogRef = useRef<any>(null);
   const [activeFlyerIndex, setActiveFlyerIndex] = useState(0);
   const [activeHorizontalBannerIndex, setActiveHorizontalBannerIndex] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -1894,6 +1898,17 @@ function AppContent() {
     return () => clearInterval(timer);
   }, []);
 
+  // Effective radio stream URL
+  const baseRadioStreamUrl = useMemo(() => {
+    return (
+      activeReferralPartner?.radioLink ||
+      customRadioLink ||
+      universalConfig.radioLink ||
+      (appData && appData.siteInfo && appData.siteInfo.radioLink) ||
+      "https://stream.zeno.fm/gsstolze3mjtv"
+    );
+  }, [activeReferralPartner, customRadioLink, universalConfig, appData]);
+
   // Sync volume of custom radio player
   useEffect(() => {
     if (radioAudioRef.current) {
@@ -1901,20 +1916,92 @@ function AppContent() {
     }
   }, [radioVolume]);
 
+  const reconnectRadio = useCallback((forcePlay = true) => {
+    if (!radioAudioRef.current) return;
+    setIsRadioBuffering(true);
+    const audio = radioAudioRef.current;
+    
+    // Set clean stream URL directly without breaking stream authentication
+    audio.src = baseRadioStreamUrl;
+
+    if (forcePlay) {
+      setTvMuted(true);
+      setIsMuted(true);
+      const p = audio.play();
+      if (p !== undefined) {
+        p.then(() => {
+          setRadioPlaying(true);
+          setIsRadioBuffering(false);
+        }).catch((err) => {
+          console.warn("Radio playback notice:", err);
+          setIsRadioBuffering(false);
+        });
+      }
+    }
+  }, [baseRadioStreamUrl]);
+
   const handleRadioTogglePlay = () => {
-    if (radioAudioRef.current) {
-      if (radioPlaying) {
-        radioAudioRef.current.pause();
-        setRadioPlaying(false);
-      } else {
-        // Toggle video sound off to prioritize radio audio clarity
-        setIsMuted(true);
-        radioAudioRef.current.play()
-          .then(() => setRadioPlaying(true))
-          .catch(e => console.error("Radio play failed:", e));
+    if (!radioAudioRef.current) return;
+    const audio = radioAudioRef.current;
+    if (radioPlaying) {
+      audio.pause();
+      setRadioPlaying(false);
+      setIsRadioBuffering(false);
+    } else {
+      // Prioritize radio audio clarity by muting TV sound
+      setTvMuted(true);
+      setIsMuted(true);
+      setIsRadioBuffering(true);
+
+      // Verify src
+      if (!audio.src || !audio.src.includes('://')) {
+        audio.src = baseRadioStreamUrl;
+      }
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setRadioPlaying(true);
+            setIsRadioBuffering(false);
+          })
+          .catch(e => {
+            console.warn("Play interrupted or autoplay restriction:", e);
+            setIsRadioBuffering(false);
+            setRadioPlaying(false);
+          });
       }
     }
   };
+
+  // Anti-stall watchdog: If audio is playing but stalled/buffering for > 4.5s, auto-reconnect
+  useEffect(() => {
+    if (!radioPlaying) {
+      if (radioWatchdogRef.current) {
+        clearTimeout(radioWatchdogRef.current);
+        radioWatchdogRef.current = null;
+      }
+      return;
+    }
+
+    if (isRadioBuffering) {
+      radioWatchdogRef.current = setTimeout(() => {
+        console.log("Anti-freeze watchdog: stream stalled, refreshing buffer socket...");
+        reconnectRadio(true);
+      }, 4500);
+    } else {
+      if (radioWatchdogRef.current) {
+        clearTimeout(radioWatchdogRef.current);
+        radioWatchdogRef.current = null;
+      }
+    }
+
+    return () => {
+      if (radioWatchdogRef.current) {
+        clearTimeout(radioWatchdogRef.current);
+      }
+    };
+  }, [radioPlaying, isRadioBuffering, reconnectRadio]);
 
   const displayedCompanies = useMemo(() => {
     if (!appData) return [];
@@ -3878,6 +3965,163 @@ function AppContent() {
               </div>
             </div>
 
+            {/* PLAYER DE RÁDIO COM BUFFER ANTI-TRAVAMENTO (LOGO ABAIXO DO PRIMEIRO CARROSSEL) */}
+            {showRadio !== false && (
+              <div id="radio-player-section" className="mb-14 sm:mb-16">
+                <div className="relative overflow-hidden bg-gradient-to-r from-[#0c0c14] via-[#12121e] to-[#0c0c14] border border-amber-500/30 rounded-[28px] p-5 sm:p-7 md:p-8 shadow-2xl transition-all duration-300">
+                  {/* Subtle top accent line */}
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-[var(--primary)] to-amber-500 opacity-85" />
+                  
+                  <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+                    {/* Left: Play button, station info, and equalizer */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 w-full lg:w-auto">
+                      {/* BOTAO DE PLAY BEM DESTACADO COM TEXTO E ICONE */}
+                      <button 
+                        type="button"
+                        id="btn-tocar-radio"
+                        onClick={handleRadioTogglePlay}
+                        className={`w-full sm:w-auto px-6 py-4 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 shrink-0 cursor-pointer font-black text-sm sm:text-base tracking-wide shadow-xl active:scale-95 ${
+                          radioPlaying 
+                            ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-600/40 ring-4 ring-red-500/20' 
+                            : 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black shadow-amber-500/30 hover:scale-[1.02] ring-4 ring-amber-400/20'
+                        }`}
+                        title={radioPlaying ? "Pausar rádio" : "Dar play na rádio ao vivo"}
+                      >
+                        {isRadioBuffering ? (
+                          <>
+                            <RefreshCw size={22} className="animate-spin text-black" />
+                            <span>CONECTANDO SINAL...</span>
+                          </>
+                        ) : radioPlaying ? (
+                          <>
+                            <Pause size={22} className="fill-current" />
+                            <span>PAUSAR RÁDIO</span>
+                          </>
+                        ) : (
+                          <>
+                            <Play size={24} className="fill-current translate-x-0.5" />
+                            <span>DAR PLAY NO RÁDIO</span>
+                          </>
+                        )}
+                      </button>
+
+                      <div className="flex-1 min-w-0">
+                        {/* Status badges */}
+                        <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                          <span className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                            radioPlaying 
+                              ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
+                              : 'bg-white/5 text-white/60 border border-white/10'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${radioPlaying ? 'bg-red-500 animate-pulse' : 'bg-white/30'}`} />
+                            {isRadioBuffering ? 'SINCRONIZANDO SINAL' : radioPlaying ? 'TRANSMISSÃO AO VIVO' : 'RÁDIO WEB AO VIVO'}
+                          </span>
+
+                          <span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
+                            <Wifi size={10} className="stroke-[2.5]" />
+                            Buffer Anti-Travamento Ativo
+                          </span>
+                        </div>
+
+                        {/* Title and Animated Equalizer */}
+                        <div className="flex items-center gap-3">
+                          <h4 className="text-base sm:text-lg font-black text-white truncate">
+                            📻 Rádio Minha Divulgação
+                          </h4>
+                          
+                          {/* Equalizer animation bars */}
+                          {radioPlaying && !isRadioBuffering && (
+                            <div className="flex items-end gap-1 h-5 select-none" title="Transmitindo áudio contínuo">
+                              <span className="w-1 bg-amber-400 rounded-full animate-radio-bar-1" />
+                              <span className="w-1 bg-amber-400 rounded-full animate-radio-bar-2" />
+                              <span className="w-1 bg-amber-400 rounded-full animate-radio-bar-3" />
+                              <span className="w-1 bg-amber-400 rounded-full animate-radio-bar-4" />
+                            </div>
+                          )}
+                        </div>
+
+                        <p className="text-xs text-white/60 truncate mt-0.5">
+                          {isRadioBuffering 
+                            ? "Carregando sinal estável sem travamento..." 
+                            : radioPlaying 
+                              ? "Tocando agora ao vivo em segundo plano. Navegue ouvindo!" 
+                              : "Toque em DAR PLAY NO RÁDIO para ouvir nossa programação e ofertas."
+                          }
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Right: Volume slider and Refresh signal button */}
+                    <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full lg:w-auto shrink-0 justify-end pt-3 lg:pt-0 border-t lg:border-t-0 border-white/5">
+                      {/* Refresh button */}
+                      <button 
+                        type="button"
+                        onClick={() => reconnectRadio(true)}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 text-[11px] font-mono font-bold text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-3.5 py-2.5 rounded-xl transition-all cursor-pointer active:scale-95"
+                        title="Limpar buffer e sincronizar sinal ao vivo"
+                      >
+                        <RefreshCw size={12} className={isRadioBuffering ? "animate-spin" : ""} />
+                        <span>Atualizar Sinal</span>
+                      </button>
+
+                      {/* Volume controls */}
+                      <div className="flex items-center gap-2.5 w-full sm:w-48 bg-white/5 px-3 py-2 rounded-xl border border-white/10">
+                        <button 
+                          type="button"
+                          onClick={() => setRadioVolume(prev => prev === 0 ? 0.8 : 0)}
+                          className="text-white/60 hover:text-white transition-colors cursor-pointer"
+                          title={radioVolume === 0 ? "Ativar som" : "Silenciar"}
+                        >
+                          {radioVolume === 0 ? <VolumeX size={16} className="text-red-400" /> : <Volume2 size={16} className="text-amber-400" />}
+                        </button>
+                        <input 
+                          type="range" 
+                          min="0" 
+                          max="1" 
+                          step="0.01"
+                          value={radioVolume}
+                          onChange={(e) => setRadioVolume(parseFloat(e.target.value))}
+                          className="flex-1 accent-amber-400 h-1.5 rounded-full cursor-pointer bg-neutral-800"
+                        />
+                        <span className="text-[10px] font-mono text-white/50 w-7 text-right">
+                          {Math.round(radioVolume * 100)}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <audio 
+                    ref={radioAudioRef}
+                    src={baseRadioStreamUrl}
+                    preload="auto"
+                    onPlay={() => {
+                      setRadioPlaying(true);
+                      setIsRadioBuffering(false);
+                    }}
+                    onPause={() => {
+                      setRadioPlaying(false);
+                      setIsRadioBuffering(false);
+                    }}
+                    onWaiting={() => {
+                      setIsRadioBuffering(true);
+                    }}
+                    onCanPlay={() => {
+                      setIsRadioBuffering(false);
+                    }}
+                    onPlaying={() => {
+                      setIsRadioBuffering(false);
+                      setRadioPlaying(true);
+                    }}
+                    onError={(e) => {
+                      console.warn("Audio stream error:", e);
+                      setIsRadioBuffering(false);
+                      setRadioPlaying(false);
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
             {/* NEW SECTION: LANDSCAPE BANNERS FOR CUSTOMERS AND PARTNERS (RESPONSIVE) */}
             {visibleHorizontalBanners.length > 0 && (
               <div className="mb-20 pt-12 border-t border-white/5">
@@ -4094,53 +4338,6 @@ function AppContent() {
                     </button>
                   </div>
                 </div>
-              </div>
-
-              {/* COMPACT RÁDIO MINHA DIVULGAÇÃO */}
-              <div className="w-full max-w-4xl lg:max-w-5xl mx-auto mt-6 bg-[#0a0a10] border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
-                <div className="flex items-center gap-4">
-                  <button 
-                    type="button"
-                    onClick={handleRadioTogglePlay}
-                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shrink-0 ${radioPlaying ? 'bg-red-600 text-white hover:bg-red-500 shadow-red-500/20' : 'bg-[var(--primary)] text-black hover:scale-105 shadow-[rgb(251,191,36)]/20'} shadow-lg cursor-pointer`}
-                  >
-                    {radioPlaying ? <Pause size={24} /> : <Play size={24} className="translate-x-0.5" />}
-                  </button>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${radioPlaying ? 'bg-red-500 animate-pulse' : 'bg-white/20'}`} />
-                      <h4 className="text-sm font-extrabold text-white">📻 Rádio Minha Divulgação — Ao Vivo</h4>
-                    </div>
-                    <p className="text-xs text-white/50 mt-0.5">Ouça nossa programação e ofertas em tempo real.</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 w-full sm:w-64">
-                  <button 
-                    type="button"
-                    onClick={() => setRadioVolume(prev => prev === 0 ? 0.8 : 0)}
-                    className="text-white/60 hover:text-white"
-                  >
-                    {radioVolume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                  </button>
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="1" 
-                    step="0.01"
-                    value={radioVolume}
-                    onChange={(e) => setRadioVolume(parseFloat(e.target.value))}
-                    className="flex-1 accent-[var(--primary)] h-1.5 rounded-full cursor-pointer bg-neutral-800"
-                  />
-                  <span className="text-[10px] font-mono text-white/40">{Math.round(radioVolume * 100)}%</span>
-                </div>
-
-                <audio 
-                  ref={radioAudioRef}
-                  src={activeReferralPartner?.radioLink || customRadioLink || universalConfig.radioLink || (appData && appData.siteInfo && appData.siteInfo.radioLink)}
-                  onPlay={() => setRadioPlaying(true)}
-                  onPause={() => setRadioPlaying(false)}
-                />
               </div>
             </div>
 
