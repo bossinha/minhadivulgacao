@@ -1999,13 +1999,26 @@ function AppContent() {
     }
   };
 
-  // Reprodução automática da rádio no primeiro gesto (rolar a página, toque, clique ou tecla)
+  // Reprodução automática da rádio no primeiro gesto (rolar para cima/baixo, toque, movimento, roda do mouse ou clique)
   useEffect(() => {
     if (!showRadio) return;
 
     let hasCleanedUp = false;
+    let isAttemptingPlay = false;
+    let lastScrollY = typeof window !== 'undefined' ? (window.scrollY || document.documentElement.scrollTop || 0) : 0;
+    let touchStartY = 0;
 
-    const startRadioOnFirstInteraction = () => {
+    const unlockAudio = () => {
+      try {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) {
+          const ctx = new AudioCtx();
+          ctx.resume().catch(() => {});
+        }
+      } catch (_) {}
+    };
+
+    const startRadioOnFirstInteraction = (_e?: Event) => {
       // Se já tocou ou o usuário pausou manualmente, remove os ouvintes
       if (hasAutoPlayedRadioRef.current || userManuallyPausedRef.current) {
         removeInteractionListeners();
@@ -2013,51 +2026,112 @@ function AppContent() {
       }
 
       const audio = radioAudioRef.current;
-      if (!audio) return;
+      if (!audio || isAttemptingPlay) return;
 
-      if (!audio.src || !audio.src.includes('://')) {
-        audio.src = baseRadioStreamUrl;
+      isAttemptingPlay = true;
+
+      try {
+        unlockAudio();
+
+        audio.muted = false;
+        if (radioVolume > 0) {
+          audio.volume = radioVolume;
+        }
+
+        if (!audio.src || audio.src === window.location.href) {
+          audio.src = baseRadioStreamUrl;
+        }
+
+        setTvMuted(true);
+        setIsMuted(true);
+
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              if (hasCleanedUp) return;
+              hasAutoPlayedRadioRef.current = true;
+              setRadioPlaying(true);
+              setIsRadioBuffering(false);
+              removeInteractionListeners();
+            })
+            .catch((e) => {
+              // Se o navegador ainda restringir esse evento específico, mantém os ouvintes para o próximo gesto (ex: touchend, pointerup)
+              isAttemptingPlay = false;
+            });
+        } else {
+          isAttemptingPlay = false;
+        }
+      } catch (err) {
+        isAttemptingPlay = false;
       }
+    };
 
-      setTvMuted(true);
-      setIsMuted(true);
+    // Detecção específica de rolagem (tanto para cima quanto para baixo)
+    const handleScrollOrWheel = (e?: Event) => {
+      const currentScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+      // Registra a direção da rolagem
+      lastScrollY = currentScrollY;
+      startRadioOnFirstInteraction(e);
+    };
 
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            if (hasCleanedUp) return;
-            hasAutoPlayedRadioRef.current = true;
-            setRadioPlaying(true);
-            setIsRadioBuffering(false);
-            removeInteractionListeners();
-          })
-          .catch((e) => {
-            // Se o navegador ainda restringir (esperando clique/toque direto), continua ouvindo os eventos
-            console.warn("Autoplay da radio aguardando interação:", e);
-          });
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches && e.touches[0]) {
+        touchStartY = e.touches[0].clientY;
       }
+      startRadioOnFirstInteraction(e);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches && e.touches[0]) {
+        const currentY = e.touches[0].clientY;
+        const delta = currentY - touchStartY;
+        // delta > 0 = arrastando para baixo (rolando a página para cima)
+        // delta < 0 = arrastando para cima (rolando a página para baixo)
+        if (Math.abs(delta) > 5) {
+          startRadioOnFirstInteraction(e);
+        }
+      } else {
+        startRadioOnFirstInteraction(e);
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      // touchend é o momento em que o dedo solta após rolar - 100% de ativação garantida em celulares
+      startRadioOnFirstInteraction(e);
     };
 
     const removeInteractionListeners = () => {
-      window.removeEventListener('scroll', startRadioOnFirstInteraction);
-      window.removeEventListener('click', startRadioOnFirstInteraction);
-      window.removeEventListener('touchstart', startRadioOnFirstInteraction);
-      window.removeEventListener('touchmove', startRadioOnFirstInteraction);
+      window.removeEventListener('scroll', handleScrollOrWheel);
+      window.removeEventListener('scroll', handleScrollOrWheel, true);
+      document.removeEventListener('scroll', handleScrollOrWheel);
+      document.removeEventListener('scroll', handleScrollOrWheel, true);
+      window.removeEventListener('wheel', handleScrollOrWheel);
+      window.removeEventListener('wheel', handleScrollOrWheel, true);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchstart', handleTouchStart, true);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchmove', handleTouchMove, true);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchend', handleTouchEnd, true);
       window.removeEventListener('pointerdown', startRadioOnFirstInteraction);
-      window.removeEventListener('wheel', startRadioOnFirstInteraction);
+      window.removeEventListener('pointerup', startRadioOnFirstInteraction);
+      window.removeEventListener('click', startRadioOnFirstInteraction);
       window.removeEventListener('keydown', startRadioOnFirstInteraction);
-      document.removeEventListener('scroll', startRadioOnFirstInteraction);
     };
 
-    window.addEventListener('scroll', startRadioOnFirstInteraction, { passive: true });
-    window.addEventListener('click', startRadioOnFirstInteraction, { passive: true });
-    window.addEventListener('touchstart', startRadioOnFirstInteraction, { passive: true });
-    window.addEventListener('touchmove', startRadioOnFirstInteraction, { passive: true });
+    // Ouvintes com capture e bubble para garantir captura de rolagem pra cima e pra baixo
+    window.addEventListener('scroll', handleScrollOrWheel, { passive: true, capture: true });
+    window.addEventListener('scroll', handleScrollOrWheel, { passive: true, capture: false });
+    document.addEventListener('scroll', handleScrollOrWheel, { passive: true, capture: true });
+    window.addEventListener('wheel', handleScrollOrWheel, { passive: true, capture: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true, capture: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true, capture: true });
     window.addEventListener('pointerdown', startRadioOnFirstInteraction, { passive: true });
-    window.addEventListener('wheel', startRadioOnFirstInteraction, { passive: true });
+    window.addEventListener('pointerup', startRadioOnFirstInteraction, { passive: true });
+    window.addEventListener('click', startRadioOnFirstInteraction, { passive: true });
     window.addEventListener('keydown', startRadioOnFirstInteraction, { passive: true });
-    document.addEventListener('scroll', startRadioOnFirstInteraction, { passive: true });
 
     // Tentativa imediata caso o navegador já tenha permitido som ou link específico de rádio
     try {
@@ -2071,7 +2145,7 @@ function AppContent() {
       hasCleanedUp = true;
       removeInteractionListeners();
     };
-  }, [showRadio, baseRadioStreamUrl]);
+  }, [showRadio, baseRadioStreamUrl, radioVolume]);
 
   // Anti-stall watchdog: If audio is playing but stalled/buffering for > 4.5s, auto-reconnect
   useEffect(() => {
