@@ -378,9 +378,30 @@ export function getCompanyOrderScore(company: any): number {
   return planTier + fixedPosBonus + (priority * 10) + (views * 0.01);
 }
 
+export function moveItemInArray<T>(list: T[], fromIndex: number, toIndex: number): T[] {
+  if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= list.length || toIndex >= list.length) {
+    return list;
+  }
+  const updated = [...list];
+  const [item] = updated.splice(fromIndex, 1);
+  updated.splice(toIndex, 0, item);
+  return updated;
+}
+
 export function sortCompaniesByPlanAndPriority(companies: any[]): any[] {
   if (!Array.isArray(companies)) return [];
   return [...companies].sort((a, b) => {
+    // Custom explicit manualOrder or orderIndex takes precedence when configured by the admin
+    const orderA = typeof a.manualOrder === 'number' ? a.manualOrder : (typeof a.orderIndex === 'number' ? a.orderIndex : null);
+    const orderB = typeof b.manualOrder === 'number' ? b.manualOrder : (typeof b.orderIndex === 'number' ? b.orderIndex : null);
+    if (orderA !== null && orderB !== null) {
+      if (orderA !== orderB) return orderA - orderB;
+    } else if (orderA !== null) {
+      return -1;
+    } else if (orderB !== null) {
+      return 1;
+    }
+
     const scoreA = getCompanyOrderScore(a);
     const scoreB = getCompanyOrderScore(b);
     if (scoreB !== scoreA) {
@@ -3665,12 +3686,22 @@ function AppContent() {
           {/* Action Buttons - Desktop */}
           <div className="hidden lg:flex items-center gap-3 font-jakarta">
             <a 
+              href="https://crm-pi-ebon-19.vercel.app/?empresa=minhadivulgacao&view=client"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 hover:text-amber-200 px-3.5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-300 flex items-center gap-1.5 decoration-transparent cursor-pointer"
+              title="Atendimento Horário Comercial: Seg a Sex 08:00 às 20:00 | Sáb: 09:00 às 14:00"
+            >
+              <MessageSquare size={13} className="text-amber-400" />
+              <span>Atendimento Online</span>
+            </a>
+            <a 
               href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Gostaria%20de%20divulgar%20minha%20empresa%20no%20Guia%20Comercial%20Minha%20Divulga%C3%A7%C3%A3o."
               target="_blank"
               rel="noreferrer"
               className="bg-[var(--primary)] hover:brightness-110 text-black px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-300 shadow shadow-[var(--primary)]/20 cursor-pointer flex items-center gap-1.5 decoration-transparent"
             >
-              🚀 Divulgue Sua Empresa
+              🚀 Divulgue no WhatsApp
             </a>
             {!hideAdvertiserAuth && (
               <button 
@@ -3684,6 +3715,16 @@ function AppContent() {
 
           {/* Mobile Menu Trigger & Quick Actions */}
           <div className="flex lg:hidden items-center gap-2">
+            <a 
+              href="https://crm-pi-ebon-19.vercel.app/?empresa=minhadivulgacao&view=client"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:text-amber-200 px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-wide cursor-pointer shrink-0 decoration-transparent flex items-center gap-1"
+              title="Atendimento Horário Comercial: Seg a Sex 08:00 às 20:00 | Sáb: 09:00 às 14:00"
+            >
+              <MessageSquare size={11} className="text-amber-400" />
+              <span>Dúvidas</span>
+            </a>
             <a 
               href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Gostaria%20de%20divulgar%20minha%20empresa%20no%20Guia%20Comercial%20Minha%20Divulga%C3%A7%C3%A3o."
               target="_blank"
@@ -3726,6 +3767,18 @@ function AppContent() {
                 <a href="#tv-destaque" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('tv-destaque'); }} className="text-white hover:text-[var(--primary)] py-2">📺 TV & Rádio Ao Vivo</a>
               </div>
               <div className="flex flex-col gap-3 pt-4 border-t border-white/5">
+                <a 
+                  href="https://crm-pi-ebon-19.vercel.app/?empresa=minhadivulgacao&view=client"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full text-center bg-gradient-to-r from-amber-500/20 via-amber-500/30 to-amber-500/20 border-2 border-amber-500/50 text-amber-300 px-4 py-3.5 rounded-xl font-black text-xs uppercase tracking-wider block cursor-pointer decoration-transparent shadow-lg"
+                >
+                  💬 Atendimento Online (Dúvidas na Hora)
+                  <span className="block text-[10px] font-mono text-amber-200/90 font-bold mt-1">
+                    Horário Comercial: Seg a Sex 08:00 às 20:00 • Sáb: 09:00 às 14:00
+                  </span>
+                </a>
                 <a 
                   href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Gostaria%20de%20divulgar%20minha%20empresa%20no%20Guia%20Comercial%20Minha%20Divulga%C3%A7%C3%A3o."
                   target="_blank"
@@ -3841,6 +3894,40 @@ function AppContent() {
             </div>
           </div>
 
+          {/* CTA Destaque: Atendimento Online (Dúvidas na Hora) */}
+          <div className="w-full max-w-3xl mt-5">
+            <a
+              href="https://crm-pi-ebon-19.vercel.app/?empresa=minhadivulgacao&view=client"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full group flex flex-col sm:flex-row items-center justify-between gap-3.5 bg-gradient-to-r from-[#16130b] via-[#151522] to-[#16130b] border-2 border-amber-500/40 hover:border-amber-400 p-3.5 sm:px-5 sm:py-3.5 rounded-2xl transition-all duration-300 shadow-xl decoration-transparent text-left cursor-pointer"
+            >
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0 text-amber-400 group-hover:scale-105 transition-transform shadow-inner">
+                  <MessageSquare size={20} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs sm:text-sm font-black text-white uppercase tracking-wider group-hover:text-amber-300 transition-colors">
+                      Atendimento Online • Tire Dúvidas na Hora
+                    </span>
+                    <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse">
+                      Online
+                    </span>
+                  </div>
+                  <div className="text-[11px] sm:text-xs text-amber-300 font-mono font-black mt-0.5">
+                    ⏰ Atendimento Horário Comercial: Seg a Sex 08:00 às 20:00 • Sáb: 09:00 às 14:00
+                  </div>
+                </div>
+              </div>
+
+              <span className="w-full sm:w-auto text-center shrink-0 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-black text-xs uppercase tracking-wider px-5 py-2.5 rounded-xl transition-all shadow-md group-hover:scale-105 flex items-center justify-center gap-1.5">
+                <span>Tirar Dúvidas na Hora</span>
+                <ExternalLink size={13} />
+              </span>
+            </a>
+          </div>
+
         </div>
       </section>
 
@@ -3882,8 +3969,20 @@ function AppContent() {
                     className="relative w-full max-w-[320px] aspect-[3/4.2] rounded-3xl overflow-hidden border-2 border-white/10 shadow-[0_15px_45px_rgba(0,0,0,0.8)] bg-[#11111a] cursor-pointer group"
                     onClick={() => {
                       const activeFlyer = visibleFlyers[activeFlyerIndex];
-                      if (typeof activeFlyer === 'object' && activeFlyer?.link) {
-                        window.open(getWaLinkWithReferral(activeFlyer.link), '_blank');
+                      if (typeof activeFlyer === 'object' && activeFlyer) {
+                        const targetComp = (activeFlyer.companyId || activeFlyer.companyName)
+                          ? (displayedCompanies || appData?.companies || []).find((c: any) => 
+                              (activeFlyer.companyId && (String(c.id) === String(activeFlyer.companyId) || c.name === activeFlyer.companyId)) ||
+                              (activeFlyer.companyName && c.name === activeFlyer.companyName)
+                            )
+                          : null;
+                        if (activeFlyer.actionType === 'company' && targetComp) {
+                          setActiveMiniSiteCompany(targetComp);
+                        } else if (activeFlyer.link) {
+                          window.open(getWaLinkWithReferral(activeFlyer.link), '_blank');
+                        } else if (targetComp) {
+                          setActiveMiniSiteCompany(targetComp);
+                        }
                       }
                     }}
                   >
@@ -3908,28 +4007,66 @@ function AppContent() {
 
                 {/* Description and Info block */}
                 <div className="w-full md:w-1/2 flex flex-col justify-center items-center md:items-start text-center md:text-left">
-                  <span className="text-[10px] text-[var(--primary)] tracking-[0.15em] font-black uppercase bg-[var(--primary)]/10 px-4 py-1.5 rounded-full mb-5 font-mono">
-                    PROMOÇÃO Nº {activeFlyerIndex + 1} de {visibleFlyers.length}
-                  </span>
-                  <h3 className="text-2xl sm:text-3.5xl font-sans font-black text-white leading-tight">
-                    Aproveite esta oportunidade exclusiva
-                  </h3>
-                  <p className="text-sm sm:text-base text-white/90 mt-4 leading-relaxed max-w-md font-extrabold">
-                    Preço especial e atendimento preferencial garantidos para usuários do portal. Toque abaixo para abrir o canal direto com o anunciante.
-                  </p>
+                  {(() => {
+                    const activeFlyer = visibleFlyers[activeFlyerIndex];
+                    const targetComp = typeof activeFlyer === 'object' && activeFlyer && (activeFlyer.companyId || activeFlyer.companyName)
+                      ? (displayedCompanies || appData?.companies || []).find((c: any) => 
+                          (activeFlyer.companyId && (String(c.id) === String(activeFlyer.companyId) || c.name === activeFlyer.companyId)) ||
+                          (activeFlyer.companyName && c.name === activeFlyer.companyName)
+                        )
+                      : null;
+                    return (
+                      <>
+                        <div className="flex flex-wrap items-center gap-2 mb-4 justify-center md:justify-start">
+                          <span className="text-[10px] text-[var(--primary)] tracking-[0.15em] font-black uppercase bg-[var(--primary)]/10 px-4 py-1.5 rounded-full font-mono">
+                            PROMOÇÃO Nº {activeFlyerIndex + 1} de {visibleFlyers.length}
+                          </span>
+                          {targetComp && (
+                            <button
+                              type="button"
+                              onClick={() => setActiveMiniSiteCompany(targetComp)}
+                              className="text-[11px] text-amber-300 font-bold bg-amber-500/15 border border-amber-500/30 hover:bg-amber-500/25 px-3 py-1 rounded-full flex items-center gap-1.5 transition-all cursor-pointer"
+                              title="Ver mini-site desta empresa no guia"
+                            >
+                              <span>🏢 {targetComp.name}</span>
+                              <span className="text-[9px] opacity-80">➔</span>
+                            </button>
+                          )}
+                        </div>
 
-                  {/* Slider Action Button wrapper */}
-                  {typeof visibleFlyers[activeFlyerIndex] === 'object' && visibleFlyers[activeFlyerIndex]?.link && (
-                    <a 
-                      href={getWaLinkWithReferral(visibleFlyers[activeFlyerIndex].link)} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="inline-flex items-center gap-3 bg-emerald-600 hover:bg-emerald-500 hover:scale-[1.03] text-white font-extrabold text-xs uppercase tracking-wider px-8 py-4.5 rounded-2xl shadow-xl mt-8 transition-all duration-300"
-                    >
-                      <Sparkles size={16} className="text-amber-300 animate-spin" />
-                      Falar no WhatsApp Comercial
-                    </a>
-                  )}
+                        <h3 className="text-2xl sm:text-3.5xl font-sans font-black text-white leading-tight">
+                          Aproveite esta oportunidade exclusiva
+                        </h3>
+                        <p className="text-sm sm:text-base text-white/90 mt-4 leading-relaxed max-w-md font-extrabold">
+                          Preço especial e atendimento preferencial garantidos para usuários do portal. Toque abaixo para abrir o canal direto com o anunciante.
+                        </p>
+
+                        {/* Slider Action Buttons */}
+                        <div className="flex flex-wrap items-center gap-3 mt-7 justify-center md:justify-start">
+                          {typeof activeFlyer === 'object' && activeFlyer?.link && (
+                            <a 
+                              href={getWaLinkWithReferral(activeFlyer.link)} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="inline-flex items-center gap-3 bg-emerald-600 hover:bg-emerald-500 hover:scale-[1.03] text-white font-extrabold text-xs uppercase tracking-wider px-7 py-4 rounded-2xl shadow-xl transition-all duration-300 decoration-transparent"
+                            >
+                              <Sparkles size={16} className="text-amber-300 animate-spin" />
+                              Falar no WhatsApp Comercial
+                            </a>
+                          )}
+                          {targetComp && (
+                            <button
+                              type="button"
+                              onClick={() => setActiveMiniSiteCompany(targetComp)}
+                              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 hover:scale-[1.03] text-white font-extrabold text-xs uppercase tracking-wider px-6 py-4 rounded-2xl border border-white/20 shadow-xl transition-all duration-300 cursor-pointer"
+                            >
+                              <span>🏢 Ver Página da Empresa</span>
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
 
                   {/* Carousel navigation controls */}
                   <div className="flex items-center gap-4 mt-8">
@@ -4122,6 +4259,75 @@ function AppContent() {
               </div>
             )}
 
+            {/* CTA ATENDIMENTO ONLINE COM HORÁRIO COMERCIAL DESTACADO */}
+            <div id="cta-atendimento-online" className="mb-14 sm:mb-16">
+              <div className="relative overflow-hidden bg-gradient-to-r from-[#0d0d18] via-[#141424] to-[#0d0d18] border-2 border-amber-500/40 hover:border-amber-400/80 rounded-[28px] p-6 sm:p-8 md:p-10 shadow-[0_15px_45px_rgba(0,0,0,0.7)] transition-all duration-300">
+                {/* Accent top gradient line */}
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 opacity-90" />
+                
+                <div className="flex flex-col lg:flex-row items-center justify-between gap-6 md:gap-8">
+                  {/* Left Column: Info, Title and Highlighted Operating Hours */}
+                  <div className="flex-1 text-center lg:text-left">
+                    {/* Status Badges */}
+                    <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-3">
+                      <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        <MessageSquare size={13} className="text-amber-400" />
+                        ATENDIMENTO ONLINE
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-mono font-bold px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        TIRE DÚVIDAS NA HORA
+                      </span>
+                    </div>
+
+                    <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight leading-snug">
+                      Central de Atendimento Online
+                    </h3>
+                    
+                    <p className="text-xs sm:text-sm text-white/70 max-w-2xl mt-1.5 leading-relaxed">
+                      Precisa de informações rápidas ou quer saber algo na hora? Fale diretamente com nossa equipe pelo navegador durante o horário comercial.
+                    </p>
+
+                    {/* HORÁRIO COMERCIAL DESTACADO (SEG A SEX: 08:00 ÀS 20:00 | SÁB: 09:00 ÀS 14:00) */}
+                    <div className="mt-4 inline-flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3.5 bg-gradient-to-r from-amber-950/70 via-[#1e1708] to-amber-950/70 border-2 border-amber-400/70 rounded-2xl px-4 sm:px-6 py-3.5 shadow-[0_0_25px_rgba(245,158,11,0.2)]">
+                      <div className="flex items-center gap-2 text-amber-300 shrink-0">
+                        <Clock size={19} className="text-amber-400 shrink-0" />
+                        <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-300">
+                          Atendimento Horário Comercial:
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm font-mono font-bold">
+                        <span className="bg-amber-400/25 text-amber-200 px-3 py-1 rounded-lg border border-amber-400/40 shadow-sm">
+                          Seg a Sex: 08:00 às 20:00
+                        </span>
+                        <span className="text-amber-400 font-bold">•</span>
+                        <span className="bg-amber-400/25 text-amber-200 px-3 py-1 rounded-lg border border-amber-400/40 shadow-sm">
+                          Sáb: 09:00 às 14:00
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Prominent Clickable CTA Button */}
+                  <div className="shrink-0 w-full sm:w-auto flex flex-col items-center gap-2">
+                    <a 
+                      href="https://crm-pi-ebon-19.vercel.app/?empresa=minhadivulgacao&view=client"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black font-black text-sm sm:text-base uppercase tracking-wider px-8 py-5 rounded-2xl shadow-[0_10px_35px_rgba(245,158,11,0.35)] hover:scale-105 active:scale-95 transition-all duration-300 border border-amber-300/50 ring-4 ring-amber-400/20 decoration-transparent cursor-pointer"
+                    >
+                      <MessageSquare size={22} className="fill-current text-black" />
+                      <span>TIRAR DÚVIDAS NA HORA</span>
+                      <ExternalLink size={18} className="text-black/80" />
+                    </a>
+                    <span className="text-[11px] text-white/50 font-mono text-center">
+                      Atendimento online direto no seu navegador
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* NEW SECTION: LANDSCAPE BANNERS FOR CUSTOMERS AND PARTNERS (RESPONSIVE) */}
             {visibleHorizontalBanners.length > 0 && (
               <div className="mb-20 pt-12 border-t border-white/5">
@@ -4150,8 +4356,20 @@ function AppContent() {
                     className="relative w-full rounded-2xl md:rounded-3xl overflow-hidden border border-white/5 bg-[#08080d] cursor-pointer group"
                     onClick={() => {
                       const activeBanner = visibleHorizontalBanners[activeHorizontalBannerIndex];
-                      if (activeBanner?.link) {
-                        window.open(getWaLinkWithReferral(activeBanner.link), '_blank');
+                      if (activeBanner) {
+                        const targetComp = (activeBanner.companyId || activeBanner.companyName)
+                          ? (displayedCompanies || appData?.companies || []).find((c: any) => 
+                              (activeBanner.companyId && (String(c.id) === String(activeBanner.companyId) || c.name === activeBanner.companyId)) ||
+                              (activeBanner.companyName && c.name === activeBanner.companyName)
+                            )
+                          : null;
+                        if (activeBanner.actionType === 'company' && targetComp) {
+                          setActiveMiniSiteCompany(targetComp);
+                        } else if (activeBanner.link) {
+                          window.open(getWaLinkWithReferral(activeBanner.link), '_blank');
+                        } else if (targetComp) {
+                          setActiveMiniSiteCompany(targetComp);
+                        }
                       }
                     }}
                   >
@@ -4178,11 +4396,35 @@ function AppContent() {
 
                   {/* Micro dashboard under the banner image */}
                   <div className="flex flex-col sm:flex-row items-center justify-between w-full px-2 mt-4 sm:mt-5 gap-3">
-                    <div className="flex items-center gap-2.5 max-w-full sm:max-w-[65%]">
+                    <div className="flex items-center gap-2.5 max-w-full sm:max-w-[70%] flex-wrap">
                       <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
                       <p className="text-xs sm:text-sm font-sans font-bold text-white/80 truncate">
                         {visibleHorizontalBanners[activeHorizontalBannerIndex]?.title || "Banner Comercial Promocional"}
                       </p>
+                      {(() => {
+                        const activeBanner = visibleHorizontalBanners[activeHorizontalBannerIndex];
+                        const targetComp = activeBanner && (activeBanner.companyId || activeBanner.companyName)
+                          ? (displayedCompanies || appData?.companies || []).find((c: any) => 
+                              (activeBanner.companyId && (String(c.id) === String(activeBanner.companyId) || c.name === activeBanner.companyId)) ||
+                              (activeBanner.companyName && c.name === activeBanner.companyName)
+                            )
+                          : null;
+                        if (!targetComp) return null;
+                        return (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMiniSiteCompany(targetComp);
+                            }}
+                            className="shrink-0 text-[10px] sm:text-xs font-black uppercase px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition-all flex items-center gap-1 cursor-pointer ml-1"
+                            title="Ver página da empresa parceira no guia"
+                          >
+                            <span>🏢 {targetComp.name}</span>
+                            <span className="text-[9px]">➔</span>
+                          </button>
+                        );
+                      })()}
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -4708,23 +4950,78 @@ function AppContent() {
           <p className="text-sm sm:text-base text-white/70 max-w-2xl mx-auto mt-4 leading-relaxed font-semibold">
             Presença no Guia Comercial Digital, banners rotativos e canal oficial de transmissão com link direto para o seu WhatsApp.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
-            <a
-              href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Gostaria%20de%20divulgar%20minha%20empresa%20no%20Guia%20Comercial%20Minha%20Divulga%C3%A7%C3%A3o."
-              target="_blank"
-              rel="noreferrer"
-              className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all duration-300 shadow-xl hover:scale-105 cursor-pointer w-full sm:w-auto decoration-transparent"
-            >
-              🚀 Divulgue Sua Empresa (WhatsApp)
-            </a>
-            <a
-              href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Acessei%20o%20portal%20Minha%20Divulga%C3%A7%C3%A3o%20e%20gostaria%20de%20tirar%20d%C3%BAvidas."
-              target="_blank"
-              rel="noreferrer"
-              className="bg-white/10 hover:bg-white/15 text-white border border-white/20 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto decoration-transparent"
-            >
-              💬 Falar no WhatsApp
-            </a>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10 max-w-4xl mx-auto text-left">
+            {/* Opção 1: Atendimento Online (Para quem quer saber algo na hora) */}
+            <div className="bg-gradient-to-b from-[#141422] to-[#0d0d16] border-2 border-amber-500/40 hover:border-amber-400/80 rounded-2xl p-6 sm:p-7 flex flex-col justify-between shadow-xl transition-all">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                    <MessageSquare size={16} />
+                  </span>
+                  <span className="text-xs font-black uppercase tracking-wider text-amber-300">
+                    Tire Dúvidas na Hora
+                  </span>
+                </div>
+                <h3 className="text-lg sm:text-xl font-black text-white leading-snug">
+                  Atendimento Online
+                </h3>
+                <p className="text-xs text-white/70 mt-2 leading-relaxed">
+                  Quer tirar dúvidas rápidas ou saber algo na hora? Acesse nosso atendimento direto pelo navegador.
+                </p>
+                
+                {/* Horário Comercial Destacado */}
+                <div className="mt-4 bg-amber-950/50 border border-amber-400/40 px-3.5 py-2.5 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-amber-300 flex items-center gap-2">
+                  <Clock size={15} className="text-amber-400 shrink-0" />
+                  <span>Horário Comercial: Seg a Sex 08:00 às 20:00 • Sáb 09:00 às 14:00</span>
+                </div>
+              </div>
+
+              <a
+                href="https://crm-pi-ebon-19.vercel.app/?empresa=minhadivulgacao&view=client"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-5 py-3.5 rounded-xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 shadow-lg hover:scale-105 cursor-pointer w-full decoration-transparent flex items-center justify-center gap-2"
+              >
+                <MessageSquare size={16} className="fill-current text-black" />
+                <span>Acessar Atendimento Online</span>
+                <ExternalLink size={14} />
+              </a>
+            </div>
+
+            {/* Opção 2: Divulgação e Parcerias (WhatsApp Comercial) */}
+            <div className="bg-gradient-to-b from-[#111a14] to-[#0c120e] border-2 border-emerald-500/40 hover:border-emerald-400/80 rounded-2xl p-6 sm:p-7 flex flex-col justify-between shadow-xl transition-all">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                    <span className="text-sm">🚀</span>
+                  </span>
+                  <span className="text-xs font-black uppercase tracking-wider text-emerald-300">
+                    Divulgação & Anúncios
+                  </span>
+                </div>
+                <h3 className="text-lg sm:text-xl font-black text-white leading-snug">
+                  Divulgue Sua Empresa
+                </h3>
+                <p className="text-xs text-white/70 mt-2 leading-relaxed">
+                  Fale com nossa equipe comercial para cadastrar seu negócio no Guia Comercial, banners rotativos e transmissões oficiais.
+                </p>
+
+                <div className="mt-4 bg-emerald-950/50 border border-emerald-400/40 px-3.5 py-2.5 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-emerald-300 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <span>Canal Oficial de Atendimento e Divulgação</span>
+                </div>
+              </div>
+
+              <a
+                href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Gostaria%20de%20divulgar%20minha%20empresa%20no%20Guia%20Comercial%20Minha%20Divulga%C3%A7%C3%A3o."
+                target="_blank"
+                rel="noreferrer"
+                className="mt-6 bg-gradient-to-r from-emerald-500 to-green-600 hover:brightness-110 text-white px-5 py-3.5 rounded-xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 shadow-lg hover:scale-105 cursor-pointer w-full decoration-transparent flex items-center justify-center gap-2"
+              >
+                <span>💬 Falar no WhatsApp Comercial</span>
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -4759,7 +5056,22 @@ function AppContent() {
 
             {/* Contact column */}
             <div className="md:col-span-3 flex flex-col gap-3 text-xs text-white/70">
-              <h4 className="text-sm font-extrabold text-white uppercase tracking-wider mb-2">Comercial</h4>
+              <h4 className="text-sm font-extrabold text-white uppercase tracking-wider mb-2">Atendimento & Comercial</h4>
+              <a 
+                href="https://crm-pi-ebon-19.vercel.app/?empresa=minhadivulgacao&view=client" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="inline-flex items-center gap-2 text-amber-300 hover:text-amber-200 font-bold bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 px-3 py-2 rounded-xl transition-all w-fit decoration-transparent"
+              >
+                <MessageSquare size={13} className="text-amber-400" />
+                <span>Atendimento Online</span>
+              </a>
+              <div className="text-[11px] font-mono text-amber-300/90 leading-tight">
+                <strong>Horário Comercial:</strong><br />
+                Seg a Sex: 08:00 às 20:00<br />
+                Sáb: 09:00 às 14:00
+              </div>
+              <p className="font-semibold mt-2 text-white/90">WhatsApp Comercial:</p>
               <p className="font-semibold">85 99286-2177</p>
               <p className="font-semibold">85 99290-8713</p>
               <p className="leading-relaxed leading-5 mt-1">{appData.siteInfo.address || 'Fortaleza - Ceará - Brasil'}</p>
@@ -5390,7 +5702,158 @@ function AppContent() {
                               <div style={{ fontSize: '11px', color: '#888' }}>{c.category}</div>
                             </div>
                           </div>
-                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                            {/* Controle de Posição Manual da Empresa */}
+                            <div 
+                              style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '4px', 
+                                background: '#181824', 
+                                padding: '3px 8px', 
+                                borderRadius: '8px', 
+                                border: '1px solid #333' 
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <span 
+                                style={{ 
+                                  background: 'rgba(245, 158, 11, 0.2)', 
+                                  color: '#fbbf24', 
+                                  border: '1px solid rgba(245, 158, 11, 0.4)', 
+                                  padding: '2px 6px', 
+                                  borderRadius: '5px', 
+                                  fontSize: '0.65rem', 
+                                  fontWeight: 800,
+                                  whiteSpace: 'nowrap'
+                                }}
+                                title={`Posição atual no guia: #${idx + 1} de ${appData.companies.length}`}
+                              >
+                                #{idx + 1}º
+                              </span>
+
+                              <select
+                                value={idx + 1}
+                                onChange={(e) => {
+                                  const newPos = parseInt(e.target.value, 10);
+                                  if (!isNaN(newPos)) {
+                                    const targetIdx = newPos - 1;
+                                    const reordered = moveItemInArray(appData.companies, idx, targetIdx);
+                                    const updated = reordered.map((comp: any, i: number) => ({ ...(comp as any), manualOrder: i + 1, orderIndex: i + 1 }));
+                                    updateData('companies', updated);
+                                  }
+                                }}
+                                style={{
+                                  background: '#12121c',
+                                  color: '#fff',
+                                  border: '1px solid #444',
+                                  borderRadius: '5px',
+                                  padding: '3px 5px',
+                                  fontSize: '0.65rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer'
+                                }}
+                                title="Mudar posição desta empresa (Ex: a última vira 1ª, a 2ª vira 4ª)"
+                              >
+                                {appData.companies.map((_, pIdx) => (
+                                  <option key={pIdx} value={pIdx + 1}>
+                                    {pIdx === 0 ? `1º (Topo)` : pIdx === appData.companies.length - 1 ? `${pIdx + 1}º (Fim)` : `${pIdx + 1}º Lugar`}
+                                  </option>
+                                ))}
+                              </select>
+
+                              <div style={{ display: 'flex', gap: '2px' }}>
+                                <button
+                                  type="button"
+                                  disabled={idx === 0}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const reordered = moveItemInArray(appData.companies, idx, 0);
+                                    const updated = reordered.map((comp: any, i: number) => ({ ...(comp as any), manualOrder: i + 1, orderIndex: i + 1 }));
+                                    updateData('companies', updated);
+                                  }}
+                                  style={{
+                                    padding: '2px 5px',
+                                    background: idx === 0 ? '#1f1f2a' : '#2a2a3d',
+                                    border: '1px solid #444',
+                                    color: idx === 0 ? '#555' : '#fbbf24',
+                                    borderRadius: '4px',
+                                    fontSize: '0.65rem',
+                                    cursor: idx === 0 ? 'not-allowed' : 'pointer'
+                                  }}
+                                  title="Mover direto para o Topo (1º Lugar)"
+                                >
+                                  ⏫
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={idx === 0}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const reordered = moveItemInArray(appData.companies, idx, idx - 1);
+                                    const updated = reordered.map((comp: any, i: number) => ({ ...(comp as any), manualOrder: i + 1, orderIndex: i + 1 }));
+                                    updateData('companies', updated);
+                                  }}
+                                  style={{
+                                    padding: '2px 5px',
+                                    background: idx === 0 ? '#1f1f2a' : '#2a2a3d',
+                                    border: '1px solid #444',
+                                    color: idx === 0 ? '#555' : '#fff',
+                                    borderRadius: '4px',
+                                    fontSize: '0.65rem',
+                                    cursor: idx === 0 ? 'not-allowed' : 'pointer'
+                                  }}
+                                  title="Subir 1 posição"
+                                >
+                                  ▲
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={idx === appData.companies.length - 1}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const reordered = moveItemInArray(appData.companies, idx, idx + 1);
+                                    const updated = reordered.map((comp: any, i: number) => ({ ...(comp as any), manualOrder: i + 1, orderIndex: i + 1 }));
+                                    updateData('companies', updated);
+                                  }}
+                                  style={{
+                                    padding: '2px 5px',
+                                    background: idx === appData.companies.length - 1 ? '#1f1f2a' : '#2a2a3d',
+                                    border: '1px solid #444',
+                                    color: idx === appData.companies.length - 1 ? '#555' : '#fff',
+                                    borderRadius: '4px',
+                                    fontSize: '0.65rem',
+                                    cursor: idx === appData.companies.length - 1 ? 'not-allowed' : 'pointer'
+                                  }}
+                                  title="Descer 1 posição"
+                                >
+                                  ▼
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={idx === appData.companies.length - 1}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const reordered = moveItemInArray(appData.companies, idx, appData.companies.length - 1);
+                                    const updated = reordered.map((comp: any, i: number) => ({ ...(comp as any), manualOrder: i + 1, orderIndex: i + 1 }));
+                                    updateData('companies', updated);
+                                  }}
+                                  style={{
+                                    padding: '2px 5px',
+                                    background: idx === appData.companies.length - 1 ? '#1f1f2a' : '#2a2a3d',
+                                    border: '1px solid #444',
+                                    color: idx === appData.companies.length - 1 ? '#555' : '#fbbf24',
+                                    borderRadius: '4px',
+                                    fontSize: '0.65rem',
+                                    cursor: idx === appData.companies.length - 1 ? 'not-allowed' : 'pointer'
+                                  }}
+                                  title="Mover direto para o Fim (Último Lugar)"
+                                >
+                                  ⏬
+                                </button>
+                              </div>
+                            </div>
+
                             <button 
                               className="dev-btn" 
                               style={{ 
@@ -6189,27 +6652,238 @@ function AppContent() {
                       const flyerObj = typeof f === 'string' ? { image: f, link: '', active: true } : f;
                       return (
                         <div key={idx} className="dev-item-card" style={{ opacity: flyerObj.active !== false ? 1 : 0.6 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                             <button 
-                              className="dev-btn" 
-                              style={{ 
-                                padding: '4px 8px', 
-                                background: flyerObj.active !== false ? '#25D366' : '#333', 
-                                border: '1px solid #444', 
-                                fontSize: '0.6rem', 
-                                fontWeight: 800,
-                                borderRadius: '5px',
-                                height: 'auto'
-                              }}
-                              onClick={() => {
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                               <button 
+                                className="dev-btn" 
+                                style={{ 
+                                  padding: '4px 8px', 
+                                  background: flyerObj.active !== false ? '#25D366' : '#333', 
+                                  border: '1px solid #444', 
+                                  fontSize: '0.6rem', 
+                                  fontWeight: 800,
+                                  borderRadius: '5px',
+                                  height: 'auto'
+                                }}
+                                onClick={() => {
+                                  const newList = [...appData.flyers];
+                                  newList[idx] = { ...flyerObj, active: flyerObj.active === false ? true : false };
+                                  updateData('flyers', newList);
+                                }}
+                              >
+                                {flyerObj.active !== false ? '👁️ ATIVO' : '🙈 OCULTO'}
+                              </button>
+                            </div>
+
+                            {/* Controles de Posição Manual do Flyer */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#181824', padding: '3px 8px', borderRadius: '8px', border: '1px solid #333' }}>
+                              <span 
+                                style={{ 
+                                  background: 'rgba(245, 158, 11, 0.2)', 
+                                  color: '#fbbf24', 
+                                  border: '1px solid rgba(245, 158, 11, 0.4)', 
+                                  padding: '2px 6px', 
+                                  borderRadius: '5px', 
+                                  fontSize: '0.65rem', 
+                                  fontWeight: 800,
+                                  whiteSpace: 'nowrap'
+                                }}
+                                title={`Posição atual do flyer: #${idx + 1} de ${appData.flyers.length}`}
+                              >
+                                #{idx + 1}º
+                              </span>
+
+                              <select
+                                value={idx + 1}
+                                onChange={(e) => {
+                                  const newPos = parseInt(e.target.value, 10);
+                                  if (!isNaN(newPos)) {
+                                    const targetIdx = newPos - 1;
+                                    const reordered = moveItemInArray(appData.flyers, idx, targetIdx);
+                                    updateData('flyers', reordered);
+                                  }
+                                }}
+                                style={{
+                                  background: '#12121c',
+                                  color: '#fff',
+                                  border: '1px solid #444',
+                                  borderRadius: '5px',
+                                  padding: '3px 5px',
+                                  fontSize: '0.65rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer'
+                                }}
+                                title="Mudar posição deste flyer (Ex: a última vira 1ª, a 2ª vira 4ª)"
+                              >
+                                {appData.flyers.map((_, pIdx) => (
+                                  <option key={pIdx} value={pIdx + 1}>
+                                    {pIdx === 0 ? `1º (Topo)` : pIdx === appData.flyers.length - 1 ? `${pIdx + 1}º (Fim)` : `${pIdx + 1}º`}
+                                  </option>
+                                ))}
+                              </select>
+
+                              <div style={{ display: 'flex', gap: '2px' }}>
+                                <button
+                                  type="button"
+                                  disabled={idx === 0}
+                                  onClick={() => {
+                                    const reordered = moveItemInArray(appData.flyers, idx, 0);
+                                    updateData('flyers', reordered);
+                                  }}
+                                  style={{
+                                    padding: '2px 5px',
+                                    background: idx === 0 ? '#1f1f2a' : '#2a2a3d',
+                                    border: '1px solid #444',
+                                    color: idx === 0 ? '#555' : '#fbbf24',
+                                    borderRadius: '4px',
+                                    fontSize: '0.65rem',
+                                    cursor: idx === 0 ? 'not-allowed' : 'pointer'
+                                  }}
+                                  title="Mover direto para o Topo (1º)"
+                                >
+                                  ⏫
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={idx === 0}
+                                  onClick={() => {
+                                    const reordered = moveItemInArray(appData.flyers, idx, idx - 1);
+                                    updateData('flyers', reordered);
+                                  }}
+                                  style={{
+                                    padding: '2px 5px',
+                                    background: idx === 0 ? '#1f1f2a' : '#2a2a3d',
+                                    border: '1px solid #444',
+                                    color: idx === 0 ? '#555' : '#fff',
+                                    borderRadius: '4px',
+                                    fontSize: '0.65rem',
+                                    cursor: idx === 0 ? 'not-allowed' : 'pointer'
+                                  }}
+                                  title="Subir 1 posição"
+                                >
+                                  ▲
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={idx === appData.flyers.length - 1}
+                                  onClick={() => {
+                                    const reordered = moveItemInArray(appData.flyers, idx, idx + 1);
+                                    updateData('flyers', reordered);
+                                  }}
+                                  style={{
+                                    padding: '2px 5px',
+                                    background: idx === appData.flyers.length - 1 ? '#1f1f2a' : '#2a2a3d',
+                                    border: '1px solid #444',
+                                    color: idx === appData.flyers.length - 1 ? '#555' : '#fff',
+                                    borderRadius: '4px',
+                                    fontSize: '0.65rem',
+                                    cursor: idx === appData.flyers.length - 1 ? 'not-allowed' : 'pointer'
+                                  }}
+                                  title="Descer 1 posição"
+                                >
+                                  ▼
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={idx === appData.flyers.length - 1}
+                                  onClick={() => {
+                                    const reordered = moveItemInArray(appData.flyers, idx, appData.flyers.length - 1);
+                                    updateData('flyers', reordered);
+                                  }}
+                                  style={{
+                                    padding: '2px 5px',
+                                    background: idx === appData.flyers.length - 1 ? '#1f1f2a' : '#2a2a3d',
+                                    border: '1px solid #444',
+                                    color: idx === appData.flyers.length - 1 ? '#555' : '#fbbf24',
+                                    borderRadius: '4px',
+                                    fontSize: '0.65rem',
+                                    cursor: idx === appData.flyers.length - 1 ? 'not-allowed' : 'pointer'
+                                  }}
+                                  title="Mover direto para o Fim (Último)"
+                                >
+                                  ⏬
+                                </button>
+                              </div>
+
+                              <button 
+                                type="button" 
+                                className="dev-remove-btn" 
+                                style={{ position: 'static', marginLeft: '4px' }} 
+                                onClick={() => updateData('flyers', appData.flyers.filter((_, i) => i !== idx))}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Direcionar Flyer para Empresa Cadastrada */}
+                          <div className="dev-form-group" style={{ marginBottom: '14px', background: '#12121d', padding: '10px 12px', borderRadius: '10px', border: '1px solid #29293d' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#fbbf24', fontWeight: 800, fontSize: '0.78rem' }}>
+                              <span>🎯 Direcionar Flyer para Empresa Cadastrada</span>
+                              <span style={{ fontSize: '0.65rem', background: 'rgba(245, 158, 11, 0.2)', border: '1px solid rgba(245, 158, 11, 0.4)', padding: '2px 6px', borderRadius: '4px', color: '#fbbf24' }}>NOVO</span>
+                            </label>
+                            <select
+                              className="dev-input"
+                              style={{ marginTop: '5px' }}
+                              value={flyerObj.companyId || ''}
+                              onChange={(e) => {
+                                const selectedId = e.target.value;
+                                const targetComp = (appData.companies || []).find((c: any) => String(c.id || c.name) === selectedId);
                                 const newList = [...appData.flyers];
-                                newList[idx] = { ...flyerObj, active: flyerObj.active === false ? true : false };
+                                if (targetComp) {
+                                  const compWa = (targetComp.wa || targetComp.whatsapp || targetComp.phone || '').replace(/\D/g, '');
+                                  const waUrl = compWa ? (compWa.length <= 11 ? `https://wa.me/55${compWa}` : `https://wa.me/${compWa}`) : '';
+                                  newList[idx] = {
+                                    ...flyerObj,
+                                    companyId: targetComp.id || targetComp.name,
+                                    companyName: targetComp.name,
+                                    link: flyerObj.link || waUrl,
+                                    actionType: 'company'
+                                  };
+                                } else {
+                                  newList[idx] = {
+                                    ...flyerObj,
+                                    companyId: '',
+                                    companyName: '',
+                                    actionType: 'link'
+                                  };
+                                }
                                 updateData('flyers', newList);
                               }}
                             >
-                              {flyerObj.active !== false ? '👁️ ATIVO' : '🙈 OCULTO'}
-                            </button>
-                            <button className="dev-remove-btn" style={{ position: 'static' }} onClick={() => updateData('flyers', appData.flyers.filter((_, i) => i !== idx))}>✕</button>
+                              <option value="">-- Nenhum (Link Manual / WhatsApp Avulso) --</option>
+                              {(appData.companies || []).map((c: any, cIdx: number) => (
+                                <option key={cIdx} value={c.id || c.name}>
+                                  🏢 {c.name} ({c.category || 'Geral'})
+                                </option>
+                              ))}
+                            </select>
+                            {flyerObj.companyId && (
+                              <div style={{ marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 700 }}>
+                                  ✓ Flyer direcionado para: <strong>{flyerObj.companyName || flyerObj.companyId}</strong>
+                                </span>
+                                <button
+                                  type="button"
+                                  className="dev-btn"
+                                  style={{ padding: '3px 8px', fontSize: '0.65rem', background: '#1c1c28', border: '1px solid #555', borderRadius: '5px' }}
+                                  onClick={() => {
+                                    const targetComp = (appData.companies || []).find((c: any) => String(c.id || c.name) === String(flyerObj.companyId));
+                                    if (targetComp) {
+                                      const compWa = (targetComp.wa || targetComp.whatsapp || targetComp.phone || '').replace(/\D/g, '');
+                                      if (compWa) {
+                                        const waUrl = compWa.length <= 11 ? `https://wa.me/55${compWa}` : `https://wa.me/${compWa}`;
+                                        const newList = [...appData.flyers];
+                                        newList[idx] = { ...flyerObj, link: waUrl };
+                                        updateData('flyers', newList);
+                                      }
+                                    }
+                                  }}
+                                >
+                                  ⚡ Puxar WhatsApp da Empresa
+                                </button>
+                              </div>
+                            )}
                           </div>
                           <div className="dev-grid-2">
                             <div className="dev-form-group">
@@ -6297,32 +6971,255 @@ function AppContent() {
                       Gerencie os banners horizontais (aspecto largo de outdoor, como os do Canva/Salão Stephanny Jessie) exibidos abaixo das Promoções da Semana.
                     </p>
 
-                    {((appData as any).horizontalBanners || []).map((fb: any, idx: number) => {
+                    {(((appData as any).horizontalBanners && (appData as any).horizontalBanners.length > 0) ? (appData as any).horizontalBanners : HORIZONTAL_BANNERS).map((fb: any, idx: number, arr: any[]) => {
                       const bannerObj = typeof fb === 'string' ? { image: fb, link: '', title: 'Banner sem título', active: true } : fb;
                       return (
                         <div key={idx} className="dev-item-card" style={{ opacity: bannerObj.active !== false ? 1 : 0.6 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                             <button 
-                              type="button"
-                              className="dev-btn" 
-                              style={{ 
-                                padding: '4px 8px', 
-                                background: bannerObj.active !== false ? '#25D366' : '#333', 
-                                border: '1px solid #444', 
-                                fontSize: '0.6rem', 
-                                fontWeight: 800,
-                                borderRadius: '5px',
-                                height: 'auto'
-                              }}
-                              onClick={() => {
-                                const newList = [...((appData as any).horizontalBanners || [])];
-                                newList[idx] = { ...bannerObj, active: bannerObj.active === false ? true : false };
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                               <button 
+                                type="button" 
+                                className="dev-btn" 
+                                style={{ 
+                                  padding: '4px 8px', 
+                                  background: bannerObj.active !== false ? '#25D366' : '#333', 
+                                  border: '1px solid #444', 
+                                  fontSize: '0.6rem', 
+                                  fontWeight: 800,
+                                  borderRadius: '5px',
+                                  height: 'auto'
+                                }}
+                                onClick={() => {
+                                  const baseList = ((appData as any).horizontalBanners && (appData as any).horizontalBanners.length > 0) ? (appData as any).horizontalBanners : HORIZONTAL_BANNERS;
+                                  const newList = [...baseList];
+                                  newList[idx] = { ...bannerObj, active: bannerObj.active === false ? true : false };
+                                  updateData('horizontalBanners', newList);
+                                }}
+                              >
+                                {bannerObj.active !== false ? '👁️ ATIVO' : '🙈 OCULTO'}
+                              </button>
+                            </div>
+
+                            {/* Controles de Posição Manual do Banner Horizontal */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#181824', padding: '3px 8px', borderRadius: '8px', border: '1px solid #333' }}>
+                              <span 
+                                style={{ 
+                                  background: 'rgba(245, 158, 11, 0.2)', 
+                                  color: '#fbbf24', 
+                                  border: '1px solid rgba(245, 158, 11, 0.4)', 
+                                  padding: '2px 6px', 
+                                  borderRadius: '5px', 
+                                  fontSize: '0.65rem', 
+                                  fontWeight: 800,
+                                  whiteSpace: 'nowrap'
+                                }}
+                                title={`Posição atual do banner: #${idx + 1} de ${arr.length}`}
+                              >
+                                #{idx + 1}º
+                              </span>
+
+                              <select
+                                value={idx + 1}
+                                onChange={(e) => {
+                                  const newPos = parseInt(e.target.value, 10);
+                                  if (!isNaN(newPos)) {
+                                    const baseList = ((appData as any).horizontalBanners && (appData as any).horizontalBanners.length > 0) ? (appData as any).horizontalBanners : HORIZONTAL_BANNERS;
+                                    const targetIdx = newPos - 1;
+                                    const reordered = moveItemInArray(baseList, idx, targetIdx);
+                                    updateData('horizontalBanners', reordered);
+                                  }
+                                }}
+                                style={{
+                                  background: '#12121c',
+                                  color: '#fff',
+                                  border: '1px solid #444',
+                                  borderRadius: '5px',
+                                  padding: '3px 5px',
+                                  fontSize: '0.65rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer'
+                                }}
+                                title="Mudar posição deste banner (Ex: o último vira 1º, o 2º vira 4º)"
+                              >
+                                {arr.map((_, pIdx) => (
+                                  <option key={pIdx} value={pIdx + 1}>
+                                    {pIdx === 0 ? `1º (Topo)` : pIdx === arr.length - 1 ? `${pIdx + 1}º (Fim)` : `${pIdx + 1}º`}
+                                  </option>
+                                ))}
+                              </select>
+
+                              <div style={{ display: 'flex', gap: '2px' }}>
+                                <button
+                                  type="button"
+                                  disabled={idx === 0}
+                                  onClick={() => {
+                                    const baseList = ((appData as any).horizontalBanners && (appData as any).horizontalBanners.length > 0) ? (appData as any).horizontalBanners : HORIZONTAL_BANNERS;
+                                    const reordered = moveItemInArray(baseList, idx, 0);
+                                    updateData('horizontalBanners', reordered);
+                                  }}
+                                  style={{
+                                    padding: '2px 5px',
+                                    background: idx === 0 ? '#1f1f2a' : '#2a2a3d',
+                                    border: '1px solid #444',
+                                    color: idx === 0 ? '#555' : '#fbbf24',
+                                    borderRadius: '4px',
+                                    fontSize: '0.65rem',
+                                    cursor: idx === 0 ? 'not-allowed' : 'pointer'
+                                  }}
+                                  title="Mover direto para o Topo (1º)"
+                                >
+                                  ⏫
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={idx === 0}
+                                  onClick={() => {
+                                    const baseList = ((appData as any).horizontalBanners && (appData as any).horizontalBanners.length > 0) ? (appData as any).horizontalBanners : HORIZONTAL_BANNERS;
+                                    const reordered = moveItemInArray(baseList, idx, idx - 1);
+                                    updateData('horizontalBanners', reordered);
+                                  }}
+                                  style={{
+                                    padding: '2px 5px',
+                                    background: idx === 0 ? '#1f1f2a' : '#2a2a3d',
+                                    border: '1px solid #444',
+                                    color: idx === 0 ? '#555' : '#fff',
+                                    borderRadius: '4px',
+                                    fontSize: '0.65rem',
+                                    cursor: idx === 0 ? 'not-allowed' : 'pointer'
+                                  }}
+                                  title="Subir 1 posição"
+                                >
+                                  ▲
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={idx === arr.length - 1}
+                                  onClick={() => {
+                                    const baseList = ((appData as any).horizontalBanners && (appData as any).horizontalBanners.length > 0) ? (appData as any).horizontalBanners : HORIZONTAL_BANNERS;
+                                    const reordered = moveItemInArray(baseList, idx, idx + 1);
+                                    updateData('horizontalBanners', reordered);
+                                  }}
+                                  style={{
+                                    padding: '2px 5px',
+                                    background: idx === arr.length - 1 ? '#1f1f2a' : '#2a2a3d',
+                                    border: '1px solid #444',
+                                    color: idx === arr.length - 1 ? '#555' : '#fff',
+                                    borderRadius: '4px',
+                                    fontSize: '0.65rem',
+                                    cursor: idx === arr.length - 1 ? 'not-allowed' : 'pointer'
+                                  }}
+                                  title="Descer 1 posição"
+                                >
+                                  ▼
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={idx === arr.length - 1}
+                                  onClick={() => {
+                                    const baseList = ((appData as any).horizontalBanners && (appData as any).horizontalBanners.length > 0) ? (appData as any).horizontalBanners : HORIZONTAL_BANNERS;
+                                    const reordered = moveItemInArray(baseList, idx, arr.length - 1);
+                                    updateData('horizontalBanners', reordered);
+                                  }}
+                                  style={{
+                                    padding: '2px 5px',
+                                    background: idx === arr.length - 1 ? '#1f1f2a' : '#2a2a3d',
+                                    border: '1px solid #444',
+                                    color: idx === arr.length - 1 ? '#555' : '#fbbf24',
+                                    borderRadius: '4px',
+                                    fontSize: '0.65rem',
+                                    cursor: idx === arr.length - 1 ? 'not-allowed' : 'pointer'
+                                  }}
+                                  title="Mover direto para o Fim (Último)"
+                                >
+                                  ⏬
+                                </button>
+                              </div>
+
+                              <button 
+                                type="button" 
+                                className="dev-remove-btn" 
+                                style={{ position: 'static', marginLeft: '4px' }} 
+                                onClick={() => {
+                                  const baseList = ((appData as any).horizontalBanners && (appData as any).horizontalBanners.length > 0) ? (appData as any).horizontalBanners : HORIZONTAL_BANNERS;
+                                  updateData('horizontalBanners', baseList.filter((_: any, i: number) => i !== idx));
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Direcionar Banner Horizontal para Empresa Cadastrada */}
+                          <div className="dev-form-group" style={{ marginBottom: '14px', background: '#12121d', padding: '10px 12px', borderRadius: '10px', border: '1px solid #29293d' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#fbbf24', fontWeight: 800, fontSize: '0.78rem' }}>
+                              <span>🎯 Direcionar Banner para Empresa Cadastrada</span>
+                              <span style={{ fontSize: '0.65rem', background: 'rgba(245, 158, 11, 0.2)', border: '1px solid rgba(245, 158, 11, 0.4)', padding: '2px 6px', borderRadius: '4px', color: '#fbbf24' }}>NOVO</span>
+                            </label>
+                            <select
+                              className="dev-input"
+                              style={{ marginTop: '5px' }}
+                              value={bannerObj.companyId || ''}
+                              onChange={(e) => {
+                                const selectedId = e.target.value;
+                                const targetComp = (appData.companies || []).find((c: any) => String(c.id || c.name) === selectedId);
+                                const baseList = ((appData as any).horizontalBanners && (appData as any).horizontalBanners.length > 0) ? (appData as any).horizontalBanners : HORIZONTAL_BANNERS;
+                                const newList = [...baseList];
+                                if (targetComp) {
+                                  const compWa = (targetComp.wa || targetComp.whatsapp || targetComp.phone || '').replace(/\D/g, '');
+                                  const waUrl = compWa ? (compWa.length <= 11 ? `https://wa.me/55${compWa}` : `https://wa.me/${compWa}`) : '';
+                                  newList[idx] = {
+                                    ...bannerObj,
+                                    companyId: targetComp.id || targetComp.name,
+                                    companyName: targetComp.name,
+                                    title: bannerObj.title && bannerObj.title !== 'Banner sem título' ? bannerObj.title : `${targetComp.name} - Destaque no Guia`,
+                                    link: bannerObj.link || waUrl,
+                                    actionType: 'company'
+                                  };
+                                } else {
+                                  newList[idx] = {
+                                    ...bannerObj,
+                                    companyId: '',
+                                    companyName: '',
+                                    actionType: 'link'
+                                  };
+                                }
                                 updateData('horizontalBanners', newList);
                               }}
                             >
-                              {bannerObj.active !== false ? '👁️ ATIVO' : '🙈 OCULTO'}
-                            </button>
-                            <button type="button" className="dev-remove-btn" style={{ position: 'static' }} onClick={() => updateData('horizontalBanners', ((appData as any).horizontalBanners || []).filter((_: any, i: number) => i !== idx))}>✕</button>
+                              <option value="">-- Nenhum (Link Manual / WhatsApp Avulso) --</option>
+                              {(appData.companies || []).map((c: any, cIdx: number) => (
+                                <option key={cIdx} value={c.id || c.name}>
+                                  🏢 {c.name} ({c.category || 'Geral'})
+                                </option>
+                              ))}
+                            </select>
+                            {bannerObj.companyId && (
+                              <div style={{ marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 700 }}>
+                                  ✓ Banner direcionado para: <strong>{bannerObj.companyName || bannerObj.companyId}</strong>
+                                </span>
+                                <button
+                                  type="button"
+                                  className="dev-btn"
+                                  style={{ padding: '3px 8px', fontSize: '0.65rem', background: '#1c1c28', border: '1px solid #555', borderRadius: '5px' }}
+                                  onClick={() => {
+                                    const targetComp = (appData.companies || []).find((c: any) => String(c.id || c.name) === String(bannerObj.companyId));
+                                    if (targetComp) {
+                                      const compWa = (targetComp.wa || targetComp.whatsapp || targetComp.phone || '').replace(/\D/g, '');
+                                      if (compWa) {
+                                        const waUrl = compWa.length <= 11 ? `https://wa.me/55${compWa}` : `https://wa.me/${compWa}`;
+                                        const baseList = ((appData as any).horizontalBanners && (appData as any).horizontalBanners.length > 0) ? (appData as any).horizontalBanners : HORIZONTAL_BANNERS;
+                                        const newList = [...baseList];
+                                        newList[idx] = { ...bannerObj, link: waUrl };
+                                        updateData('horizontalBanners', newList);
+                                      }
+                                    }
+                                  }}
+                                >
+                                  ⚡ Puxar WhatsApp da Empresa
+                                </button>
+                              </div>
+                            )}
                           </div>
                           
                           <div className="dev-form-group" style={{ marginBottom: '15px' }}>
