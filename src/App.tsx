@@ -60,8 +60,15 @@ import {
   Globe,
   Instagram,
   RefreshCw,
-  Wifi
+  Wifi,
+  ArrowRight
 } from 'lucide-react';
+
+import { 
+  SegmentsShowcase, 
+  ComoFuncionaSection, 
+  PlanosSection 
+} from './components/DivulgacaoCommercialSections';
 
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -1558,6 +1565,15 @@ function AppContent() {
     const separator = baseUrl.includes('?') ? '&' : '?';
     return `${baseUrl}${separator}text=${encodeURIComponent(referralText)}`;
   };
+
+  const primaryDivulgarWaLink = useMemo(() => {
+    const baseWa = appData?.pricing?.waLink || 'https://wa.me/5585992862177';
+    const text = 'Olá! Gostaria de divulgar minha empresa no Minha Divulgação.';
+    const linkWithText = baseWa.includes('text=')
+      ? baseWa
+      : `${baseWa}${baseWa.includes('?') ? '&' : '?'}text=${encodeURIComponent(text)}`;
+    return getWaLinkWithReferral(linkWithText);
+  }, [appData?.pricing?.waLink, tenantId]);
 
   const handleLogin = async () => {
     setIsLoading(true);
@@ -3830,8 +3846,9 @@ function AppContent() {
           {/* Clean Menu - Desktop */}
           <div className="hidden lg:flex items-center gap-6 text-xs font-bold uppercase tracking-wider text-white/70">
             <a href="#inicio" onClick={(e) => { e.preventDefault(); scrollToSection('inicio'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Início</a>
+            <a href="#como-funciona" onClick={(e) => { e.preventDefault(); scrollToSection('como-funciona'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Como Funciona</a>
+            <a href="#planos" onClick={(e) => { e.preventDefault(); scrollToSection('planos'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Planos</a>
             <a href="#filtro-empresas" onClick={(e) => { e.preventDefault(); scrollToSection('filtro-empresas'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Buscar Empresas</a>
-            <a href="#categorias" onClick={(e) => { e.preventDefault(); scrollToSection('categorias'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Categorias</a>
             <a href="#tv-destaque" onClick={(e) => { e.preventDefault(); scrollToSection('tv-destaque'); }} className="hover:text-[var(--primary)] transition-colors duration-200">TV & Rádio</a>
           </div>
 
@@ -3848,21 +3865,13 @@ function AppContent() {
               <span>Atendimento Online</span>
             </a>
             <a 
-              href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Gostaria%20de%20divulgar%20minha%20empresa%20no%20Guia%20Comercial%20Minha%20Divulga%C3%A7%C3%A3o."
+              href={primaryDivulgarWaLink}
               target="_blank"
               rel="noreferrer"
-              className="bg-[var(--primary)] hover:brightness-110 text-black px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-300 shadow shadow-[var(--primary)]/20 cursor-pointer flex items-center gap-1.5 decoration-transparent"
+              className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-300 shadow shadow-amber-500/20 cursor-pointer flex items-center gap-1.5 decoration-transparent hover:scale-105"
             >
-              🚀 Divulgue no WhatsApp
+              🚀 Quero Divulgar Minha Empresa
             </a>
-            {!hideAdvertiserAuth && (
-              <button 
-                onClick={() => { setAuthMode('login'); setIsAdPortalOpen(true); }}
-                className="bg-neutral-950 hover:bg-neutral-900 border border-white/20 text-white/90 hover:text-white px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 flex items-center gap-1.5 cursor-pointer"
-              >
-                <User size={13} /> Entrar (Login)
-              </button>
-            )}
           </div>
 
           {/* Mobile Menu Trigger & Quick Actions */}
@@ -3878,21 +3887,13 @@ function AppContent() {
               <span>Dúvidas</span>
             </a>
             <a 
-              href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Gostaria%20de%20divulgar%20minha%20empresa%20no%20Guia%20Comercial%20Minha%20Divulga%C3%A7%C3%A3o."
+              href={primaryDivulgarWaLink}
               target="_blank"
               rel="noreferrer"
-              className="bg-[var(--primary)] text-black px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-wide cursor-pointer shrink-0 decoration-transparent"
+              className="bg-gradient-to-r from-amber-400 to-amber-500 text-black px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-wide cursor-pointer shrink-0 decoration-transparent"
             >
               🚀 Divulgar
             </a>
-            {!hideAdvertiserAuth && (
-              <button 
-                onClick={() => { setAuthMode('login'); setIsAdPortalOpen(true); }}
-                className="bg-neutral-900 border border-white/10 text-white px-2.5 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wide cursor-pointer flex items-center gap-1 shrink-0"
-              >
-                <User size={11} /> Entrar
-              </button>
-            )}
             <button 
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -3914,9 +3915,10 @@ function AppContent() {
             >
               <div className="flex flex-col gap-4 text-sm font-bold uppercase tracking-wider">
                 <a href="#inicio" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('inicio'); }} className="text-white hover:text-[var(--primary)] py-2">🏠 Início</a>
+                <a href="#como-funciona" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('como-funciona'); }} className="text-white hover:text-[var(--primary)] py-2">⚡ Como Funciona</a>
+                <a href="#planos" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('planos'); }} className="text-white hover:text-[var(--primary)] py-2">💰 Planos</a>
                 <a href="#filtro-empresas" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('filtro-empresas'); }} className="text-white hover:text-[var(--primary)] py-2">🔍 Buscar Empresas</a>
-                <a href="#categorias" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('categorias'); }} className="text-white hover:text-[var(--primary)] py-2">📂 Categorias</a>
-                <a href="#tv-destaque" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('tv-destaque'); }} className="text-white hover:text-[var(--primary)] py-2">📺 TV & Rádio Ao Vivo</a>
+                <a href="#tv-destaque" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('tv-destaque'); }} className="text-white hover:text-[var(--primary)] py-2">📺 TV & Rádio</a>
               </div>
               <div className="flex flex-col gap-3 pt-4 border-t border-white/5">
                 <a 
@@ -3932,22 +3934,14 @@ function AppContent() {
                   </span>
                 </a>
                 <a 
-                  href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Gostaria%20de%20divulgar%20minha%20empresa%20no%20Guia%20Comercial%20Minha%20Divulga%C3%A7%C3%A3o."
+                  href={primaryDivulgarWaLink}
                   target="_blank"
                   rel="noreferrer"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full text-center bg-[var(--primary)] text-black px-5 py-3 rounded-xl font-extrabold text-xs uppercase tracking-widest block cursor-pointer decoration-transparent"
+                  className="w-full text-center bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-black px-5 py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-widest block cursor-pointer decoration-transparent shadow-lg"
                 >
-                  🚀 Divulgue Sua Empresa
+                  🚀 QUERO DIVULGAR MINHA EMPRESA
                 </a>
-                {!hideAdvertiserAuth && (
-                  <button 
-                    onClick={() => { setIsMobileMenuOpen(false); setAuthMode('login'); setIsAdPortalOpen(true); }}
-                    className="w-full text-center bg-neutral-950 border border-white/10 text-white px-5 py-3 rounded-xl font-extrabold text-xs uppercase tracking-widest block cursor-pointer"
-                  >
-                    🔑 Entrar na Conta
-                  </button>
-                )}
               </div>
             </motion.div>
           )}
@@ -3968,27 +3962,31 @@ function AppContent() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2.5 bg-neutral-950/90 border border-amber-500/40 px-5 py-2 rounded-full text-[10px] sm:text-xs font-black tracking-[0.2em] uppercase text-amber-400 mb-6 font-mono shadow-[0_4px_30px_rgba(251,191,36,0.2)] select-none">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
-            Guia Comercial Digital
+            PLATAFORMA DE DIVULGAÇÃO DE EMPRESAS E NEGÓCIOS
           </div>
   
           {/* Main Headline & Subtitle */}
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-sans font-black text-white tracking-tight leading-[1.1] max-w-4xl select-none">
-            Encontre ou divulgue sua empresa no <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500">Guia Comercial Digital</span>
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-sans font-black text-white tracking-tight leading-[1.08] max-w-4xl select-none">
+            DIVULGAMOS SUA <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500">EMPRESA</span>
           </h1>
   
-          <p className="text-sm sm:text-lg md:text-xl text-white/85 font-semibold max-w-2xl mt-4 leading-relaxed select-none">
-            Sua empresa visível para clientes da sua região. Presença digital inclusa na assinatura do Plano Completo.
+          <p className="text-base sm:text-xl md:text-2xl text-amber-300 font-extrabold max-w-2xl mt-4 leading-snug select-none">
+            Você cuida do seu negócio. Nós cuidamos da sua divulgação.
+          </p>
+
+          <p className="text-sm sm:text-base md:text-lg text-white/80 font-medium max-w-2xl mt-3 leading-relaxed select-none">
+            Coloque sua empresa em evidência e apresente seus produtos e serviços para pessoas que estão procurando por negócios como o seu.
           </p>
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mt-8 w-full sm:w-auto relative z-20">
             <a 
-              href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Gostaria%20de%20divulgar%20minha%20empresa%20no%20Guia%20Comercial%20Minha%20Divulga%C3%A7%C3%A3o."
+              href={primaryDivulgarWaLink}
               target="_blank"
               rel="noreferrer"
-              className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-400 hover:to-yellow-400 text-black hover:scale-105 hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-wider text-center transition-all duration-300 shadow-2xl flex items-center justify-center gap-2.5 cursor-pointer w-full sm:w-auto shrink-0 border border-amber-300/30 decoration-transparent"
+              className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-400 hover:to-yellow-400 text-black hover:scale-105 hover:shadow-[0_0_30px_rgba(245,158,11,0.4)] px-8 py-4 sm:py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider text-center transition-all duration-300 shadow-2xl flex items-center justify-center gap-2.5 cursor-pointer w-full sm:w-auto shrink-0 border border-amber-300/40 decoration-transparent"
             >
-              🚀 Divulgue Sua Empresa
+              <span>QUERO DIVULGAR MINHA EMPRESA</span>
             </a>
             
             <button 
@@ -3996,14 +3994,26 @@ function AppContent() {
                 const el = document.getElementById('filtro-empresas');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="bg-white/10 hover:bg-white/15 text-white border border-white/20 hover:border-white/40 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2.5 cursor-pointer w-full sm:w-auto shrink-0"
+              className="bg-white/10 hover:bg-white/15 text-white border border-white/20 hover:border-white/40 px-7 py-4 sm:py-5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider text-center transition-all duration-300 shadow-xl flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto shrink-0"
             >
-              🔍 Buscar Empresas
+              <span>🔍 Encontrar Empresas e Serviços</span>
             </button>
           </div>
 
+          {/* Segmentos de empresas atendidas */}
+          <SegmentsShowcase />
+
           {/* Direct Search Bar */}
           <div className="w-full max-w-3xl mt-10 bg-neutral-900/90 border border-white/10 rounded-2xl p-4 sm:p-5 shadow-2xl backdrop-blur-md text-left">
+            <div className="mb-3">
+              <div className="flex items-center gap-2 text-sm sm:text-base font-extrabold text-white">
+                <Search size={16} className="text-amber-400" />
+                <span>🔍 Encontrar Empresas e Serviços</span>
+              </div>
+              <p className="text-xs text-white/60 mt-0.5 font-medium">
+                Busque empresas, produtos e serviços cadastrados no portal.
+              </p>
+            </div>
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40 text-sm">📍</span>
@@ -4046,42 +4056,19 @@ function AppContent() {
             </div>
           </div>
 
-          {/* CTA Destaque: Atendimento Online (Dúvidas na Hora) */}
-          <div className="w-full max-w-3xl mt-5">
-            <a
-              href="https://crm-pi-ebon-19.vercel.app/?empresa=minhadivulgacao&view=client"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full group flex flex-col sm:flex-row items-center justify-between gap-3.5 bg-gradient-to-r from-[#16130b] via-[#151522] to-[#16130b] border-2 border-amber-500/40 hover:border-amber-400 p-3.5 sm:px-5 sm:py-3.5 rounded-2xl transition-all duration-300 shadow-xl decoration-transparent text-left cursor-pointer"
-            >
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0 text-amber-400 group-hover:scale-105 transition-transform shadow-inner">
-                  <MessageSquare size={20} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs sm:text-sm font-black text-white uppercase tracking-wider group-hover:text-amber-300 transition-colors">
-                      Atendimento Online • Tire Dúvidas na Hora
-                    </span>
-                    <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse">
-                      Online
-                    </span>
-                  </div>
-                  <div className="text-[11px] sm:text-xs text-amber-300 font-mono font-black mt-0.5">
-                    ⏰ Atendimento Horário Comercial: Seg a Sex 08:00 às 20:00 • Sáb: 09:00 às 14:00
-                  </div>
-                </div>
-              </div>
-
-              <span className="w-full sm:w-auto text-center shrink-0 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-black text-xs uppercase tracking-wider px-5 py-2.5 rounded-xl transition-all shadow-md group-hover:scale-105 flex items-center justify-center gap-1.5">
-                <span>Tirar Dúvidas na Hora</span>
-                <ExternalLink size={13} />
-              </span>
-            </a>
-          </div>
-
         </div>
       </section>
+
+      {/* 1. SEÇÃO: COMO FUNCIONA */}
+      <ComoFuncionaSection primaryWaLink={primaryDivulgarWaLink} />
+
+      {/* 2. SEÇÃO: PLANOS - PLANO DE DIVULGAÇÃO */}
+      <PlanosSection 
+        primaryWaLink={primaryDivulgarWaLink}
+        price={appData?.pricing?.price || '59,90'}
+        period={appData?.pricing?.period || 'MÊS'}
+        features={appData?.pricing?.features}
+      />
 
       {/* Showcase Hub of Main Advertisers & Flyers */}
       {visibleFlyers.length > 0 && (
@@ -4095,13 +4082,12 @@ function AppContent() {
             <div className="mb-20">
               <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 gap-4">
                 <div>
-                  <span className="text-[var(--primary)] text-xs font-black font-mono tracking-[0.2em] uppercase">CURADORIA DIGITAL</span>
-                  <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mt-2">
-                    🔥 Ofertas Irrecusáveis da Semana
+                  <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
+                    🔥 Ofertas e Promoções
                   </h2>
                 </div>
-                <p className="text-sm sm:text-base text-white/85 font-bold max-w-sm leading-relaxed">
-                  Apenas ofertas reais e com descontos exclusivos de marcas verificadas no portal. Toque no card e garanta o seu benefício no WhatsApp antes que esgote!
+                <p className="text-sm sm:text-base text-white/80 font-medium max-w-md leading-relaxed">
+                  Confira ofertas e promoções das empresas anunciantes do portal.
                 </p>
               </div>
 
@@ -4113,8 +4099,8 @@ function AppContent() {
                 <div className="relative w-full md:w-1/2 flex flex-col items-center justify-center">
                   
                   {/* Highlight badge outside and above the image banner */}
-                  <span className="mb-5 bg-gradient-to-r from-red-600 to-amber-600 text-white font-black text-[9px] tracking-widest uppercase px-4 py-1.5 rounded-full shadow-lg z-10 whitespace-nowrap animate-pulse select-none">
-                    🚨 DESTAQUE COMERCIAL DE HOJE
+                  <span className="mb-5 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black text-[9px] tracking-widest uppercase px-4 py-1.5 rounded-full shadow-lg z-10 whitespace-nowrap select-none">
+                    🔥 OFERTA EM DESTAQUE
                   </span>
 
                   <div 
@@ -4329,13 +4315,10 @@ function AppContent() {
                           )}
                         </div>
 
-                        <p className="text-xs text-white/60 truncate mt-0.5">
+                        <p className="text-xs text-white/70 truncate mt-0.5">
                           {isRadioBuffering 
-                            ? "Carregando sinal estável sem travamento..." 
-                            : radioPlaying 
-                              ? "Tocando agora ao vivo em segundo plano. Navegue ouvindo!" 
-                              : "Toque em DAR PLAY NO RÁDIO para ouvir nossa programação e ofertas."
-                          }
+                            ? "Sincronizando sinal da rádio..." 
+                            : "Ouça nossa programação e ofertas."}
                         </p>
                       </div>
                     </div>
@@ -4433,11 +4416,11 @@ function AppContent() {
                     </div>
 
                     <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight leading-snug">
-                      Central de Atendimento Online
+                      💬 Atendimento Online
                     </h3>
                     
-                    <p className="text-xs sm:text-sm text-white/70 max-w-2xl mt-1.5 leading-relaxed">
-                      Precisa de informações rápidas ou quer saber algo na hora? Fale diretamente com nossa equipe pelo navegador durante o horário comercial.
+                    <p className="text-xs sm:text-sm text-white/80 max-w-2xl mt-1.5 leading-relaxed font-medium">
+                      Tire suas dúvidas diretamente com nossa equipe.
                     </p>
 
                     {/* HORÁRIO COMERCIAL DESTACADO (SEG A SEX: 08:00 ÀS 20:00 | SÁB: 09:00 ÀS 14:00) */}
@@ -4445,7 +4428,7 @@ function AppContent() {
                       <div className="flex items-center gap-2 text-amber-300 shrink-0">
                         <Clock size={19} className="text-amber-400 shrink-0" />
                         <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-300">
-                          Atendimento Horário Comercial:
+                          Horário:
                         </span>
                       </div>
                       <div className="flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm font-mono font-bold">
@@ -4617,13 +4600,12 @@ function AppContent() {
             <div id="tv-destaque" className="mb-14 md:mb-20 pt-8 md:pt-12 border-t border-white/5 scroll-mt-24">
               <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 md:mb-10 gap-3">
                 <div>
-                  <span className="text-[var(--primary)] text-xs font-black font-mono tracking-[0.2em] uppercase">CANAL OFICIAL DE TRANSMISSÃO</span>
                   <h2 className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight mt-1.5 flex items-center gap-2">
-                    📺 TV Minha Divulgação — Promoções e Destaques
+                    📺 TV Minha Divulgação
                   </h2>
                 </div>
-                <p className="text-xs sm:text-sm text-white/60 max-w-md leading-relaxed">
-                  Canal oficial de promoções, mídias e ofertas especiais das empresas cadastradas.
+                <p className="text-xs sm:text-sm text-white/70 max-w-md leading-relaxed font-medium">
+                  Promoções, anúncios e destaques das empresas cadastradas.
                 </p>
               </div>
 
@@ -4735,25 +4717,28 @@ function AppContent() {
               </div>
             </div>
 
-            {/* 2. SEÇÃO: PARCEIROS OFICIAIS */}
+            {/* 2. SEÇÃO: VITRINE DE PARCEIROS */}
             <div className="mb-20 pt-8 border-t border-white/5">
-              <div className="text-center mb-10">
-                <span className="text-[var(--primary)] text-[10px] font-black font-mono tracking-[0.2em] uppercase">MARCAS DE CONFIANÇA</span>
-                <h3 className="text-xl sm:text-2xl font-black text-white mt-1">🤝 Parceiros Oficiais do Portal</h3>
+              <div className="text-center mb-8">
+                <h3 className="text-xl sm:text-2xl font-black text-white mt-1">🤝 Empresas e Marcas em Destaque</h3>
               </div>
               
-              {/* High precision logo marquee - Auto scroll motion effect */}
-              <div className="logo-marquee-container py-4 bg-gradient-to-r from-transparent via-white/[0.02] to-transparent border-y border-white/5 rounded-2xl">
-                <div className="logo-marquee-track opacity-60 hover:opacity-100 transition-opacity duration-300">
+              <div className="py-4 bg-gradient-to-r from-transparent via-white/[0.02] to-transparent border-y border-white/5 rounded-2xl">
+                <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 px-4">
                   {(() => {
-                    const originalLogos = (appData?.companies || []).filter((c: any) => c.logo);
-                    if (originalLogos.length === 0) return null;
-                    // Double the logos list to make infinite scroll continuous and neat
-                    const doubledLogos = [...originalLogos, ...originalLogos, ...originalLogos];
-                    return doubledLogos.map((c: any, idx: number) => (
+                    const seen = new Set();
+                    const uniquePartners = (appData?.companies || []).filter((c: any) => {
+                      if (!c.logo) return false;
+                      const key = String(c.logo || '') + '::' + String(c.name || '');
+                      if (seen.has(key)) return false;
+                      seen.add(key);
+                      return true;
+                    });
+                    if (uniquePartners.length === 0) return null;
+                    return uniquePartners.map((c: any, idx: number) => (
                       <div 
                         key={idx} 
-                        className="h-10 w-28 md:w-36 flex-shrink-0 flex items-center justify-center grayscale hover:grayscale-0 contrast-125 opacity-75 hover:opacity-100 transition-all duration-300 transform hover:scale-105"
+                        className="h-10 w-28 md:w-36 flex-shrink-0 flex items-center justify-center grayscale hover:grayscale-0 opacity-75 hover:opacity-100 transition-all duration-300 transform hover:scale-105"
                       >
                         <img 
                           src={c.logo} 
@@ -4774,13 +4759,12 @@ function AppContent() {
             <div className="mb-20">
               <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 gap-4">
                 <div>
-                  <span className="text-[var(--primary)] text-xs font-black font-mono tracking-[0.2em] uppercase">VITRINE DE EXCELÊNCIA</span>
                   <h3 className="text-2xl sm:text-3.5xl font-sans font-extrabold text-white tracking-tight mt-1">
                     ⭐ Empresas em Destaque
                   </h3>
                 </div>
-                <p className="text-xs sm:text-sm text-white/50 max-w-sm">
-                  Anunciantes master selecionados por excelente prestação de serviços, avaliação positiva e confiabilidade.
+                <p className="text-xs sm:text-sm text-white/70 max-w-sm font-medium">
+                  Conheça empresas e serviços anunciantes do Minha Divulgação.
                 </p>
               </div>
 
@@ -4827,12 +4811,11 @@ function AppContent() {
           
           {/* Search Input and Filters layout */}
           <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-12">
-            <span className="text-[var(--primary)] text-xs font-bold font-mono tracking-widest uppercase">Diretório Comercial</span>
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">
-              Encontre Empresas Verificadas ou Divulgue a Sua
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+              🔎 Encontre Empresas ou Divulgue a Sua
             </h2>
-            <p className="text-sm text-white/50 mt-3">
-              Busque abaixo as melhores empresas ativas conectadas via WhatsApp, ou cadastre seu negócio hoje mesmo para começar a receber pedidos diretos de novos clientes em minutos!
+            <p className="text-sm sm:text-base text-white/70 max-w-2xl mx-auto mt-3 font-medium">
+              Encontre empresas e serviços no portal ou coloque sua empresa em destaque para ser encontrada por novos clientes.
             </p>
 
             {/* Dynamic Keywords Search Box */}
@@ -5089,91 +5072,27 @@ function AppContent() {
         </div>
       </section>
 
-      {/* Call to Action Section */}
-      <section className="w-full py-16 md:py-20 bg-gradient-to-b from-[#0a0a10] to-black border-b border-white/5 relative overflow-hidden">
+      {/* Seção Final Comercial */}
+      <section className="w-full py-16 md:py-24 bg-gradient-to-b from-[#0a0a10] to-black border-b border-white/5 relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-amber-500/5 rounded-full blur-[140px] pointer-events-none" />
-        <div className="relative w-full max-w-5xl mx-auto px-4 md:px-6 text-center z-10 select-none">
-          <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 px-4 py-1.5 rounded-full text-xs font-mono font-bold uppercase tracking-widest mb-6">
-            🚀 Faça Parte do Guia
-          </div>
+        <div className="relative w-full max-w-4xl mx-auto px-4 md:px-6 text-center z-10 select-none">
           <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-            Divulgue sua empresa para milhares de clientes
+            🔎 Encontre Empresas ou Divulgue a Sua
           </h2>
-          <p className="text-sm sm:text-base text-white/70 max-w-2xl mx-auto mt-4 leading-relaxed font-semibold">
-            Presença no Guia Comercial Digital, banners rotativos e canal oficial de transmissão com link direto para o seu WhatsApp.
+          <p className="text-sm sm:text-base md:text-lg text-white/80 font-medium max-w-2xl mx-auto mt-4 leading-relaxed">
+            Encontre empresas e serviços no portal ou coloque sua empresa em destaque para ser encontrada por novos clientes.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10 max-w-4xl mx-auto text-left">
-            {/* Opção 1: Atendimento Online (Para quem quer saber algo na hora) */}
-            <div className="bg-gradient-to-b from-[#141422] to-[#0d0d16] border-2 border-amber-500/40 hover:border-amber-400/80 rounded-2xl p-6 sm:p-7 flex flex-col justify-between shadow-xl transition-all">
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
-                    <MessageSquare size={16} />
-                  </span>
-                  <span className="text-xs font-black uppercase tracking-wider text-amber-300">
-                    Tire Dúvidas na Hora
-                  </span>
-                </div>
-                <h3 className="text-lg sm:text-xl font-black text-white leading-snug">
-                  Atendimento Online
-                </h3>
-                <p className="text-xs text-white/70 mt-2 leading-relaxed">
-                  Quer tirar dúvidas rápidas ou saber algo na hora? Acesse nosso atendimento direto pelo navegador.
-                </p>
-                
-                {/* Horário Comercial Destacado */}
-                <div className="mt-4 bg-amber-950/50 border border-amber-400/40 px-3.5 py-2.5 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-amber-300 flex items-center gap-2">
-                  <Clock size={15} className="text-amber-400 shrink-0" />
-                  <span>Horário Comercial: Seg a Sex 08:00 às 20:00 • Sáb 09:00 às 14:00</span>
-                </div>
-              </div>
-
-              <a
-                href="https://crm-pi-ebon-19.vercel.app/?empresa=minhadivulgacao&view=client"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-6 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-5 py-3.5 rounded-xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 shadow-lg hover:scale-105 cursor-pointer w-full decoration-transparent flex items-center justify-center gap-2"
-              >
-                <MessageSquare size={16} className="fill-current text-black" />
-                <span>Acessar Atendimento Online</span>
-                <ExternalLink size={14} />
-              </a>
-            </div>
-
-            {/* Opção 2: Divulgação e Parcerias (WhatsApp Comercial) */}
-            <div className="bg-gradient-to-b from-[#111a14] to-[#0c120e] border-2 border-emerald-500/40 hover:border-emerald-400/80 rounded-2xl p-6 sm:p-7 flex flex-col justify-between shadow-xl transition-all">
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-                    <span className="text-sm">🚀</span>
-                  </span>
-                  <span className="text-xs font-black uppercase tracking-wider text-emerald-300">
-                    Divulgação & Anúncios
-                  </span>
-                </div>
-                <h3 className="text-lg sm:text-xl font-black text-white leading-snug">
-                  Divulgue Sua Empresa
-                </h3>
-                <p className="text-xs text-white/70 mt-2 leading-relaxed">
-                  Fale com nossa equipe comercial para cadastrar seu negócio no Guia Comercial, banners rotativos e transmissões oficiais.
-                </p>
-
-                <div className="mt-4 bg-emerald-950/50 border border-emerald-400/40 px-3.5 py-2.5 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-emerald-300 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                  <span>Canal Oficial de Atendimento e Divulgação</span>
-                </div>
-              </div>
-
-              <a
-                href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Gostaria%20de%20divulgar%20minha%20empresa%20no%20Guia%20Comercial%20Minha%20Divulga%C3%A7%C3%A3o."
-                target="_blank"
-                rel="noreferrer"
-                className="mt-6 bg-gradient-to-r from-emerald-500 to-green-600 hover:brightness-110 text-white px-5 py-3.5 rounded-xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 shadow-lg hover:scale-105 cursor-pointer w-full decoration-transparent flex items-center justify-center gap-2"
-              >
-                <span>💬 Falar no WhatsApp Comercial</span>
-              </a>
-            </div>
+          <div className="mt-8 flex justify-center">
+            <a
+              href={primaryDivulgarWaLink}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 py-4 sm:py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_10px_35px_rgba(245,158,11,0.35)] hover:scale-105 cursor-pointer decoration-transparent"
+            >
+              <span>QUERO DIVULGAR MINHA EMPRESA</span>
+              <ArrowRight size={18} />
+            </a>
           </div>
         </div>
       </section>
@@ -5194,8 +5113,11 @@ function AppContent() {
                 decoding="async"
                 onError={(e) => { e.currentTarget.src = "https://i.postimg.cc/nVdYndN2/minha-divulgacao-png.png" }}
               />
-              <p className="text-xs text-white/50 max-w-sm leading-relaxed mt-2">
-                Sua maior vitrine digital em todo o Brasil.
+              <p className="text-xs text-amber-300 font-bold max-w-sm leading-relaxed mt-1">
+                Sua empresa. Nossa divulgação.
+              </p>
+              <p className="text-xs text-white/50 max-w-sm leading-relaxed">
+                Plataforma profissional de divulgação de empresas e negócios em todo o Brasil.
               </p>
 
               {/* Social icons */}
