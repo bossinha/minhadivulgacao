@@ -66,12 +66,11 @@ import {
 
 import { 
   SegmentsShowcase, 
-  OQueERedeSection, 
-  OQueSuaEmpresaRecebeSection, 
-  PlanoPrincipalSection, 
-  ComoFuncionaRedeSection, 
-  FaqSection, 
-  CtaFinalRedeSection 
+  OQueSuaEmpresaGanhaSection, 
+  ComoFuncionaSection, 
+  OndeSuaEmpresaApareceSection, 
+  PlanoPrecoSection, 
+  CtaFinalSection 
 } from './components/DivulgacaoCommercialSections';
 
 import { auth, db, googleProvider } from './lib/firebase';
@@ -3974,103 +3973,52 @@ function AppContent() {
             COLOQUE SUA EMPRESA NA REDE <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500">MINHA DIVULGAÇÃO</span>
           </h1>
   
-          <p className="text-base sm:text-xl md:text-2xl text-white/90 font-medium max-w-3xl mt-5 leading-relaxed select-none">
-            Tenha sua empresa presente em uma rede de divulgação com portal, vitrine comercial, TV, rádio e espaços de destaque.
+          <p className="text-base sm:text-xl md:text-2xl text-white/90 font-medium max-w-3xl mt-4 leading-relaxed select-none">
+            Seja encontrado por novos clientes e facilite o contato direto pelo WhatsApp.
           </p>
 
           {/* Destaque Comercial: R$ 49,90/mês */}
-          <div className="mt-6 inline-flex items-center gap-3 bg-gradient-to-r from-[#17140b] via-[#211a0d] to-[#17140b] border-2 border-amber-400 px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl shadow-[0_0_35px_rgba(245,158,11,0.25)] select-none">
-            <span className="text-xs sm:text-sm font-mono uppercase tracking-wider text-white/70">Apenas</span>
-            <span className="text-3xl sm:text-4xl md:text-5xl font-black text-amber-400">R$ 49,90</span>
+          <div className="mt-6 inline-flex items-baseline gap-2 bg-gradient-to-r from-[#17140b] via-[#211a0d] to-[#17140b] border-2 border-amber-400 px-7 sm:px-9 py-3.5 rounded-2xl shadow-[0_0_35px_rgba(245,158,11,0.25)] select-none">
+            <span className="text-sm font-black text-amber-400">R$</span>
+            <span className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">49,90</span>
             <span className="text-xs sm:text-sm font-mono text-white/70">/mês</span>
           </div>
 
-          {/* Action Button & Subtitle */}
-          <div className="flex flex-col items-center justify-center gap-2.5 mt-7 w-full sm:w-auto relative z-20">
+          {/* Frase curta */}
+          <p className="text-xs sm:text-sm text-amber-300 font-extrabold mt-3 select-none">
+            Divulgação contínua para sua empresa dentro da nossa rede.
+          </p>
+
+          {/* Botão principal grande & frase pequena */}
+          <div className="flex flex-col items-center justify-center gap-2 mt-6 w-full sm:w-auto relative z-20">
             <a 
-              href={primaryDivulgarWaLink}
+              href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Gostaria%20de%20divulgar%20minha%20empresa%20no%20Minha%20Divulga%C3%A7%C3%A3o."
               target="_blank"
               rel="noreferrer"
-              className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-400 hover:to-yellow-400 text-black hover:scale-105 hover:shadow-[0_0_30px_rgba(245,158,11,0.4)] px-8 sm:px-10 py-4 sm:py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider text-center transition-all duration-300 shadow-2xl flex items-center justify-center gap-2.5 cursor-pointer w-full sm:w-auto shrink-0 border border-amber-300/40 decoration-transparent"
+              className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black hover:scale-105 hover:shadow-[0_0_35px_rgba(245,158,11,0.45)] px-8 sm:px-12 py-4 sm:py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider text-center transition-all duration-300 shadow-2xl flex items-center justify-center gap-3 cursor-pointer w-full sm:w-auto shrink-0 decoration-transparent"
             >
               <span>QUERO DIVULGAR MINHA EMPRESA</span>
               <ArrowRight size={18} />
             </a>
-            <p className="text-xs text-white/60 font-mono select-none">
-              Assinatura mensal • Sem cadastro gratuito
+            <p className="text-[11px] sm:text-xs text-white/60 font-mono select-none">
+              Cadastro feito pela nossa equipe.
             </p>
           </div>
 
           {/* Segmentos de empresas atendidas */}
           <SegmentsShowcase />
 
-          {/* Direct Search Bar */}
-          <div className="w-full max-w-3xl mt-10 bg-neutral-900/90 border border-white/10 rounded-2xl p-4 sm:p-5 shadow-2xl backdrop-blur-md text-left">
-            <div className="mb-3">
-              <div className="flex items-center gap-2 text-sm sm:text-base font-extrabold text-white">
-                <Search size={16} className="text-amber-400" />
-                <span>🔍 Encontrar Empresas e Serviços</span>
-              </div>
-              <p className="text-xs text-white/60 mt-0.5 font-medium">
-                Busque empresas, produtos e serviços cadastrados no portal.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex-1 relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40 text-sm">📍</span>
-                <select
-                  value={selectedStateFilter}
-                  onChange={(e) => setSelectedStateFilter(e.target.value)}
-                  className="w-full bg-[#111116] border border-white/10 hover:border-white/20 focus:border-amber-500 outline-none rounded-xl pl-10 pr-8 py-3 text-xs sm:text-sm text-white font-bold appearance-none cursor-pointer transition-all"
-                >
-                  <option value="">Todos os Estados (Brasil)</option>
-                  {BRAZIL_STATES.map(st => (
-                    <option key={st.uf} value={st.uf}>{st.name} ({st.uf})</option>
-                  ))}
-                </select>
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none text-[10px]">▼</span>
-              </div>
-
-              <div className="flex-1 relative">
-                <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-white/40">
-                  <Search size={16} />
-                </div>
-                <input 
-                  type="text" 
-                  placeholder="Nome da empresa ou ramo..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-[#111116] border border-white/10 hover:border-white/20 focus:border-amber-500 outline-none rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm text-white font-medium transition-all"
-                />
-              </div>
-              
-              <button
-                type="button"
-                onClick={() => {
-                  const el = document.getElementById('filtro-empresas');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="bg-amber-500 hover:bg-amber-400 text-black font-black text-xs sm:text-sm uppercase tracking-wider px-6 py-3 rounded-xl transition-all duration-200 shrink-0 flex items-center justify-center gap-2 cursor-pointer shadow-lg"
-              >
-                🔍 Buscar
-              </button>
-            </div>
-          </div>
-
         </div>
       </section>
 
-      {/* SEÇÃO 2 — O QUE É A MINHA DIVULGAÇÃO */}
-      <OQueERedeSection />
+      {/* 2. SEÇÃO: O QUE SUA EMPRESA GANHA? */}
+      <OQueSuaEmpresaGanhaSection />
 
-      {/* SEÇÃO 3 — O QUE SUA EMPRESA RECEBE */}
-      <OQueSuaEmpresaRecebeSection primaryWaLink={primaryDivulgarWaLink} />
+      {/* 3. SEÇÃO: COMO FUNCIONA? */}
+      <ComoFuncionaSection />
 
-      {/* SEÇÃO 4 — PLANO: UMA ASSINATURA PARA SUA EMPRESA (R$ 49,90/mês) */}
-      <PlanoPrincipalSection primaryWaLink={primaryDivulgarWaLink} />
-
-      {/* SEÇÃO 5 — COMO FUNCIONA (5 ETAPAS) */}
-      <ComoFuncionaRedeSection />
+      {/* 4. SEÇÃO: ONDE SUA EMPRESA SERÁ DIVULGADA? */}
+      <OndeSuaEmpresaApareceSection />
 
       {/* Showcase Hub of Main Advertisers & Flyers */}
       {visibleFlyers.length > 0 && (
@@ -4782,11 +4730,14 @@ function AppContent() {
           
           {/* Search Input and Filters layout */}
           <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-12">
+            <span className="text-amber-400 text-[10px] sm:text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
+              REDE ATIVA & EMPRESAS PARTICIPANTES
+            </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-              🔎 Encontre Empresas ou Divulgue a Sua
+              ENCONTRE EMPRESAS E SERVIÇOS
             </h2>
             <p className="text-sm sm:text-base text-white/70 max-w-2xl mx-auto mt-3 font-medium">
-              Encontre empresas e serviços no portal ou coloque sua empresa em destaque para ser encontrada por novos clientes.
+              Veja empresas que já fazem parte da rede Minha Divulgação.
             </p>
 
             {/* Dynamic Keywords Search Box */}
@@ -5068,11 +5019,11 @@ function AppContent() {
         </div>
       </section>
 
-      {/* SEÇÃO 9: PERGUNTAS FREQUENTES (FAQ) */}
-      <FaqSection />
+      {/* 7. SEÇÃO DE PREÇO: SUA EMPRESA NA REDE (R$ 49,90/mês) */}
+      <PlanoPrecoSection primaryWaLink={primaryDivulgarWaLink} />
 
-      {/* SEÇÃO 10: CTA FINAL (SUA EMPRESA JÁ ESTÁ NA REDE?) */}
-      <CtaFinalRedeSection primaryWaLink={primaryDivulgarWaLink} />
+      {/* 8. CTA FINAL: SUA EMPRESA PODE ESTAR AQUI */}
+      <CtaFinalSection primaryWaLink={primaryDivulgarWaLink} />
 
       {/* Footer Section design */}
       <footer className="bg-black border-t border-white/5 pt-16 pb-24 text-white select-none">
