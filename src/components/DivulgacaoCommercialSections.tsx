@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   CheckCircle2, 
   Sparkles, 
@@ -7,37 +7,31 @@ import {
   Search, 
   MessageSquare, 
   Smartphone, 
-  Share2, 
   Tv, 
   Radio, 
-  Video, 
   Layers, 
-  Clock, 
-  ShieldCheck, 
   Check, 
   ArrowRight,
   ExternalLink,
-  PhoneCall,
-  Flame,
-  Wrench,
   Utensils,
   Scissors,
+  Wrench,
   Car,
   ShoppingBag,
   Stethoscope,
-  Laptop
+  Star,
+  Megaphone,
+  HelpCircle,
+  ChevronDown,
+  ShieldCheck,
+  Zap,
+  Building2,
+  Share2
 } from 'lucide-react';
 
-interface DivulgacaoSectionsProps {
-  primaryWaLink: string;
-  price: string;
-  period: string;
-  features?: string[];
-  onScrollToSearch: () => void;
-  onlineSupportLink?: string;
-}
-
-// 1. SEGMENTOS ATENDIDOS (Diversos tipos de empresas e negócios)
+// ==========================================
+// 1. SEGMENTOS ATENDIDOS NA REDE
+// ==========================================
 export const SegmentsShowcase: React.FC = () => {
   const segments = [
     { label: 'Lojas & Varejo', icon: Store, color: 'from-amber-500/20 to-yellow-500/10 text-amber-400 border-amber-500/30' },
@@ -57,7 +51,7 @@ export const SegmentsShowcase: React.FC = () => {
     <div className="w-full mt-10 pt-8 border-t border-white/5 select-none">
       <div className="text-center mb-5">
         <span className="text-[11px] font-mono font-bold tracking-[0.2em] text-white/50 uppercase">
-          Divulgação para empresas de todos os portes e segmentos
+          Presença comercial para empresas de todos os portes e segmentos
         </span>
       </div>
       <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5 max-w-5xl mx-auto">
@@ -78,310 +72,234 @@ export const SegmentsShowcase: React.FC = () => {
   );
 };
 
-// 2. SEÇÃO: DOIS PÚBLICOS (Para quem procura vs Para quem vende)
-export const DoisPublicosSection: React.FC<{ primaryWaLink: string; onScrollToSearch: () => void }> = ({ 
-  primaryWaLink, 
-  onScrollToSearch 
-}) => {
-  return (
-    <section id="publicos" className="w-full py-16 md:py-20 bg-gradient-to-b from-black via-[#08080e] to-black border-b border-white/5 relative overflow-hidden select-none">
-      <div className="absolute top-1/2 left-1/4 w-[400px] h-[400px] bg-amber-500/5 rounded-full blur-[140px] pointer-events-none" />
-      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-        
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <span className="text-amber-400 text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-3.5 py-1.5 rounded-full inline-block mb-3">
-            O PORTAL QUE CONECTA NEGÓCIOS
-          </span>
-          <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
-            Dois públicos. Uma só plataforma de divulgação.
-          </h2>
-          <p className="text-sm sm:text-base text-white/70 mt-3 max-w-2xl mx-auto">
-            Criamos uma ponte direta entre quem procura produtos e serviços confiáveis e quem precisa divulgar sua empresa de forma profissional.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
-          {/* Card 1: Para quem procura */}
-          <div className="relative bg-gradient-to-b from-[#101018] to-[#0a0a0f] border-2 border-white/10 hover:border-amber-500/40 rounded-3xl p-7 sm:p-9 flex flex-col justify-between shadow-2xl transition-all duration-300 group">
-            <div>
-              <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-6 shadow-inner group-hover:scale-110 transition-transform">
-                <Search size={26} />
-              </div>
-              <span className="text-[11px] font-mono font-extrabold uppercase tracking-widest text-amber-400/90 block mb-2">
-                PARA QUEM PROCURA
-              </span>
-              <h3 className="text-xl sm:text-2xl font-black text-white leading-snug">
-                Encontre empresas, produtos e serviços
-              </h3>
-              <p className="text-sm text-white/70 mt-3 leading-relaxed">
-                Navegue pelo portal e encontre negócios e serviços com facilidade. Descubra contatos atualizados, catálogo de fotos, localização e fale direto pelo WhatsApp de cada anunciante.
-              </p>
-
-              <div className="mt-6 space-y-2.5 pt-6 border-t border-white/5">
-                <div className="flex items-center gap-2 text-xs font-semibold text-white/80">
-                  <CheckCircle2 size={16} className="text-amber-400 shrink-0" />
-                  <span>Busca por cidade, estado, nome ou categoria</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs font-semibold text-white/80">
-                  <CheckCircle2 size={16} className="text-amber-400 shrink-0" />
-                  <span>Acesso direto ao WhatsApp da empresa com um toque</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs font-semibold text-white/80">
-                  <CheckCircle2 size={16} className="text-amber-400 shrink-0" />
-                  <span>Navegação 100% gratuita para clientes e visitantes</span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={onScrollToSearch}
-              className="mt-8 w-full inline-flex items-center justify-center gap-2.5 bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/40 text-white px-6 py-4 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 shadow-lg cursor-pointer hover:scale-[1.02]"
-            >
-              <Search size={16} />
-              <span>ENCONTRAR EMPRESAS AGORA</span>
-              <ArrowRight size={16} />
-            </button>
-          </div>
-
-          {/* Card 2: Para quem vende */}
-          <div className="relative bg-gradient-to-b from-[#141422] to-[#0c0c16] border-2 border-amber-500/40 hover:border-amber-400 rounded-3xl p-7 sm:p-9 flex flex-col justify-between shadow-2xl transition-all duration-300 group">
-            <div className="absolute top-4 right-5 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black text-[9px] tracking-widest uppercase px-3 py-1 rounded-full shadow-lg">
-              OPORTUNIDADE
-            </div>
-
-            <div>
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center text-black mb-6 shadow-xl group-hover:scale-110 transition-transform">
-                <Sparkles size={26} />
-              </div>
-              <span className="text-[11px] font-mono font-extrabold uppercase tracking-widest text-amber-400 block mb-2">
-                PARA QUEM VENDE
-              </span>
-              <h3 className="text-xl sm:text-2xl font-black text-white leading-snug">
-                Divulgue sua empresa
-              </h3>
-              <p className="text-sm text-white/70 mt-3 leading-relaxed">
-                Apresente sua empresa, produtos e serviços para pessoas que estão procurando negócios. Deixe que nós organizamos toda a sua presença para você se concentrar no seu atendimento.
-              </p>
-
-              <div className="mt-6 space-y-2.5 pt-6 border-t border-white/5">
-                <div className="flex items-center gap-2 text-xs font-semibold text-white/80">
-                  <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
-                  <span>Página e apresentação da sua empresa no portal</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs font-semibold text-white/80">
-                  <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
-                  <span>Espaço para produtos, serviços, fotos e WhatsApp</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs font-semibold text-white/80">
-                  <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
-                  <span>Exibição na TV e Rádio Online da plataforma</span>
-                </div>
-              </div>
-            </div>
-
-            <a
-              href={primaryWaLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-8 w-full inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-6 py-4 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 shadow-[0_10px_30px_rgba(245,158,11,0.3)] cursor-pointer decoration-transparent hover:scale-[1.02] ring-2 ring-amber-400/40"
-            >
-              <span>QUERO DIVULGAR MINHA EMPRESA</span>
-              <ArrowRight size={16} />
-            </a>
-          </div>
-        </div>
-
-      </div>
-    </section>
-  );
-};
-
-// 3. SEÇÃO: COMO FUNCIONA (4 etapas simples)
-export const ComoFuncionaSection: React.FC<{ primaryWaLink: string }> = ({ primaryWaLink }) => {
-  const steps = [
+// ==========================================
+// 2. SEÇÃO: O QUE É A MINHA DIVULGAÇÃO
+// ==========================================
+export const OQueERedeSection: React.FC = () => {
+  const redePilares = [
     {
-      num: '1',
-      title: 'Escolha seu plano',
-      desc: 'Escolha a opção de divulgação que melhor atende sua empresa.',
-      icon: CheckCircle2,
-      badge: 'Passo Inicial'
+      title: 'Portal de Empresas',
+      desc: 'Presença organizada em um portal de negócios ativo.',
+      icon: Building2
     },
     {
-      num: '2',
-      title: 'Envie as informações da sua empresa',
-      desc: 'Nome, descrição, fotos, contatos, produtos ou serviços e demais informações necessárias.',
-      icon: MessageSquare,
-      badge: 'Envio Fácil'
+      title: 'Busca de Empresas & Serviços',
+      desc: 'Localização rápida por categoria, palavras-chave e estado.',
+      icon: Search
     },
     {
-      num: '3',
-      title: 'Nós organizamos sua divulgação',
-      desc: 'As informações são apresentadas de forma profissional dentro do Minha Divulgação.',
-      icon: Layers,
-      badge: 'Estruturação'
+      title: 'Vitrine Comercial',
+      desc: 'Espaço profissional para fotos, descrição e produtos.',
+      icon: Store
     },
     {
-      num: '4',
-      title: 'Sua empresa fica disponível para ser encontrada',
-      desc: 'Clientes podem acessar as informações da sua empresa e entrar em contato.',
-      icon: Store,
-      badge: 'Divulgação Ativa'
+      title: 'Espaços de Destaque',
+      desc: 'Participação nas áreas de evidência comercial da rede.',
+      icon: Star
+    },
+    {
+      title: 'Promoções & Ofertas',
+      desc: 'Canal para divulgação de ofertas comerciais da sua empresa.',
+      icon: Sparkles
+    },
+    {
+      title: 'TV Minha Divulgação',
+      desc: 'Canal de TV próprio com exibição contínua de anúncios.',
+      icon: Tv
+    },
+    {
+      title: 'Rádio Minha Divulgação',
+      desc: 'Rádio web transmitindo programação e anúncios comerciais.',
+      icon: Radio
+    },
+    {
+      title: 'Canais de Contato com Clientes',
+      desc: 'Botão de WhatsApp e contato direto para atendimento imediato.',
+      icon: MessageSquare
     }
   ];
 
   return (
-    <section id="como-funciona" className="w-full py-16 md:py-24 bg-[#050508] border-b border-white/5 relative overflow-hidden select-none">
+    <section id="o-que-e" className="w-full py-16 md:py-24 bg-gradient-to-b from-black via-[#08080f] to-black border-b border-white/5 relative overflow-hidden select-none">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-amber-500/5 rounded-full blur-[160px] pointer-events-none" />
+
       <div className="w-full max-w-7xl mx-auto px-4 md:px-6 relative z-10">
         
+        {/* Header da Seção */}
         <div className="text-center max-w-3xl mx-auto mb-14">
-          <span className="text-amber-400 text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-3.5 py-1.5 rounded-full inline-block mb-3">
-            PROCESSO SIMPLES E SEM COMPLICAÇÃO
+          <span className="text-amber-400 text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
+            REDE DE DIVULGAÇÃO
           </span>
-          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-            COMO FUNCIONA?
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
+            O QUE É A MINHA DIVULGAÇÃO?
           </h2>
-          <p className="text-sm sm:text-base text-white/70 mt-3 max-w-2xl mx-auto">
-            Você não precisa perder tempo aprendendo ferramentas complexas. Nossa equipe cuida de organizar a divulgação da sua empresa.
+          <p className="text-base sm:text-lg text-white/90 font-medium mt-4 leading-relaxed max-w-2xl mx-auto">
+            O Minha Divulgação é uma rede comercial criada para ajudar empresas a ampliarem sua presença e serem encontradas por pessoas que procuram produtos e serviços.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-          {steps.map((step, idx) => {
-            const Icon = step.icon;
+        {/* Pilares da Rede Comercial */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto">
+          {redePilares.map((pilar, idx) => {
+            const Icon = pilar.icon;
             return (
               <div 
                 key={idx}
-                className="relative bg-gradient-to-b from-[#111119] to-[#09090e] border border-white/10 hover:border-amber-500/50 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-xl transition-all duration-300 group hover:-translate-y-1"
+                className="bg-gradient-to-b from-[#111119] to-[#09090e] border border-white/10 hover:border-amber-500/40 rounded-2xl sm:rounded-3xl p-5 sm:p-6 flex flex-col justify-between shadow-xl transition-all duration-300 hover:-translate-y-1 group"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-5">
-                    <span className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-black font-black text-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                      {step.num}
-                    </span>
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400/80 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
-                      {step.badge}
-                    </span>
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-amber-500/20 transition-all">
+                    <Icon size={22} />
                   </div>
-
-                  <h3 className="text-lg font-black text-white leading-snug group-hover:text-amber-300 transition-colors">
-                    {step.title}
+                  <h3 className="text-base sm:text-lg font-black text-white leading-snug group-hover:text-amber-300 transition-colors">
+                    {pilar.title}
                   </h3>
-                  <p className="text-xs sm:text-sm text-white/70 mt-3 leading-relaxed">
-                    {step.desc}
+                  <p className="text-xs sm:text-sm text-white/70 mt-2 leading-relaxed font-medium">
+                    {pilar.desc}
                   </p>
                 </div>
-
-                <div className="mt-6 pt-4 border-t border-white/5 flex items-center gap-2 text-white/40 text-xs font-mono">
-                  <Icon size={14} className="text-amber-400" />
-                  <span>Etapa {step.num} de 4</span>
+                <div className="mt-4 pt-3 border-t border-white/5 flex items-center gap-1.5 text-amber-400/80 text-[11px] font-mono font-bold uppercase">
+                  <span>Rede Integrada</span>
                 </div>
               </div>
             );
           })}
         </div>
 
+        {/* Nota de Posicionamento */}
+        <div className="mt-12 max-w-3xl mx-auto bg-gradient-to-r from-amber-950/30 via-[#161206] to-amber-950/30 border border-amber-400/30 rounded-2xl p-5 sm:p-6 text-center shadow-lg">
+          <p className="text-xs sm:text-sm text-amber-200/90 font-medium leading-relaxed">
+            <span className="font-black text-amber-400 uppercase tracking-wide">Mais do que um simples cadastro: </span> 
+            Sua empresa contrata presença ativa em uma rede completa com portal, busca, vitrine comercial, TV, rádio e divulgação direcionada ao WhatsApp.
+          </p>
+        </div>
+
       </div>
     </section>
   );
 };
 
-// 4. SEÇÃO: BENEFÍCIOS ("DEIXE SUA DIVULGAÇÃO COM A GENTE")
-export const BeneficiosSection: React.FC<{ primaryWaLink: string }> = ({ primaryWaLink }) => {
-  const benefits = [
+// ==========================================
+// 3. SEÇÃO: O QUE SUA EMPRESA RECEBE
+// ==========================================
+export const OQueSuaEmpresaRecebeSection: React.FC<{ primaryWaLink: string }> = ({ primaryWaLink }) => {
+  const cards = [
     {
-      title: 'Presença em uma plataforma de divulgação',
-      desc: 'Sua empresa inserida em uma plataforma ativa e focada exclusivamente em negócios e serviços.',
-      icon: Store
+      tag: 'PRESENÇA NO PORTAL',
+      title: '🔎 PRESENÇA NO PORTAL',
+      desc: 'Sua empresa fica disponível para ser encontrada por categoria e busca.',
+      detail: 'Página exclusiva com nome, descrição, categoria, horários, fotos e informações comerciais completas.',
+      icon: Search,
+      highlight: 'Busca Otimizada'
     },
     {
-      title: 'Página e apresentação da empresa',
-      desc: 'Um espaço limpo e profissional para apresentar sua marca com identidade visual clara.',
-      icon: Briefcase
+      tag: 'CONTATO DIRETO',
+      title: '📱 CONTATO DIRETO',
+      desc: 'Botão para o cliente entrar em contato com sua empresa.',
+      detail: 'Link direto para seu WhatsApp comercial e telefone, sem intermediários e sem comissões sobre vendas.',
+      icon: Smartphone,
+      highlight: 'Direto no WhatsApp'
     },
     {
-      title: 'Espaço para produtos e serviços',
-      desc: 'Apresente suas principais ofertas, catálogo de serviços e especialidades para quem visita.',
-      icon: ShoppingBag
+      tag: 'DESTAQUE COMERCIAL',
+      title: '⭐ DESTAQUE COMERCIAL',
+      desc: 'Sua empresa participa dos espaços de destaque disponíveis na rede.',
+      detail: 'Visibilidade destacada na página inicial, seções de recomendação e vitrines temáticas da plataforma.',
+      icon: Star,
+      highlight: 'Visibilidade em Evidência'
     },
     {
-      title: 'Fotos e informações da empresa',
-      desc: 'Galeria visual com fotos do estabelecimento, produtos, diferenciais e informações operacionais.',
-      icon: Layers
+      tag: 'TV MINHA DIVULGAÇÃO',
+      title: '📺 TV MINHA DIVULGAÇÃO',
+      desc: 'Possibilidade de participação nos espaços comerciais da TV da rede, conforme programação.',
+      detail: 'Transmissão contínua em formato 16:9 acessível no portal por visitantes e parceiros comerciais.',
+      icon: Tv,
+      highlight: 'Canal de TV 24h'
     },
     {
-      title: 'Link direto para WhatsApp',
-      desc: 'O cliente clica e já inicia a conversa direto com seu atendimento, sem intermediários.',
-      icon: MessageSquare
+      tag: 'RÁDIO MINHA DIVULGAÇÃO',
+      title: '📻 RÁDIO MINHA DIVULGAÇÃO',
+      desc: 'Participação nos espaços comerciais da rádio, conforme programação.',
+      detail: 'Rádio web com música, vinhetas e menções aos negócios que fazem parte da nossa rede.',
+      icon: Radio,
+      highlight: 'Rádio Web Comercial'
     },
     {
-      title: 'Informações completas de contato',
-      desc: 'Endereço, horários, localização geográfica, telefone e redes sociais centralizados.',
-      icon: PhoneCall
-    },
-    {
-      title: 'Divulgação organizada e profissional',
-      desc: 'Seu negócio apresentado de forma estruturada para passar credibilidade imediata ao público.',
-      icon: ShieldCheck
+      tag: 'DIVULGAÇÃO',
+      title: '📢 DIVULGAÇÃO',
+      desc: 'Sua empresa participa dos espaços destinados aos anunciantes da rede.',
+      detail: 'Apresentação comercial organizada, moderna e acessível para pessoas que procuram negócios como o seu.',
+      icon: Megaphone,
+      highlight: 'Exposição Comercial'
     }
   ];
 
   return (
-    <section id="beneficios" className="w-full py-16 md:py-24 bg-gradient-to-b from-black via-[#0a0a12] to-black border-b border-white/5 relative overflow-hidden select-none">
+    <section id="beneficios" className="w-full py-16 md:py-24 bg-[#050508] border-b border-white/5 relative overflow-hidden select-none">
       <div className="w-full max-w-7xl mx-auto px-4 md:px-6 relative z-10">
         
         <div className="text-center max-w-3xl mx-auto mb-14">
-          <span className="text-amber-400 text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-3.5 py-1.5 rounded-full inline-block mb-3">
-            VANTAGENS REAIS
+          <span className="text-amber-400 text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
+            BENEFÍCIOS DA ASSINATURA
           </span>
           <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-            DEIXE SUA DIVULGAÇÃO COM A GENTE
+            O QUE SUA EMPRESA RECEBE
           </h2>
-          <p className="text-sm sm:text-base text-white/70 mt-3 max-w-2xl mx-auto">
-            Tudo o que sua empresa precisa para ter uma apresentação comercial de qualidade na internet.
+          <p className="text-sm sm:text-base text-white/70 mt-3 max-w-2xl mx-auto font-medium">
+            Tudo o que sua empresa precisa para ter uma presença profissional e ser encontrada na internet com investimento acessível.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {benefits.map((b, idx) => {
-            const Icon = b.icon;
+          {cards.map((c, idx) => {
+            const Icon = c.icon;
             return (
               <div 
                 key={idx}
-                className={`bg-[#0d0e15] border border-white/10 hover:border-amber-500/40 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-xl transition-all duration-300 group hover:-translate-y-1 ${
-                  idx === 6 ? 'md:col-span-2 lg:col-span-3 lg:max-w-xl lg:mx-auto' : ''
-                }`}
+                className="bg-gradient-to-b from-[#12121d] to-[#0a0a10] border border-white/10 hover:border-amber-500/50 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-xl transition-all duration-300 hover:-translate-y-1.5 group"
               >
                 <div>
-                  <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                    <Icon size={22} />
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+                      <Icon size={24} />
+                    </div>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-300 bg-amber-500/10 border border-amber-500/25 px-2.5 py-1 rounded-full">
+                      {c.highlight}
+                    </span>
                   </div>
-                  <h3 className="text-base sm:text-lg font-black text-white leading-snug group-hover:text-amber-300 transition-colors">
-                    {b.title}
+
+                  <h3 className="text-lg sm:text-xl font-black text-white leading-snug group-hover:text-amber-300 transition-colors">
+                    {c.title}
                   </h3>
-                  <p className="text-xs sm:text-sm text-white/70 mt-2.5 leading-relaxed">
-                    {b.desc}
+
+                  <p className="text-sm font-bold text-white/90 mt-2.5 leading-relaxed">
+                    {c.desc}
+                  </p>
+
+                  <p className="text-xs text-white/60 mt-2 leading-relaxed">
+                    {c.detail}
                   </p>
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-white/5 flex items-center gap-1.5 text-[11px] font-mono font-bold text-emerald-400">
-                  <Check size={14} />
-                  <span>Benefício incluso</span>
+                <div className="mt-6 pt-4 border-t border-white/5 flex items-center gap-2 text-emerald-400 text-xs font-semibold">
+                  <CheckCircle2 size={15} className="shrink-0" />
+                  <span>Incluso na assinatura mensal</span>
                 </div>
               </div>
             );
           })}
         </div>
 
+        {/* CTA rápido */}
         <div className="mt-12 text-center">
           <a
             href={primaryWaLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 py-4 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 shadow-[0_10px_35px_rgba(245,158,11,0.3)] cursor-pointer decoration-transparent hover:scale-105"
+            className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 py-4 sm:py-5 rounded-2xl font-black text-sm uppercase tracking-wider transition-all duration-300 shadow-[0_10px_35px_rgba(245,158,11,0.3)] cursor-pointer decoration-transparent hover:scale-105"
           >
-            <span>DIVULGUE SUA EMPRESA</span>
-            <ArrowRight size={16} />
+            <span>QUERO DIVULGAR MINHA EMPRESA</span>
+            <ArrowRight size={18} />
           </a>
         </div>
 
@@ -390,175 +308,92 @@ export const BeneficiosSection: React.FC<{ primaryWaLink: string }> = ({ primary
   );
 };
 
-// 5. SEÇÃO: DIFERENCIAL ("VOCÊ CUIDA DO SEU NEGÓCIO. NÓS CUIDAMOS DA DIVULGAÇÃO.")
-export const DiferencialSection: React.FC<{ primaryWaLink: string }> = ({ primaryWaLink }) => {
-  return (
-    <section id="diferencial" className="w-full py-16 md:py-24 bg-[#050508] border-b border-white/5 relative overflow-hidden select-none">
-      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-        
-        <div className="max-w-5xl mx-auto bg-gradient-to-r from-[#141424] via-[#1a1828] to-[#141424] border-2 border-amber-500/40 rounded-3xl p-8 sm:p-12 md:p-14 shadow-2xl relative overflow-hidden">
-          {/* Top highlight bar */}
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500" />
-          
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 md:gap-12">
-            <div className="flex-1 text-center lg:text-left">
-              <span className="text-amber-400 text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/30 px-3.5 py-1.5 rounded-full inline-block mb-4">
-                FOCO NO QUE IMPORTA
-              </span>
-              
-              <h2 className="text-2xl sm:text-4xl md:text-4xl font-black text-white tracking-tight leading-tight">
-                VOCÊ CUIDA DO SEU NEGÓCIO.<br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500">
-                  NÓS CUIDAMOS DA DIVULGAÇÃO.
-                </span>
-              </h2>
-
-              <p className="text-sm sm:text-base text-white/80 mt-5 leading-relaxed font-medium">
-                Você já tem uma empresa para administrar. Não precisa passar horas pensando em como apresentar seu negócio na internet.
-              </p>
-
-              <p className="text-sm sm:text-base text-white/80 mt-3 leading-relaxed font-medium">
-                Nós organizamos sua presença no <strong className="text-white">Minha Divulgação</strong> para que sua empresa tenha um espaço profissional para apresentar seus produtos e serviços.
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-7 text-left">
-                <div className="bg-black/30 border border-white/10 rounded-2xl p-3.5 flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 font-bold">
-                    ✓
-                  </span>
-                  <span className="text-xs font-bold text-white/90">Sem precisar aprender ferramentas difíceis</span>
-                </div>
-                <div className="bg-black/30 border border-white/10 rounded-2xl p-3.5 flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 font-bold">
-                    ✓
-                  </span>
-                  <span className="text-xs font-bold text-white/90">Sem perder tempo montando páginas sozinho</span>
-                </div>
-                <div className="bg-black/30 border border-white/10 rounded-2xl p-3.5 flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 font-bold">
-                    ✓
-                  </span>
-                  <span className="text-xs font-bold text-white/90">Você envia as informações e nós estruturamos</span>
-                </div>
-                <div className="bg-black/30 border border-white/10 rounded-2xl p-3.5 flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 font-bold">
-                    ✓
-                  </span>
-                  <span className="text-xs font-bold text-white/90">Link direto para seu WhatsApp comercial</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="shrink-0 w-full lg:w-auto flex flex-col items-center">
-              <a
-                href={primaryWaLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_15px_40px_rgba(245,158,11,0.35)] cursor-pointer decoration-transparent hover:scale-105 active:scale-95"
-              >
-                <span>QUERO DIVULGAR MINHA EMPRESA</span>
-                <ArrowRight size={18} />
-              </a>
-              <span className="text-[11px] text-white/50 font-mono mt-3 text-center">
-                Atendimento direto via WhatsApp comercial
-              </span>
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-    </section>
-  );
-};
-
-// 6. SEÇÃO: PLANOS (Preço real do site, benefícios reais)
-export const PlanosSection: React.FC<{ 
-  primaryWaLink: string; 
-  price: string; 
-  period: string; 
-  features?: string[];
-}> = ({ 
-  primaryWaLink, 
-  price, 
-  period,
-  features 
-}) => {
-  const defaultFeatures = [
-    'Sua empresa presente na plataforma Minha Divulgação',
-    'Página de apresentação exclusiva da sua empresa',
-    'Espaço para exibir produtos, serviços e fotos',
-    'Botão com link direto para seu WhatsApp comercial',
-    'Informações completas de contato, endereço e horários',
-    'Presença no catálogo e busca de empresas do portal',
-    'Exibição na TV e Rádio Online da plataforma',
-    'Divulgação ativa 24 horas por dia'
+// ==========================================
+// 4. SEÇÃO: PLANO (UMA ASSINATURA PARA SUA EMPRESA - R$ 49,90/mês)
+// ==========================================
+export const PlanoPrincipalSection: React.FC<{ primaryWaLink: string }> = ({ primaryWaLink }) => {
+  const benefits = [
+    'Presença no portal Minha Divulgação',
+    'Página / perfil completo da sua empresa',
+    'Nome, descrição, categoria e informações comerciais',
+    'Fotos da empresa, produtos ou serviços',
+    'Telefone e botão direto para seu WhatsApp',
+    'Participação nas buscas e filtros do portal',
+    'Participação na vitrine comercial',
+    'Possibilidade de aparecer nos espaços de destaque da rede',
+    'Participação nos espaços comerciais da TV e Rádio Minha Divulgação, conforme programação e critérios da rede',
+    'Divulgação contínua dentro dos espaços disponíveis para anunciantes'
   ];
 
-  const actualFeatures = (features && features.length > 0) ? features : defaultFeatures;
-
   return (
-    <section id="planos" className="w-full py-16 md:py-24 bg-gradient-to-b from-black via-[#08080f] to-black border-b border-white/5 relative overflow-hidden select-none">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-amber-500/5 rounded-full blur-[160px] pointer-events-none" />
-      
+    <section id="planos" className="w-full py-16 md:py-24 bg-gradient-to-b from-black via-[#090912] to-black border-b border-white/5 relative overflow-hidden select-none">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/10 rounded-full blur-[170px] pointer-events-none" />
+
       <div className="w-full max-w-7xl mx-auto px-4 md:px-6 relative z-10">
         
-        <div className="text-center max-w-3xl mx-auto mb-14">
-          <span className="text-amber-400 text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-3.5 py-1.5 rounded-full inline-block mb-3">
-            CONDIÇÃO COMERCIAL
+        {/* Header */}
+        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
+          <span className="text-amber-400 text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
+            ASSINATURA RECORRENTE
           </span>
           <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-            PLANO DE DIVULGAÇÃO
+            UMA ASSINATURA PARA SUA EMPRESA
           </h2>
-          <p className="text-base sm:text-lg text-amber-300/90 font-bold mt-2">
-            Sua empresa presente no Minha Divulgação.
+          <p className="text-base sm:text-lg text-amber-300 font-extrabold mt-3">
+            Presença e divulgação ativa na rede Minha Divulgação.
           </p>
-          <p className="text-sm text-white/60 mt-2 max-w-xl mx-auto">
-            Apresentação comercial organizada, moderna e acessível para o seu negócio ser encontrado por clientes.
+          <p className="text-sm text-white/60 mt-1.5 max-w-xl mx-auto">
+            Sem cadastro gratuito. Um valor justo e transparente para colocar sua marca em evidência.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-5xl mx-auto items-stretch">
-          
-          {/* Main Active Plan Card */}
-          <div className="lg:col-span-8 bg-gradient-to-b from-[#141422] to-[#0c0c16] border-2 border-amber-400 rounded-3xl p-7 sm:p-10 shadow-[0_15px_50px_rgba(245,158,11,0.15)] flex flex-col justify-between relative">
-            <div className="absolute -top-3.5 right-8 bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black text-[10px] sm:text-xs tracking-widest uppercase px-4 py-1.5 rounded-full shadow-lg">
-              PLANO PRINCIPAL
+        {/* Card do Plano */}
+        <div className="max-w-3xl mx-auto">
+          <div className="relative bg-gradient-to-b from-[#151525] via-[#10101b] to-[#0b0b12] border-2 border-amber-400 rounded-3xl p-6 sm:p-10 md:p-12 shadow-[0_20px_60px_rgba(245,158,11,0.2)]">
+            
+            {/* Badge de Destaque */}
+            <div className="absolute -top-3.5 right-6 sm:right-10 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black font-black text-[10px] sm:text-xs tracking-widest uppercase px-4 py-1.5 rounded-full shadow-lg">
+              ASSINATURA COMERCIAL
             </div>
 
-            <div>
-              <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 mb-6 pb-6 border-b border-white/10">
-                <div>
-                  <span className="text-xs font-mono font-black uppercase tracking-wider text-amber-400">
-                    DIVULGAÇÃO COMPLETA
-                  </span>
-                  <h3 className="text-2xl sm:text-3xl font-black text-white mt-1">
-                    Divulgação Minha Divulgação
-                  </h3>
-                </div>
-
-                <div className="text-left sm:text-right">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-sm font-black text-amber-400">R$</span>
-                    <span className="text-4xl sm:text-5xl font-black text-white tracking-tight">
-                      {price || '59,90'}
-                    </span>
-                    <span className="text-xs sm:text-sm font-black text-white/60 uppercase">
-                      / {period || 'MÊS'}
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-white/50 font-mono block mt-1">
-                    Sem fidelidade • Contratação direta
-                  </span>
-                </div>
+            {/* Cabeçalho do Card */}
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-8 border-b border-white/10">
+              <div>
+                <span className="text-xs font-mono font-black uppercase tracking-wider text-amber-400">
+                  PLANO OFICIAL DA REDE
+                </span>
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mt-1">
+                  MINHA DIVULGAÇÃO
+                </h3>
+                <p className="text-xs sm:text-sm text-white/70 mt-1 font-medium">
+                  Acesso completo aos canais e espaços da rede
+                </p>
               </div>
 
-              {/* Features list */}
-              <div className="space-y-3.5 my-6">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-white/50 block mb-3">
-                  Benefícios reais inclusos na sua divulgação:
+              <div className="text-left sm:text-right shrink-0">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-base font-black text-amber-400">R$</span>
+                  <span className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tight">
+                    49,90
+                  </span>
+                  <span className="text-xs sm:text-sm font-black text-white/70 uppercase">
+                    /mês
+                  </span>
+                </div>
+                <span className="text-[11px] text-amber-300 font-mono font-bold block mt-1">
+                  Assinatura mensal • Sem cadastro gratuito
                 </span>
-                {actualFeatures.map((feat, idx) => (
+              </div>
+            </div>
+
+            {/* Lista de Benefícios Reais */}
+            <div className="my-8">
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-white/50 block mb-4">
+                Benefícios reais inclusos na sua assinatura:
+              </span>
+
+              <div className="space-y-3.5">
+                {benefits.map((feat, idx) => (
                   <div key={idx} className="flex items-start gap-3">
                     <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center shrink-0 mt-0.5">
                       <Check size={12} className="stroke-[3]" />
@@ -571,66 +406,25 @@ export const PlanosSection: React.FC<{
               </div>
             </div>
 
-            <div className="mt-8 pt-6 border-t border-white/10">
+            {/* Botão de Contratação */}
+            <div className="pt-6 border-t border-white/10">
               <a
                 href={primaryWaLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_10px_30px_rgba(245,158,11,0.35)] cursor-pointer decoration-transparent hover:scale-[1.02] active:scale-95"
+                className="w-full inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_12px_35px_rgba(245,158,11,0.35)] cursor-pointer decoration-transparent hover:scale-[1.02] active:scale-95"
               >
-                <span>QUERO DIVULGAR MINHA EMPRESA</span>
+                <span>QUERO ENTRAR NA REDE</span>
                 <ArrowRight size={18} />
               </a>
-              <p className="text-center text-[11px] text-white/50 font-mono mt-3">
-                Fale diretamente com nossa equipe comercial no WhatsApp
-              </p>
-            </div>
-          </div>
 
-          {/* Secondary Card (Prepared for future custom plans & packages) */}
-          <div className="lg:col-span-4 bg-gradient-to-b from-[#0e0e16] to-[#08080d] border border-white/10 rounded-3xl p-7 sm:p-8 flex flex-col justify-between">
-            <div>
-              <div className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full text-[10px] font-mono font-bold text-white/60 uppercase mb-4">
-                <span>⚡ ESTRUTURA PREPARADA</span>
-              </div>
-
-              <h4 className="text-lg sm:text-xl font-black text-white leading-snug">
-                Planos Personalizados & Redes
-              </h4>
-
-              <p className="text-xs text-white/70 mt-3 leading-relaxed">
-                Possui mais de uma unidade, franquia ou precisa de um projeto específico de divulgação para sua região?
-              </p>
-
-              <div className="mt-6 space-y-2.5 pt-4 border-t border-white/5 text-xs text-white/70">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 size={14} className="text-amber-400 shrink-0" />
-                  <span>Divulgação para múltiplas unidades</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 size={14} className="text-amber-400 shrink-0" />
-                  <span>Projetos comerciais customizados</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 size={14} className="text-amber-400 shrink-0" />
-                  <span>Atendimento dedicado para empresas</span>
-                </div>
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-4 text-[11px] text-white/50 font-mono text-center sm:text-left">
+                <span>💬 Contratação rápida e direta pelo WhatsApp</span>
+                <span>🔒 Sem taxa de adesão oculta</span>
               </div>
             </div>
 
-            <div className="mt-8 pt-6 border-t border-white/5">
-              <a
-                href={primaryWaLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/15 text-white/90 hover:text-white px-5 py-3.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-300 cursor-pointer decoration-transparent"
-              >
-                <span>Falar com Comercial</span>
-                <ExternalLink size={14} />
-              </a>
-            </div>
           </div>
-
         </div>
 
       </div>
@@ -638,46 +432,228 @@ export const PlanosSection: React.FC<{
   );
 };
 
-// 7. SEÇÃO: ÁUDIO E VÍDEO ("DIVULGAÇÃO COM CONTEÚDO PROFISSIONAL")
-export const AudioVideoSection: React.FC<{ primaryWaLink: string }> = ({ primaryWaLink }) => {
+// ==========================================
+// 5. SEÇÃO: COMO FUNCIONA (5 Passos Simples)
+// ==========================================
+export const ComoFuncionaRedeSection: React.FC = () => {
+  const steps = [
+    {
+      num: '1',
+      title: 'Você solicita sua assinatura',
+      desc: 'Entre em contato pelo WhatsApp e informe os dados iniciais do seu negócio.',
+      badge: 'Contato'
+    },
+    {
+      num: '2',
+      title: 'Nossa equipe recebe seus dados',
+      desc: 'Coletamos nome da empresa, descrição, fotos, categorias, contatos e WhatsApp.',
+      badge: 'Recebimento'
+    },
+    {
+      num: '3',
+      title: 'Sua empresa é cadastrada na rede',
+      desc: 'Criamos a apresentação visual e o perfil comercial dentro da plataforma.',
+      badge: 'Cadastro'
+    },
+    {
+      num: '4',
+      title: 'As informações são organizadas e publicadas',
+      desc: 'Revisamos todos os dados, botões de contato e links para garantir funcionamento perfeito.',
+      badge: 'Publicação'
+    },
+    {
+      num: '5',
+      title: 'Sua empresa passa a participar dos espaços de divulgação disponíveis',
+      desc: 'Sua marca passa a ser exibida nas buscas, destaques, canais e vitrines da rede.',
+      badge: 'Divulgação Ativa'
+    }
+  ];
+
   return (
-    <section id="audio-e-video" className="w-full py-16 md:py-20 bg-[#050508] border-b border-white/5 relative overflow-hidden select-none">
-      <div className="w-full max-w-5xl mx-auto px-4 md:px-6 relative z-10">
+    <section id="como-funciona" className="w-full py-16 md:py-24 bg-[#06060a] border-b border-white/5 relative overflow-hidden select-none">
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 relative z-10">
         
-        <div className="bg-gradient-to-r from-[#0d0d17] via-[#121124] to-[#0d0d17] border border-amber-500/30 rounded-3xl p-7 sm:p-10 md:p-12 shadow-xl flex flex-col md:flex-row items-center justify-between gap-8">
-          
-          <div className="flex-1 text-center md:text-left">
-            <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 px-3.5 py-1.5 rounded-full text-[10px] font-mono font-bold text-amber-400 uppercase tracking-widest mb-4">
-              <Video size={13} />
-              <span>PRODUÇÃO AUDIOVISUAL</span>
-            </div>
-
-            <h3 className="text-xl sm:text-3xl font-black text-white leading-tight">
-              DIVULGAÇÃO COM CONTEÚDO PROFISSIONAL
-            </h3>
-
-            <p className="text-sm text-white/80 mt-3 leading-relaxed max-w-xl font-medium">
-              Sua empresa também poderá contar com materiais de divulgação, como vídeos promocionais e conteúdos produzidos profissionalmente.
-            </p>
-
-            <p className="text-xs text-white/50 mt-2 font-mono">
-              * Espaço preparado para produção audiovisual sob demanda. Consulte opções e disponibilidade com a equipe comercial.
-            </p>
-          </div>
-
-          <div className="shrink-0 w-full md:w-auto">
-            <a
-              href={primaryWaLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full md:w-auto inline-flex items-center justify-center gap-2.5 bg-amber-500/15 hover:bg-amber-500/25 border-2 border-amber-500/40 hover:border-amber-400 text-amber-300 hover:text-amber-200 px-6 py-4 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 shadow-md cursor-pointer decoration-transparent hover:scale-105"
-            >
-              <Video size={16} />
-              <span>CONSULTAR PRODUÇÃO DE VÍDEO</span>
-            </a>
-          </div>
-
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <span className="text-amber-400 text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
+            PROCESSO SIMPLES
+          </span>
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
+            COMO FUNCIONA?
+          </h2>
+          <p className="text-sm sm:text-base text-white/70 mt-3 max-w-2xl mx-auto font-medium">
+            Você não precisa perder tempo configurando ferramentas complexas. Nossa equipe cuida de toda a organização da sua divulgação.
+          </p>
         </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 max-w-6xl mx-auto">
+          {steps.map((st, idx) => (
+            <div 
+              key={idx}
+              className="bg-gradient-to-b from-[#111119] to-[#09090e] border border-white/10 hover:border-amber-500/50 rounded-3xl p-5 sm:p-6 flex flex-col justify-between shadow-xl transition-all duration-300 hover:-translate-y-1 group"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-black font-black text-lg flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                    {st.num}
+                  </span>
+                  <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-amber-400/90 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                    {st.badge}
+                  </span>
+                </div>
+
+                <h3 className="text-sm sm:text-base font-black text-white leading-snug group-hover:text-amber-300 transition-colors">
+                  {st.title}
+                </h3>
+                <p className="text-xs text-white/70 mt-2.5 leading-relaxed">
+                  {st.desc}
+                </p>
+              </div>
+
+              <div className="mt-5 pt-3 border-t border-white/5 text-[10px] font-mono text-white/40">
+                Passo {st.num} de 5
+              </div>
+            </div>
+          ))}
+        </div>
+
+      </div>
+    </section>
+  );
+};
+
+// ==========================================
+// 6. SEÇÃO: FAQ (Perguntas Frequentes)
+// ==========================================
+export const FaqSection: React.FC = () => {
+  const [openIdx, setOpenIdx] = useState<number | null>(0);
+
+  const faqs = [
+    {
+      q: 'O que é o Minha Divulgação?',
+      a: 'O Minha Divulgação é uma rede comercial criada para ajudar empresas a ampliarem sua presença e serem encontradas por pessoas que procuram produtos e serviços.'
+    },
+    {
+      q: 'Quanto custa participar?',
+      a: 'A assinatura oficial da rede custa R$ 49,90 por mês, sem custos ocultos e sem cobrança de comissões sobre as vendas que você realizar.'
+    },
+    {
+      q: 'O pagamento é mensal?',
+      a: 'Sim, a assinatura é recorrente mensal. Você tem total controle sobre sua continuidade, sem contratos de fidelidade que prendam seu negócio.'
+    },
+    {
+      q: 'O que minha empresa recebe?',
+      a: 'Sua empresa recebe presença completa no portal, perfil com fotos e descrição, link direto para seu WhatsApp comercial, inclusão nas buscas e categorias, participação na vitrine comercial e possibilidade de participação nos espaços comerciais da TV e Rádio Minha Divulgação.'
+    },
+    {
+      q: 'Minha empresa pode ser encontrada no portal?',
+      a: 'Sim! Os visitantes podem encontrar sua empresa filtrando por estado, buscando pelo nome do negócio, produtos, ramos de atividade ou navegando diretamente nas categorias comerciais.'
+    },
+    {
+      q: 'Como faço para contratar?',
+      a: 'Basta tocar no botão "QUERO DIVULGAR MINHA EMPRESA" para falar diretamente com nossa equipe no WhatsApp. Nós coletamos as informações da sua empresa e organizamos tudo para você.'
+    },
+    {
+      q: 'Tenho garantia de clientes?',
+      a: 'O Minha Divulgação oferece presença e divulgação dentro da rede. O resultado em vendas depende também da oferta, localização, atendimento, preço e outros fatores de cada empresa. Por isso, não prometemos vendas ou quantidade de clientes.'
+    }
+  ];
+
+  return (
+    <section id="faq" className="w-full py-16 md:py-24 bg-[#050508] border-b border-white/5 relative overflow-hidden select-none">
+      <div className="w-full max-w-4xl mx-auto px-4 md:px-6 relative z-10">
+        
+        <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
+          <span className="text-amber-400 text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
+            TIRA-DÚVIDAS
+          </span>
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
+            PERGUNTAS FREQUENTES
+          </h2>
+          <p className="text-sm sm:text-base text-white/70 mt-3 font-medium">
+            Respostas claras e transparentes sobre o funcionamento da rede Minha Divulgação.
+          </p>
+        </div>
+
+        <div className="space-y-3.5">
+          {faqs.map((faq, idx) => {
+            const isOpen = openIdx === idx;
+            return (
+              <div 
+                key={idx}
+                className="bg-gradient-to-b from-[#11111a] to-[#09090f] border border-white/10 hover:border-amber-500/40 rounded-2xl overflow-hidden transition-all duration-200"
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenIdx(isOpen ? null : idx)}
+                  className="w-full text-left px-5 sm:px-6 py-4 sm:py-5 flex items-center justify-between gap-4 cursor-pointer"
+                >
+                  <span className="text-sm sm:text-base font-extrabold text-white">
+                    {faq.q}
+                  </span>
+                  <span className={`w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center shrink-0 text-amber-400 transition-transform duration-200 ${isOpen ? 'rotate-180 bg-amber-500/15' : ''}`}>
+                    <ChevronDown size={18} />
+                  </span>
+                </button>
+
+                {isOpen && (
+                  <div className="px-5 sm:px-6 pb-5 pt-1 text-xs sm:text-sm text-white/80 leading-relaxed font-medium border-t border-white/5">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+      </div>
+    </section>
+  );
+};
+
+// ==========================================
+// 7. SEÇÃO: CTA FINAL (SUA EMPRESA JÁ ESTÁ NA REDE?)
+// ==========================================
+export const CtaFinalRedeSection: React.FC<{ primaryWaLink: string }> = ({ primaryWaLink }) => {
+  return (
+    <section className="w-full py-16 md:py-24 bg-gradient-to-b from-[#0a0a10] to-black border-b border-white/5 relative overflow-hidden select-none">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-amber-500/10 rounded-full blur-[160px] pointer-events-none" />
+
+      <div className="relative w-full max-w-4xl mx-auto px-4 md:px-6 text-center z-10">
+        
+        <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 text-amber-400 px-4 py-1.5 rounded-full text-xs font-mono font-bold uppercase tracking-widest mb-6">
+          🚀 ENTRAR PARA A REDE
+        </div>
+
+        <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
+          SUA EMPRESA JÁ ESTÁ NA REDE?
+        </h2>
+
+        <p className="text-sm sm:text-base md:text-lg text-white/80 font-medium max-w-2xl mx-auto mt-4 leading-relaxed">
+          Entre para o Minha Divulgação e coloque sua empresa em uma rede criada para ampliar sua presença comercial.
+        </p>
+
+        <div className="mt-4 inline-flex items-baseline gap-2 bg-neutral-900/80 border border-white/10 px-5 py-2.5 rounded-2xl">
+          <span className="text-xs font-mono text-white/60 uppercase">Assinatura:</span>
+          <span className="text-xl sm:text-2xl font-black text-amber-400">R$ 49,90</span>
+          <span className="text-xs text-white/60 uppercase font-mono">/mês</span>
+          <span className="text-[11px] text-white/40 ml-2 hidden sm:inline">• Sem cadastro gratuito</span>
+        </div>
+
+        <div className="mt-8 flex justify-center">
+          <a
+            href={primaryWaLink}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_12px_40px_rgba(245,158,11,0.35)] hover:scale-105 cursor-pointer decoration-transparent"
+          >
+            <span>QUERO DIVULGAR MINHA EMPRESA</span>
+            <ArrowRight size={18} />
+          </a>
+        </div>
+
+        <p className="text-xs text-white/40 font-mono mt-4">
+          Fale diretamente com nossa equipe comercial pelo WhatsApp
+        </p>
 
       </div>
     </section>
