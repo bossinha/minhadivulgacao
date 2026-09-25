@@ -72,6 +72,12 @@ import {
   PlanoPrecoSection, 
   CtaFinalSection 
 } from './components/DivulgacaoCommercialSections';
+import { 
+  ProfessionalSocialLinks, 
+  FacebookIcon, 
+  InstagramIcon, 
+  WhatsAppIcon 
+} from './components/SocialMediaIcons';
 
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -3945,6 +3951,18 @@ function AppContent() {
                 >
                   🚀 QUERO DIVULGAR MINHA EMPRESA
                 </a>
+
+                <div className="flex flex-col items-center gap-2 pt-2 border-t border-white/5">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-white/50 font-bold">
+                    Redes Oficiais Minha Divulgação
+                  </span>
+                  <ProfessionalSocialLinks 
+                    facebookUrl={appData?.siteInfo?.social?.fb || "https://www.facebook.com/profile.php?id=61586484977147"}
+                    instagramUrl={appData?.siteInfo?.social?.ig || "https://www.instagram.com/minhadivulgacaooficial/"}
+                    whatsappUrl={getWaLinkWithReferral(appData?.siteInfo?.social?.wa || "https://wa.me/5585992908713")}
+                    size="sm"
+                  />
+                </div>
               </div>
             </motion.div>
           )}
@@ -5049,10 +5067,16 @@ function AppContent() {
               </p>
 
               {/* Social icons */}
-              <div className="flex gap-3.5 mt-4">
-                <a href={appData?.siteInfo?.social?.fb || "#"} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 hover:border-blue-500 hover:text-blue-500 flex items-center justify-center transition-all text-xs font-black font-mono">FB</a>
-                <a href={appData?.siteInfo?.social?.ig || "#"} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 hover:border-pink-500 hover:text-pink-500 flex items-center justify-center transition-all text-xs font-black font-mono">IG</a>
-                <a href={getWaLinkWithReferral(appData?.siteInfo?.social?.wa || "https://wa.me/5585992908713")} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-xl bg-[#25D366] hover:brightness-110 flex items-center justify-center transition-all text-xs font-black font-mono text-white">WA</a>
+              <div className="flex flex-col gap-2.5 mt-5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-white/50">
+                  Nossas Redes Oficiais
+                </span>
+                <ProfessionalSocialLinks 
+                  facebookUrl={appData?.siteInfo?.social?.fb || "https://www.facebook.com/profile.php?id=61586484977147"}
+                  instagramUrl={appData?.siteInfo?.social?.ig || "https://www.instagram.com/minhadivulgacaooficial/"}
+                  whatsappUrl={getWaLinkWithReferral(appData?.siteInfo?.social?.wa || "https://wa.me/5585992908713")}
+                  size="md"
+                />
               </div>
             </div>
 
@@ -8109,8 +8133,9 @@ function AppContent() {
                             WhatsApp 💬
                           </a>
                           {c.ig && c.ig !== '' && c.ig !== '#' && (
-                            <a href={c.ig} target="_blank" rel="noreferrer" className="chat-result-wa" style={{ flex: 1, background: '#E1306C' }}>
-                              IG 📸
+                            <a href={c.ig} target="_blank" rel="noreferrer" className="chat-result-wa" style={{ flex: 1, background: '#E1306C', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                              <InstagramIcon className="w-3.5 h-3.5" />
+                              <span>Instagram</span>
                             </a>
                           )}
                           {c.website && c.website !== '' && (
@@ -8299,7 +8324,8 @@ function AppContent() {
                           rel="noreferrer"
                           className="inline-flex items-center gap-2 bg-pink-600/10 border border-pink-500/20 text-pink-400 hover:text-white hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-200"
                         >
-                          Instagram Oficial
+                          <InstagramIcon className="w-3.5 h-3.5 shrink-0" />
+                          <span>Instagram Oficial</span>
                         </a>
                       )}
                       {company.website && company.website !== '' && (
