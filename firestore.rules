@@ -70,17 +70,14 @@ service cloud.firestore {
     }
 
     // Dynamic Settings
-    match /settings/universal {
+    match /settings/{settingId} {
       allow read: if true;
-      allow update: if (
-        isAdmin() || 
-        (
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalVisits']) &&
-          request.resource.data.totalVisits is number &&
-          request.resource.data.totalVisits > resource.data.totalVisits
-        )
-      );
-      allow create: if isAdmin();
+      allow write: if true;
+    }
+
+    // Company Views & Real-time Stats
+    match /company_views/{companyId} {
+      allow read, write: if true;
     }
 
     // Reviews Collection

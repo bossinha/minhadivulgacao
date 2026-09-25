@@ -80,6 +80,13 @@ import {
   TelegramIcon,
   YouTubeIcon
 } from './components/SocialMediaIcons';
+import { 
+  CompanyCardViewBadge, 
+  BigRealtimeVisitorCounter, 
+  trackCompanyInteraction, 
+  getCompanyBaseViews,
+  getLocalCompanyExtraViews
+} from './components/RealtimeCounters';
 
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -850,7 +857,7 @@ function AppContent() {
     flyerSpeed: 180, 
     testimonialSpeed: 120, 
     companySpeed: 200, 
-    totalVisits: 0,
+    totalVisits: 9480,
     uploadImageHelpUrl: 'https://postimages.org/',
     uploadVideoHelpUrl: 'https://streamable.com/'
   });
@@ -1311,10 +1318,15 @@ function AppContent() {
           const configRef = doc(db, 'settings', 'universal');
           const snap = await getDoc(configRef);
           if (snap.exists()) {
-            await updateDoc(configRef, { totalVisits: increment(1) });
+            const currentVisits = Number(snap.data()?.totalVisits || 0);
+            if (currentVisits < 9480) {
+              await setDoc(configRef, { totalVisits: 9481 }, { merge: true });
+            } else {
+              await updateDoc(configRef, { totalVisits: increment(1) });
+            }
           } else {
             await setDoc(configRef, { 
-              totalVisits: 1201, 
+              totalVisits: 9481, 
               radioLink: '', 
               logoSpeed: 100, 
               flyerSpeed: 180, 
@@ -1418,7 +1430,7 @@ function AppContent() {
           flyerSpeed: data.flyerSpeed || 180,
           testimonialSpeed: data.testimonialSpeed || 120,
           companySpeed: data.companySpeed || 200,
-          totalVisits: data.totalVisits || 1200,
+          totalVisits: Math.max(Number(data.totalVisits || 0), 9480),
           uploadImageHelpUrl: data.uploadImageHelpUrl || 'https://postimages.org/',
           uploadVideoHelpUrl: data.uploadVideoHelpUrl || 'https://streamable.com/'
         });
@@ -1780,6 +1792,7 @@ function AppContent() {
   };
 
   const handleCompanyPrimaryButtonClick = (company: any) => {
+    trackCompanyInteraction(company, 'catalog');
     setActiveMiniSiteCompany(company);
     const currentUrl = window.location.href;
     const baseUrl = currentUrl.split('?')[0];
@@ -1822,6 +1835,7 @@ function AppContent() {
           href={waUrl} 
           target="_blank" 
           rel="noreferrer"
+          onClick={() => trackCompanyInteraction(company, 'whatsapp')}
           className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-2.5 sm:py-3 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md active:scale-[0.98]"
         >
           <Smartphone size={isCompact ? 12 : 14} className="shrink-0" /> Falar no WhatsApp
@@ -1833,6 +1847,7 @@ function AppContent() {
           href={websiteUrl} 
           target="_blank" 
           rel="noreferrer"
+          onClick={() => trackCompanyInteraction(company, 'website')}
           className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-2.5 sm:py-3 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer active:scale-[0.98]"
         >
           <Globe size={isCompact ? 12 : 14} className="shrink-0" /> Visitar Site Oficial
@@ -1844,6 +1859,7 @@ function AppContent() {
           href={company.ig} 
           target="_blank" 
           rel="noreferrer"
+          onClick={() => trackCompanyInteraction(company, 'instagram')}
           className="w-full bg-[#e1306c] hover:bg-[#d6245d] text-white py-2.5 sm:py-3 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md active:scale-[0.98]"
         >
           <Instagram size={isCompact ? 12 : 14} className="shrink-0" /> Instagram Oficial
@@ -1862,6 +1878,7 @@ function AppContent() {
           href={waUrl} 
           target="_blank" 
           rel="noreferrer"
+          onClick={() => trackCompanyInteraction(company, 'whatsapp')}
           className="flex-1 min-w-0 bg-emerald-500/10 border border-emerald-500/25 hover:bg-[#25D366] hover:border-[#25D366] text-emerald-400 hover:text-white py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all duration-200"
           title="Falar no WhatsApp"
         >
@@ -1880,6 +1897,7 @@ function AppContent() {
           href={company.ig} 
           target="_blank" 
           rel="noreferrer"
+          onClick={() => trackCompanyInteraction(company, 'instagram')}
           className="flex-1 min-w-0 bg-pink-500/10 border border-pink-500/25 hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 hover:border-transparent text-pink-400 hover:text-white py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all duration-200"
           title="Ver Instagram"
         >
@@ -1898,6 +1916,7 @@ function AppContent() {
           href={websiteUrl} 
           target="_blank" 
           rel="noreferrer"
+          onClick={() => trackCompanyInteraction(company, 'website')}
           className="flex-1 min-w-0 bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500 hover:border-amber-500 text-amber-400 hover:text-black py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all duration-200"
           title="Visitar Website"
         >
@@ -4962,9 +4981,13 @@ function AppContent() {
                       </div>
                     )}
                     
-                    <div>
+                    <div 
+                      onClick={() => handleCompanyPrimaryButtonClick(company)}
+                      className="cursor-pointer group/cardinfo"
+                      title={`Clique para ver mais de ${company.name}`}
+                    >
                       {/* Logo Frame */}
-                      <div className="w-20 h-20 rounded-full bg-white border border-white/15 overflow-hidden flex items-center justify-center shadow-lg p-0 mb-5 mt-2">
+                      <div className="w-20 h-20 rounded-full bg-white border border-white/15 overflow-hidden flex items-center justify-center shadow-lg p-0 mb-5 mt-2 transition-transform duration-300 group-hover/cardinfo:scale-105">
                         <img src={company.logo} alt={company.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
                       </div>
 
@@ -4993,12 +5016,10 @@ function AppContent() {
                             📍 {company.city || 'Fortaleza'}{company.state || company.uf ? ` - ${company.state || company.uf}` : ''}
                           </span>
                         )}
-                        <span className="text-[9px] text-white/40 font-bold uppercase tracking-wide bg-white/5 border border-white/10 px-2 py-1 rounded-full select-none flex items-center gap-1 font-mono">
-                          👁️ {company.views || 0}
-                        </span>
+                        <CompanyCardViewBadge company={company} />
                       </div>
 
-                      <h3 className="text-lg font-black text-white mt-4 line-clamp-1 flex items-center gap-1.5">
+                      <h3 className="text-lg font-black text-white mt-4 line-clamp-1 flex items-center gap-1.5 group-hover/cardinfo:text-amber-300 transition-colors">
                         {company.name}
                         {planType === 'verificado' && (
                           <span className="text-emerald-400 text-xs" title="Empresa Verificada">✔</span>
@@ -5048,6 +5069,9 @@ function AppContent() {
 
       {/* 8. CTA FINAL: SUA EMPRESA PODE ESTAR AQUI */}
       <CtaFinalSection primaryWaLink={primaryDivulgarWaLink} />
+
+      {/* CONTADOR GRANDE EM TEMPO REAL (+9 MIL VISITAS) */}
+      <BigRealtimeVisitorCounter />
 
       {/* Footer Section design */}
       <footer className="bg-black border-t border-white/5 pt-16 pb-24 text-white select-none">
@@ -8331,6 +8355,7 @@ function AppContent() {
                           );
                         }
                       })()}
+                      <CompanyCardViewBadge company={company} />
                     </div>
                   </div>
                 </div>
@@ -8353,6 +8378,7 @@ function AppContent() {
                         href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}`} 
                         target="_blank" 
                         rel="noreferrer"
+                        onClick={() => trackCompanyInteraction(company, 'whatsapp')}
                         className="inline-flex items-center gap-2 bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 hover:text-white hover:bg-emerald-600 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-200"
                       >
                         <Smartphone size={14} /> WhatsApp Comercial
@@ -8362,6 +8388,7 @@ function AppContent() {
                           href={company.ig} 
                           target="_blank" 
                           rel="noreferrer"
+                          onClick={() => trackCompanyInteraction(company, 'instagram')}
                           className="inline-flex items-center gap-2 bg-pink-600/10 border border-pink-500/20 text-pink-400 hover:text-white hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-200"
                         >
                           <InstagramIcon className="w-3.5 h-3.5 shrink-0" />
@@ -8373,6 +8400,7 @@ function AppContent() {
                           href={company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`} 
                           target="_blank" 
                           rel="noreferrer"
+                          onClick={() => trackCompanyInteraction(company, 'website')}
                           className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:text-black hover:bg-gradient-to-r hover:from-amber-400 hover:to-amber-500 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-200"
                         >
                           <ExternalLink size={14} /> Website Oficial
@@ -10225,7 +10253,8 @@ function AppContent() {
                     const { score, checklist } = calculateVisibilityScore(currentAdvertiser.company);
                     const currentPlan = getCompanyPlanType(currentAdvertiser.company);
                     const rankInfo = getCompanyCategoryRanking(currentAdvertiser.company, displayedCompanies);
-                    const views = Number(currentAdvertiser.company.views || 0);
+                    const companyKey = String(currentAdvertiser.company.id || currentAdvertiser.company.name || 'empresa').toLowerCase().replace(/\s+/g, '-');
+                    const views = getCompanyBaseViews(currentAdvertiser.company) + getLocalCompanyExtraViews(companyKey);
 
                     return (
                       <div className="flex flex-col gap-6">
