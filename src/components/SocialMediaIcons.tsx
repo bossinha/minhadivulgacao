@@ -18,6 +18,12 @@ export const WhatsAppIcon: React.FC<{ className?: string }> = ({ className = "w-
   </svg>
 );
 
+export const TelegramIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+  </svg>
+);
+
 export const YouTubeIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
@@ -28,6 +34,8 @@ interface SocialLinksProps {
   facebookUrl?: string;
   instagramUrl?: string;
   whatsappUrl?: string;
+  telegramUrl?: string;
+  youtubeUrl?: string;
   showLabels?: boolean;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
@@ -37,6 +45,8 @@ export const ProfessionalSocialLinks: React.FC<SocialLinksProps> = ({
   facebookUrl = "https://www.facebook.com/profile.php?id=61586484977147",
   instagramUrl = "https://www.instagram.com/minhadivulgacaooficial/",
   whatsappUrl = "https://wa.me/5585992908713",
+  telegramUrl = "https://t.me/+5585992908713",
+  youtubeUrl = "https://www.youtube.com/@Minhadivulgacao",
   showLabels = false,
   size = 'md',
   className = ""
@@ -53,8 +63,26 @@ export const ProfessionalSocialLinks: React.FC<SocialLinksProps> = ({
     lg: "w-6 h-6"
   }[size];
 
+  // Helper to normalize Telegram URL from a raw number or username
+  const formatTelegramUrl = (urlOrPhone?: string) => {
+    if (!urlOrPhone) return "";
+    const trimmed = urlOrPhone.trim();
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+      return trimmed;
+    }
+    const cleanDigits = trimmed.replace(/\D/g, "");
+    if (cleanDigits.length >= 8) {
+      const fullNumber = cleanDigits.startsWith("55") ? cleanDigits : `55${cleanDigits}`;
+      return `https://t.me/+${fullNumber}`;
+    }
+    const cleanUsername = trimmed.replace(/^@/, "");
+    return `https://t.me/${cleanUsername}`;
+  };
+
+  const finalTelegramUrl = formatTelegramUrl(telegramUrl);
+
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
+    <div className={`flex flex-wrap items-center gap-2.5 sm:gap-3 ${className}`}>
       {/* Instagram */}
       {instagramUrl && (
         <a
@@ -85,6 +113,40 @@ export const ProfessionalSocialLinks: React.FC<SocialLinksProps> = ({
           <FacebookIcon className={`${iconSizes} transition-transform duration-300 group-hover:scale-110 shrink-0`} />
           {showLabels && (
             <span className="ml-2 font-bold text-xs uppercase tracking-wider">Facebook</span>
+          )}
+        </a>
+      )}
+
+      {/* YouTube */}
+      {youtubeUrl && (
+        <a
+          href={youtubeUrl}
+          target="_blank"
+          rel="noreferrer"
+          title="Canal Oficial no YouTube (@Minhadivulgacao)"
+          aria-label="Canal Oficial no YouTube"
+          className={`group relative flex items-center justify-center ${sizeClasses} bg-red-600/10 border border-red-500/30 hover:border-[#FF0000] hover:bg-[#FF0000] text-red-500 hover:text-white transition-all duration-300 shadow-sm hover:shadow-[0_4px_20px_rgba(255,0,0,0.4)] hover:-translate-y-0.5 active:scale-95`}
+        >
+          <YouTubeIcon className={`${iconSizes} transition-transform duration-300 group-hover:scale-110 shrink-0`} />
+          {showLabels && (
+            <span className="ml-2 font-bold text-xs uppercase tracking-wider">YouTube</span>
+          )}
+        </a>
+      )}
+
+      {/* Telegram */}
+      {finalTelegramUrl && (
+        <a
+          href={finalTelegramUrl}
+          target="_blank"
+          rel="noreferrer"
+          title="Telegram Oficial Minha Divulgação (85 99290-8713)"
+          aria-label="Telegram Oficial"
+          className={`group relative flex items-center justify-center ${sizeClasses} bg-sky-500/10 border border-sky-500/30 hover:border-[#229ED9] hover:bg-[#229ED9] text-sky-400 hover:text-white transition-all duration-300 shadow-sm hover:shadow-[0_4px_20px_rgba(34,158,217,0.4)] hover:-translate-y-0.5 active:scale-95`}
+        >
+          <TelegramIcon className={`${iconSizes} transition-transform duration-300 group-hover:scale-110 shrink-0`} />
+          {showLabels && (
+            <span className="ml-2 font-bold text-xs uppercase tracking-wider">Telegram</span>
           )}
         </a>
       )}

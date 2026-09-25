@@ -76,7 +76,9 @@ import {
   ProfessionalSocialLinks, 
   FacebookIcon, 
   InstagramIcon, 
-  WhatsAppIcon 
+  WhatsAppIcon,
+  TelegramIcon,
+  YouTubeIcon
 } from './components/SocialMediaIcons';
 
 import { auth, db, googleProvider } from './lib/firebase';
@@ -303,7 +305,9 @@ const DEFAULT_DATA = {
     social: {
       fb: "https://www.facebook.com/profile.php?id=61586484977147",
       ig: "https://www.instagram.com/minhadivulgacaooficial/",
-      wa: "https://wa.me/5585992908713"
+      wa: "https://wa.me/5585992908713",
+      tg: "https://t.me/+5585992908713",
+      yt: "https://www.youtube.com/@Minhadivulgacao"
     }
   },
   sections: {
@@ -3959,6 +3963,8 @@ function AppContent() {
                   <ProfessionalSocialLinks 
                     facebookUrl={appData?.siteInfo?.social?.fb || "https://www.facebook.com/profile.php?id=61586484977147"}
                     instagramUrl={appData?.siteInfo?.social?.ig || "https://www.instagram.com/minhadivulgacaooficial/"}
+                    youtubeUrl={appData?.siteInfo?.social?.yt || "https://www.youtube.com/@Minhadivulgacao"}
+                    telegramUrl={appData?.siteInfo?.social?.tg || "https://t.me/+5585992908713"}
                     whatsappUrl={getWaLinkWithReferral(appData?.siteInfo?.social?.wa || "https://wa.me/5585992908713")}
                     size="sm"
                   />
@@ -5074,6 +5080,8 @@ function AppContent() {
                 <ProfessionalSocialLinks 
                   facebookUrl={appData?.siteInfo?.social?.fb || "https://www.facebook.com/profile.php?id=61586484977147"}
                   instagramUrl={appData?.siteInfo?.social?.ig || "https://www.instagram.com/minhadivulgacaooficial/"}
+                  youtubeUrl={appData?.siteInfo?.social?.yt || "https://www.youtube.com/@Minhadivulgacao"}
+                  telegramUrl={appData?.siteInfo?.social?.tg || "https://t.me/+5585992908713"}
                   whatsappUrl={getWaLinkWithReferral(appData?.siteInfo?.social?.wa || "https://wa.me/5585992908713")}
                   size="md"
                 />
@@ -5460,6 +5468,38 @@ function AppContent() {
                             setAppData(prev => {
                               if (!prev) return prev;
                               return { ...prev, siteInfo: { ...prev.siteInfo, social: { ...prev.siteInfo.social, fb: val } } };
+                            });
+                          }} 
+                        />
+                      </div>
+                      <div className="dev-form-group">
+                        <label>YouTube (Canal Oficial)</label>
+                        <input 
+                          type="text" 
+                          className="dev-input" 
+                          value={appData.siteInfo.social.yt || "https://www.youtube.com/@Minhadivulgacao"} 
+                          placeholder="https://www.youtube.com/@Minhadivulgacao"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAppData(prev => {
+                              if (!prev) return prev;
+                              return { ...prev, siteInfo: { ...prev.siteInfo, social: { ...prev.siteInfo.social, yt: val } } };
+                            });
+                          }} 
+                        />
+                      </div>
+                      <div className="dev-form-group">
+                        <label>Telegram (Link ou Telefone: 85992908713)</label>
+                        <input 
+                          type="text" 
+                          className="dev-input" 
+                          value={appData.siteInfo.social.tg || "https://t.me/+5585992908713"} 
+                          placeholder="https://t.me/+5585992908713"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAppData(prev => {
+                              if (!prev) return prev;
+                              return { ...prev, siteInfo: { ...prev.siteInfo, social: { ...prev.siteInfo.social, tg: val } } };
                             });
                           }} 
                         />
