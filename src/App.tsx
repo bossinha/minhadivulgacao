@@ -89,6 +89,7 @@ import {
   getLocalCompanyExtraViews
 } from './components/RealtimeCounters';
 import { SelfServiceTrialModal, OFFICIAL_PIX_DATA } from './components/SelfServiceTrialModal';
+import { CompanyRegistrationModal } from './components/CompanyRegistrationModal';
 
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -1061,6 +1062,7 @@ function AppContent() {
     state: 'CE',
     city: 'Fortaleza'
   });
+  const [isCompanyRegModalOpen, setIsCompanyRegModalOpen] = useState(false);
   const [isTrialPreviewOpen, setIsTrialPreviewOpen] = useState(false);
   const [trialPreviewData, setTrialPreviewData] = useState<any | null>(null);
   const [adminAdvertiserFilter, setAdminAdvertiserFilter] = useState<'todos' | 'pendentes' | 'aprovados'>('todos');
@@ -1123,47 +1125,11 @@ function AppContent() {
     scriptTag.text = JSON.stringify(schemaData);
   }, [appData]);
 
-  // Auto login effect for advertisers on refresh
+  // Clients do not use logins or passwords - portal cards are managed exclusively by the admin
   useEffect(() => {
-    const savedEmail = localStorage.getItem('ad_email');
-    const savedPass = localStorage.getItem('ad_password');
-    if (savedEmail && savedPass && !currentAdvertiser) {
-      const autoLogin = async () => {
-        try {
-          const q = query(collection(db, 'advertisers'), where('email', '==', savedEmail.toLowerCase().trim()));
-          const snap = await getDocs(q);
-          if (!snap.empty) {
-            const adDoc = snap.docs[0];
-            const docData = adDoc.data();
-            if (docData.password === savedPass) {
-              if (docData.isBlocked || docData.company?.isBlocked) {
-                localStorage.removeItem('ad_email');
-                localStorage.removeItem('ad_password');
-                alert("Sua conta foi bloqueada pelo administrador.");
-                return;
-              }
-              setCurrentAdvertiser({
-                id: adDoc.id,
-                ...docData
-              });
-            } else {
-              localStorage.removeItem('ad_email');
-              localStorage.removeItem('ad_password');
-            }
-          } else {
-            localStorage.removeItem('ad_email');
-            localStorage.removeItem('ad_password');
-          }
-        } catch (err) {
-          console.error("Auto-login failed:", err);
-        } finally {
-          setIsAutoLoggingIn(false);
-        }
-      };
-      autoLogin();
-    } else {
-      setIsAutoLoggingIn(false);
-    }
+    localStorage.removeItem('ad_email');
+    localStorage.removeItem('ad_password');
+    setIsAutoLoggingIn(false);
   }, []);
 
   // --- Item Detail & Reviews States ---
@@ -3911,8 +3877,7 @@ function AppContent() {
             <button 
               type="button"
               onClick={() => {
-                setAdLoginMode('register');
-                setIsAdPortalOpen(true);
+                setIsCompanyRegModalOpen(true);
               }}
               className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-300 shadow shadow-amber-500/20 cursor-pointer flex items-center gap-1.5 hover:scale-105"
             >
@@ -3935,8 +3900,7 @@ function AppContent() {
             <button 
               type="button"
               onClick={() => {
-                setAdLoginMode('register');
-                setIsAdPortalOpen(true);
+                setIsCompanyRegModalOpen(true);
               }}
               className="bg-gradient-to-r from-amber-400 to-amber-500 text-black px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-wide cursor-pointer shrink-0"
             >
@@ -3985,8 +3949,7 @@ function AppContent() {
                   type="button"
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    setAdLoginMode('register');
-                    setIsAdPortalOpen(true);
+                    setIsCompanyRegModalOpen(true);
                   }}
                   className="w-full text-center bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-black px-5 py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-widest block cursor-pointer shadow-lg hover:brightness-110 transition-all"
                 >
@@ -4055,8 +4018,7 @@ function AppContent() {
             <button 
               type="button"
               onClick={() => {
-                setAdLoginMode('register');
-                setIsAdPortalOpen(true);
+                setIsCompanyRegModalOpen(true);
               }}
               className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black hover:scale-105 hover:shadow-[0_0_35px_rgba(245,158,11,0.45)] px-8 sm:px-10 py-4 sm:py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider text-center transition-all duration-300 shadow-2xl flex items-center justify-center gap-3 cursor-pointer w-full sm:w-auto shrink-0"
             >
@@ -5097,8 +5059,7 @@ function AppContent() {
       <PlanoPrecoSection 
         primaryWaLink={primaryDivulgarWaLink} 
         onCadastrarClick={() => {
-          setAdLoginMode('register');
-          setIsAdPortalOpen(true);
+          setIsCompanyRegModalOpen(true);
         }}
       />
 
@@ -5106,8 +5067,7 @@ function AppContent() {
       <CtaFinalSection 
         primaryWaLink={primaryDivulgarWaLink} 
         onCadastrarClick={() => {
-          setAdLoginMode('register');
-          setIsAdPortalOpen(true);
+          setIsCompanyRegModalOpen(true);
         }}
       />
 
@@ -9816,470 +9776,25 @@ function AppContent() {
                   <p className="text-[10px] text-white/40 mt-1">Acessando seu painel de forma segura</p>
                 </div>
               ) : !currentAdvertiser ? (
-                <div className="w-full max-w-md mx-auto py-8">
-                  {/* Mode Selector */}
-                  {!hideAdvertiserAuth ? (
-                    <div className="flex gap-4 p-1 bg-white/5 rounded-2xl mb-8">
-                      <button 
-                        onClick={() => setAdLoginMode('login')}
-                        className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-200 ${adLoginMode === 'login' ? 'bg-[var(--primary)] text-black' : 'text-white hover:bg-white/5'}`}
-                      >
-                        Acessar Meu Painel
-                      </button>
-                      <button 
-                        onClick={() => setAdLoginMode('register')}
-                        className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-200 ${adLoginMode === 'register' ? 'bg-[var(--primary)] text-black' : 'text-white hover:bg-white/5'}`}
-                      >
-                        Cadastrar Negócio
-                      </button>
-                    </div>
-                  ) : (
-                    // If hideAdvertiserAuth is true, show a clean header or notice
-                    <div className="text-center mb-6">
-                      <span className="text-[10px] font-bold text-amber-500 tracking-[0.2em] uppercase font-mono">PORTAL DO ANUNCIANTE</span>
-                    </div>
-                  )}
-
-                  {/* Mode 1: Advertiser Login Form */}
-                  {adLoginMode === 'login' || hideAdvertiserAuth ? (
-                    <div className="flex flex-col gap-4">
-                      <div>
-                        <h2 className="text-xl font-extrabold text-white tracking-tight flex items-center gap-2">
-                          🗝️ Login do Anunciante
-                        </h2>
-                        <p className="text-xs text-white/50 mt-1">Gerencie seu perfil, catálogo e pedidos de forma profissional.</p>
-                      </div>
-
-                      <div className="flex flex-col gap-1.5 mt-2">
-                        <label className="text-[10px] text-white/50 uppercase tracking-widest font-black">E-mail Cadastrado</label>
-                        <input 
-                          type="email"
-                          placeholder="Informe seu email"
-                          value={adLoginForm.email}
-                          onChange={(e) => setAdLoginForm(prev => ({ ...prev, email: e.target.value }))}
-                          className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3.5 text-xs text-white"
-                        />
-                      </div>
-
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] text-white/50 uppercase tracking-widest font-black">Senha</label>
-                        <input 
-                          type="password"
-                          placeholder="Digite sua senha cadastrada"
-                          value={adLoginForm.password}
-                          onChange={(e) => setAdLoginForm(prev => ({ ...prev, password: e.target.value }))}
-                          onKeyDown={async (e) => {
-                            if (e.key === 'Enter') {
-                              // Trigger login
-                              const email = adLoginForm.email.toLowerCase().trim();
-                              const pass = adLoginForm.password;
-                              if (!email || !pass) return;
-                              setIsAdLoading(true);
-                              try {
-                                const q = query(collection(db, 'advertisers'), where('email', '==', email));
-                                const snap = await getDocs(q);
-                                if (snap.empty) {
-                                  alert("Nenhum anunciante cadastrado com este e-mail.");
-                                  return;
-                                }
-                                const adDoc = snap.docs[0];
-                                const docData = adDoc.data();
-                                if (docData.password === pass) {
-                                  if (docData.isBlocked || docData.company?.isBlocked) {
-                                    alert("Esta conta foi bloqueada pelo administrador.");
-                                    return;
-                                  }
-                                  localStorage.setItem('ad_email', email);
-                                  localStorage.setItem('ad_password', pass);
-                                  setCurrentAdvertiser({
-                                    id: adDoc.id,
-                                    ...docData
-                                  });
-                                  alert("Login realizado com sucesso! Bem-vindo!");
-                                } else {
-                                  alert("Senha incorreta. Tente novamente.");
-                                }
-                              } catch (err) {
-                                console.error(err);
-                                alert("Erro ao tentar fazer login.");
-                              } finally {
-                                setIsAdLoading(false);
-                              }
-                            }
-                          }}
-                          className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3.5 text-xs text-white"
-                        />
-                      </div>
-
-                      <button 
-                        onClick={async () => {
-                          const email = adLoginForm.email.toLowerCase().trim();
-                          const pass = adLoginForm.password;
-                          if (!email || !pass) {
-                            alert("Preencha todos os campos.");
-                            return;
-                          }
-                          setIsAdLoading(true);
-                          try {
-                            const q = query(collection(db, 'advertisers'), where('email', '==', email));
-                            const snap = await getDocs(q);
-                            if (snap.empty) {
-                              alert("Nenhum anunciante cadastrado com este e-mail.");
-                              return;
-                            }
-                            const adDoc = snap.docs[0];
-                            const docData = adDoc.data();
-                            if (docData.password === pass) {
-                              if (docData.isBlocked || docData.company?.isBlocked) {
-                                alert("Esta conta foi bloqueada pelo administrador.");
-                                return;
-                              }
-                              localStorage.setItem('ad_email', email);
-                              localStorage.setItem('ad_password', pass);
-                              setCurrentAdvertiser({
-                                id: adDoc.id,
-                                ...docData
-                              });
-                              alert("Login realizado com sucesso! Bem-vindo!");
-                            } else {
-                              alert("Senha incorreta. Tente novamente.");
-                            }
-                          } catch (err) {
-                            console.error(err);
-                            alert("Erro ao tentar fazer login.");
-                          } finally {
-                            setIsAdLoading(false);
-                          }
-                        }}
-                        disabled={isAdLoading}
-                        className="w-full bg-[var(--primary)] hover:brightness-110 text-black py-4 rounded-xl font-bold text-xs uppercase tracking-widest text-center transition-all duration-200 mt-2 flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:shadow-yellow-500/10"
-                      >
-                        {isAdLoading ? "Carregando..." : "Entrar no Meu Painel"}
-                      </button>
-                    </div>
-                  ) : (
-                    // Mode 2: Advertiser Registration Form
-                    <div className="flex flex-col gap-4">
-                      <div>
-                        <h2 className="text-xl font-extrabold text-white tracking-tight flex items-center gap-2">
-                          🚀 Anuncie e Destaque Sua Empresa no Portal
-                        </h2>
-                        <p className="text-xs text-white/50 mt-1">Sua empresa será listada automaticamente de forma profissional e interativa.</p>
-                        <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-xl p-3.5 text-[11px] text-emerald-300 mt-3 font-medium leading-relaxed">
-                          ⚡ <strong>Presença Comercial Garantida:</strong> Sua empresa será divulgada na vitrine oficial da cidade para milhares de potenciais clientes todos os dias!
-                        </div>
-
-                        {/* Video Tutorial Box */}
-                        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mt-4 overflow-hidden flex flex-col gap-3">
-                          <div className="flex items-center gap-2 text-white font-semibold text-xs tracking-wide uppercase">
-                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                            🎥 Vídeo Tutorial: Passo a Passo do Cadastro
-                          </div>
-                          <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black/60 border border-white/10">
-                            <iframe 
-                              className="absolute top-0 left-0 w-full h-full"
-                              src="https://www.youtube.com/embed/ksjH0BOP8Kw" 
-                              title="Tutorial de Cadastro"
-                              frameBorder="0"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                              allowFullScreen
-                            ></iframe>
-                          </div>
-                          <p className="text-[10px] text-white/40 leading-relaxed">
-                            Assista ao vídeo de 1 minuto acima para aprender a preencher corretamente o cadastro e publicar seu mini-site instantaneamente!
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] text-white/50 uppercase font-black">Seu E-mail de Usuário</label>
-                          <input 
-                            type="email"
-                            placeholder="email@link.com"
-                            value={adRegisterForm.email}
-                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, email: e.target.value }))}
-                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] text-white/50 uppercase font-black">Sua Senha de Acesso</label>
-                          <input 
-                            type="password"
-                            placeholder="Crie uma senha forte"
-                            value={adRegisterForm.password}
-                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, password: e.target.value }))}
-                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] text-white/50 uppercase font-black">Nome do Estabelecimento / Comercial</label>
-                          <input 
-                            type="text"
-                            placeholder="Ex: Mercadinho Brasil"
-                            value={adRegisterForm.name}
-                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, name: e.target.value }))}
-                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] text-white/50 uppercase font-black">WhatsApp Comercial (com DDD)</label>
-                          <input 
-                            type="text"
-                            placeholder="5585992900000"
-                            value={adRegisterForm.wa}
-                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, wa: e.target.value }))}
-                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] text-white/50 uppercase font-black">Categoria Comercial</label>
-                          <select 
-                            value={(appData?.categories || []).some((cat: any) => cat.name === adRegisterForm.category) ? adRegisterForm.category : "__custom__"}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val === "__custom__") {
-                                setAdRegisterForm(prev => ({ ...prev, category: '' }));
-                              } else {
-                                setAdRegisterForm(prev => ({ ...prev, category: val }));
-                              }
-                            }}
-                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
-                          >
-                            {(appData?.categories || []).map((cat: any) => (
-                              <option key={cat.name} value={cat.name}>{cat.name}</option>
-                            ))}
-                            <option value="__custom__">✍️ Outro (Digitar nicho personalizado...)</option>
-                          </select>
-                          
-                          {! (appData?.categories || []).some((cat: any) => cat.name === adRegisterForm.category) && (
-                            <div className="flex flex-col gap-1.5 mt-2">
-                              <label className="text-[9px] text-[var(--primary)] uppercase font-black">Escreva o Nome do seu Nicho *</label>
-                              <input 
-                                type="text"
-                                value={adRegisterForm.category}
-                                onChange={(e) => setAdRegisterForm(prev => ({ ...prev, category: e.target.value }))}
-                                placeholder="Ex: Pizzaria, Fretes, Ar Condicionado, Informática..."
-                                className="w-full bg-[#11111a] border border-[var(--primary)]/50 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
-                                required
-                              />
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] text-white/50 uppercase font-black">Estilo do seu Mini-Site</label>
-                          <select 
-                            value={adRegisterForm.type}
-                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, type: e.target.value }))}
-                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
-                          >
-                            <option value="loja">🛍️ Loja Virtual (Produtos com preço e carrinho)</option>
-                            <option value="cardapio">🍔 Cardápio / Lanchonete (Itens alimentícios e pedidos)</option>
-                            <option value="servico">🛠️ Prestador de Serviços (Listado de serviços, fotos, botão orçamentos)</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-1.5">
-                          <div className="flex justify-between items-center">
-                            <label className="text-[10px] text-white/50 uppercase font-black">Link da Logo (Opcional)</label>
-                            <DirectFileUploadButton 
-                              label="📷 Escolher do Celular" 
-                              onUploadSuccess={(url) => setAdRegisterForm(prev => ({ ...prev, logo: url }))} 
-                            />
-                          </div>
-                          <input 
-                            type="text"
-                            placeholder="Cole a URL ou selecione uma foto do celular acima"
-                            value={adRegisterForm.logo}
-                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, logo: e.target.value }))}
-                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] text-white/50 uppercase font-black">Perfil do Instagram (Opcional)</label>
-                          <input 
-                            type="text"
-                            placeholder="https://instagram.com/seu_perfil"
-                            value={adRegisterForm.ig}
-                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, ig: e.target.value }))}
-                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] text-white/50 uppercase font-black">Site Oficial / Loja Online (Opcional)</label>
-                          <input 
-                            type="text"
-                            placeholder="https://suaempresa.com.br"
-                            value={adRegisterForm.website}
-                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, website: e.target.value }))}
-                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] text-white/50 uppercase font-black">Estado (UF) *</label>
-                          <select 
-                            value={adRegisterForm.state}
-                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, state: e.target.value }))}
-                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
-                            required
-                          >
-                            <option value="">Selecione o Estado</option>
-                            {BRAZIL_STATES.map(st => (
-                              <option key={st.uf} value={st.uf}>{st.uf} - {st.name}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] text-white/50 uppercase font-black">Cidade *</label>
-                          <input 
-                            type="text"
-                            placeholder="Ex: Fortaleza, São Paulo..."
-                            value={adRegisterForm.city}
-                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, city: e.target.value }))}
-                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
-                            required
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] text-white/50 uppercase font-black">Período de Teste Gratuito</label>
-                          <div className="w-full bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 text-xs text-amber-300 font-bold flex items-center gap-2">
-                            <span>⏳ Prévia de 24 horas liberada</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] text-white/50 uppercase font-black">Descrição Curta do Negócio</label>
-                        <textarea 
-                          placeholder="Ex: Oferecemos o melhor da moda e confecções na região com descontos exclusivos e promoções todos os dias."
-                          rows={2}
-                          value={adRegisterForm.desc}
-                          onChange={(e) => setAdRegisterForm(prev => ({ ...prev, desc: e.target.value }))}
-                          className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white resize-none"
-                        />
-                      </div>
-
-                      <button 
-                        onClick={async () => {
-                          const { email, password, name, wa, category, type, logo, ig, website, desc, state, city } = adRegisterForm;
-                          if (!email || !password || !name || !wa || !category || !state || !city) {
-                            alert("Por favor, preencha todos os campos obrigatórios (E-mail, Senha, Nome da Empresa, WhatsApp com DDD, Nicho/Categoria, Estado e Cidade).");
-                            return;
-                          }
-                          
-                          setIsAdLoading(true);
-                          try {
-                            const activeSlug = slugify(name);
-                            const advertiserRef = doc(db, 'advertisers', activeSlug);
-                            
-                            // Check uniqueness
-                            const checkRef = await getDoc(advertiserRef);
-                            if (checkRef.exists()) {
-                              alert("Já existe uma empresa cadastrada com este nome comercial. Escolha um nome exclusivo.");
-                              setIsAdLoading(false);
-                              return;
-                            }
-                            
-                            const creationDate = new Date();
-                            const trialDays = 20;
-                            const expiryDate = new Date(creationDate.getTime() + (trialDays * 24 * 60 * 60 * 1000));
-                            const expiresAtStr = expiryDate.toISOString().split('T')[0];
-                            const createdAtStr = creationDate.toISOString();
-
-                            const newCompany = {
-                              id: activeSlug,
-                              name: name.trim(),
-                              category: category.trim(),
-                              desc: desc.trim() || 'Sem descrição cadastrada.',
-                              logo: logo.trim() || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150',
-                              wa: wa.replace(/[^0-9]/g, ''),
-                              ig: ig.trim() || '#',
-                              website: (website || '').trim(),
-                              type: type,
-                              state: state.toUpperCase(),
-                              uf: state.toUpperCase(),
-                              city: city.trim(),
-                              items: [],
-                              featured: false,
-                              active: false,
-                              status: 'pending',
-                              pixPaid: false,
-                              expiresAt: expiresAtStr,
-                              createdAt: createdAtStr
-                            };
-                            
-                            // Save to collection
-                            await setDoc(advertiserRef, {
-                              email: email.toLowerCase().trim(),
-                              password: password,
-                              tenantId: slugify(tenantId || 'fortaleza'),
-                              status: 'pending',
-                              pixPaid: false,
-                              expiresAt: expiresAtStr,
-                              createdAt: createdAtStr,
-                              company: newCompany
-                            });
-                            
-                            localStorage.setItem('ad_email', email);
-                            localStorage.setItem('ad_password', password);
-                            
-                            const createdAdvertiser = {
-                              id: activeSlug,
-                              email: email.toLowerCase().trim(),
-                              password: password,
-                              tenantId: slugify(tenantId || 'fortaleza'),
-                              status: 'pending',
-                              pixPaid: false,
-                              expiresAt: expiresAtStr,
-                              createdAt: createdAtStr,
-                              company: newCompany
-                            };
-
-                            // Load to active advertiser
-                            setCurrentAdvertiser(createdAdvertiser);
-                            
-                            // Refresh dynamic list
-                            await fetchAdvertisers(tenantId || 'fortaleza');
-
-                            // Open 24h preview & PIX modal immediately!
-                            setTrialPreviewData(createdAdvertiser);
-                            setIsTrialPreviewOpen(true);
-
-                            alert("Sua empresa foi cadastrada com sucesso! Abrimos a prévia de 24h com os dados do PIX (R$ 49,90) para liberação definitiva.");
-                          } catch (err) {
-                            console.error("Cadastro falhou:", err);
-                            alert("Erro ao tentar cadastrar seu negócio. Verifique os campos e tente novamente.");
-                          } finally {
-                            setIsAdLoading(false);
-                          }
-                        }}
-                        disabled={isAdLoading}
-                        className="w-full bg-[#25D366] hover:brightness-110 text-white py-4 rounded-xl font-bold text-xs uppercase tracking-widest text-center transition-all duration-200 mt-2 cursor-pointer shadow-lg shadow-emerald-500/10"
-                      >
-                        {isAdLoading ? "Salvando informações..." : "Completar Cadastro & Ver Prévia 24h"}
-                      </button>
-                    </div>
-                  )}
+                <div className="w-full max-w-md mx-auto py-12 text-center flex flex-col items-center">
+                  <div className="w-16 h-16 rounded-3xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center text-3xl mb-4 shadow-xl">
+                    🚀
+                  </div>
+                  <h3 className="text-xl font-black text-white">Cadastre Seu Negócio no Portal</h3>
+                  <p className="text-xs text-white/60 mt-2 leading-relaxed max-w-sm">
+                    Cadastro direto e simplificado. Sem necessidade de inventar ou guardar senhas. Você preenche os dados e confere a prévia do seu card em tempo real!
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAdPortalOpen(false);
+                      setIsCompanyRegModalOpen(true);
+                    }}
+                    className="mt-6 w-full bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-black font-black text-xs uppercase tracking-wider py-4 rounded-xl shadow-xl hover:brightness-110 cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <span>🚀 Abrir Formulário de Cadastro</span>
+                    <ArrowRight size={16} />
+                  </button>
                 </div>
               ) : (
                 // SECTION B: IF AUTHENTICATED SHOW ADVERTISER DASHBOARD
@@ -13207,6 +12722,22 @@ function AppContent() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* MODAL DE CADASTRO SIMPLIFICADO DIRETO (SEM LOGIN / SEM SENHA) COM PRÉVIA AO VIVO */}
+      <CompanyRegistrationModal 
+        isOpen={isCompanyRegModalOpen}
+        onClose={() => setIsCompanyRegModalOpen(false)}
+        categories={appData?.categories || CATEGORIES || []}
+        defaultCity={appData?.siteInfo?.city || 'Fortaleza'}
+        defaultState={appData?.siteInfo?.state || 'CE'}
+        tenantId={tenantId || 'fortaleza'}
+        onSuccess={async (advertiserDoc) => {
+          setIsCompanyRegModalOpen(false);
+          await fetchAdvertisers(tenantId || 'fortaleza');
+          setTrialPreviewData(advertiserDoc);
+          setIsTrialPreviewOpen(true);
+        }}
+      />
 
       {/* MODAL DE PRÉVIA DE 24H E PAGAMENTO PIX OFICIAL (R$ 49,90) */}
       <SelfServiceTrialModal 
