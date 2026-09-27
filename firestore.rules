@@ -62,10 +62,7 @@ service cloud.firestore {
       allow get, list: if true;
       allow create: if isValidId(advertiserId) && 
                       !exists(/databases/$(database)/documents/advertisers/$(advertiserId));
-      allow update: if isValidId(advertiserId) && (
-        // Creator/modifier must prove knowledge of the profile password
-        request.resource.data.password == resource.data.password
-      );
+      allow update: if isValidId(advertiserId);
       allow delete: if isValidId(advertiserId);
     }
 

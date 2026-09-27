@@ -66,6 +66,22 @@
         "createdAt": { "type": "string" }
       },
       "required": ["companyId", "itemId", "rating", "author"]
+    },
+    "Advertiser": {
+      "title": "Advertiser",
+      "description": "Self-registered company/advertiser profile",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "password": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "status": { "type": "string" },
+        "pixPaid": { "type": "boolean" },
+        "expiresAt": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "company": { "type": "object" }
+      },
+      "required": ["email", "password", "company"]
     }
   },
   "firestore": {
@@ -76,6 +92,10 @@
     "/tenants/{tenantId}/affiliates/{affiliateId}": {
       "schema": "Affiliate",
       "description": "Affiliates for a specific tenant"
+    },
+    "/advertisers/{advertiserId}": {
+      "schema": "Advertiser",
+      "description": "Self-service registered advertisers awaiting or approved with Pix"
     },
     "/settings/universal": {
       "schema": "GlobalConfig",

@@ -61,7 +61,8 @@ import {
   Instagram,
   RefreshCw,
   Wifi,
-  ArrowRight
+  ArrowRight,
+  ShieldCheck
 } from 'lucide-react';
 
 import { 
@@ -87,6 +88,7 @@ import {
   getCompanyBaseViews,
   getLocalCompanyExtraViews
 } from './components/RealtimeCounters';
+import { SelfServiceTrialModal, OFFICIAL_PIX_DATA } from './components/SelfServiceTrialModal';
 
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -708,6 +710,8 @@ function AppContent() {
             id: d.company.id || docDoc.id,
             email: d.email,
             password: d.password,
+            status: d.status || d.company.status || (d.company.hasPlan ? 'approved' : 'pending'),
+            pixPaid: d.pixPaid || d.company.pixPaid || false,
             expiresAt: d.expiresAt || d.company.expiresAt || '',
             createdAt: d.createdAt || d.company.createdAt || '',
             isAdvertiserCreated: true
@@ -1048,14 +1052,18 @@ function AppContent() {
     password: '',
     name: '',
     wa: '5585',
-    category: 'Supermercado',
+    category: '',
     type: 'loja',
     desc: '',
     logo: '',
     ig: '',
+    website: '',
     state: 'CE',
     city: 'Fortaleza'
   });
+  const [isTrialPreviewOpen, setIsTrialPreviewOpen] = useState(false);
+  const [trialPreviewData, setTrialPreviewData] = useState<any | null>(null);
+  const [adminAdvertiserFilter, setAdminAdvertiserFilter] = useState<'todos' | 'pendentes' | 'aprovados'>('todos');
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
   const [itemForm, setItemForm] = useState({
     name: '',
@@ -1070,8 +1078,9 @@ function AppContent() {
     colors: '',
     options: ''
   });
-  const [adDashboardTab, setAdDashboardTab] = useState<'metricas' | 'perfil' | 'catalogo' | 'plano'>(() => {
-    return (localStorage.getItem('adDashboardTab') as any) || 'metricas';
+  const [adDashboardTab, setAdDashboardTab] = useState<'anuncio' | 'metricas' | 'pix' | 'admin_editar'>(() => {
+    const saved = localStorage.getItem('adDashboardTab');
+    return (saved === 'metricas' || saved === 'pix' || saved === 'admin_editar') ? (saved as any) : 'anuncio';
   });
 
   // Persistence and State Preservation for the Advertiser Portal
@@ -2232,6 +2241,9 @@ function AppContent() {
     advertiserCompanies.forEach((ad: any) => {
       // Check if advertiser is blocked
       if (ad.isBlocked) return;
+
+      // Pending self-service registration waiting for PIX approval from admin
+      if (ad.status === 'pending') return;
 
       // Check if advertiser trial has expired
       const isExpired = ad.expiresAt && !ad.hasPlan && ad.expiresAt < new Date().toISOString().split('T')[0];
@@ -3896,14 +3908,16 @@ function AppContent() {
               <MessageSquare size={13} className="text-amber-400" />
               <span>Atendimento Online</span>
             </a>
-            <a 
-              href={primaryDivulgarWaLink}
-              target="_blank"
-              rel="noreferrer"
-              className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-300 shadow shadow-amber-500/20 cursor-pointer flex items-center gap-1.5 decoration-transparent hover:scale-105"
+            <button 
+              type="button"
+              onClick={() => {
+                setAdLoginMode('register');
+                setIsAdPortalOpen(true);
+              }}
+              className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-300 shadow shadow-amber-500/20 cursor-pointer flex items-center gap-1.5 hover:scale-105"
             >
-              🚀 Quero Divulgar Minha Empresa
-            </a>
+              🚀 Cadastrar Minha Empresa
+            </button>
           </div>
 
           {/* Mobile Menu Trigger & Quick Actions */}
@@ -3918,14 +3932,16 @@ function AppContent() {
               <MessageSquare size={11} className="text-amber-400" />
               <span>Dúvidas</span>
             </a>
-            <a 
-              href={primaryDivulgarWaLink}
-              target="_blank"
-              rel="noreferrer"
-              className="bg-gradient-to-r from-amber-400 to-amber-500 text-black px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-wide cursor-pointer shrink-0 decoration-transparent"
+            <button 
+              type="button"
+              onClick={() => {
+                setAdLoginMode('register');
+                setIsAdPortalOpen(true);
+              }}
+              className="bg-gradient-to-r from-amber-400 to-amber-500 text-black px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-wide cursor-pointer shrink-0"
             >
-              🚀 Divulgar
-            </a>
+              🚀 Cadastrar
+            </button>
             <button 
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -3965,15 +3981,17 @@ function AppContent() {
                     Horário Comercial: Seg a Sex 08:00 às 20:00 • Sáb: 09:00 às 14:00
                   </span>
                 </a>
-                <a 
-                  href={primaryDivulgarWaLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full text-center bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-black px-5 py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-widest block cursor-pointer decoration-transparent shadow-lg"
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setAdLoginMode('register');
+                    setIsAdPortalOpen(true);
+                  }}
+                  className="w-full text-center bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-black px-5 py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-widest block cursor-pointer shadow-lg hover:brightness-110 transition-all"
                 >
-                  🚀 QUERO DIVULGAR MINHA EMPRESA
-                </a>
+                  🚀 CADASTRAR MINHA EMPRESA (PRÉVIA 24H)
+                </button>
 
                 <div className="flex flex-col items-center gap-2 pt-2 border-t border-white/5">
                   <span className="text-[10px] font-mono uppercase tracking-widest text-white/50 font-bold">
@@ -4033,20 +4051,31 @@ function AppContent() {
           </p>
 
           {/* Botão principal grande & frase pequena */}
-          <div className="flex flex-col items-center justify-center gap-2 mt-6 w-full sm:w-auto relative z-20">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6 w-full sm:w-auto relative z-20">
+            <button 
+              type="button"
+              onClick={() => {
+                setAdLoginMode('register');
+                setIsAdPortalOpen(true);
+              }}
+              className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black hover:scale-105 hover:shadow-[0_0_35px_rgba(245,158,11,0.45)] px-8 sm:px-10 py-4 sm:py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider text-center transition-all duration-300 shadow-2xl flex items-center justify-center gap-3 cursor-pointer w-full sm:w-auto shrink-0"
+            >
+              <span>🚀 CADASTRAR MINHA EMPRESA (PRÉVIA 24H)</span>
+              <ArrowRight size={18} />
+            </button>
             <a 
-              href="https://wa.me/5585992862177?text=Ol%C3%A1!%20Gostaria%20de%20divulgar%20minha%20empresa%20no%20Minha%20Divulga%C3%A7%C3%A3o."
+              href="https://wa.me/5585992908713?text=Ol%C3%A1!%20Gostaria%20de%20tirar%20d%C3%BAvidas%20sobre%20como%20divulgar%20minha%20empresa%20no%20Minha%20Divulga%C3%A7%C3%A3o."
               target="_blank"
               rel="noreferrer"
-              className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black hover:scale-105 hover:shadow-[0_0_35px_rgba(245,158,11,0.45)] px-8 sm:px-12 py-4 sm:py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider text-center transition-all duration-300 shadow-2xl flex items-center justify-center gap-3 cursor-pointer w-full sm:w-auto shrink-0 decoration-transparent"
+              className="bg-white/10 hover:bg-white/15 border border-white/20 text-white px-6 sm:px-8 py-4 sm:py-5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider text-center transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto shrink-0 decoration-transparent"
             >
-              <span>QUERO DIVULGAR MINHA EMPRESA</span>
-              <ArrowRight size={18} />
+              <Smartphone size={16} className="text-emerald-400" />
+              <span>Dúvidas no WhatsApp</span>
             </a>
-            <p className="text-[11px] sm:text-xs text-white/60 font-mono select-none">
-              Cadastro feito pela nossa equipe.
-            </p>
           </div>
+          <p className="text-[11px] sm:text-xs text-white/60 font-mono mt-2 select-none">
+            Cadastro instantâneo com prévia de 24 horas • PIX R$ 49,90/mês
+          </p>
 
           {/* Segmentos de empresas atendidas */}
           <SegmentsShowcase />
@@ -5065,10 +5094,22 @@ function AppContent() {
       </section>
 
       {/* 7. SEÇÃO DE PREÇO: SUA EMPRESA NA REDE (R$ 49,90/mês) */}
-      <PlanoPrecoSection primaryWaLink={primaryDivulgarWaLink} />
+      <PlanoPrecoSection 
+        primaryWaLink={primaryDivulgarWaLink} 
+        onCadastrarClick={() => {
+          setAdLoginMode('register');
+          setIsAdPortalOpen(true);
+        }}
+      />
 
       {/* 8. CTA FINAL: SUA EMPRESA PODE ESTAR AQUI */}
-      <CtaFinalSection primaryWaLink={primaryDivulgarWaLink} />
+      <CtaFinalSection 
+        primaryWaLink={primaryDivulgarWaLink} 
+        onCadastrarClick={() => {
+          setAdLoginMode('register');
+          setIsAdPortalOpen(true);
+        }}
+      />
 
       {/* CONTADOR GRANDE EM TEMPO REAL (+9 MIL VISITAS) */}
       <BigRealtimeVisitorCounter />
@@ -6251,9 +6292,69 @@ function AppContent() {
                         🔄 Atualizar Lista
                       </button>
                     </div>
-                    <p style={{ color: '#aaa', fontSize: '12px', marginBottom: '20px' }}>
-                      Aqui você controla quais anunciantes criaram conta no portal e ativa o <strong>Destaque</strong> ou <strong>Plano VIP</strong> (que concede produtos ilimitados) para eles.
+                    <p style={{ color: '#aaa', fontSize: '12px', marginBottom: '15px' }}>
+                      Aqui você controla quais anunciantes criaram conta no portal, <strong>libera o cadastro após confirmação do Pix</strong>, e ativa <strong>Destaque VIP</strong> ou <strong>Patrocinado Top 1</strong> para eles.
                     </p>
+
+                    {/* Filter buttons: Todos / Pendentes de Ativação / Aprovados */}
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => setAdminAdvertiserFilter('todos')}
+                        style={{
+                          background: adminAdvertiserFilter === 'todos' ? 'var(--primary)' : '#1a1c26',
+                          color: adminAdvertiserFilter === 'todos' ? '#000' : '#fff',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          padding: '7px 14px',
+                          borderRadius: '8px',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Todos ({advertiserCompanies.length})
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setAdminAdvertiserFilter('pendentes')}
+                        style={{
+                          background: adminAdvertiserFilter === 'pendentes' ? '#f59e0b' : '#1a1c26',
+                          color: adminAdvertiserFilter === 'pendentes' ? '#000' : '#f59e0b',
+                          border: '1px solid rgba(245,158,11,0.3)',
+                          padding: '7px 14px',
+                          borderRadius: '8px',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <span>⏳ Aguardando Pix / Liberação</span>
+                        <span style={{ background: '#000', color: '#f59e0b', padding: '1px 6px', borderRadius: '10px', fontSize: '10px' }}>
+                          {advertiserCompanies.filter((a: any) => a.status === 'pending').length}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setAdminAdvertiserFilter('aprovados')}
+                        style={{
+                          background: adminAdvertiserFilter === 'aprovados' ? '#10b981' : '#1a1c26',
+                          color: adminAdvertiserFilter === 'aprovados' ? '#000' : '#10b981',
+                          border: '1px solid rgba(16,185,129,0.3)',
+                          padding: '7px 14px',
+                          borderRadius: '8px',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ✅ Aprovados & Ativos ({advertiserCompanies.filter((a: any) => a.status !== 'pending').length})
+                      </button>
+                    </div>
                     
                     {isAdLoading ? (
                       <div style={{ padding: '20px', textAlign: 'center', color: 'var(--primary)' }}>Carregando anunciantes...</div>
@@ -6263,10 +6364,17 @@ function AppContent() {
                       </div>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {advertiserCompanies.map((ad: any, idx: number) => {
+                        {advertiserCompanies
+                          .filter((ad: any) => {
+                            if (adminAdvertiserFilter === 'pendentes') return ad.status === 'pending';
+                            if (adminAdvertiserFilter === 'aprovados') return ad.status !== 'pending';
+                            return true;
+                          })
+                          .map((ad: any, idx: number) => {
                           const itemsCount = ad.items?.length || 0;
+                          const isPending = ad.status === 'pending';
                           return (
-                            <div key={ad.id || idx} style={{ background: '#11111a', padding: '18px', borderRadius: '16px', border: ad.hasPlan ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+                            <div key={ad.id || idx} style={{ background: '#11111a', padding: '18px', borderRadius: '16px', border: isPending ? '2px solid #f59e0b' : ad.hasPlan ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
                                 <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
                                   <div style={{ width: '48px', height: '48px', borderRadius: '10px', overflow: 'hidden', background: '#222', border: '1px solid rgba(255,255,255,0.1)' }}>
@@ -6275,6 +6383,15 @@ function AppContent() {
                                   <div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                                       <h4 style={{ margin: 0, fontWeight: 900, fontSize: '14px', color: '#fff' }}>{ad.name}</h4>
+                                      {isPending ? (
+                                        <span style={{ color: '#000', background: '#f59e0b', fontSize: '9px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                                          ⏳ Aguardando Pix (Prévia 24h)
+                                        </span>
+                                      ) : (
+                                        <span style={{ color: '#fff', background: '#10b981', fontSize: '9px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                                          ✅ Publicado na Página Principal
+                                        </span>
+                                      )}
                                       {ad.isBlocked && (
                                         <span style={{ color: '#fff', background: '#ef4444', fontSize: '9px', fontWeight: 'bold', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
                                           🚫 Bloqueado
@@ -6289,7 +6406,76 @@ function AppContent() {
                                     </span>
                                   </div>
                                 </div>
-                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                  {/* BOTÃO LIBERAR / APROVAR PIX */}
+                                  {isPending ? (
+                                    <button 
+                                      className="dev-btn"
+                                      style={{ background: '#10b981', color: '#fff', border: 'none', fontSize: '11px', padding: '7px 14px', cursor: 'pointer', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '5px', boxShadow: '0 0 15px rgba(16,185,129,0.3)' }}
+                                      onClick={async () => {
+                                        if (confirm(`Confirma o pagamento do PIX e deseja LIBERAR a empresa "${ad.name}" na página principal agora?`)) {
+                                          setIsAdLoading(true);
+                                          try {
+                                            const docRef = doc(db, 'advertisers', ad.id);
+                                            await updateDoc(docRef, {
+                                              status: 'approved',
+                                              pixPaid: true,
+                                              'company.status': 'approved',
+                                              'company.pixPaid': true,
+                                              'company.active': true
+                                            });
+                                            await fetchAdvertisers(tenantId || 'fortaleza');
+                                            alert(`✅ Sucesso! "${ad.name}" foi liberada e agora aparece na página principal do portal!`);
+                                          } catch(ee) {
+                                            console.error(ee);
+                                            alert("Falha ao liberar empresa.");
+                                          } finally {
+                                            setIsAdLoading(false);
+                                          }
+                                        }
+                                      }}
+                                    >
+                                      ✅ Confirmar Pix & Liberar na Home
+                                    </button>
+                                  ) : (
+                                    <button 
+                                      className="dev-btn"
+                                      style={{ background: '#374151', color: '#fcd34d', border: 'none', fontSize: '10px', padding: '5px 10px', cursor: 'pointer', fontWeight: 'bold' }}
+                                      onClick={async () => {
+                                        if (confirm(`Deseja retornar "${ad.name}" para status de PENDENTE (retirar da página principal)?`)) {
+                                          setIsAdLoading(true);
+                                          try {
+                                            const docRef = doc(db, 'advertisers', ad.id);
+                                            await updateDoc(docRef, {
+                                              status: 'pending',
+                                              'company.status': 'pending'
+                                            });
+                                            await fetchAdvertisers(tenantId || 'fortaleza');
+                                            alert(`Empresa "${ad.name}" alterada para status Pendente.`);
+                                          } catch(ee) {
+                                            console.error(ee);
+                                          } finally {
+                                            setIsAdLoading(false);
+                                          }
+                                        }
+                                      }}
+                                    >
+                                      ↩️ Suspender para Pendente
+                                    </button>
+                                  )}
+
+                                  {/* Botão Ver Prévia / Dados do Pix */}
+                                  <button
+                                    className="dev-btn"
+                                    style={{ background: '#f59e0b', color: '#000', border: 'none', fontSize: '11px', padding: '6px 12px', cursor: 'pointer', fontWeight: 'bold' }}
+                                    onClick={() => {
+                                      setTrialPreviewData({ company: ad, status: ad.status });
+                                      setIsTrialPreviewOpen(true);
+                                    }}
+                                  >
+                                    👁️ Ver Prévia & Pix
+                                  </button>
+
                                   <button 
                                     className="dev-btn"
                                     style={{ background: 'var(--primary)', color: 'black', border: 'none', fontSize: '11px', padding: '6px 12px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}
@@ -6315,7 +6501,7 @@ function AppContent() {
                                       alert(`Entrando no painel de "${ad.name}" como Administrador. Você pode fazer alterações no perfil, catálogo e produtos!`);
                                     }}
                                   >
-                                    👁️ Ver / Editar Loja
+                                    ✏️ Editar Loja
                                   </button>
 
                                   <button 
@@ -9935,6 +10121,17 @@ function AppContent() {
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase font-black">Site Oficial / Loja Online (Opcional)</label>
+                          <input 
+                            type="text"
+                            placeholder="https://suaempresa.com.br"
+                            value={adRegisterForm.website}
+                            onChange={(e) => setAdRegisterForm(prev => ({ ...prev, website: e.target.value }))}
+                            className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
                           <label className="text-[10px] text-white/50 uppercase font-black">Estado (UF) *</label>
                           <select 
                             value={adRegisterForm.state}
@@ -9948,7 +10145,9 @@ function AppContent() {
                             ))}
                           </select>
                         </div>
+                      </div>
 
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1.5">
                           <label className="text-[10px] text-white/50 uppercase font-black">Cidade *</label>
                           <input 
@@ -9959,6 +10158,13 @@ function AppContent() {
                             className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
                             required
                           />
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-white/50 uppercase font-black">Período de Teste Gratuito</label>
+                          <div className="w-full bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 text-xs text-amber-300 font-bold flex items-center gap-2">
+                            <span>⏳ Prévia de 24 horas liberada</span>
+                          </div>
                         </div>
                       </div>
 
@@ -9975,9 +10181,9 @@ function AppContent() {
 
                       <button 
                         onClick={async () => {
-                          const { email, password, name, wa, category, type, logo, ig, desc, state, city } = adRegisterForm;
-                          if (!email || !password || !name || !wa || !state || !city) {
-                            alert("Por favor, preencha todos os campos obrigatórios (E-mail, Senha, Nome da Empresa, WhatsApp, Estado e Cidade).");
+                          const { email, password, name, wa, category, type, logo, ig, website, desc, state, city } = adRegisterForm;
+                          if (!email || !password || !name || !wa || !category || !state || !city) {
+                            alert("Por favor, preencha todos os campos obrigatórios (E-mail, Senha, Nome da Empresa, WhatsApp com DDD, Nicho/Categoria, Estado e Cidade).");
                             return;
                           }
                           
@@ -10003,18 +10209,21 @@ function AppContent() {
                             const newCompany = {
                               id: activeSlug,
                               name: name.trim(),
-                              category: category,
+                              category: category.trim(),
                               desc: desc.trim() || 'Sem descrição cadastrada.',
                               logo: logo.trim() || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150',
                               wa: wa.replace(/[^0-9]/g, ''),
                               ig: ig.trim() || '#',
+                              website: (website || '').trim(),
                               type: type,
                               state: state.toUpperCase(),
                               uf: state.toUpperCase(),
                               city: city.trim(),
                               items: [],
                               featured: false,
-                              active: true,
+                              active: false,
+                              status: 'pending',
+                              pixPaid: false,
                               expiresAt: expiresAtStr,
                               createdAt: createdAtStr
                             };
@@ -10024,6 +10233,8 @@ function AppContent() {
                               email: email.toLowerCase().trim(),
                               password: password,
                               tenantId: slugify(tenantId || 'fortaleza'),
+                              status: 'pending',
+                              pixPaid: false,
                               expiresAt: expiresAtStr,
                               createdAt: createdAtStr,
                               company: newCompany
@@ -10032,20 +10243,29 @@ function AppContent() {
                             localStorage.setItem('ad_email', email);
                             localStorage.setItem('ad_password', password);
                             
-                            // Load to active advertiser
-                            setCurrentAdvertiser({
+                            const createdAdvertiser = {
                               id: activeSlug,
                               email: email.toLowerCase().trim(),
                               password: password,
                               tenantId: slugify(tenantId || 'fortaleza'),
+                              status: 'pending',
+                              pixPaid: false,
                               expiresAt: expiresAtStr,
                               createdAt: createdAtStr,
                               company: newCompany
-                            });
+                            };
+
+                            // Load to active advertiser
+                            setCurrentAdvertiser(createdAdvertiser);
                             
                             // Refresh dynamic list
                             await fetchAdvertisers(tenantId || 'fortaleza');
-                            alert("Sua empresa foi cadastrada com total sucesso e já está publicada online no portal!");
+
+                            // Open 24h preview & PIX modal immediately!
+                            setTrialPreviewData(createdAdvertiser);
+                            setIsTrialPreviewOpen(true);
+
+                            alert("Sua empresa foi cadastrada com sucesso! Abrimos a prévia de 24h com os dados do PIX (R$ 49,90) para liberação definitiva.");
                           } catch (err) {
                             console.error("Cadastro falhou:", err);
                             alert("Erro ao tentar cadastrar seu negócio. Verifique os campos e tente novamente.");
@@ -10056,7 +10276,7 @@ function AppContent() {
                         disabled={isAdLoading}
                         className="w-full bg-[#25D366] hover:brightness-110 text-white py-4 rounded-xl font-bold text-xs uppercase tracking-widest text-center transition-all duration-200 mt-2 cursor-pointer shadow-lg shadow-emerald-500/10"
                       >
-                        {isAdLoading ? "Salvando informações..." : "Completar Cadastro & Publicar"}
+                        {isAdLoading ? "Salvando informações..." : "Completar Cadastro & Ver Prévia 24h"}
                       </button>
                     </div>
                   )}
@@ -10065,45 +10285,91 @@ function AppContent() {
                 // SECTION B: IF AUTHENTICATED SHOW ADVERTISER DASHBOARD
                 <div className="flex flex-col gap-6">
                   {/* Registration Confirmation Banner & Public Preview Link */}
-                  <div className="bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-emerald-500/15 border-2 border-emerald-500/40 rounded-2xl p-5 md:p-6 shadow-[0_0_30px_rgba(16,185,129,0.15)] flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 text-left">
-                      <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-black flex items-center justify-center text-2xl font-black shrink-0 shadow-lg">
-                        🎉
+                  {currentAdvertiser?.status === 'pending' ? (
+                    <div className="bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-amber-500/20 border-2 border-amber-500/50 rounded-2xl p-5 md:p-6 shadow-[0_0_35px_rgba(245,158,11,0.2)] flex flex-col md:flex-row items-center justify-between gap-4">
+                      <div className="flex items-center gap-4 text-left">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-500 text-black flex items-center justify-center text-2xl font-black shrink-0 shadow-lg">
+                          ⏳
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-base sm:text-lg font-black text-white leading-snug">
+                              Cadastro Concluído! Modo Prévia 24h Ativo
+                            </h3>
+                            <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase px-2 py-0.5 rounded-full">
+                              Aguardando Pix
+                            </span>
+                          </div>
+                          <p className="text-xs text-white/80 mt-1 font-medium leading-relaxed">
+                            Sua empresa está salva e pronta no sistema. Realize o pagamento de <strong className="text-amber-300">R$ 49,90 via PIX</strong> para liberação imediata na página principal do portal comercial!
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="text-base sm:text-lg font-black text-white leading-snug">
-                          Sua empresa já está publicada e visível para milhares de clientes!
-                        </h3>
-                        <p className="text-xs text-white/70 mt-1 font-medium">
-                          Seu perfil comercial e botão de WhatsApp estão ativos no guia da sua cidade.
-                        </p>
+                      
+                      <div className="flex flex-wrap items-center gap-3 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTrialPreviewData(currentAdvertiser);
+                            setIsTrialPreviewOpen(true);
+                          }}
+                          className="bg-amber-500 hover:bg-amber-400 text-black px-5 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-amber-500/20 cursor-pointer flex items-center gap-2"
+                        >
+                          💳 Ver Pix & Prévia (R$ 49,90)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsAdPortalOpen(false);
+                            setActiveMiniSiteCompany(currentAdvertiser.company);
+                          }}
+                          className="bg-white/10 hover:bg-white/20 text-white border border-white/15 px-4 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer"
+                        >
+                          👁️ Ver Mini-Site
+                        </button>
                       </div>
                     </div>
-                    
-                    <div className="flex flex-wrap items-center gap-3 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsAdPortalOpen(false);
-                          setActiveMiniSiteCompany(currentAdvertiser.company);
-                        }}
-                        className="bg-emerald-500 hover:bg-emerald-400 text-black px-5 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-lg cursor-pointer"
-                      >
-                        👁️ Ver Perfil Público
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const shareUrl = `${window.location.origin}/#/${tenantId || 'fortaleza'}?id=${currentAdvertiser.company.id || slugify(currentAdvertiser.company.name)}`;
-                          navigator.clipboard.writeText(shareUrl);
-                          alert("Link do seu perfil comercial copiado!");
-                        }}
-                        className="bg-white/10 hover:bg-white/20 text-white border border-white/10 px-4 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer"
-                      >
-                        🔗 Copiar Link
-                      </button>
+                  ) : (
+                    <div className="bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-emerald-500/15 border-2 border-emerald-500/40 rounded-2xl p-5 md:p-6 shadow-[0_0_30px_rgba(16,185,129,0.15)] flex flex-col md:flex-row items-center justify-between gap-4">
+                      <div className="flex items-center gap-4 text-left">
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-black flex items-center justify-center text-2xl font-black shrink-0 shadow-lg">
+                          🎉
+                        </div>
+                        <div>
+                          <h3 className="text-base sm:text-lg font-black text-white leading-snug">
+                            Sua empresa já está publicada e visível para milhares de clientes!
+                          </h3>
+                          <p className="text-xs text-white/70 mt-1 font-medium">
+                            Seu perfil comercial e botão de WhatsApp estão ativos no guia da sua cidade.
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-wrap items-center gap-3 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsAdPortalOpen(false);
+                            setActiveMiniSiteCompany(currentAdvertiser.company);
+                          }}
+                          className="bg-emerald-500 hover:bg-emerald-400 text-black px-5 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-lg cursor-pointer"
+                        >
+                          👁️ Ver Perfil Público
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const shareUrl = `${window.location.origin}/#/${tenantId || 'fortaleza'}?id=${currentAdvertiser.company.id || slugify(currentAdvertiser.company.name)}`;
+                            navigator.clipboard.writeText(shareUrl);
+                            alert("Link do seu perfil comercial copiado!");
+                          }}
+                          className="bg-white/10 hover:bg-white/20 text-white border border-white/10 px-4 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer"
+                        >
+                          🔗 Copiar Link
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Dashboard Header Bar */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-5 mt-4">
@@ -10116,7 +10382,7 @@ function AppContent() {
                           </span>
                         )}
                       </h2>
-                      <p className="text-xs text-white/50">Edite seu perfil e seus serviços de forma independente, as atualizações são automáticas!</p>
+                      <p className="text-xs text-white/50">Central de visualização e métricas do seu anúncio comercial na rede Minha Divulgação.</p>
                     </div>
                     <button 
                       onClick={() => {
@@ -10223,30 +10489,285 @@ function AppContent() {
                   {/* Tabs Nav */}
                   <div className="flex gap-2 border-b border-white/5 pb-1 overflow-x-auto">
                     <button 
+                      onClick={() => { setAdDashboardTab('anuncio'); setEditingItemIndex(null); }}
+                      className={`text-xs font-black uppercase tracking-wider pb-3 px-3 transition-all border-b-2 hover:text-white shrink-0 cursor-pointer ${adDashboardTab === 'anuncio' ? 'border-amber-400 text-amber-400 font-extrabold' : 'border-transparent text-white/50'}`}
+                    >
+                      📋 Dados do Meu Anúncio & Status
+                    </button>
+                    <button 
                       onClick={() => { setAdDashboardTab('metricas'); setEditingItemIndex(null); }}
-                      className={`text-xs font-black uppercase tracking-wider pb-3 px-3 transition-all border-b-2 hover:text-white shrink-0 cursor-pointer ${adDashboardTab === 'metricas' ? 'border-[var(--primary)] text-white' : 'border-transparent text-white/40'}`}
+                      className={`text-xs font-black uppercase tracking-wider pb-3 px-3 transition-all border-b-2 hover:text-white shrink-0 cursor-pointer ${adDashboardTab === 'metricas' ? 'border-amber-400 text-amber-400 font-extrabold' : 'border-transparent text-white/50'}`}
                     >
-                      📊 Métricas & Visibilidade
+                      📊 Métricas de Visitas & WhatsApp
                     </button>
                     <button 
-                      onClick={() => { setAdDashboardTab('perfil'); setEditingItemIndex(null); }}
-                      className={`text-xs font-black uppercase tracking-wider pb-3 px-3 transition-all border-b-2 hover:text-white shrink-0 cursor-pointer ${adDashboardTab === 'perfil' ? 'border-[var(--primary)] text-white' : 'border-transparent text-white/40'}`}
+                      onClick={() => { setAdDashboardTab('pix'); setEditingItemIndex(null); }}
+                      className={`text-xs font-black uppercase tracking-wider pb-3 px-3 transition-all border-b-2 hover:text-white shrink-0 cursor-pointer ${adDashboardTab === 'pix' ? 'border-amber-400 text-amber-400 font-extrabold' : 'border-transparent text-white/50'}`}
                     >
-                      ⚙️ Perfil & Dados
+                      💳 Pagamento Pix & Ativação (R$ 49,90)
                     </button>
-                    <button 
-                      onClick={() => { setAdDashboardTab('catalogo'); setEditingItemIndex(null); }}
-                      className={`text-xs font-black uppercase tracking-wider pb-3 px-3 transition-all border-b-2 hover:text-white shrink-0 cursor-pointer ${adDashboardTab === 'catalogo' ? 'border-[var(--primary)] text-white' : 'border-transparent text-white/40'}`}
-                    >
-                      📦 Produtos & Serviços ({currentAdvertiser.company.items?.length || 0})
-                    </button>
-                    <button 
-                      onClick={() => { setAdDashboardTab('plano'); setEditingItemIndex(null); }}
-                      className={`text-xs font-black uppercase tracking-wider pb-3 px-3 transition-all border-b-2 hover:text-white shrink-0 cursor-pointer ${adDashboardTab === 'plano' ? 'border-[var(--primary)] text-white' : 'border-transparent text-white/40'}`}
-                    >
-                      💎 Meu Plano & Benefícios
-                    </button>
+                    {user?.isAdmin && (
+                      <button 
+                        onClick={() => { setAdDashboardTab('admin_editar'); setEditingItemIndex(null); }}
+                        className={`text-xs font-black uppercase tracking-wider pb-3 px-3 transition-all border-b-2 hover:text-white shrink-0 cursor-pointer ${adDashboardTab === 'admin_editar' ? 'border-red-400 text-red-400 font-extrabold' : 'border-transparent text-white/50'}`}
+                      >
+                        ⚙️ Edição Total (Admin)
+                      </button>
+                    )}
                   </div>
+
+                  {/* Tab: Dados do Meu Anúncio & Status (Modo Somente Leitura) */}
+                  {adDashboardTab === 'anuncio' && (() => {
+                    const company = currentAdvertiser.company || {};
+                    const isPending = currentAdvertiser.status === 'pending';
+                    const cleanCompanyWa = String(company.wa || '').replace(/[^0-9]/g, '');
+                    const adminWa = String(appData?.pricing?.waLink || '5585992908713').replace(/[^0-9]/g, '') || '5585992908713';
+                    const displayCategory = company.category || 'Comércio';
+                    const displayCity = company.city || 'Fortaleza';
+                    const displayState = company.state || company.uf || 'CE';
+                    const daysLeft = calculateDaysLeft(currentAdvertiser.expiresAt);
+
+                    return (
+                      <div className="flex flex-col gap-6">
+                        
+                        {/* Official Status Card */}
+                        <div className={`p-6 rounded-3xl border-2 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 shadow-2xl relative overflow-hidden ${
+                          isPending 
+                            ? 'bg-gradient-to-r from-amber-950/60 via-[#181308] to-amber-950/60 border-amber-500/50 shadow-amber-500/10' 
+                            : 'bg-gradient-to-r from-emerald-950/60 via-[#0a1811] to-emerald-950/60 border-emerald-500/50 shadow-emerald-500/10'
+                        }`}>
+                          <div className="flex items-center gap-4">
+                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl font-black shrink-0 shadow-lg ${
+                              isPending ? 'bg-amber-500 text-black' : 'bg-emerald-500 text-black'
+                            }`}>
+                              {isPending ? '⏳' : '✅'}
+                            </div>
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className={`text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full ${
+                                  isPending ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                                }`}>
+                                  {isPending ? 'Modo Prévia de 24h Ativo • Aguardando Pix' : 'Anúncio Ativo & Publicado no Guia Oficial'}
+                                </span>
+                                {daysLeft !== null && !isPending && (
+                                  <span className="text-[11px] text-white/60 font-mono">
+                                    {daysLeft > 0 ? `Renovação em ${daysLeft} dias` : 'Vencimento hoje'}
+                                  </span>
+                                )}
+                              </div>
+                              <h3 className="text-xl sm:text-2xl font-black text-white mt-1.5">
+                                {isPending ? 'Sua empresa está salva e aguarda confirmação do PIX' : 'Sua empresa está no ar gerando contatos direto pro seu WhatsApp!'}
+                              </h3>
+                              <p className="text-xs text-white/70 mt-1 max-w-2xl leading-relaxed">
+                                {isPending 
+                                  ? 'Você pode visualizar a prévia do seu anúncio no portal. Realize o pagamento de R$ 49,90 via PIX para liberação na página principal.' 
+                                  : 'Seu perfil comercial e botão de atendimento WhatsApp estão ativos para milhares de clientes na cidade.'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-3 shrink-0">
+                            {isPending ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setTrialPreviewData(currentAdvertiser);
+                                  setIsTrialPreviewOpen(true);
+                                }}
+                                className="bg-amber-500 hover:bg-amber-400 text-black px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-amber-500/20 cursor-pointer flex items-center gap-2 hover:scale-105"
+                              >
+                                💳 Ver Dados do Pix (R$ 49,90)
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsAdPortalOpen(false);
+                                  setActiveMiniSiteCompany(currentAdvertiser.company);
+                                }}
+                                className="bg-emerald-500 hover:bg-emerald-400 text-black px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-lg cursor-pointer flex items-center gap-2 hover:scale-105"
+                              >
+                                👁️ Ver Meu Perfil no Guia
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Official Registered Company Card (Read-Only) */}
+                        <div className="bg-[#0f111c] border border-white/10 rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col gap-6">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
+                            <div className="flex items-center gap-4">
+                              <div className="w-20 h-20 rounded-2xl bg-white/10 border-2 border-amber-500/40 overflow-hidden flex items-center justify-center shrink-0 shadow-lg">
+                                <img 
+                                  src={company.logo || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150"} 
+                                  alt={company.name} 
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150"; }}
+                                />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h3 className="text-xl sm:text-2xl font-black text-white">{company.name}</h3>
+                                  <span className="text-emerald-400 font-bold text-sm">✔ Verificado</span>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2 mt-1">
+                                  <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-md">
+                                    {displayCategory}
+                                  </span>
+                                  <span className="text-xs text-white/60">
+                                    📍 {displayCity} - {displayState}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsAdPortalOpen(false);
+                                  setActiveMiniSiteCompany(currentAdvertiser.company);
+                                }}
+                                className="bg-white/10 hover:bg-white/20 text-white border border-white/15 px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5"
+                              >
+                                👁️ Visualizar Perfil
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const shareUrl = `${window.location.origin}/#/${tenantId || 'fortaleza'}?id=${company.id || slugify(company.name)}`;
+                                  navigator.clipboard.writeText(shareUrl);
+                                  alert("Link do seu perfil comercial copiado!");
+                                }}
+                                className="bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5"
+                              >
+                                🔗 Copiar Link
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Detailed Info Grid */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            
+                            {/* WhatsApp Card */}
+                            <div className="bg-[#141624] border border-white/10 rounded-2xl p-4 flex flex-col justify-between">
+                              <div>
+                                <span className="text-[10px] font-mono font-bold text-white/50 uppercase tracking-widest block mb-1">
+                                  WhatsApp Comercial de Atendimento
+                                </span>
+                                <div className="text-base font-black text-white font-mono flex items-center gap-2">
+                                  <span>📱</span> {company.wa || 'Não informado'}
+                                </div>
+                                <p className="text-[11px] text-white/60 mt-1">Todos os botões do anúncio direcionam clientes direto para este número.</p>
+                              </div>
+                              {cleanCompanyWa && (
+                                <a
+                                  href={`https://wa.me/${cleanCompanyWa}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="mt-3 bg-[#25D366]/15 hover:bg-[#25D366] text-[#25D366] hover:text-white border border-[#25D366]/30 py-2 px-3 rounded-xl text-xs font-bold uppercase text-center transition-all decoration-transparent flex items-center justify-center gap-1.5"
+                                >
+                                  <span>📲 Testar Atendimento</span>
+                                </a>
+                              )}
+                            </div>
+
+                            {/* Nicho & Localização */}
+                            <div className="bg-[#141624] border border-white/10 rounded-2xl p-4 flex flex-col justify-between">
+                              <div>
+                                <span className="text-[10px] font-mono font-bold text-white/50 uppercase tracking-widest block mb-1">
+                                  Segmento / Categoria
+                                </span>
+                                <div className="text-base font-black text-amber-400">
+                                  🏷️ {displayCategory}
+                                </div>
+                                <p className="text-[11px] text-white/60 mt-1">Sua empresa aparece nas buscas de clientes desse nicho na cidade.</p>
+                              </div>
+                              <div className="mt-3 text-[11px] text-white/40 font-mono">
+                                Cidade: <strong className="text-white">{displayCity} ({displayState})</strong>
+                              </div>
+                            </div>
+
+                            {/* Canais e Links */}
+                            <div className="bg-[#141624] border border-white/10 rounded-2xl p-4 flex flex-col justify-between">
+                              <div>
+                                <span className="text-[10px] font-mono font-bold text-white/50 uppercase tracking-widest block mb-1">
+                                  Canais & Redes Conectadas
+                                </span>
+                                <div className="flex flex-col gap-1.5 mt-2 text-xs">
+                                  {company.website && company.website !== '#' ? (
+                                    <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline flex items-center gap-1.5 truncate">
+                                      <Globe size={13} /> {company.website}
+                                    </a>
+                                  ) : (
+                                    <span className="text-white/40 text-[11px]">🌐 Site: Não informado</span>
+                                  )}
+                                  {company.ig && company.ig !== '#' ? (
+                                    <a href={company.ig.startsWith('http') ? company.ig : `https://${company.ig}`} target="_blank" rel="noreferrer" className="text-pink-400 hover:underline flex items-center gap-1.5 truncate">
+                                      <Instagram size={13} /> Instagram Oficial
+                                    </a>
+                                  ) : (
+                                    <span className="text-white/40 text-[11px]">📷 Instagram: Não informado</span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="mt-3 text-[10px] text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                                <span>✔</span> Integrado ao Guia Oficial
+                              </div>
+                            </div>
+
+                          </div>
+
+                          {/* Descrição Comercial */}
+                          <div className="bg-[#141624] border border-white/10 rounded-2xl p-4">
+                            <span className="text-[10px] font-mono font-bold text-white/50 uppercase tracking-widest block mb-1">
+                              Apresentação / Descrição da Empresa
+                            </span>
+                            <p className="text-xs text-white/80 leading-relaxed italic">
+                              "{company.desc || 'Sem descrição informada no cadastro inicial.'}"
+                            </p>
+                          </div>
+
+                          {/* AVISO CENTRALIZADO DE GESTÃO EDITORIAL & BOTÃO WHATSAPP */}
+                          <div className="bg-gradient-to-r from-[#17192a] via-[#121321] to-[#17192a] border-2 border-amber-500/40 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-5 mt-2">
+                            <div className="flex items-start gap-4">
+                              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center text-2xl shrink-0 shadow">
+                                🔒
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="text-sm font-black text-white uppercase tracking-wider">
+                                    Controle Editorial & Padrão de Qualidade Oficial
+                                  </h4>
+                                  <span className="bg-amber-400 text-black text-[9px] font-black uppercase px-2 py-0.5 rounded">
+                                    Segurança
+                                  </span>
+                                </div>
+                                <p className="text-xs text-white/70 mt-1.5 leading-relaxed max-w-2xl">
+                                  Para manter a excelência visual, proteção das imagens e o correto direcionamento de novos clientes para o seu negócio, <strong>todas as alterações de telefone, fotos, links ou textos são gerenciadas exclusivamente pela nossa equipe técnica</strong>.
+                                </p>
+                                <p className="text-xs text-amber-300 font-bold mt-1.5">
+                                  Precisa atualizar a logo, trocar seu WhatsApp comercial ou mudar a descrição? Peça diretamente com 1 clique:
+                                </p>
+                              </div>
+                            </div>
+
+                            <a 
+                              href={`https://wa.me/${adminWa}?text=${encodeURIComponent(`Olá Anderson! Sou da empresa "${company.name}" e gostaria de solicitar uma atualização de dados no meu cadastro do Guia Comercial.`)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="bg-emerald-500 hover:bg-emerald-400 text-black px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-wider transition-all duration-200 shadow-xl shadow-emerald-500/20 shrink-0 flex items-center justify-center gap-2 cursor-pointer decoration-transparent hover:scale-105"
+                            >
+                              <Smartphone size={16} />
+                              <span>Solicitar Alteração no WhatsApp</span>
+                            </a>
+                          </div>
+
+                        </div>
+
+                      </div>
+                    );
+                  })()}
 
                   {/* Tab 1: Metrics & Score de Visibilidade */}
                   {adDashboardTab === 'metricas' && (() => {
@@ -10451,11 +10972,87 @@ function AppContent() {
                     );
                   })()}
 
-                  {/* Tab 4: Meu Plano & Benefícios */}
-                  {adDashboardTab === 'plano' && (() => {
+                  {/* Tab 3: Pagamento Pix & Ativação */}
+                  {adDashboardTab === 'pix' && (() => {
                     const currentPlan = getCompanyPlanType(currentAdvertiser.company);
+                    const adminWa = String(appData?.pricing?.waLink || '5585992908713').replace(/[^0-9]/g, '') || '5585992908713';
                     return (
                       <div className="flex flex-col gap-6">
+                        
+                        {/* OFFICIAL PIX ACTIVATION BOX */}
+                        <div className="bg-gradient-to-b from-[#161828] via-[#10121d] to-[#0c0d16] border-2 border-amber-500/50 rounded-3xl p-6 sm:p-8 shadow-2xl text-center">
+                          <span className="inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-mono font-black uppercase px-3 py-1 rounded-full mb-3">
+                            <ShieldCheck size={13} /> DADOS OFICIAIS DE ATIVAÇÃO VIA PIX
+                          </span>
+
+                          <h3 className="text-2xl font-black text-white">Assinatura Mensal Comercial • R$ 49,90/mês</h3>
+                          <p className="text-xs text-white/70 mt-1 max-w-lg mx-auto">
+                            Mantenha sua empresa em destaque contínuo no guia comercial da sua cidade recebendo novos clientes no WhatsApp.
+                          </p>
+
+                          {/* QR Code */}
+                          <div className="w-52 h-52 bg-white rounded-2xl p-2 mx-auto shadow-2xl border-4 border-amber-400/50 overflow-hidden my-4 flex items-center justify-center">
+                            <img 
+                              src={OFFICIAL_PIX_DATA.qrCodeUrl} 
+                              alt="QR Code Pix Oficial" 
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                          <p className="text-[11px] text-white/50 font-mono">Abra o app do seu banco e aponte a câmera para escanear o QR Code</p>
+
+                          {/* Pix Copia e Cola / CNPJ Grid */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 text-left max-w-2xl mx-auto">
+                            <div className="bg-[#12131f] border border-white/10 rounded-2xl p-4">
+                              <span className="text-[10px] text-white/40 font-mono uppercase font-bold block mb-1">Chave Pix (CNPJ)</span>
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-mono font-bold text-white">{OFFICIAL_PIX_DATA.cnpj}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(OFFICIAL_PIX_DATA.cnpj);
+                                    alert("Chave CNPJ copiada com sucesso!");
+                                  }}
+                                  className="bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-black px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer"
+                                >
+                                  Copiar
+                                </button>
+                              </div>
+                              <span className="text-[10px] text-amber-400/80 font-mono block mt-1">Favorecido: {OFFICIAL_PIX_DATA.receiverName}</span>
+                            </div>
+
+                            <div className="bg-[#12131f] border border-white/10 rounded-2xl p-4">
+                              <span className="text-[10px] text-white/40 font-mono uppercase font-bold block mb-1">Pix Copia e Cola</span>
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-mono text-white truncate max-w-[170px]">{OFFICIAL_PIX_DATA.copiaECola}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(OFFICIAL_PIX_DATA.copiaECola);
+                                    alert("Código Pix Copia e Cola copiado com sucesso!");
+                                  }}
+                                  className="bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-black px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer"
+                                >
+                                  Copiar
+                                </button>
+                              </div>
+                              <span className="text-[10px] text-emerald-400 font-mono block mt-1">Pronto para colar no app do banco</span>
+                            </div>
+                          </div>
+
+                          {/* Botão Enviar Comprovante */}
+                          <div className="max-w-md mx-auto mt-6">
+                            <a 
+                              href={`https://wa.me/${adminWa}?text=${encodeURIComponent(`Olá Anderson! Segue o comprovante do pagamento PIX de R$ 49,90 da empresa "${currentAdvertiser.company.name}".`)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/20 cursor-pointer decoration-transparent transition-all hover:scale-[1.02]"
+                            >
+                              <Smartphone size={16} />
+                              <span>Enviar Comprovante pelo WhatsApp</span>
+                            </a>
+                          </div>
+                        </div>
+
                         {/* Current Active Plan Header & Conversion Triggers */}
                         <div className="bg-gradient-to-r from-[#11121c] via-[#161726] to-[#11121c] border border-amber-500/30 p-6 rounded-3xl flex flex-col gap-5 shadow-2xl relative overflow-hidden">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
@@ -10847,8 +11444,8 @@ function AppContent() {
                     );
                   })()}
 
-                  {/* Sub-Tab 1: Profile Edits */}
-                  {adDashboardTab === 'perfil' && (
+                  {/* Sub-Tab 1: Profile Edits (Apenas para o Administrador) */}
+                  {user?.isAdmin && adDashboardTab === 'admin_editar' && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                       {/* Form area */}
                       <div className="lg:col-span-2 flex flex-col gap-4">
@@ -11317,8 +11914,8 @@ function AppContent() {
                     </div>
                   )}
 
-                  {/* Sub-Tab 2: Catalog Management list */}
-                  {adDashboardTab === 'catalogo' && (
+                  {/* Sub-Tab 2: Catalog Management (Desativado conforme decisão de não utilizar catálogo) */}
+                  {false && (
                     <div className="flex flex-col gap-6">
                       
                       {/* Add Button and Title */}
@@ -12610,6 +13207,19 @@ function AppContent() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* MODAL DE PRÉVIA DE 24H E PAGAMENTO PIX OFICIAL (R$ 49,90) */}
+      <SelfServiceTrialModal 
+        isOpen={isTrialPreviewOpen}
+        onClose={() => setIsTrialPreviewOpen(false)}
+        advertiserData={trialPreviewData}
+        onNotifyWhatsApp={(company, planChoice) => {
+          const planText = planChoice === 'destaque' ? 'Plano VIP com Destaque Super Especial' : 'Plano Mensal (R$ 49,90/mês)';
+          const msg = `Olá Anderson! Acabei de cadastrar minha empresa "${company?.name || 'Comércio'}" no portal Guia Comercial!\n\n📋 *Dados do Negócio:*\n• Nicho / Ramo: ${company?.category || 'Geral'}\n• Cidade/UF: ${company?.city || 'Fortaleza'}/${company?.state || 'CE'}\n• WhatsApp: ${company?.wa || ''}\n• Plano: ${planText}\n\nJá fiz o PIX de R$ 49,90 e estou enviando este comprovante para liberar minha empresa no guia! 🚀`;
+          const adminWa = (appData?.pricing?.waLink || '5585992908713').replace(/[^0-9]/g, '');
+          window.open(`https://wa.me/${adminWa}?text=${encodeURIComponent(msg)}`, '_blank');
+        }}
+      />
     </div>
   );
 }

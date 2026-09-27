@@ -375,7 +375,10 @@ export const OndeSuaEmpresaApareceSection: React.FC = () => {
 // ==========================================
 // 7. SEÇÃO DE PREÇO: SUA EMPRESA NA REDE (R$ 49,90/mês)
 // ==========================================
-export const PlanoPrecoSection: React.FC<{ primaryWaLink?: string }> = ({ primaryWaLink = DEFAULT_WA_LINK }) => {
+export const PlanoPrecoSection: React.FC<{ primaryWaLink?: string; onCadastrarClick?: () => void }> = ({ 
+  primaryWaLink = DEFAULT_WA_LINK,
+  onCadastrarClick
+}) => {
   return (
     <section id="planos" className="w-full py-16 md:py-24 bg-gradient-to-b from-black via-[#0a0a14] to-black border-b border-white/5 relative overflow-hidden select-none">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-amber-500/10 rounded-full blur-[170px] pointer-events-none" />
@@ -413,22 +416,42 @@ export const PlanoPrecoSection: React.FC<{ primaryWaLink?: string }> = ({ primar
           </div>
 
           <p className="text-xs sm:text-sm text-amber-200/90 font-semibold mt-2">
-            Sem precisar criar ou administrar tudo sozinho.
+            Sem precisar criar ou administrar tudo sozinho. Prévia de 24h para seu perfil.
           </p>
 
-          <div className="mt-7">
+          <div className="mt-7 flex flex-col gap-3">
+            {onCadastrarClick ? (
+              <button
+                type="button"
+                onClick={onCadastrarClick}
+                className="w-full inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_10px_35px_rgba(245,158,11,0.35)] cursor-pointer hover:scale-105 active:scale-95"
+              >
+                <span>🚀 CADASTRAR & TESTAR 24H</span>
+                <ArrowRight size={18} />
+              </button>
+            ) : (
+              <a
+                href={primaryWaLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_10px_35px_rgba(245,158,11,0.35)] cursor-pointer decoration-transparent hover:scale-105 active:scale-95"
+              >
+                <span>QUERO ENTRAR NA REDE</span>
+                <ArrowRight size={18} />
+              </a>
+            )}
+
             <a
               href={primaryWaLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_10px_35px_rgba(245,158,11,0.35)] cursor-pointer decoration-transparent hover:scale-105 active:scale-95"
+              className="text-xs text-white/70 hover:text-amber-300 font-medium py-1.5 flex items-center justify-center gap-1.5 decoration-transparent transition-colors"
             >
-              <span>QUERO ENTRAR NA REDE</span>
-              <ArrowRight size={18} />
+              <span>💬 Ou fale direto no WhatsApp com nossa equipe</span>
             </a>
 
-            <p className="text-[11px] text-white/50 font-mono mt-3">
-              Atendimento e cadastro direto com nossa equipe via WhatsApp
+            <p className="text-[11px] text-white/50 font-mono mt-1">
+              Pagamento facilitado via Pix • Ativação rápida com suporte
             </p>
           </div>
 
@@ -442,7 +465,10 @@ export const PlanoPrecoSection: React.FC<{ primaryWaLink?: string }> = ({ primar
 // ==========================================
 // 8. SEÇÃO: CTA FINAL
 // ==========================================
-export const CtaFinalSection: React.FC<{ primaryWaLink?: string }> = ({ primaryWaLink = DEFAULT_WA_LINK }) => {
+export const CtaFinalSection: React.FC<{ primaryWaLink?: string; onCadastrarClick?: () => void }> = ({ 
+  primaryWaLink = DEFAULT_WA_LINK,
+  onCadastrarClick
+}) => {
   return (
     <section className="w-full py-16 md:py-24 bg-gradient-to-b from-[#0a0a12] to-black border-b border-white/5 relative overflow-hidden select-none">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[160px] pointer-events-none" />
@@ -458,23 +484,42 @@ export const CtaFinalSection: React.FC<{ primaryWaLink?: string }> = ({ primaryW
         </h2>
 
         <p className="text-sm sm:text-base md:text-lg text-white/80 font-medium max-w-2xl mx-auto mt-4 leading-relaxed">
-          Faça parte da rede Minha Divulgação e facilite para novos clientes encontrarem seu negócio.
+          Faça parte da rede Minha Divulgação e facilite para novos clientes encontrarem seu negócio na sua cidade.
         </p>
 
-        <div className="mt-8 flex justify-center">
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+          {onCadastrarClick ? (
+            <button
+              type="button"
+              onClick={onCadastrarClick}
+              className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 sm:px-10 py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_12px_40px_rgba(245,158,11,0.35)] hover:scale-105 cursor-pointer"
+            >
+              <span>🚀 CADASTRAR MINHA EMPRESA</span>
+              <ArrowRight size={18} />
+            </button>
+          ) : (
+            <a
+              href={primaryWaLink}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 sm:px-10 py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_12px_40px_rgba(245,158,11,0.35)] hover:scale-105 cursor-pointer decoration-transparent"
+            >
+              <span>QUERO DIVULGAR MINHA EMPRESA</span>
+              <ArrowRight size={18} />
+            </a>
+          )}
           <a
             href={primaryWaLink}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 sm:px-10 py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_12px_40px_rgba(245,158,11,0.35)] hover:scale-105 cursor-pointer decoration-transparent"
+            className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-6 sm:px-8 py-5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 cursor-pointer decoration-transparent"
           >
-            <span>QUERO DIVULGAR MINHA EMPRESA</span>
-            <ArrowRight size={18} />
+            <span>Dúvidas no WhatsApp</span>
           </a>
         </div>
 
         <p className="text-xs text-white/40 font-mono mt-4">
-          Cadastro feito pela nossa equipe • Suporte rápido pelo WhatsApp
+          Cadastro com prévia imediata de 24 horas • Suporte rápido pelo WhatsApp
         </p>
 
       </div>
