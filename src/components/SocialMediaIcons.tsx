@@ -44,7 +44,7 @@ interface SocialLinksProps {
 export const ProfessionalSocialLinks: React.FC<SocialLinksProps> = ({
   facebookUrl = "https://www.facebook.com/profile.php?id=61586484977147",
   instagramUrl = "https://www.instagram.com/minhadivulgacaooficial/",
-  whatsappUrl = "https://wa.me/5585992908713",
+  whatsappUrl = "https://wa.me/5585992908713?text=" + encodeURIComponent("Olá! Gostaria de obter informações comerciais sobre o portal Minha Divulgação.\n\nTenho interesse em divulgar minha empresa na rede. Poderia me atender, por gentileza?"),
   telegramUrl = "https://t.me/+5585992908713",
   youtubeUrl = "https://www.youtube.com/@Minhadivulgacao",
   showLabels = false,

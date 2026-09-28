@@ -62,7 +62,9 @@ import {
   RefreshCw,
   Wifi,
   ArrowRight,
-  ShieldCheck
+  ShieldCheck,
+  CreditCard,
+  QrCode
 } from 'lucide-react';
 
 import { 
@@ -1553,11 +1555,21 @@ function AppContent() {
     if (!baseUrl) return '#';
     const tid = slugify(tenantId || 'fortaleza');
     const ref = sessionStorage.getItem(`ref_${tid}`);
-    if (!ref) return baseUrl;
+    const siteName = appData?.siteInfo?.name || 'Minha Divulgação';
     
-    const referralText = `Olá, vim pelo portal ${appData?.siteInfo.name} indicado pelo divulgador: ${ref}`;
+    if (!ref) {
+      // Se não há divulgador indicado e o link não possui texto predefinido, definimos uma mensagem comercial profissional
+      if (!baseUrl.toLowerCase().includes('text=')) {
+        const defaultProfessionalText = `Olá! Gostaria de obter informações sobre a divulgação da minha empresa no portal ${siteName}.\n\nTenho interesse nos planos comerciais e gostaria de entender como colocar meu negócio em destaque. Poderia me atender, por gentileza?`;
+        const sep = baseUrl.includes('?') ? '&' : '?';
+        return `${baseUrl}${sep}text=${encodeURIComponent(defaultProfessionalText)}`;
+      }
+      return baseUrl;
+    }
     
-    // Se o link já tem text=, a gente substitui para manter o indicativo do divulgador
+    const referralText = `Olá! Gostaria de obter informações comerciais sobre a divulgação da minha empresa no portal ${siteName}.\n\nFui indicado pelo parceiro divulgador: *${ref}*.\nGostaria de conhecer os planos comerciais e orientações para o cadastro da minha empresa. Poderia me atender, por gentileza?`;
+    
+    // Se o link já tem text=, substituímos para manter o indicativo do divulgador de forma profissional
     if (baseUrl.toLowerCase().includes('text=')) {
       return baseUrl.replace(/([?&])text=[^&]*/i, `$1text=${encodeURIComponent(referralText)}`);
     }
@@ -1568,7 +1580,7 @@ function AppContent() {
 
   const primaryDivulgarWaLink = useMemo(() => {
     const baseWa = appData?.pricing?.waLink || 'https://wa.me/5585992862177';
-    const text = 'Olá! Gostaria de divulgar minha empresa no Minha Divulgação.';
+    const text = 'Olá! Gostaria de obter informações sobre a divulgação da minha empresa no portal Minha Divulgação.\n\nTenho interesse no plano comercial (R$ 49,90/mês) e gostaria de orientações para cadastrar meu negócio. Poderia me atender, por gentileza?';
     const linkWithText = baseWa.includes('text=')
       ? baseWa
       : `${baseWa}${baseWa.includes('?') ? '&' : '?'}text=${encodeURIComponent(text)}`;
@@ -3803,7 +3815,12 @@ function AppContent() {
         <p style={{ color: '#888', maxWidth: '500px', fontSize: 'clamp(0.9rem, 4vw, 1.1rem)', marginBottom: '40px', lineHeight: 1.6 }}>
           Este portal encontra-se temporariamente indisponível. Por favor, entre em contato com o administrador master para regularizar sua situação e restabelecer o acesso.
         </p>
-        <a href="https://wa.me/5585992908713" target="_blank" className="cta-button" style={{ background: '#25D366' }}>
+        <a 
+          href={`https://wa.me/5585992908713?text=${encodeURIComponent("Olá! Sou responsável pelo portal e gostaria de verificar o status de regularização e restabelecimento do acesso.")}`} 
+          target="_blank" 
+          className="cta-button" 
+          style={{ background: '#25D366' }}
+        >
           ENTRAR EM CONTATO AGORA
         </a>
       </div>
@@ -4054,7 +4071,11 @@ function AppContent() {
               <ArrowRight size={18} />
             </button>
             <a 
-              href="https://wa.me/5585992908713?text=Ol%C3%A1!%20Gostaria%20de%20tirar%20d%C3%BAvidas%20sobre%20como%20divulgar%20minha%20empresa%20no%20Minha%20Divulga%C3%A7%C3%A3o."
+              href={getWaLinkWithReferral(
+                `https://wa.me/5585992908713?text=${encodeURIComponent(
+                  "Olá! Gostaria de obter informações sobre como divulgar minha empresa no portal Minha Divulgação.\n\nTenho interesse nos planos comerciais (R$ 49,90/mês) e gostaria de tirar algumas dúvidas sobre o cadastro. Poderia me atender, por gentileza?"
+                )}`
+              )}
               target="_blank"
               rel="noreferrer"
               className="bg-white/10 hover:bg-white/15 border border-white/20 text-white px-6 sm:px-8 py-4 sm:py-5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider text-center transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto shrink-0 decoration-transparent"
@@ -4064,7 +4085,7 @@ function AppContent() {
             </a>
           </div>
           <p className="text-[11px] sm:text-xs text-white/60 font-mono mt-2 select-none">
-            Cadastro instantâneo com prévia de 24 horas • PIX R$ 49,90/mês
+            Cadastro instantâneo com prévia de 24 horas • Cartão ou PIX R$ 49,90/mês
           </p>
 
           {/* Segmentos de empresas atendidas */}
@@ -9863,11 +9884,11 @@ function AppContent() {
                               Cadastro Concluído! Modo Prévia 24h Ativo
                             </h3>
                             <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase px-2 py-0.5 rounded-full">
-                              Aguardando Pix
+                              Aguardando Pagamento
                             </span>
                           </div>
                           <p className="text-xs text-white/80 mt-1 font-medium leading-relaxed">
-                            Sua empresa está salva e pronta no sistema. Realize o pagamento de <strong className="text-amber-300">R$ 49,90 via PIX</strong> para liberação imediata na página principal do portal comercial!
+                            Sua empresa está salva e pronta no sistema. Realize o pagamento de <strong className="text-amber-300">R$ 49,90 (Cartão de Crédito ou PIX)</strong> para liberação imediata na página principal do portal comercial!
                           </p>
                         </div>
                       </div>
@@ -9881,7 +9902,7 @@ function AppContent() {
                           }}
                           className="bg-amber-500 hover:bg-amber-400 text-black px-5 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-amber-500/20 cursor-pointer flex items-center gap-2"
                         >
-                          💳 Ver Pix & Prévia (R$ 49,90)
+                          💳 Pagar / Ver Opções (R$ 49,90)
                         </button>
                         <button
                           type="button"
@@ -10070,7 +10091,7 @@ function AppContent() {
                       onClick={() => { setAdDashboardTab('pix'); setEditingItemIndex(null); }}
                       className={`text-xs font-black uppercase tracking-wider pb-3 px-3 transition-all border-b-2 hover:text-white shrink-0 cursor-pointer ${adDashboardTab === 'pix' ? 'border-amber-400 text-amber-400 font-extrabold' : 'border-transparent text-white/50'}`}
                     >
-                      💳 Pagamento Pix & Ativação (R$ 49,90)
+                      💳 Pagamento (Cartão ou Pix R$ 49,90)
                     </button>
                     {user?.isAdmin && (
                       <button 
@@ -10113,7 +10134,7 @@ function AppContent() {
                                 <span className={`text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full ${
                                   isPending ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                                 }`}>
-                                  {isPending ? 'Modo Prévia de 24h Ativo • Aguardando Pix' : 'Anúncio Ativo & Publicado no Guia Oficial'}
+                                  {isPending ? 'Modo Prévia de 24h Ativo • Aguardando Pagamento' : 'Anúncio Ativo & Publicado no Guia Oficial'}
                                 </span>
                                 {daysLeft !== null && !isPending && (
                                   <span className="text-[11px] text-white/60 font-mono">
@@ -10122,11 +10143,11 @@ function AppContent() {
                                 )}
                               </div>
                               <h3 className="text-xl sm:text-2xl font-black text-white mt-1.5">
-                                {isPending ? 'Sua empresa está salva e aguarda confirmação do PIX' : 'Sua empresa está no ar gerando contatos direto pro seu WhatsApp!'}
+                                {isPending ? 'Sua empresa está salva e aguarda confirmação do pagamento' : 'Sua empresa está no ar gerando contatos direto pro seu WhatsApp!'}
                               </h3>
                               <p className="text-xs text-white/70 mt-1 max-w-2xl leading-relaxed">
                                 {isPending 
-                                  ? 'Você pode visualizar a prévia do seu anúncio no portal. Realize o pagamento de R$ 49,90 via PIX para liberação na página principal.' 
+                                  ? 'Você pode visualizar a prévia do seu anúncio no portal. Realize o pagamento de R$ 49,90 via Cartão de Crédito ou PIX para liberação na página principal.' 
                                   : 'Seu perfil comercial e botão de atendimento WhatsApp estão ativos para milhares de clientes na cidade.'}
                               </p>
                             </div>
@@ -10142,7 +10163,7 @@ function AppContent() {
                                 }}
                                 className="bg-amber-500 hover:bg-amber-400 text-black px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-amber-500/20 cursor-pointer flex items-center gap-2 hover:scale-105"
                               >
-                                💳 Ver Dados do Pix (R$ 49,90)
+                                💳 Opções de Pagamento (R$ 49,90)
                               </button>
                             ) : (
                               <button
@@ -10319,7 +10340,7 @@ function AppContent() {
                             </div>
 
                             <a 
-                              href={`https://wa.me/${adminWa}?text=${encodeURIComponent(`Olá Anderson! Sou da empresa "${company.name}" e gostaria de solicitar uma atualização de dados no meu cadastro do Guia Comercial.`)}`}
+                              href={`https://wa.me/${adminWa}?text=${encodeURIComponent(`Olá, Anderson! Sou responsável pela empresa "${company.name}" cadastrada no portal Minha Divulgação.\n\nGostaria de solicitar uma atualização de dados no meu perfil comercial (fotos, telefone ou descrição). Poderia me orientar sobre o procedimento, por gentileza?`)}`}
                               target="_blank"
                               rel="noreferrer"
                               className="bg-emerald-500 hover:bg-emerald-400 text-black px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-wider transition-all duration-200 shadow-xl shadow-emerald-500/20 shrink-0 flex items-center justify-center gap-2 cursor-pointer decoration-transparent hover:scale-105"
@@ -10538,77 +10559,143 @@ function AppContent() {
                     );
                   })()}
 
-                  {/* Tab 3: Pagamento Pix & Ativação */}
+                  {/* Tab 3: Pagamento (Cartão ou Pix) & Ativação */}
                   {adDashboardTab === 'pix' && (() => {
                     const currentPlan = getCompanyPlanType(currentAdvertiser.company);
                     const adminWa = String(appData?.pricing?.waLink || '5585992908713').replace(/[^0-9]/g, '') || '5585992908713';
                     return (
                       <div className="flex flex-col gap-6">
                         
-                        {/* OFFICIAL PIX ACTIVATION BOX */}
+                        {/* OFFICIAL PAYMENT ACTIVATION BOX */}
                         <div className="bg-gradient-to-b from-[#161828] via-[#10121d] to-[#0c0d16] border-2 border-amber-500/50 rounded-3xl p-6 sm:p-8 shadow-2xl text-center">
                           <span className="inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-mono font-black uppercase px-3 py-1 rounded-full mb-3">
-                            <ShieldCheck size={13} /> DADOS OFICIAIS DE ATIVAÇÃO VIA PIX
+                            <ShieldCheck size={13} /> DADOS OFICIAIS DE ATIVAÇÃO
                           </span>
 
                           <h3 className="text-2xl font-black text-white">Assinatura Mensal Comercial • R$ 49,90/mês</h3>
                           <p className="text-xs text-white/70 mt-1 max-w-lg mx-auto">
-                            Mantenha sua empresa em destaque contínuo no guia comercial da sua cidade recebendo novos clientes no WhatsApp.
+                            Mantenha sua empresa em destaque contínuo no guia comercial da sua cidade recebendo novos clientes no WhatsApp. Escolha pagar via Cartão ou Pix.
                           </p>
 
-                          {/* QR Code */}
-                          <div className="w-52 h-52 bg-white rounded-2xl p-2 mx-auto shadow-2xl border-4 border-amber-400/50 overflow-hidden my-4 flex items-center justify-center">
-                            <img 
-                              src={OFFICIAL_PIX_DATA.qrCodeUrl} 
-                              alt="QR Code Pix Oficial" 
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-                          <p className="text-[11px] text-white/50 font-mono">Abra o app do seu banco e aponte a câmera para escanear o QR Code</p>
+                          {/* PAYMENT OPTIONS GRID: CARTÃO + PIX */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 text-left max-w-3xl mx-auto items-stretch">
+                            
+                            {/* OPÇÃO 1: CARTÃO DE CRÉDITO (ASAAS) */}
+                            <div className="bg-gradient-to-b from-[#14182b] to-[#0d0f1a] border-2 border-blue-500/40 rounded-3xl p-5 sm:p-6 shadow-xl flex flex-col justify-between">
+                              <div>
+                                <div className="flex items-center justify-between gap-2 mb-3">
+                                  <span className="inline-flex items-center gap-1 bg-blue-500/20 text-blue-300 text-[10px] font-mono font-black uppercase px-2.5 py-1 rounded-full border border-blue-500/30">
+                                    <CreditCard size={12} /> CARTÃO DE CRÉDITO
+                                  </span>
+                                  <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">
+                                    LIBERAÇÃO RÁPIDA
+                                  </span>
+                                </div>
 
-                          {/* Pix Copia e Cola / CNPJ Grid */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 text-left max-w-2xl mx-auto">
-                            <div className="bg-[#12131f] border border-white/10 rounded-2xl p-4">
-                              <span className="text-[10px] text-white/40 font-mono uppercase font-bold block mb-1">Chave Pix (CNPJ)</span>
-                              <div className="flex items-center justify-between gap-2">
-                                <span className="text-xs font-mono font-bold text-white">{OFFICIAL_PIX_DATA.cnpj}</span>
+                                <h4 className="text-lg font-black text-white">Pagar com Cartão</h4>
+                                <p className="text-xs text-white/60 mt-0.5">
+                                  Ambiente 100% seguro pelo gateway Asaas (R$ 49,90)
+                                </p>
+
+                                <div className="bg-black/50 border border-white/10 rounded-2xl p-3.5 my-3.5">
+                                  <span className="text-[10px] text-white/40 font-mono uppercase font-bold block mb-1">
+                                    Link Direto do Cartão:
+                                  </span>
+                                  <p className="text-[11px] text-white/80 font-mono leading-relaxed select-all break-all">
+                                    {OFFICIAL_PIX_DATA.creditCardMessage}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col gap-2 pt-2">
+                                <a
+                                  href={OFFICIAL_PIX_DATA.creditCardUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white py-3 px-4 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 transition-all cursor-pointer decoration-transparent text-center"
+                                >
+                                  <CreditCard size={15} />
+                                  <span>Pagar R$ 49,90 no Cartão</span>
+                                  <ExternalLink size={14} />
+                                </a>
+
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    navigator.clipboard.writeText(OFFICIAL_PIX_DATA.cnpj);
-                                    alert("Chave CNPJ copiada com sucesso!");
+                                    navigator.clipboard.writeText(OFFICIAL_PIX_DATA.creditCardUrl);
+                                    alert("Link de pagamento do cartão copiado com sucesso!");
                                   }}
-                                  className="bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-black px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer"
+                                  className="w-full bg-white/10 hover:bg-white/15 text-white/80 hover:text-white border border-white/10 py-2 rounded-xl text-[11px] font-bold uppercase transition-all cursor-pointer flex items-center justify-center gap-1.5"
                                 >
-                                  Copiar
+                                  <Copy size={13} />
+                                  <span>Copiar Link do Cartão</span>
                                 </button>
                               </div>
-                              <span className="text-[10px] text-amber-400/80 font-mono block mt-1">Favorecido: {OFFICIAL_PIX_DATA.receiverName}</span>
                             </div>
 
-                            <div className="bg-[#12131f] border border-white/10 rounded-2xl p-4">
-                              <span className="text-[10px] text-white/40 font-mono uppercase font-bold block mb-1">Pix Copia e Cola</span>
-                              <div className="flex items-center justify-between gap-2">
-                                <span className="text-xs font-mono text-white truncate max-w-[170px]">{OFFICIAL_PIX_DATA.copiaECola}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(OFFICIAL_PIX_DATA.copiaECola);
-                                    alert("Código Pix Copia e Cola copiado com sucesso!");
-                                  }}
-                                  className="bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-black px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer"
-                                >
-                                  Copiar
-                                </button>
+                            {/* OPÇÃO 2: PIX OFICIAL */}
+                            <div className="bg-gradient-to-b from-[#171520] to-[#0e0d16] border-2 border-amber-500/40 rounded-3xl p-5 sm:p-6 shadow-xl flex flex-col justify-between">
+                              <div>
+                                <div className="flex items-center justify-between gap-2 mb-3">
+                                  <span className="inline-flex items-center gap-1 bg-amber-500/20 text-amber-300 text-[10px] font-mono font-black uppercase px-2.5 py-1 rounded-full border border-amber-500/30">
+                                    <QrCode size={12} /> PIX OFICIAL
+                                  </span>
+                                  <span className="text-[10px] font-mono text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded">
+                                    INSTANTÂNEO
+                                  </span>
+                                </div>
+
+                                <h4 className="text-lg font-black text-white">Pagar via Pix</h4>
+                                <p className="text-xs text-white/60 mt-0.5">
+                                  Escaneie ou copie a chave oficial (R$ 49,90)
+                                </p>
+
+                                {/* QR Code Mini */}
+                                <div className="w-32 h-32 bg-white rounded-xl p-1.5 mx-auto my-3 shadow border-2 border-amber-400 flex items-center justify-center">
+                                  <img 
+                                    src={OFFICIAL_PIX_DATA.qrCodeUrl} 
+                                    alt="QR Code Pix Oficial" 
+                                    className="w-full h-full object-contain"
+                                  />
+                                </div>
+
+                                <div className="bg-black/50 border border-white/10 rounded-xl p-2.5 mb-2 flex items-center justify-between gap-2">
+                                  <div className="truncate">
+                                    <span className="text-[9px] text-white/40 uppercase font-mono block">Chave (CNPJ)</span>
+                                    <span className="text-xs font-mono font-bold text-white truncate block">{OFFICIAL_PIX_DATA.cnpj}</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(OFFICIAL_PIX_DATA.cnpj);
+                                      alert("Chave CNPJ copiada com sucesso!");
+                                    }}
+                                    className="bg-amber-500 hover:bg-amber-400 text-black px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer shrink-0"
+                                  >
+                                    Copiar
+                                  </button>
+                                </div>
                               </div>
-                              <span className="text-[10px] text-emerald-400 font-mono block mt-1">Pronto para colar no app do banco</span>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(OFFICIAL_PIX_DATA.copiaECola);
+                                  alert("Código Pix Copia e Cola copiado com sucesso!");
+                                }}
+                                className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:brightness-110 text-black py-2.5 px-3 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow transition-all cursor-pointer"
+                              >
+                                <Copy size={14} />
+                                <span>Copiar Pix Copia e Cola</span>
+                              </button>
                             </div>
+
                           </div>
 
                           {/* Botão Enviar Comprovante */}
                           <div className="max-w-md mx-auto mt-6">
                             <a 
-                              href={`https://wa.me/${adminWa}?text=${encodeURIComponent(`Olá Anderson! Segue o comprovante do pagamento PIX de R$ 49,90 da empresa "${currentAdvertiser.company.name}".`)}`}
+                              href={`https://wa.me/${adminWa}?text=${encodeURIComponent(`Olá, Anderson! Segue o comprovante de pagamento para ativação da minha empresa no portal Minha Divulgação:\n\n• Empresa: *${currentAdvertiser.company.name}*\n• Valor: *R$ 49,90* (Divulgação Comercial Online)\n• Status: Pagamento efetuado via Cartão ou Pix\n\nPoderia confirmar o recebimento e manter o perfil da minha empresa ativo no guia? Agradeço desde já!`)}`}
                               target="_blank"
                               rel="noreferrer"
                               className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/20 cursor-pointer decoration-transparent transition-all hover:scale-[1.02]"
@@ -10616,6 +10703,9 @@ function AppContent() {
                               <Smartphone size={16} />
                               <span>Enviar Comprovante pelo WhatsApp</span>
                             </a>
+                            <p className="text-[11px] text-white/50 mt-2">
+                              Após pagar no Cartão ou no Pix, envie o comprovante acima para confirmação imediata.
+                            </p>
                           </div>
                         </div>
 
@@ -10643,7 +10733,7 @@ function AppContent() {
                             </div>
 
                             <a 
-                              href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero ativar o Plano Premium para minha empresa (${currentAdvertiser?.company?.name}) para aparecer em 1º lugar!`)}`}
+                              href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá, Anderson! Sou responsável pela empresa "${currentAdvertiser?.company?.name}" no Minha Divulgação.\n\nTenho interesse em ativar o Plano Premium Patrocinado para posicionar minha empresa em 1º lugar nas buscas. Poderia me passar as orientações para ativação, por gentileza?`)}`}
                               target="_blank"
                               rel="noreferrer"
                               className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:brightness-110 text-black px-7 py-4 rounded-2xl font-black text-xs uppercase tracking-wider text-center shadow-xl shadow-amber-500/20 shrink-0 cursor-pointer flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
@@ -10826,7 +10916,7 @@ function AppContent() {
                                 </div>
                               ) : (
                                 <a 
-                                  href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano Premium Confiança (R$ 39,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
+                                  href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá, Anderson! Sou responsável pela empresa "${currentAdvertiser.company.name}" no portal Minha Divulgação.\n\nTenho interesse em realizar o UPGRADE para o *Plano Premium Confiança (R$ 39,90/mês)* com selo oficial de verificação. Poderia me passar as orientações para ativação, por gentileza?`)}`}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="w-full block mt-4 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
@@ -10914,7 +11004,7 @@ function AppContent() {
                                 </div>
                               ) : (
                                 <a 
-                                  href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano Premium Destaque VIP (R$ 59,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
+                                  href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá, Anderson! Sou responsável pela empresa "${currentAdvertiser.company.name}" no portal Minha Divulgação.\n\nTenho interesse em realizar o UPGRADE para o *Plano Premium Destaque VIP (R$ 59,90/mês)* para expandir fotos e catálogo. Poderia me passar as orientações para ativação, por gentileza?`)}`}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="w-full block mt-4 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:brightness-110 text-black font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-[0_4px_25px_rgba(245,158,11,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
@@ -10995,7 +11085,7 @@ function AppContent() {
                                 </div>
                               ) : (
                                 <a 
-                                  href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá! Quero fazer o UPGRADE para o Plano Premium Patrocinado Top 1 (R$ 89,90/mês) da empresa ${currentAdvertiser.company.name}.`)}`}
+                                  href={`https://wa.me/5585992862177?text=${encodeURIComponent(`Olá, Anderson! Sou responsável pela empresa "${currentAdvertiser.company.name}" no portal Minha Divulgação.\n\nTenho interesse em realizar o UPGRADE para o *Plano Premium Patrocinado Top 1 (R$ 89,90/mês)* para ter o 1º lugar exclusivo e exibição em TV/Rádio. Poderia me passar as orientações para ativação imediata, por gentileza?`)}`}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="w-full block mt-4 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl text-center shadow-[0_4px_25px_rgba(239,68,68,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
@@ -12774,7 +12864,7 @@ function AppContent() {
 
               {/* JÁ EFETUEI O PAGAMENTO CTA */}
               <a 
-                href={`https://wa.me/${(appData?.pricing.waLink || '5585992862177').replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Olá! Já efetuei o pagamento do plano de anúncios via PIX, aqui está o comprovante! Desejo ativar meu perfil premium.')}`}
+                href={`https://wa.me/${(appData?.pricing.waLink || '5585992862177').replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Olá, Anderson! Efetuei o pagamento do plano de anúncios no portal Minha Divulgação e estou enviando este comprovante para ativação do meu perfil comercial. Poderia confirmar o recebimento, por gentileza?')}`}
                 target="_blank" 
                 rel="noreferrer"
                 onClick={() => setIsCheckoutOpen(false)}
@@ -12809,18 +12899,41 @@ function AppContent() {
         }}
       />
 
-      {/* MODAL DE PRÉVIA DE 24H E PAGAMENTO PIX OFICIAL (R$ 49,90) */}
+      {/* MODAL DE PRÉVIA DE 24H E PAGAMENTO (CARTÃO / PIX R$ 49,90) */}
       <SelfServiceTrialModal 
         isOpen={isTrialPreviewOpen}
         onClose={() => setIsTrialPreviewOpen(false)}
         advertiserData={trialPreviewData}
-        onNotifyWhatsApp={(company, planChoice) => {
+        onNotifyWhatsApp={(company, planChoice, paymentMethod) => {
           const planText = planChoice === 'destaque' ? 'Plano VIP com Destaque Super Especial' : 'Plano Mensal (R$ 49,90/mês)';
-          const msg = `Olá Anderson! Acabei de cadastrar minha empresa "${company?.name || 'Comércio'}" no portal Guia Comercial!\n\n📋 *Dados do Negócio:*\n• Nicho / Ramo: ${company?.category || 'Geral'}\n• Cidade/UF: ${company?.city || 'Fortaleza'}/${company?.state || 'CE'}\n• WhatsApp: ${company?.wa || ''}\n• Plano: ${planText}\n\nJá fiz o PIX de R$ 49,90 e estou enviando este comprovante para liberar minha empresa no guia! 🚀`;
+          const payText = paymentMethod === 'cartao' ? 'Cartão de Crédito (Asaas)' : 'PIX Oficial';
+          const msg = `Olá, Anderson! Acabei de cadastrar minha empresa no portal Minha Divulgação e efetuei o pagamento para ativação imediata.\n\n📋 *Dados Cadastrais da Empresa:*\n• Nome Fantasia: *${company?.name || 'Comércio'}*\n• Ramo de Atuação: ${company?.category || 'Geral'}\n• Localização: ${company?.city || 'Fortaleza'} - ${company?.state || 'CE'}\n• WhatsApp de Atendimento: ${company?.wa || 'Não informado'}\n• Plano Contratado: *${planText}*\n• Forma de Pagamento: *${payText}* (Valor: R$ 49,90)\n\nSegue o comprovante em anexo para conferência e validação da publicação oficial no guia. Aguardo a liberação!\n\nMuito obrigado! 🤝🚀`;
           const adminWa = (appData?.pricing?.waLink || '5585992908713').replace(/[^0-9]/g, '');
           window.open(`https://wa.me/${adminWa}?text=${encodeURIComponent(msg)}`, '_blank');
         }}
       />
+
+      {/* Botão Flutuante Oficial de Atendimento WhatsApp */}
+      <a
+        href={getWaLinkWithReferral(
+          `https://wa.me/5585992908713?text=${encodeURIComponent(
+            "Olá! Gostaria de obter informações sobre a divulgação da minha empresa no portal Minha Divulgação.\n\nTenho interesse nos planos comerciais e gostaria de entender como colocar meu negócio em destaque. Poderia me atender, por gentileza?"
+          )}`
+        )}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-[100] group flex items-center gap-2.5 bg-[#25D366] hover:bg-[#20ba59] text-white px-4 py-3 sm:py-3.5 rounded-full shadow-[0_10px_30px_rgba(37,211,102,0.4)] hover:shadow-[0_15px_35px_rgba(37,211,102,0.6)] transition-all duration-300 hover:scale-105 active:scale-95 decoration-transparent select-none cursor-pointer"
+        title="Falar no WhatsApp com nossa equipe"
+      >
+        <span className="relative flex h-3 w-3">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+        </span>
+        <WhatsAppIcon className="w-5 h-5 text-white shrink-0" />
+        <span className="font-extrabold text-xs uppercase tracking-wider pr-1">
+          Falar no WhatsApp
+        </span>
+      </a>
     </div>
   );
 }

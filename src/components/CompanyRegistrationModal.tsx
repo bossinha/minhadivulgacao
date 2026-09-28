@@ -265,7 +265,7 @@ export const CompanyRegistrationModal: React.FC<CompanyRegistrationModalProps> =
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3.5 flex items-start gap-3 text-amber-200 text-xs leading-relaxed">
                 <Sparkles size={18} className="shrink-0 text-amber-400 mt-0.5" />
                 <div>
-                  <strong>Presença Garantida no Portal:</strong> Após cadastrar e pagar o Pix de <strong>R$ 49,90/mês</strong>, o gestor do portal libera o seu card diretamente na vitrine da cidade para receber clientes no WhatsApp!
+                  <strong>Presença Garantida no Portal:</strong> Após cadastrar e realizar o pagamento de <strong>R$ 49,90/mês</strong> (via Cartão de Crédito ou Pix), o gestor do portal libera o seu card diretamente na vitrine da cidade para receber clientes no WhatsApp!
                 </div>
               </div>
 
@@ -545,7 +545,7 @@ export const CompanyRegistrationModal: React.FC<CompanyRegistrationModalProps> =
                     </>
                   ) : (
                     <>
-                      <span>🚀 Finalizar Cadastro & Ver Pix (R$ 49,90)</span>
+                      <span>🚀 Finalizar Cadastro & Ver Pagamento (R$ 49,90)</span>
                       <ArrowRight size={18} />
                     </>
                   )}
@@ -672,7 +672,7 @@ export const CompanyRegistrationModal: React.FC<CompanyRegistrationModalProps> =
                 {/* Bottom Notice on Preview */}
                 <div className="mt-4 pt-3 border-t border-white/10 text-center">
                   <p className="text-[10px] text-amber-300/90 font-medium">
-                    ⏳ Este card será ativado na página principal assim que o pagamento do Pix (R$ 49,90) for verificado.
+                    ⏳ Este card será ativado na página principal assim que o pagamento de R$ 49,90 (Cartão ou Pix) for confirmado.
                   </p>
                 </div>
               </div>

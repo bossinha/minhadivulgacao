@@ -13,7 +13,9 @@ import {
   ArrowRight,
   Eye,
   Store,
-  AlertCircle
+  AlertCircle,
+  CreditCard,
+  QrCode
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -21,7 +23,7 @@ export interface SelfServiceTrialModalProps {
   isOpen: boolean;
   onClose: () => void;
   advertiserData: any;
-  onNotifyWhatsApp: (company: any, planChoice: string) => void;
+  onNotifyWhatsApp: (company: any, planChoice: string, paymentMethod?: 'cartao' | 'pix') => void;
 }
 
 export const OFFICIAL_PIX_DATA = {
@@ -29,7 +31,9 @@ export const OFFICIAL_PIX_DATA = {
   cnpj: "62.133.196/0001-40",
   copiaECola: "00020126360014BR.GOV.BCB.PIX011462133196000140520400005303986540549.905802BR592562.133.196 ANDERSON LUIZ 6009SAO PAULO622905253d2fg9j6ky9pj5yubh1459d3b6304E8D4",
   receiverName: "ANDERSON LUIZ",
-  monthlyPrice: "49,90"
+  monthlyPrice: "49,90",
+  creditCardUrl: "https://www.asaas.com/c/okss95v9udeb9nl8",
+  creditCardMessage: "Olá. Segue o link de pagamento Divulgação on line  no valor de R$ 49,90 : https://www.asaas.com/c/okss95v9udeb9nl8"
 };
 
 export const SelfServiceTrialModal: React.FC<SelfServiceTrialModalProps> = ({
@@ -40,6 +44,9 @@ export const SelfServiceTrialModal: React.FC<SelfServiceTrialModalProps> = ({
 }) => {
   const [copiedKey, setCopiedKey] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedCardLink, setCopiedCardLink] = useState(false);
+  const [copiedCardMsg, setCopiedCardMsg] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'cartao' | 'pix'>('cartao');
   const [selectedPlan, setSelectedPlan] = useState<'mensal' | 'destaque'>('mensal');
   const [previewTab, setPreviewTab] = useState<'card' | 'mini-site'>('card');
   const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 59, seconds: 48 });
@@ -232,7 +239,7 @@ export const SelfServiceTrialModal: React.FC<SelfServiceTrialModalProps> = ({
                     {/* Action buttons on card */}
                     <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
                       <a
-                        href={`https://wa.me/${cleanWa}`}
+                        href={`https://wa.me/${cleanWa}?text=${encodeURIComponent(`Olá! Vi o anúncio da empresa "${company.name}" no portal Minha Divulgação e gostaria de mais informações sobre seus produtos e serviços.`)}`}
                         target="_blank"
                         rel="noreferrer"
                         className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-center flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer decoration-transparent"
@@ -261,13 +268,16 @@ export const SelfServiceTrialModal: React.FC<SelfServiceTrialModalProps> = ({
                             <Instagram size={13} /> Instagram
                           </a>
                         )}
-                        <button
-                          type="button"
-                          onClick={() => setPreviewTab('mini-site')}
-                          className="flex-1 min-w-[120px] bg-white/10 border border-white/15 text-white py-2 rounded-xl font-bold text-[11px] uppercase text-center hover:bg-white/20 transition-all cursor-pointer"
-                        >
-                          Ver Catálogo
-                        </button>
+                        {company.catalogUrl && company.catalogUrl !== '#' && (
+                          <a
+                            href={company.catalogUrl.startsWith('http') ? company.catalogUrl : `https://${company.catalogUrl}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex-1 min-w-[120px] bg-amber-500/15 border border-amber-500/30 text-amber-300 py-2 rounded-xl font-bold text-[11px] uppercase text-center flex items-center justify-center gap-1.5 hover:bg-amber-600 hover:text-black transition-all decoration-transparent"
+                          >
+                            <Store size={13} /> Catálogo
+                          </a>
+                        )}
                       </div>
                     </div>
 
@@ -295,7 +305,7 @@ export const SelfServiceTrialModal: React.FC<SelfServiceTrialModalProps> = ({
 
                   <div className="flex flex-wrap justify-center gap-2 mt-4">
                     <a
-                      href={`https://wa.me/${cleanWa}`}
+                      href={`https://wa.me/${cleanWa}?text=${encodeURIComponent(`Olá! Vi o mini-site da empresa "${company.name}" no portal Minha Divulgação e gostaria de atendimento sobre seus produtos e serviços.`)}`}
                       target="_blank"
                       rel="noreferrer"
                       className="bg-[#25D366] text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow decoration-transparent"
@@ -330,7 +340,7 @@ export const SelfServiceTrialModal: React.FC<SelfServiceTrialModalProps> = ({
               )}
             </div>
 
-            {/* OFFICIAL PIX ACTIVATION SECTION */}
+            {/* OFFICIAL PAYMENT ACTIVATION SECTION */}
             <div className="bg-gradient-to-b from-[#131522] via-[#0d0f17] to-[#07080e] border-2 border-amber-500/50 rounded-3xl p-5 sm:p-7 shadow-2xl relative overflow-hidden">
               
               <div className="text-center max-w-xl mx-auto">
@@ -341,7 +351,7 @@ export const SelfServiceTrialModal: React.FC<SelfServiceTrialModalProps> = ({
                   Ative seu Anúncio na Página Principal
                 </h3>
                 <p className="text-xs sm:text-sm text-white/70 mt-1 leading-relaxed">
-                  Faça o pagamento via Pix utilizando a chave CNPJ ou o código Copia e Cola. O gestor libera sua empresa na página principal logo após a confirmação.
+                  Escolha como deseja pagar: <strong>Cartão de Crédito</strong> online ou <strong>Pix</strong> imediato. O gestor libera sua empresa na página principal logo após a confirmação.
                 </p>
               </div>
 
@@ -354,98 +364,213 @@ export const SelfServiceTrialModal: React.FC<SelfServiceTrialModalProps> = ({
                   R$ {OFFICIAL_PIX_DATA.monthlyPrice} <span className="text-xs text-white/50 font-normal font-sans">/ MÊS</span>
                 </div>
                 <span className="text-[11px] text-white/60 block mt-1">
-                  Card na página principal • Catálogo online • Botão direto de WhatsApp
+                  Card na página principal • Redes sociais • Botão direto de WhatsApp
                 </span>
               </div>
 
-              {/* PIX DETAILS GRID */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 items-center">
-                
-                {/* QR Code image */}
-                <div className="flex flex-col items-center justify-center p-4 bg-white/5 border border-white/10 rounded-2xl">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-white/70 mb-3 flex items-center gap-1.5">
-                    📱 QR Code Pix Oficial
-                  </span>
-                  <div className="w-52 h-52 bg-white rounded-2xl p-2.5 shadow-xl flex items-center justify-center border-4 border-amber-400">
-                    <img 
-                      src={OFFICIAL_PIX_DATA.qrCodeUrl} 
-                      alt="QR Code Pix Oficial Minha Divulgação" 
-                      className="w-full h-full object-contain"
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
-                  <span className="text-[10px] text-white/40 mt-2 font-mono">
-                    Abra o app do seu banco e escaneie o código
-                  </span>
+              {/* PAYMENT METHOD SELECTOR TABS */}
+              <div className="flex justify-center mt-6">
+                <div className="inline-flex p-1.5 bg-black/60 border border-white/10 rounded-2xl gap-2 w-full max-w-md">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('cartao')}
+                    className={`flex-1 py-3 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      paymentMethod === 'cartao'
+                        ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 text-white shadow-lg shadow-blue-500/30 border border-blue-400/40'
+                        : 'text-white/60 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <CreditCard size={16} />
+                    <span>Cartão de Crédito</span>
+                    <span className="text-[9px] bg-blue-400 text-black px-1.5 py-0.5 rounded font-black hidden sm:inline">ONLINE</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('pix')}
+                    className={`flex-1 py-3 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      paymentMethod === 'pix'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-lg shadow-amber-500/30 border border-amber-400/40'
+                        : 'text-white/60 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <QrCode size={16} />
+                    <span>Pix Oficial</span>
+                    <span className="text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded font-black hidden sm:inline">IMEDIATO</span>
+                  </button>
                 </div>
+              </div>
 
-                {/* Chave e Copia e Cola */}
-                <div className="flex flex-col gap-4">
-                  {/* CNPJ Key Box */}
-                  <div className="bg-black/50 border border-white/10 rounded-2xl p-4">
-                    <span className="text-[10px] text-white/50 font-bold uppercase tracking-wider block font-mono mb-1">
-                      Chave PIX (CNPJ)
+              {/* TAB 1: CARTÃO DE CRÉDITO (ASAAS) */}
+              {paymentMethod === 'cartao' && (
+                <div className="mt-6 max-w-xl mx-auto bg-gradient-to-b from-[#14182b] to-[#0c0e18] border-2 border-blue-500/40 rounded-3xl p-6 sm:p-7 shadow-2xl">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shrink-0">
+                      <CreditCard size={24} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-base sm:text-lg font-black text-white">Pagamento Online no Cartão</h4>
+                        <span className="text-[10px] bg-blue-500/20 text-blue-300 font-mono font-bold px-2 py-0.5 rounded-full border border-blue-500/30">
+                          ASAAS
+                        </span>
+                      </div>
+                      <p className="text-xs text-white/60">
+                        Divulgação on line • R$ {OFFICIAL_PIX_DATA.monthlyPrice}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-black/50 border border-white/10 rounded-2xl p-4 mb-5">
+                    <span className="text-[10px] text-white/50 font-mono uppercase font-bold block mb-1">
+                      Link Oficial de Pagamento
                     </span>
-                    <div className="flex items-center justify-between gap-2 bg-[#12141f] border border-white/10 rounded-xl px-3 py-2.5">
-                      <span className="text-sm font-mono font-bold text-white tracking-wide">
-                        {OFFICIAL_PIX_DATA.cnpj}
-                      </span>
+                    <p className="text-xs text-white/90 font-mono leading-relaxed select-all break-all">
+                      {OFFICIAL_PIX_DATA.creditCardMessage}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    <a
+                      href={OFFICIAL_PIX_DATA.creditCardUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:brightness-110 text-white py-4 px-6 rounded-2xl font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2.5 shadow-xl shadow-blue-600/30 transition-all hover:scale-[1.02] cursor-pointer decoration-transparent"
+                    >
+                      <CreditCard size={18} />
+                      <span>Pagar R$ 49,90 no Cartão de Crédito</span>
+                      <ExternalLink size={16} />
+                    </a>
+
+                    <div className="flex flex-col sm:flex-row items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => copyToClipboard(OFFICIAL_PIX_DATA.cnpj, 'key')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer ${
-                          copiedKey ? 'bg-emerald-500 text-white' : 'bg-amber-500 hover:bg-amber-400 text-black'
+                        onClick={() => {
+                          navigator.clipboard.writeText(OFFICIAL_PIX_DATA.creditCardUrl);
+                          setCopiedCardLink(true);
+                          setTimeout(() => setCopiedCardLink(false), 2000);
+                        }}
+                        className={`flex-1 w-full py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                          copiedCardLink ? 'bg-emerald-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white border border-white/15'
                         }`}
                       >
-                        {copiedKey ? <Check size={14} /> : <Copy size={14} />}
-                        {copiedKey ? 'Copiado!' : 'Copiar'}
+                        {copiedCardLink ? <Check size={14} /> : <Copy size={14} />}
+                        <span>{copiedCardLink ? 'Link Copiado!' : 'Copiar Link do Cartão'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(OFFICIAL_PIX_DATA.creditCardMessage);
+                          setCopiedCardMsg(true);
+                          setTimeout(() => setCopiedCardMsg(false), 2000);
+                        }}
+                        className={`flex-1 w-full py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                          copiedCardMsg ? 'bg-emerald-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white border border-white/15'
+                        }`}
+                      >
+                        {copiedCardMsg ? <Check size={14} /> : <Copy size={14} />}
+                        <span>{copiedCardMsg ? 'Texto Completo Copiado!' : 'Copiar Mensagem do Link'}</span>
                       </button>
                     </div>
-                    <span className="text-[10px] text-white/40 mt-1 block">
-                      Favorecido: {OFFICIAL_PIX_DATA.receiverName}
-                    </span>
                   </div>
 
-                  {/* Copia e Cola Box */}
-                  <div className="bg-black/50 border border-white/10 rounded-2xl p-4">
-                    <span className="text-[10px] text-white/50 font-bold uppercase tracking-wider block font-mono mb-1">
-                      Código PIX Copia e Cola
-                    </span>
-                    <div className="relative">
-                      <textarea
-                        readOnly
-                        rows={2}
-                        value={OFFICIAL_PIX_DATA.copiaECola}
-                        className="w-full bg-[#12141f] border border-white/10 rounded-xl p-2.5 text-[11px] font-mono text-white/80 resize-none outline-none focus:border-amber-400 select-all"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(OFFICIAL_PIX_DATA.copiaECola, 'code')}
-                      className={`w-full mt-2 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                        copiedCode ? 'bg-emerald-500 text-white' : 'bg-gradient-to-r from-amber-400 to-yellow-500 hover:brightness-110 text-black shadow-md'
-                      }`}
-                    >
-                      {copiedCode ? <Check size={16} /> : <Copy size={16} />}
-                      {copiedCode ? 'Código PIX Copiado com Sucesso!' : 'Copiar Código Copia e Cola'}
-                    </button>
+                  <div className="mt-4 pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-[11px] text-white/50">
+                    <span>🔒 Pagamento seguro processado via Asaas</span>
+                    <span className="text-emerald-400 font-bold">Confirmação Ágil</span>
                   </div>
                 </div>
+              )}
 
-              </div>
+              {/* TAB 2: PIX OFICIAL */}
+              {paymentMethod === 'pix' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 items-center">
+                  
+                  {/* QR Code image */}
+                  <div className="flex flex-col items-center justify-center p-4 bg-white/5 border border-white/10 rounded-2xl">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-white/70 mb-3 flex items-center gap-1.5">
+                      📱 QR Code Pix Oficial
+                    </span>
+                    <div className="w-52 h-52 bg-white rounded-2xl p-2.5 shadow-xl flex items-center justify-center border-4 border-amber-400">
+                      <img 
+                        src={OFFICIAL_PIX_DATA.qrCodeUrl} 
+                        alt="QR Code Pix Oficial Minha Divulgação" 
+                        className="w-full h-full object-contain"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                    <span className="text-[10px] text-white/40 mt-2 font-mono">
+                      Abra o app do seu banco e escaneie o código
+                    </span>
+                  </div>
+
+                  {/* Chave e Copia e Cola */}
+                  <div className="flex flex-col gap-4">
+                    {/* CNPJ Key Box */}
+                    <div className="bg-black/50 border border-white/10 rounded-2xl p-4">
+                      <span className="text-[10px] text-white/50 font-bold uppercase tracking-wider block font-mono mb-1">
+                        Chave PIX (CNPJ)
+                      </span>
+                      <div className="flex items-center justify-between gap-2 bg-[#12141f] border border-white/10 rounded-xl px-3 py-2.5">
+                        <span className="text-sm font-mono font-bold text-white tracking-wide">
+                          {OFFICIAL_PIX_DATA.cnpj}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(OFFICIAL_PIX_DATA.cnpj, 'key')}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer ${
+                            copiedKey ? 'bg-emerald-500 text-white' : 'bg-amber-500 hover:bg-amber-400 text-black'
+                          }`}
+                        >
+                          {copiedKey ? <Check size={14} /> : <Copy size={14} />}
+                          {copiedKey ? 'Copiado!' : 'Copiar'}
+                        </button>
+                      </div>
+                      <span className="text-[10px] text-white/40 mt-1 block">
+                        Favorecido: {OFFICIAL_PIX_DATA.receiverName}
+                      </span>
+                    </div>
+
+                    {/* Copia e Cola Box */}
+                    <div className="bg-black/50 border border-white/10 rounded-2xl p-4">
+                      <span className="text-[10px] text-white/50 font-bold uppercase tracking-wider block font-mono mb-1">
+                        Código PIX Copia e Cola
+                      </span>
+                      <div className="relative">
+                        <textarea
+                          readOnly
+                          rows={2}
+                          value={OFFICIAL_PIX_DATA.copiaECola}
+                          className="w-full bg-[#12141f] border border-white/10 rounded-xl p-2.5 text-[11px] font-mono text-white/80 resize-none outline-none focus:border-amber-400 select-all"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(OFFICIAL_PIX_DATA.copiaECola, 'code')}
+                        className={`w-full mt-2 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                          copiedCode ? 'bg-emerald-500 text-white' : 'bg-gradient-to-r from-amber-400 to-yellow-500 hover:brightness-110 text-black shadow-md'
+                        }`}
+                      >
+                        {copiedCode ? <Check size={16} /> : <Copy size={16} />}
+                        {copiedCode ? 'Código PIX Copiado com Sucesso!' : 'Copiar Código Copia e Cola'}
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              )}
 
               {/* ACTION: NOTIFY MANAGER ON WHATSAPP */}
               <div className="mt-7 pt-6 border-t border-white/10 text-center flex flex-col items-center">
                 <button
                   type="button"
-                  onClick={() => onNotifyWhatsApp(company, selectedPlan)}
+                  onClick={() => onNotifyWhatsApp(company, selectedPlan, paymentMethod)}
                   className="w-full max-w-md bg-[#25D366] hover:bg-[#20ba59] text-white py-4 px-6 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2.5 shadow-[0_10px_35px_rgba(37,211,102,0.3)] transition-all hover:scale-[1.02] cursor-pointer"
                 >
                   <Smartphone size={18} />
-                  <span>Já Fiz o Pix / Enviar Comprovante</span>
+                  <span>Já Fiz o Pagamento / Enviar Comprovante</span>
                 </button>
                 <p className="text-xs text-white/50 mt-2.5 max-w-md">
-                  Envie o comprovante pelo botão acima. O gestor checará o valor e ativará sua empresa imediatamente para o público da sua cidade!
+                  Pagou via Cartão ou Pix? Envie a confirmação pelo botão acima. O gestor checará o pagamento e ativará sua empresa imediatamente para o público da sua cidade!
                 </p>
               </div>
 

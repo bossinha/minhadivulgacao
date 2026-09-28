@@ -24,7 +24,9 @@ import {
   Briefcase
 } from 'lucide-react';
 
-const DEFAULT_WA_LINK = "https://wa.me/5585992862177?text=Ol%C3%A1!%20Gostaria%20de%20divulgar%20minha%20empresa%20no%20Minha%20Divulga%C3%A7%C3%A3o.";
+const DEFAULT_WA_LINK = `https://wa.me/5585992862177?text=${encodeURIComponent(
+  "Olá! Gostaria de obter informações sobre a divulgação da minha empresa no portal Minha Divulgação.\n\nTenho interesse no plano comercial de R$ 49,90/mês. Poderia me orientar sobre o cadastro e a ativação, por gentileza?"
+)}`;
 
 // ==========================================
 // SEGMENTOS DE EMPRESAS ATENDIDAS
@@ -451,7 +453,7 @@ export const PlanoPrecoSection: React.FC<{ primaryWaLink?: string; onCadastrarCl
             </a>
 
             <p className="text-[11px] text-white/50 font-mono mt-1">
-              Pagamento facilitado via Pix • Ativação rápida com suporte
+              Pagamento facilitado via Cartão de Crédito ou Pix • Ativação rápida com suporte
             </p>
           </div>
 
