@@ -15,6 +15,7 @@ import {
   Eye, 
   ShieldCheck,
   User,
+  ShoppingBag,
   HelpCircle,
   FileText
 } from 'lucide-react';
@@ -83,7 +84,9 @@ export const CompanyRegistrationModal: React.FC<CompanyRegistrationModalProps> =
   const [logo, setLogo] = useState('');
   const [desc, setDesc] = useState('');
   const [ig, setIg] = useState('');
+  const [catalogUrl, setCatalogUrl] = useState('');
   const [website, setWebsite] = useState('');
+  const [fb, setFb] = useState('');
   const [responsibleName, setResponsibleName] = useState('');
   
   const [isUploading, setIsUploading] = useState(false);
@@ -171,7 +174,9 @@ export const CompanyRegistrationModal: React.FC<CompanyRegistrationModalProps> =
         logo: logo.trim() || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=300',
         wa: cleanWa,
         ig: ig.trim() ? (ig.startsWith('@') ? `https://instagram.com/${ig.replace('@', '')}` : ig.trim()) : '',
+        catalogUrl: catalogUrl.trim(),
         website: website.trim(),
+        fb: fb.trim(),
         state: state.toUpperCase(),
         uf: state.toUpperCase(),
         city: city.trim(),
@@ -446,7 +451,7 @@ export const CompanyRegistrationModal: React.FC<CompanyRegistrationModalProps> =
                 />
               </div>
 
-              {/* Redes Opcionais: Instagram + Nome do Responsável */}
+              {/* Redes Sociais & Links Externos */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[11px] font-black uppercase tracking-wider text-white/70 flex items-center gap-1.5">
@@ -465,18 +470,65 @@ export const CompanyRegistrationModal: React.FC<CompanyRegistrationModalProps> =
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[11px] font-black uppercase tracking-wider text-white/70 flex items-center gap-1.5">
-                    <User size={13} className="text-cyan-400" />
-                    <span>Nome do Responsável</span>
+                    <ShoppingBag size={13} className="text-amber-400" />
+                    <span>Link do Catálogo / Cardápio</span>
                     <span className="text-[10px] text-white/40 normal-case font-normal">(opcional)</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="Para contato com o gestor Anderson"
-                    value={responsibleName}
-                    onChange={(e) => setResponsibleName(e.target.value)}
-                    className="w-full bg-[#11111a] border border-white/15 focus:border-cyan-400 outline-none rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-white/30"
+                    placeholder="Link do WhatsApp, PDF, catálogo ou menu"
+                    value={catalogUrl}
+                    onChange={(e) => setCatalogUrl(e.target.value)}
+                    className="w-full bg-[#11111a] border border-white/15 focus:border-amber-400 outline-none rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-white/30"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-black uppercase tracking-wider text-white/70 flex items-center gap-1.5">
+                    <Globe size={13} className="text-amber-400" />
+                    <span>Website Oficial</span>
+                    <span className="text-[10px] text-white/40 normal-case font-normal">(opcional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="https://suaempresa.com.br"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                    className="w-full bg-[#11111a] border border-white/15 focus:border-amber-400 outline-none rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-white/30"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-black uppercase tracking-wider text-white/70 flex items-center gap-1.5">
+                    <span className="text-blue-400 font-black text-xs">f</span>
+                    <span>Facebook</span>
+                    <span className="text-[10px] text-white/40 normal-case font-normal">(opcional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="facebook.com/suaempresa ou link"
+                    value={fb}
+                    onChange={(e) => setFb(e.target.value)}
+                    className="w-full bg-[#11111a] border border-white/15 focus:border-blue-400 outline-none rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-white/30"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-black uppercase tracking-wider text-white/70 flex items-center gap-1.5">
+                  <User size={13} className="text-cyan-400" />
+                  <span>Nome do Responsável</span>
+                  <span className="text-[10px] text-white/40 normal-case font-normal">(opcional)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Para contato com o gestor Anderson"
+                  value={responsibleName}
+                  onChange={(e) => setResponsibleName(e.target.value)}
+                  className="w-full bg-[#11111a] border border-white/15 focus:border-cyan-400 outline-none rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-white/30"
+                />
               </div>
 
               {/* SUBMIT BUTTON */}
@@ -584,6 +636,37 @@ export const CompanyRegistrationModal: React.FC<CompanyRegistrationModalProps> =
                     <Phone size={14} />
                     <span>Falar no WhatsApp ({cleanWa ? `(DDD) ${cleanWa.slice(-8)}` : 'Seu WhatsApp'})</span>
                   </div>
+                </div>
+
+                {/* Simulated Secondary Action Buttons (Instagram, Catálogo, Website, Facebook) */}
+                <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-1.5 w-full">
+                  <div className={`flex-1 min-w-0 py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all ${
+                    ig ? 'bg-pink-500/20 border border-pink-500/40 text-pink-300' : 'bg-white/5 border border-white/10 text-white/40'
+                  }`}>
+                    <Instagram size={12} />
+                    <span className="truncate">Instagram</span>
+                  </div>
+
+                  <div className={`flex-1 min-w-0 py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all ${
+                    catalogUrl ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300' : 'bg-white/5 border border-white/10 text-white/40'
+                  }`}>
+                    <ShoppingBag size={12} />
+                    <span className="truncate">Catálogo</span>
+                  </div>
+
+                  <div className={`flex-1 min-w-0 py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all ${
+                    website ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300' : 'bg-white/5 border border-white/10 text-white/40'
+                  }`}>
+                    <Globe size={12} />
+                    <span className="truncate">Website</span>
+                  </div>
+
+                  {fb && (
+                    <div className="flex-1 min-w-0 py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all bg-blue-500/20 border border-blue-500/40 text-blue-300">
+                      <span className="text-xs font-black">f</span>
+                      <span className="truncate">Facebook</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Bottom Notice on Preview */}

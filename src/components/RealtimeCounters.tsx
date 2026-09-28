@@ -50,7 +50,7 @@ export const getLocalCompanyExtraViews = (companyIdOrSlug: string): number => {
 // Track action on company (clicking WhatsApp, Instagram, Website, Catalog, or Card)
 export const trackCompanyInteraction = async (
   company: any, 
-  actionType: 'card' | 'catalog' | 'whatsapp' | 'instagram' | 'website' = 'card'
+  actionType: 'card' | 'catalog' | 'whatsapp' | 'instagram' | 'website' | 'facebook' = 'card'
 ) => {
   if (!company) return;
   const companyKey = String(company.id || company.name || 'empresa').toLowerCase().replace(/\s+/g, '-');

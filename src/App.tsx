@@ -1780,31 +1780,24 @@ function AppContent() {
 
     const hasWa = Boolean(company.wa && company.wa.trim());
     const hasIg = Boolean(company.ig && company.ig !== '#' && company.ig.trim());
+    const catalogUrl = (company.catalogUrl || company.catalogLink || company.catalog || '').trim();
+    const hasCatalogLink = Boolean(catalogUrl && catalogUrl !== '#');
     const hasWebsite = Boolean(company.website && company.website !== '#' && company.website.trim());
-    const showCatalog = !company.hideMiniSite;
-
-    const btnInfo = getCompanyPrimaryButtonInfo(company);
+    const hasFb = Boolean(company.fb && company.fb !== '#' && company.fb.trim());
 
     const refCode = sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`);
     const waMessage = `Olá, vi seu anúncio no portal ${appData?.siteInfo?.name || 'Minha Divulgação'}!${refCode ? ` Fui indicado pelo parceiro: ${refCode}` : ''}`;
     const waClean = hasWa ? company.wa.replace(/[^0-9]/g, '') : '';
     const waUrl = `https://wa.me/${waClean}?text=${encodeURIComponent(waMessage)}`;
     const websiteUrl = hasWebsite ? (company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`) : '#';
+    const cleanCatalogUrl = hasCatalogLink ? (catalogUrl.startsWith('http') ? catalogUrl : `https://${catalogUrl}`) : '#';
+    const igUrl = hasIg ? (company.ig.trim().startsWith('http') ? company.ig.trim() : `https://instagram.com/${company.ig.trim().replace('@', '')}`) : '#';
+    const fbUrl = hasFb ? (company.fb.trim().startsWith('http') ? company.fb.trim() : `https://${company.fb.trim()}`) : '#';
 
-    // Primary CTA Button (Row 1)
+    // Primary CTA Button (Row 1): WhatsApp is always the main prominent button
     let primaryButton = null;
 
-    if (showCatalog) {
-      primaryButton = (
-        <button 
-          onClick={() => handleCompanyPrimaryButtonClick(company)}
-          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-2.5 sm:py-3 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer active:scale-[0.98]"
-        >
-          <ShoppingBag size={isCompact ? 12 : 14} className="shrink-0" /> 
-          <span className="truncate">{btnInfo.label}</span>
-        </button>
-      );
-    } else if (hasWa) {
+    if (hasWa) {
       primaryButton = (
         <a 
           href={waUrl} 
@@ -1814,6 +1807,18 @@ function AppContent() {
           className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-2.5 sm:py-3 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md active:scale-[0.98]"
         >
           <Smartphone size={isCompact ? 12 : 14} className="shrink-0" /> Falar no WhatsApp
+        </a>
+      );
+    } else if (hasCatalogLink) {
+      primaryButton = (
+        <a 
+          href={cleanCatalogUrl} 
+          target="_blank" 
+          rel="noreferrer"
+          onClick={() => trackCompanyInteraction(company, 'catalog')}
+          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-2.5 sm:py-3 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer active:scale-[0.98]"
+        >
+          <ShoppingBag size={isCompact ? 12 : 14} className="shrink-0" /> Ver Catálogo
         </a>
       );
     } else if (hasWebsite) {
@@ -1831,7 +1836,7 @@ function AppContent() {
     } else if (hasIg) {
       primaryButton = (
         <a 
-          href={company.ig} 
+          href={igUrl} 
           target="_blank" 
           rel="noreferrer"
           onClick={() => trackCompanyInteraction(company, 'instagram')}
@@ -1842,34 +1847,15 @@ function AppContent() {
       );
     }
 
-    // Secondary Actions (Row 2) - Grid of 1, 2, or 3 buttons
+    // Secondary Actions (Row 2) - Redes Sociais & Links (Instagram, Catálogo, Website, Facebook)
     const secondaryList: React.ReactNode[] = [];
 
-    // WhatsApp as secondary (if Catalog is Primary)
-    if (showCatalog && hasWa) {
-      secondaryList.push(
-        <a 
-          key="wa"
-          href={waUrl} 
-          target="_blank" 
-          rel="noreferrer"
-          onClick={() => trackCompanyInteraction(company, 'whatsapp')}
-          className="flex-1 min-w-0 bg-emerald-500/10 border border-emerald-500/25 hover:bg-[#25D366] hover:border-[#25D366] text-emerald-400 hover:text-white py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all duration-200"
-          title="Falar no WhatsApp"
-        >
-          <Smartphone size={12} className="shrink-0" />
-          <span className="truncate">WhatsApp</span>
-        </a>
-      );
-    }
-
-    // Instagram as secondary
-    const isIgPrimary = !showCatalog && !hasWa && !hasWebsite && hasIg;
-    if (hasIg && !isIgPrimary) {
+    // Instagram (se tiver e WhatsApp for o principal)
+    if (hasIg && hasWa) {
       secondaryList.push(
         <a 
           key="ig"
-          href={company.ig} 
+          href={igUrl} 
           target="_blank" 
           rel="noreferrer"
           onClick={() => trackCompanyInteraction(company, 'instagram')}
@@ -1882,9 +1868,26 @@ function AppContent() {
       );
     }
 
-    // Website as secondary
-    const isWebsitePrimary = !showCatalog && !hasWa && hasWebsite;
-    if (hasWebsite && !isWebsitePrimary) {
+    // Catálogo externo (se tiver e WhatsApp for o principal)
+    if (hasCatalogLink && hasWa) {
+      secondaryList.push(
+        <a 
+          key="catalog"
+          href={cleanCatalogUrl} 
+          target="_blank" 
+          rel="noreferrer"
+          onClick={() => trackCompanyInteraction(company, 'catalog')}
+          className="flex-1 min-w-0 bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500 hover:border-amber-500 text-amber-400 hover:text-black py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all duration-200"
+          title="Ver Catálogo / Cardápio"
+        >
+          <ShoppingBag size={12} className="shrink-0" />
+          <span className="truncate">Catálogo</span>
+        </a>
+      );
+    }
+
+    // Website (se tiver, for diferente do catálogo, e WhatsApp for o principal)
+    if (hasWebsite && hasWa && (!hasCatalogLink || company.website !== catalogUrl)) {
       secondaryList.push(
         <a 
           key="web"
@@ -1901,6 +1904,24 @@ function AppContent() {
       );
     }
 
+    // Facebook (se tiver)
+    if (hasFb) {
+      secondaryList.push(
+        <a 
+          key="fb"
+          href={fbUrl} 
+          target="_blank" 
+          rel="noreferrer"
+          onClick={() => trackCompanyInteraction(company, 'facebook')}
+          className="flex-1 min-w-0 bg-blue-500/10 border border-blue-500/25 hover:bg-blue-600 hover:border-blue-600 text-blue-400 hover:text-white py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all duration-200"
+          title="Ver Facebook"
+        >
+          <span className="text-xs font-black shrink-0 leading-none">f</span>
+          <span className="truncate">Facebook</span>
+        </a>
+      );
+    }
+
     if (!primaryButton && secondaryList.length === 0) {
       return (
         <div className="mt-4 pt-3 border-t border-white/5 w-full">
@@ -1911,13 +1932,20 @@ function AppContent() {
       );
     }
 
+    const gridColsClass = 
+      secondaryList.length === 1 
+        ? 'grid-cols-1' 
+        : secondaryList.length === 2 
+        ? 'grid-cols-2' 
+        : secondaryList.length === 3 
+        ? 'grid-cols-3' 
+        : 'grid-cols-4';
+
     return (
       <div className="flex flex-col gap-2 w-full mt-4 pt-3 border-t border-white/5">
         {primaryButton}
         {secondaryList.length > 0 && (
-          <div className={`grid gap-1.5 w-full ${
-            secondaryList.length === 1 ? 'grid-cols-1' : secondaryList.length === 2 ? 'grid-cols-2' : 'grid-cols-3'
-          }`}>
+          <div className={`grid gap-1.5 w-full ${gridColsClass}`}>
             {secondaryList}
           </div>
         )}
@@ -4973,9 +5001,20 @@ function AppContent() {
                     )}
                     
                     <div 
-                      onClick={() => handleCompanyPrimaryButtonClick(company)}
+                      onClick={() => {
+                        if (company.wa) {
+                          const waClean = company.wa.replace(/[^0-9]/g, '');
+                          const refCode = sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`);
+                          const waMessage = `Olá, vi seu anúncio no portal ${appData?.siteInfo?.name || 'Minha Divulgação'}!${refCode ? ` Fui indicado pelo parceiro: ${refCode}` : ''}`;
+                          window.open(`https://wa.me/${waClean}?text=${encodeURIComponent(waMessage)}`, '_blank');
+                        } else if (company.catalogUrl) {
+                          window.open(company.catalogUrl, '_blank');
+                        } else if (company.website) {
+                          window.open(company.website, '_blank');
+                        }
+                      }}
                       className="cursor-pointer group/cardinfo"
-                      title={`Clique para ver mais de ${company.name}`}
+                      title={`Falar no WhatsApp com ${company.name}`}
                     >
                       {/* Logo Frame */}
                       <div className="w-20 h-20 rounded-full bg-white border border-white/15 overflow-hidden flex items-center justify-center shadow-lg p-0 mb-5 mt-2 transition-transform duration-300 group-hover/cardinfo:scale-105">
@@ -6081,6 +6120,18 @@ function AppContent() {
                                     }} placeholder="Opcional" />
                                   </div>
                                   <div className="dev-form-group" style={{ margin: 0 }}>
+                                    <label>Link do Catálogo / Cardápio</label>
+                                    <input type="text" className="dev-input" value={c.catalogUrl || ''} onChange={(e) => {
+                                      const val = e.target.value;
+                                      setAppData(prev => {
+                                        if (!prev) return prev;
+                                        const newList = [...prev.companies];
+                                        newList[idx] = { ...newList[idx], catalogUrl: val };
+                                        return { ...prev, companies: newList };
+                                      });
+                                    }} placeholder="Link do PDF, WhatsApp, Menu..." />
+                                  </div>
+                                  <div className="dev-form-group" style={{ margin: 0 }}>
                                     <label>Link do Site</label>
                                     <input type="text" className="dev-input" value={c.website} onChange={(e) => {
                                       const val = e.target.value;
@@ -6229,7 +6280,7 @@ function AppContent() {
                     ))}
                     <button className="dev-add-btn" onClick={() => {
                       const newIdx = appData.companies.length;
-                      updateData('companies', [...appData.companies, { id: Date.now(), name: "Nova Empresa", category: "Geral", desc: "Descrição aqui", logo: "", wa: "", ig: "", website: "", featured: false }]);
+                      updateData('companies', [...appData.companies, { id: Date.now(), name: "Nova Empresa", category: "Geral", desc: "Descrição aqui", logo: "", wa: "", ig: "", catalogUrl: "", website: "", fb: "", featured: false }]);
                       setOpenCompanyIndex(newIdx);
                     }}>+ Adicionar Empresa</button>
                   </div>
@@ -11114,6 +11165,23 @@ function AppContent() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-white/50 uppercase font-bold">Link do Catálogo / Cardápio Digital (Opcional)</label>
+                            <input 
+                              type="text"
+                              value={currentAdvertiser.company.catalogUrl || currentAdvertiser.company.catalogLink || ''}
+                              placeholder="Link do WhatsApp, PDF, catálogo ou menu"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCurrentAdvertiser((prev: any) => ({
+                                  ...prev,
+                                  company: { ...prev.company, catalogUrl: val }
+                                }));
+                              }}
+                              className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
+                            />
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
                             <label className="text-[10px] text-white/50 uppercase font-bold">Link do Site Oficial (Website)</label>
                             <input 
                               type="text"
@@ -11129,7 +11197,9 @@ function AppContent() {
                               className="w-full bg-[#11111a] border border-white/10 focus:border-[var(--primary)] outline-none rounded-xl px-4 py-3 text-xs text-white"
                             />
                           </div>
+                        </div>
 
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="flex flex-col gap-1.5">
                             <label className="text-[10px] text-white/50 uppercase font-bold">Link do Facebook (facebook.com/...)</label>
                             <input 
