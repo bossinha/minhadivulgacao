@@ -234,15 +234,15 @@ export const CompanyRegistrationModal: React.FC<CompanyRegistrationModalProps> =
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-base sm:text-lg font-black text-white leading-tight">
-                    Cadastrar Minha Empresa
+                  <h3 className="text-base sm:text-lg font-black text-white leading-tight uppercase tracking-tight">
+                    COLOQUE SUA EMPRESA EM EVIDÊNCIA
                   </h3>
                   <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-mono font-bold px-2 py-0.5 rounded-full border border-emerald-500/30 uppercase">
                     Sem Burocracia
                   </span>
                 </div>
-                <p className="text-xs text-white/60">
-                  Sem senhas complicadas. Preencha os dados e veja a prévia do seu anúncio na hora!
+                <p className="text-xs text-white/70">
+                  Imagine sua empresa apresentada aqui, com sua marca, seus produtos e seus contatos.
                 </p>
               </div>
             </div>
@@ -265,7 +265,7 @@ export const CompanyRegistrationModal: React.FC<CompanyRegistrationModalProps> =
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3.5 flex items-start gap-3 text-amber-200 text-xs leading-relaxed">
                 <Sparkles size={18} className="shrink-0 text-amber-400 mt-0.5" />
                 <div>
-                  <strong>Presença Garantida no Portal:</strong> Após cadastrar e realizar o pagamento de <strong>R$ 49,90/mês</strong> (via Cartão de Crédito ou Pix), o gestor do portal libera o seu card diretamente na vitrine da cidade para receber clientes no WhatsApp!
+                  <strong>Preencha os dados e veja a prévia de como sua empresa poderá aparecer no portal.</strong> Tenha mais um canal para apresentar seus produtos, serviços e contatos por R$ 49,90/mês.
                 </div>
               </div>
 
@@ -563,7 +563,7 @@ export const CompanyRegistrationModal: React.FC<CompanyRegistrationModalProps> =
               <div className="bg-[#121420] border border-amber-500/30 rounded-2xl p-4 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-black uppercase text-amber-300 tracking-wider">
                   <Eye size={15} />
-                  <span>Prévia do Card em Tempo Real</span>
+                  <span>ASSIM SUA EMPRESA PODERÁ APARECER</span>
                 </div>
                 <span className="text-[10px] font-mono bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-bold">
                   AO VIVO
