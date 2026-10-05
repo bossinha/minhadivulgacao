@@ -16,6 +16,8 @@ export interface CompanyDispatchTracking {
   companyName: string;
   totalDispatches: number;
   manualInitialCount: number;
+  daysElapsed: number; // Sequência dos dias que já foram (ex: 1, 2, 5, etc.)
+  totalCampaignDays: number; // Total de dias da campanha (padrão: 30)
   lastDispatchedAt?: string;
   isAuto24hActive: boolean;
   auto24hStartedAt?: number; // epoch ms
@@ -23,6 +25,8 @@ export interface CompanyDispatchTracking {
   autoIntervalMinutes: number; // default 5 minutes
   groupsWhatsAppReached: number;
   groupsFacebookReached: number;
+  manualWhatsAppGroups?: number;
+  manualFacebookGroups?: number;
   estimatedReach: number;
   recentLogs: DispatchLogEntry[];
   updatedAt?: string;
@@ -36,10 +40,14 @@ export function getDefaultTracking(companyId: string, companyName: string = 'Emp
     companyName,
     totalDispatches: 0,
     manualInitialCount: 0,
+    daysElapsed: 1,
+    totalCampaignDays: 30,
     isAuto24hActive: false,
     autoIntervalMinutes: 5,
     groupsWhatsAppReached: 0,
     groupsFacebookReached: 0,
+    manualWhatsAppGroups: 0,
+    manualFacebookGroups: 0,
     estimatedReach: 0,
     recentLogs: [],
     updatedAt: new Date().toISOString()
@@ -75,14 +83,22 @@ export function computeLiveTracking(tracking: CompanyDispatchTracking): CompanyD
   const calculatedTotal = baseCount + manualAdds + autoCycles;
   const total = Math.max(tracking.totalDispatches, calculatedTotal);
 
-  const waGroups = Math.max(1, Math.round(total * 0.7) + 5);
-  const fbGroups = Math.max(1, Math.round(total * 0.4) + 3);
+  const waGroups = (tracking.manualWhatsAppGroups !== undefined && tracking.manualWhatsAppGroups >= 0)
+    ? tracking.manualWhatsAppGroups
+    : (tracking.groupsWhatsAppReached > 0 ? tracking.groupsWhatsAppReached : Math.max(1, Math.round(total * 0.7) + 5));
+  const fbGroups = (tracking.manualFacebookGroups !== undefined && tracking.manualFacebookGroups >= 0)
+    ? tracking.manualFacebookGroups
+    : (tracking.groupsFacebookReached > 0 ? tracking.groupsFacebookReached : Math.max(1, Math.round(total * 0.4) + 3));
   const reach = Math.max(total * 350, 1200);
 
   return {
     ...tracking,
     totalDispatches: total,
     isAuto24hActive: !isExpired,
+    daysElapsed: tracking.daysElapsed || 1,
+    totalCampaignDays: tracking.totalCampaignDays || 30,
+    manualWhatsAppGroups: tracking.manualWhatsAppGroups,
+    manualFacebookGroups: tracking.manualFacebookGroups,
     groupsWhatsAppReached: waGroups,
     groupsFacebookReached: fbGroups,
     estimatedReach: reach
@@ -174,8 +190,12 @@ export async function registerManualDispatch(
     ...current,
     totalDispatches: newTotal,
     lastDispatchedAt: now.toISOString(),
-    groupsWhatsAppReached: Math.max(1, Math.round(newTotal * 0.7) + 5),
-    groupsFacebookReached: Math.max(1, Math.round(newTotal * 0.4) + 3),
+    groupsWhatsAppReached: current.manualWhatsAppGroups !== undefined && current.manualWhatsAppGroups > 0 
+      ? current.manualWhatsAppGroups 
+      : (current.groupsWhatsAppReached > 0 ? current.groupsWhatsAppReached : Math.max(1, Math.round(newTotal * 0.7) + 5)),
+    groupsFacebookReached: current.manualFacebookGroups !== undefined && current.manualFacebookGroups > 0 
+      ? current.manualFacebookGroups 
+      : (current.groupsFacebookReached > 0 ? current.groupsFacebookReached : Math.max(1, Math.round(newTotal * 0.4) + 3)),
     estimatedReach: Math.max(newTotal * 350, 1200),
     recentLogs: updatedLogs
   };
@@ -211,9 +231,121 @@ export async function setManualInitialCount(
     manualInitialCount: validCount,
     totalDispatches: validCount,
     lastDispatchedAt: now.toISOString(),
-    groupsWhatsAppReached: Math.max(1, Math.round(validCount * 0.7) + 5),
-    groupsFacebookReached: Math.max(1, Math.round(validCount * 0.4) + 3),
+    groupsWhatsAppReached: current.manualWhatsAppGroups !== undefined && current.manualWhatsAppGroups > 0 
+      ? current.manualWhatsAppGroups 
+      : (current.groupsWhatsAppReached > 0 ? current.groupsWhatsAppReached : Math.max(1, Math.round(validCount * 0.7) + 5)),
+    groupsFacebookReached: current.manualFacebookGroups !== undefined && current.manualFacebookGroups > 0 
+      ? current.manualFacebookGroups 
+      : (current.groupsFacebookReached > 0 ? current.groupsFacebookReached : Math.max(1, Math.round(validCount * 0.4) + 3)),
     estimatedReach: Math.max(validCount * 350, 1200),
+    recentLogs: [newLog, ...(current.recentLogs || [])].slice(0, 50)
+  };
+
+  await saveCompanyDispatchTracking(updated);
+  return updated;
+}
+
+/**
+ * Set manual WhatsApp and Facebook groups count
+ */
+export async function setManualGroupsCount(
+  current: CompanyDispatchTracking,
+  waGroups: number,
+  fbGroups: number
+): Promise<CompanyDispatchTracking> {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+
+  const validWa = Math.max(0, Math.floor(waGroups));
+  const validFb = Math.max(0, Math.floor(fbGroups));
+
+  const newLog: DispatchLogEntry = {
+    id: `log_${Date.now()}_groups`,
+    timestamp: `${dateStr} às ${timeStr}`,
+    type: 'initial_adjust',
+    channel: 'Definição de Grupos',
+    count: 0,
+    totalAfter: current.totalDispatches,
+    note: `Quantidade de grupos definida: ${validWa} grupos de WhatsApp e ${validFb} grupos de Facebook.`
+  };
+
+  const updated: CompanyDispatchTracking = {
+    ...current,
+    manualWhatsAppGroups: validWa,
+    manualFacebookGroups: validFb,
+    groupsWhatsAppReached: validWa,
+    groupsFacebookReached: validFb,
+    recentLogs: [newLog, ...(current.recentLogs || [])].slice(0, 50)
+  };
+
+  await saveCompanyDispatchTracking(updated);
+  return updated;
+}
+
+/**
+ * Reset all counters for a new month
+ */
+export async function resetForNewMonth(
+  current: CompanyDispatchTracking
+): Promise<CompanyDispatchTracking> {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+
+  const newLog: DispatchLogEntry = {
+    id: `log_${Date.now()}_reset_month`,
+    timestamp: `${dateStr} às ${timeStr}`,
+    type: 'initial_adjust',
+    channel: 'Início de Novo Mês',
+    count: 0,
+    totalAfter: 0,
+    note: 'Contador zerado pelo administrador para início de um novo mês de campanha.'
+  };
+
+  const updated: CompanyDispatchTracking = {
+    ...current,
+    totalDispatches: 0,
+    manualInitialCount: 0,
+    daysElapsed: 1,
+    isAuto24hActive: false,
+    lastDispatchedAt: now.toISOString(),
+    recentLogs: [newLog, ...(current.recentLogs || [])].slice(0, 50)
+  };
+
+  await saveCompanyDispatchTracking(updated);
+  return updated;
+}
+
+/**
+ * Set manual days sequence (e.g. Dia 4 de 30 dias)
+ */
+export async function setManualDaysElapsed(
+  current: CompanyDispatchTracking,
+  days: number,
+  totalDays: number = 30
+): Promise<CompanyDispatchTracking> {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+
+  const validDays = Math.max(1, Math.floor(days));
+  const validTotal = Math.max(validDays, Math.floor(totalDays || 30));
+
+  const newLog: DispatchLogEntry = {
+    id: `log_${Date.now()}_days`,
+    timestamp: `${dateStr} às ${timeStr}`,
+    type: 'initial_adjust',
+    channel: 'Sequência de Dias',
+    count: 0,
+    totalAfter: current.totalDispatches,
+    note: `Sequência de dias atualizada manualmente para o Dia ${validDays} de ${validTotal} dias.`
+  };
+
+  const updated: CompanyDispatchTracking = {
+    ...current,
+    daysElapsed: validDays,
+    totalCampaignDays: validTotal,
     recentLogs: [newLog, ...(current.recentLogs || [])].slice(0, 50)
   };
 

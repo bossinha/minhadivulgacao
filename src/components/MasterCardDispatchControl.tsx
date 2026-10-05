@@ -4,6 +4,9 @@ import {
   getCompanyDispatchTracking,
   registerManualDispatch,
   setManualInitialCount,
+  setManualDaysElapsed,
+  setManualGroupsCount,
+  resetForNewMonth,
   toggleAuto24hDispatch,
   subscribeToDispatchTracking,
   generateClientTrackingLink,
@@ -17,6 +20,7 @@ interface MasterCardDispatchControlProps {
     logo?: string;
     wa?: string;
     category?: string;
+    city?: string;
   };
   onOpenClientView?: (tracking: CompanyDispatchTracking) => void;
   compact?: boolean;
@@ -35,21 +39,40 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
     companyName,
     totalDispatches: 0,
     manualInitialCount: 0,
+    daysElapsed: 1,
+    totalCampaignDays: 30,
     isAuto24hActive: false,
     autoIntervalMinutes: 5,
     groupsWhatsAppReached: 0,
     groupsFacebookReached: 0,
+    manualWhatsAppGroups: 0,
+    manualFacebookGroups: 0,
     estimatedReach: 0,
     recentLogs: []
   }));
 
   const [loading, setLoading] = useState(false);
-  const [manualInputValue, setManualInputValue] = useState<string>('');
-  const [isEditingInitial, setIsEditingInitial] = useState(false);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
+
+  // Form values
+  const [manualInputValue, setManualInputValue] = useState<string>('0');
+  const [manualDaysValue, setManualDaysValue] = useState<string>('1');
+  const [manualTotalDaysValue, setManualTotalDaysValue] = useState<string>('30');
+  const [manualWaGroups, setManualWaGroups] = useState<string>('0');
+  const [manualFbGroups, setManualFbGroups] = useState<string>('0');
+
   const [copiedLink, setCopiedLink] = useState(false);
   const [countdownSeconds, setCountdownSeconds] = useState<number>(300);
   const [remainingHoursStr, setRemainingHoursStr] = useState<string>('');
   const [isExpanded, setIsExpanded] = useState(!compact);
+
+  // Show temporary alert banner
+  const triggerSuccessMsg = (msg: string) => {
+    setSaveSuccessMsg(msg);
+    setTimeout(() => {
+      setSaveSuccessMsg(null);
+    }, 4000);
+  };
 
   // Load initial and subscribe to real-time updates
   useEffect(() => {
@@ -58,6 +81,10 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
       if (isMounted) {
         setTracking(data);
         setManualInputValue(String(data.totalDispatches || 0));
+        setManualDaysValue(String(data.daysElapsed || 1));
+        setManualTotalDaysValue(String(data.totalCampaignDays || 30));
+        setManualWaGroups(String(data.manualWhatsAppGroups !== undefined ? data.manualWhatsAppGroups : (data.groupsWhatsAppReached || 0)));
+        setManualFbGroups(String(data.manualFacebookGroups !== undefined ? data.manualFacebookGroups : (data.groupsFacebookReached || 0)));
       }
     });
 
@@ -85,39 +112,36 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
       const expiresAt = tracking.auto24hExpiresAt || (startTime + 24 * 60 * 60 * 1000);
 
       if (now >= expiresAt) {
-        // Expired 24h
         setTracking(prev => ({ ...prev, isAuto24hActive: false }));
         setRemainingHoursStr('Ciclo de 24h concluído');
         return;
       }
 
-      // Calculate remaining 24h time
       const msLeft = expiresAt - now;
       const hoursLeft = Math.floor(msLeft / (1000 * 60 * 60));
       const minsLeft = Math.floor((msLeft % (1000 * 60 * 60)) / (1000 * 60));
       setRemainingHoursStr(`${hoursLeft}h ${minsLeft}m restantes`);
 
-      // Calculate 5-minute interval cycle countdown
       const elapsedSinceStart = now - startTime;
       const cycleMs = (tracking.autoIntervalMinutes || 5) * 60 * 1000;
       const msIntoCurrentCycle = elapsedSinceStart % cycleMs;
       const secRemaining = Math.max(0, Math.ceil((cycleMs - msIntoCurrentCycle) / 1000));
       setCountdownSeconds(secRemaining);
 
-      // Re-compute live tracking to catch step boundaries
       setTracking(prev => computeLiveTracking(prev));
     }, 1000);
 
     return () => clearInterval(interval);
   }, [tracking.isAuto24hActive, tracking.auto24hStartedAt, tracking.auto24hExpiresAt, tracking.autoIntervalMinutes]);
 
-  // Handle +1 manual dispatch
+  // Handle manual dispatch
   const handleManualDispatch = async (amount: number = 1) => {
     setLoading(true);
     try {
       const updated = await registerManualDispatch(tracking, amount, 'Grupos WhatsApp & Facebook');
       setTracking(updated);
       setManualInputValue(String(updated.totalDispatches));
+      triggerSuccessMsg(`+${amount} disparo(s) registrado(s) com sucesso! Total: ${updated.totalDispatches}`);
     } catch (err) {
       console.error(err);
     } finally {
@@ -125,18 +149,96 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
     }
   };
 
-  // Handle saving manual initial count
+  // Handle saving manual total dispatches
   const handleSaveInitialCount = async () => {
     const num = parseInt(manualInputValue, 10);
     if (isNaN(num) || num < 0) {
-      alert('Por favor, informe um número válido de disparos.');
+      alert('Por favor, digite um número válido de disparos.');
       return;
     }
     setLoading(true);
     try {
       const updated = await setManualInitialCount(tracking, num);
       setTracking(updated);
-      setIsEditingInitial(false);
+      triggerSuccessMsg(`Total de disparos atualizado para ${num}! Salvo no sistema.`);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle saving manual days elapsed
+  const handleSaveDaysElapsed = async () => {
+    const days = parseInt(manualDaysValue, 10);
+    const total = parseInt(manualTotalDaysValue, 10) || 30;
+    if (isNaN(days) || days < 1) {
+      alert('Por favor, informe um número de dias válido (mínimo 1).');
+      return;
+    }
+    setLoading(true);
+    try {
+      const updated = await setManualDaysElapsed(tracking, days, total);
+      setTracking(updated);
+      triggerSuccessMsg(`Sequência de dias definida: Dia ${days} de ${total} dias!`);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Quick increment day
+  const handleIncrementDays = async (amount: number = 1) => {
+    setLoading(true);
+    try {
+      const currentDays = tracking.daysElapsed || 1;
+      const total = tracking.totalCampaignDays || 30;
+      const updated = await setManualDaysElapsed(tracking, currentDays + amount, total);
+      setTracking(updated);
+      setManualDaysValue(String(updated.daysElapsed));
+      triggerSuccessMsg(`Dia avançado para Dia ${updated.daysElapsed} de ${total}!`);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle saving manual groups count
+  const handleSaveGroupsCount = async () => {
+    const wa = parseInt(manualWaGroups, 10);
+    const fb = parseInt(manualFbGroups, 10);
+    if (isNaN(wa) || wa < 0 || isNaN(fb) || fb < 0) {
+      alert('Por favor, digite a quantidade de grupos de WhatsApp e Facebook.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const updated = await setManualGroupsCount(tracking, wa, fb);
+      setTracking(updated);
+      triggerSuccessMsg(`Salvo com sucesso: ${wa} grupos de WhatsApp e ${fb} grupos de Facebook! O cliente já pode ver.`);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Reset for new month
+  const handleResetForNewMonth = async () => {
+    const confirmReset = window.confirm(
+      `⚠️ ATENÇÃO - ZERAR PARA NOVO MÊS:\n\nDeseja zerar os disparos e voltar para o Dia 1 da campanha de "${companyName}"?\n\n• Os disparos totais voltarão a 0.\n• A sequência voltará ao Dia 1.\n• Os grupos de WhatsApp (${tracking.manualWhatsAppGroups || tracking.groupsWhatsAppReached || 0}) e Facebook (${tracking.manualFacebookGroups || tracking.groupsFacebookReached || 0}) SERÃO MANTIDOS.\n\nConfirmar início de novo mês?`
+    );
+    if (!confirmReset) return;
+
+    setLoading(true);
+    try {
+      const updated = await resetForNewMonth(tracking);
+      setTracking(updated);
+      setManualInputValue('0');
+      setManualDaysValue('1');
+      triggerSuccessMsg(`Novo mês iniciado para "${companyName}"! Contadores zerados.`);
     } catch (err) {
       console.error(err);
     } finally {
@@ -153,6 +255,9 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
       setTracking(updated);
       if (nextState) {
         setCountdownSeconds(300);
+        triggerSuccessMsg('Modo 24h ativado! +1 disparo será somado a cada 5 minutos.');
+      } else {
+        triggerSuccessMsg('Modo 24h pausado com sucesso.');
       }
     } catch (err) {
       console.error(err);
@@ -161,88 +266,275 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
     }
   };
 
-  // Copy private client link to clipboard
+  // Copy private client link
+  const clientLink = generateClientTrackingLink(companyId, companyName);
   const handleCopyClientLink = () => {
-    const link = generateClientTrackingLink(companyId, companyName);
-    navigator.clipboard.writeText(link).then(() => {
+    navigator.clipboard.writeText(clientLink).then(() => {
       setCopiedLink(true);
+      triggerSuccessMsg('Link exclusivo copiado! Envie no WhatsApp privado (PV) do cliente.');
       setTimeout(() => setCopiedLink(false), 3500);
     }).catch(() => {
-      prompt('Copie o link abaixo para enviar no PV do cliente:', link);
+      prompt('Copie o link abaixo para enviar no PV do cliente:', clientLink);
     });
   };
 
-  const clientLink = generateClientTrackingLink(companyId, companyName);
   const minutes = Math.floor(countdownSeconds / 60);
   const seconds = countdownSeconds % 60;
   const timerFormatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
+  const currentWa = tracking.manualWhatsAppGroups !== undefined ? tracking.manualWhatsAppGroups : (tracking.groupsWhatsAppReached || 0);
+  const currentFb = tracking.manualFacebookGroups !== undefined ? tracking.manualFacebookGroups : (tracking.groupsFacebookReached || 0);
+
   return (
-    <div className="mt-4 pt-3 border-t border-amber-500/30 bg-gradient-to-b from-[#141622] to-[#0c0d14] rounded-2xl p-3.5 sm:p-4 text-left shadow-2xl relative select-none">
+    <div className="mt-4 pt-3.5 border-t border-amber-500/40 bg-gradient-to-b from-[#131522] via-[#0e0f18] to-[#090a10] rounded-2xl p-4 text-left shadow-2xl relative select-none">
+      
+      {/* Feedback Banner */}
+      {saveSuccessMsg && (
+        <div className="mb-3 p-2.5 bg-emerald-500/20 border border-emerald-500/60 rounded-xl text-emerald-300 text-xs font-bold flex items-center gap-2 animate-fadeIn shadow-lg">
+          <span className="text-base">✅</span>
+          <span>{saveSuccessMsg}</span>
+        </div>
+      )}
+
       {/* Header bar: Badge and expand/collapse */}
-      <div className="flex items-center justify-between gap-2 mb-2.5">
+      <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
-          <span className="flex h-2.5 w-2.5 relative">
+          <span className="flex h-3 w-3 relative">
             <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${tracking.isAuto24hActive ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
-            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${tracking.isAuto24hActive ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+            <span className={`relative inline-flex rounded-full h-3 w-3 ${tracking.isAuto24hActive ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
           </span>
-          <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-amber-300">
-            Disparador & Acompanhamento (Painel Master)
+          <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-amber-300">
+            Painel Master de Disparos & Acompanhamento
           </span>
         </div>
 
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-[10px] text-white/60 hover:text-white px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 transition-colors font-mono"
+          className="text-xs text-white/80 hover:text-white px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition-colors font-bold cursor-pointer"
         >
-          {isExpanded ? '▲ Recolher' : '▼ Expandir'}
+          {isExpanded ? '▲ Recolher Painel' : '▼ Expandir Controles'}
         </button>
       </div>
 
-      {/* Summary Row */}
-      <div className="flex items-center justify-between bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 mb-2.5">
+      {/* Resumo Principal em Destaque */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-black/60 border border-white/10 rounded-xl p-3 mb-3">
+        {/* Total Disparos */}
         <div>
           <span className="text-[10px] uppercase font-bold text-white/50 block">Disparos Totais</span>
-          <span className="text-xl sm:text-2xl font-black text-amber-400 font-mono tracking-tight flex items-center gap-1.5">
+          <span className="text-lg sm:text-2xl font-black text-amber-400 font-mono tracking-tight flex items-center gap-1">
             📢 {tracking.totalDispatches.toLocaleString('pt-BR')}
             {tracking.isAuto24hActive && (
-              <span className="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-sans uppercase font-bold animate-pulse">
-                +1 a cada 5m
+              <span className="text-[8px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1 py-0.5 rounded font-sans font-bold animate-pulse">
+                +1/5m
               </span>
             )}
           </span>
         </div>
 
-        <div className="text-right">
+        {/* Sequência de Dias */}
+        <div className="border-l border-white/10 pl-2">
+          <span className="text-[10px] uppercase font-bold text-white/50 block">Sequência de Dias</span>
+          <span className="text-sm sm:text-base font-black text-yellow-300 font-mono tracking-tight block mt-0.5">
+            📅 Dia {tracking.daysElapsed || 1} de {tracking.totalCampaignDays || 30}
+          </span>
+        </div>
+
+        {/* Grupos Cadastrados */}
+        <div className="border-l border-white/10 pl-2">
+          <span className="text-[10px] uppercase font-bold text-white/50 block">Grupos no Ar</span>
+          <span className="text-xs sm:text-sm font-bold text-white font-mono tracking-tight block mt-0.5">
+            💬 <strong className="text-emerald-400">{currentWa}</strong> ZAP • 👥 <strong className="text-blue-400">{currentFb}</strong> FB
+          </span>
+        </div>
+
+        {/* Modo 24h */}
+        <div className="border-l border-white/10 pl-2">
           <span className="text-[10px] uppercase font-bold text-white/50 block">Modo 24 Horas</span>
-          <span className={`text-xs font-black uppercase px-2 py-0.5 rounded inline-block ${
+          <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded inline-block mt-0.5 ${
             tracking.isAuto24hActive 
-              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' 
+              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse' 
               : 'bg-white/5 text-white/40 border border-white/10'
           }`}>
-            {tracking.isAuto24hActive ? '🟢 Ativo' : '⚪ Pausado'}
+            {tracking.isAuto24hActive ? '🟢 Ativo (5m)' : '⚪ Pausado'}
           </span>
         </div>
       </div>
 
       {isExpanded && (
         <div className="space-y-3 pt-1">
-          {/* Action 1: Disparo Manual */}
-          <div className="bg-white/[0.03] border border-white/5 rounded-xl p-2.5">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-bold text-white/80 flex items-center gap-1">
-                🚀 Disparo Manual no WhatsApp/Facebook:
+
+          {/* ========================================================= */}
+          {/* SEÇÃO 1: QUANTIDADE DE GRUPOS WHATSAPP E FACEBOOK */}
+          {/* ========================================================= */}
+          <div className="bg-gradient-to-r from-emerald-950/40 via-[#0e1c15] to-[#0e1c15] border border-emerald-500/40 rounded-xl p-3 shadow-md">
+            <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+              <span className="text-xs font-black text-emerald-300 flex items-center gap-1.5">
+                👥 Definir Quantidade de Grupos (WhatsApp & Facebook):
               </span>
-              <span className="text-[9px] text-white/40 font-mono">Dá +1 no painel do cliente</span>
+              <span className="text-[10px] text-emerald-400/80 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                Aparece para o cliente • Não sai ao atualizar
+              </span>
             </div>
-            
-            <div className="grid grid-cols-3 gap-1.5">
+            <p className="text-[11px] text-white/70 mb-2 leading-tight">
+              Digite abaixo em quantos grupos de WhatsApp e Facebook essa empresa está sendo divulgada. Ao clicar em <strong>Salvar Grupos</strong>, o valor fica salvo permanente no sistema e o cliente visualiza ao vivo.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+              <div className="bg-black/50 p-2 rounded-lg border border-emerald-500/20">
+                <label className="text-[10px] font-bold text-emerald-300 block mb-1">
+                  💬 Grupos de WhatsApp:
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    min="0"
+                    value={manualWaGroups}
+                    onChange={(e) => setManualWaGroups(e.target.value)}
+                    placeholder="Ex: 85"
+                    className="bg-black/80 border border-emerald-500/40 text-emerald-300 text-sm font-mono font-black px-3 py-1.5 rounded-lg w-full focus:border-emerald-400 focus:outline-none"
+                  />
+                  <span className="text-xs text-white/50 whitespace-nowrap">grupos</span>
+                </div>
+              </div>
+
+              <div className="bg-black/50 p-2 rounded-lg border border-blue-500/20">
+                <label className="text-[10px] font-bold text-blue-300 block mb-1">
+                  👥 Comunidades do Facebook:
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    min="0"
+                    value={manualFbGroups}
+                    onChange={(e) => setManualFbGroups(e.target.value)}
+                    placeholder="Ex: 40"
+                    className="bg-black/80 border border-blue-500/40 text-blue-300 text-sm font-mono font-black px-3 py-1.5 rounded-lg w-full focus:border-blue-400 focus:outline-none"
+                  />
+                  <span className="text-xs text-white/50 whitespace-nowrap">grupos</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-1 border-t border-emerald-500/20">
+              <span className="text-[10px] text-white/60">
+                Total atual: <strong className="text-white font-mono">{currentWa + currentFb} grupos alcançados</strong>
+              </span>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={handleSaveGroupsCount}
+                className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 active:scale-95 text-black font-black text-xs px-4 py-2 rounded-lg transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+              >
+                💾 Salvar Quantidade de Grupos
+              </button>
+            </div>
+          </div>
+
+          {/* ========================================================= */}
+          {/* SEÇÃO 2: SEQUÊNCIA DE DIAS QUE JÁ FORAM */}
+          {/* ========================================================= */}
+          <div className="bg-gradient-to-r from-yellow-950/40 via-[#1c190a] to-[#1c190a] border border-yellow-500/40 rounded-xl p-3 shadow-md">
+            <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+              <span className="text-xs font-black text-yellow-300 flex items-center gap-1.5">
+                📅 Sequência dos Dias (Dias que já foram):
+              </span>
+              <span className="text-[10px] text-yellow-400/80 font-bold bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">
+                Dia Atual: {tracking.daysElapsed || 1} de {tracking.totalCampaignDays || 30}
+              </span>
+            </div>
+            <p className="text-[11px] text-white/70 mb-2 leading-tight">
+              Coloque manualmente o número do dia que a divulgação já está para dar sequência (ex: Dia 4, Dia 10) e o total de dias do plano contratado.
+            </p>
+
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <div className="bg-black/50 p-2 rounded-lg border border-yellow-500/20">
+                <label className="text-[10px] font-bold text-yellow-300 block mb-1">
+                  Dia Atual da Campanha:
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-yellow-400 font-bold">Dia</span>
+                  <input
+                    type="number"
+                    min="1"
+                    value={manualDaysValue}
+                    onChange={(e) => setManualDaysValue(e.target.value)}
+                    placeholder="Ex: 5"
+                    className="bg-black/80 border border-yellow-500/40 text-yellow-300 text-sm font-mono font-black px-3 py-1.5 rounded-lg w-full focus:border-yellow-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-black/50 p-2 rounded-lg border border-white/10">
+                <label className="text-[10px] font-bold text-white/70 block mb-1">
+                  Total de Dias do Plano:
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    min="1"
+                    value={manualTotalDaysValue}
+                    onChange={(e) => setManualTotalDaysValue(e.target.value)}
+                    placeholder="30"
+                    className="bg-black/80 border border-white/20 text-white text-sm font-mono font-black px-3 py-1.5 rounded-lg w-full focus:border-white/40 focus:outline-none"
+                  />
+                  <span className="text-xs text-white/50">dias</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-1 border-t border-yellow-500/20">
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleIncrementDays(1)}
+                  className="bg-yellow-400/20 hover:bg-yellow-400/30 text-yellow-300 border border-yellow-400/40 text-xs font-bold px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+                  title="Avançar +1 dia"
+                >
+                  +1 Dia
+                </button>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleIncrementDays(5)}
+                  className="bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+                  title="Avançar +5 dias"
+                >
+                  +5 Dias
+                </button>
+              </div>
+
+              <button
+                type="button"
+                disabled={loading}
+                onClick={handleSaveDaysElapsed}
+                className="bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 active:scale-95 text-black font-black text-xs px-4 py-2 rounded-lg transition-all shadow-md flex items-center gap-1 cursor-pointer"
+              >
+                💾 Salvar Sequência de Dias
+              </button>
+            </div>
+          </div>
+
+          {/* ========================================================= */}
+          {/* SEÇÃO 3: DISPAROS MANUAIS (+1, +5, +10) */}
+          {/* ========================================================= */}
+          <div className="bg-white/[0.03] border border-white/10 rounded-xl p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                🚀 Disparo Manual nos Grupos (WhatsApp / Facebook):
+              </span>
+              <span className="text-[10px] text-white/50 font-mono">
+                Soma na hora para o cliente
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 mb-2.5">
               <button
                 type="button"
                 disabled={loading}
                 onClick={() => handleManualDispatch(1)}
-                className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 active:scale-95 text-white font-black text-xs py-2 px-2 rounded-lg transition-all shadow-md flex items-center justify-center gap-1 cursor-pointer"
+                className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 active:scale-95 text-white font-black text-xs py-2.5 px-2 rounded-xl transition-all shadow-lg flex items-center justify-center gap-1 cursor-pointer"
               >
                 +1 Disparo
               </button>
@@ -250,7 +542,7 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
                 type="button"
                 disabled={loading}
                 onClick={() => handleManualDispatch(5)}
-                className="bg-white/10 hover:bg-white/20 active:scale-95 text-emerald-300 font-bold text-xs py-2 px-2 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer"
+                className="bg-white/10 hover:bg-white/20 active:scale-95 text-emerald-300 font-bold text-xs py-2.5 px-2 rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer"
               >
                 +5 Disparos
               </button>
@@ -258,51 +550,76 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
                 type="button"
                 disabled={loading}
                 onClick={() => handleManualDispatch(10)}
-                className="bg-white/10 hover:bg-white/20 active:scale-95 text-emerald-300 font-bold text-xs py-2 px-2 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer"
+                className="bg-white/10 hover:bg-white/20 active:scale-95 text-emerald-300 font-bold text-xs py-2.5 px-2 rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer"
               >
                 +10 Disparos
               </button>
             </div>
+
+            {/* Ajuste manual do total de disparos caso já tenham começado */}
+            <div className="bg-black/40 border border-white/5 rounded-lg p-2 flex items-center gap-2">
+              <span className="text-[10px] text-white/60 font-bold whitespace-nowrap">
+                Definir Disparos Já Realizados:
+              </span>
+              <input
+                type="number"
+                min="0"
+                value={manualInputValue}
+                onChange={(e) => setManualInputValue(e.target.value)}
+                placeholder="Ex: 150"
+                className="bg-black/80 border border-white/20 text-white text-xs px-2.5 py-1 rounded-lg w-full font-mono focus:border-amber-400 focus:outline-none"
+              />
+              <button
+                type="button"
+                disabled={loading}
+                onClick={handleSaveInitialCount}
+                className="bg-amber-400 hover:bg-amber-300 text-black font-black text-xs px-3 py-1 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
+              >
+                💾 Salvar Total
+              </button>
+            </div>
           </div>
 
-          {/* Action 2: Modo Automático 24 Horas (a cada 5 minutos) */}
-          <div className={`border rounded-xl p-2.5 transition-all ${
+          {/* ========================================================= */}
+          {/* SEÇÃO 4: MODO 24 HORAS AUTOMÁTICO (DE 5 EM 5 MINUTOS) */}
+          {/* ========================================================= */}
+          <div className={`border rounded-xl p-3 transition-all ${
             tracking.isAuto24hActive 
-              ? 'bg-emerald-950/20 border-emerald-500/40' 
-              : 'bg-white/[0.03] border-white/5'
+              ? 'bg-emerald-950/30 border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)]' 
+              : 'bg-white/[0.03] border-white/10'
           }`}>
             <div className="flex items-center justify-between mb-2">
               <div>
-                <span className="text-[11px] font-bold text-white flex items-center gap-1.5">
-                  ⏱️ Modo 24h (Disparo a cada 5 minutos):
+                <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                  ⏱️ Modo Automático 24h (Disparo a cada 5 minutos):
                 </span>
-                <span className="text-[9px] text-white/50 block">
-                  Conta automaticamente +1 disparo de 5 em 5 minutos durante 24 horas.
+                <span className="text-[10px] text-white/60 block mt-0.5">
+                  Muda automaticamente de 5 em 5 minutos contando +1 disparo para o cliente.
                 </span>
               </div>
             </div>
 
             {tracking.isAuto24hActive ? (
               <div className="space-y-2">
-                <div className="bg-black/40 border border-emerald-500/30 rounded-lg p-2 flex items-center justify-between text-xs">
+                <div className="bg-black/60 border border-emerald-500/40 rounded-xl p-2.5 flex items-center justify-between text-xs">
                   <div>
-                    <span className="text-white/60 text-[10px] block">Próximo Disparo em:</span>
-                    <span className="font-mono font-black text-emerald-400 text-sm tracking-widest flex items-center gap-1">
+                    <span className="text-white/60 text-[10px] block font-bold">Próximo Disparo em:</span>
+                    <span className="font-mono font-black text-emerald-400 text-base tracking-widest flex items-center gap-1">
                       ⏳ {timerFormatted}
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-white/60 text-[10px] block">Duração:</span>
-                    <span className="text-white font-bold text-[11px]">
-                      {remainingHoursStr || 'Ciclo de 24 horas'}
+                    <span className="text-white/60 text-[10px] block font-bold">Tempo Restante de 24h:</span>
+                    <span className="text-white font-bold text-xs font-mono">
+                      {remainingHoursStr || 'Ciclo de 24 horas ativo'}
                     </span>
                   </div>
                 </div>
 
-                {/* Progress bar representing 5 minute interval */}
-                <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                {/* Progress bar representing 5 minute cycle */}
+                <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
                   <div 
-                    className="bg-emerald-400 h-full transition-all duration-1000 ease-linear rounded-full"
+                    className="bg-emerald-400 h-full transition-all duration-1000 ease-linear rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)]"
                     style={{ width: `${Math.min(100, Math.max(0, ((300 - countdownSeconds) / 300) * 100))}%` }}
                   ></div>
                 </div>
@@ -311,7 +628,7 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
                   type="button"
                   disabled={loading}
                   onClick={handleToggle24h}
-                  className="w-full bg-red-600/80 hover:bg-red-600 text-white font-black text-xs py-2 rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                  className="w-full bg-red-600/90 hover:bg-red-600 text-white font-black text-xs py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-lg"
                 >
                   ⏸️ Pausar Disparo Automático 24h
                 </button>
@@ -321,84 +638,35 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
                 type="button"
                 disabled={loading}
                 onClick={handleToggle24h}
-                className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-black text-xs py-2.5 rounded-lg transition-all shadow-lg flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:brightness-110 active:scale-95 text-black font-black text-xs py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
               >
                 ▶️ Ativar Disparo Automático 24h (a cada 5 min)
               </button>
             )}
           </div>
 
-          {/* Action 3: Ajuste Manual de Disparos já feitos */}
-          <div className="bg-white/[0.03] border border-white/5 rounded-xl p-2.5">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-bold text-white/80">
-                ✏️ Ajustar Contador Inicial (Já Iniciados):
-              </span>
-              {!isEditingInitial ? (
-                <button
-                  type="button"
-                  onClick={() => setIsEditingInitial(true)}
-                  className="text-[10px] text-amber-400 hover:underline font-bold"
-                >
-                  Alterar valor
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsEditingInitial(false)}
-                  className="text-[10px] text-white/50 hover:underline"
-                >
-                  Cancelar
-                </button>
-              )}
+          {/* ========================================================= */}
+          {/* SEÇÃO 5: LINK EXCLUSIVO DO CLIENTE (PV) */}
+          {/* ========================================================= */}
+          <div className="bg-gradient-to-r from-blue-950/50 to-indigo-950/50 border border-blue-500/40 rounded-xl p-3 shadow-md">
+            <div className="flex items-center gap-1.5 mb-1 text-xs font-black text-blue-300">
+              <span>🔒 Link Exclusivo do Dono da Divulgação (Mandar no PV):</span>
             </div>
-
-            {isEditingInitial ? (
-              <div className="flex gap-1.5 mt-1">
-                <input
-                  type="number"
-                  min="0"
-                  value={manualInputValue}
-                  onChange={(e) => setManualInputValue(e.target.value)}
-                  placeholder="Ex: 150"
-                  className="bg-black/60 border border-white/20 text-white text-xs px-2.5 py-1.5 rounded-lg w-full font-mono focus:border-amber-400 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={handleSaveInitialCount}
-                  className="bg-amber-400 hover:bg-amber-300 text-black font-black text-xs px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
-                >
-                  💾 Salvar
-                </button>
-              </div>
-            ) : (
-              <p className="text-[10px] text-white/50">
-                Se este anunciante já começou antes, você pode definir quantos disparos já foram realizados (atual: <strong>{tracking.totalDispatches}</strong>).
-              </p>
-            )}
-          </div>
-
-          {/* Action 4: LINK EXCLUSIVO DO DONO DA DIVULGAÇÃO (PV) */}
-          <div className="bg-gradient-to-r from-blue-950/40 to-indigo-950/40 border border-blue-500/30 rounded-xl p-2.5">
-            <div className="flex items-center gap-1.5 mb-1 text-[11px] font-black text-blue-300">
-              <span>🔒 Link Exclusivo do Cliente (Envie no PV):</span>
-            </div>
-            <p className="text-[9px] text-blue-200/70 mb-2">
-              Apenas você (Master) tem acesso a este link. Copie e envie no WhatsApp privado do cliente para ele acompanhar os disparos ao vivo!
+            <p className="text-[10px] text-blue-200/80 mb-2 leading-relaxed">
+              Esse link <strong>só aparece aqui no Master</strong>. Copie e envie no WhatsApp privado do cliente. Ele abrirá o portal e verá em tempo real os disparos, os grupos e a sequência de dias.
             </p>
 
-            <div className="flex gap-1.5 mb-2">
+            <div className="flex gap-2 mb-2">
               <input
                 type="text"
                 readOnly
                 value={clientLink}
-                className="bg-black/60 border border-blue-500/30 text-blue-200 text-[10px] px-2.5 py-1.5 rounded-lg w-full font-mono select-all focus:outline-none"
+                className="bg-black/70 border border-blue-500/40 text-blue-200 text-xs px-3 py-2 rounded-xl w-full font-mono select-all focus:outline-none"
               />
               <button
                 type="button"
                 onClick={handleCopyClientLink}
-                className={`text-xs font-black px-3 py-1.5 rounded-lg transition-all whitespace-nowrap flex items-center gap-1 cursor-pointer ${
+                className={`text-xs font-black px-4 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer shadow-md ${
                   copiedLink 
                     ? 'bg-emerald-500 text-black' 
                     : 'bg-blue-600 hover:bg-blue-500 text-white'
@@ -417,11 +685,36 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
                   window.open(clientLink, '_blank');
                 }
               }}
-              className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-[11px] font-bold py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer"
+              className="w-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-black py-2 rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
             >
-              👁️ Abrir Visão do Cliente (Como ele enxerga)
+              👁️ Abrir Tela do Cliente (Visualizar exatamente o que ele vê)
             </button>
           </div>
+
+          {/* ========================================================= */}
+          {/* SEÇÃO 6: BOTÃO ZERAR CONTADOR PARA NOVO MÊS */}
+          {/* ========================================================= */}
+          <div className="pt-2 border-t border-white/10 flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <span className="text-[11px] font-bold text-white/60 block">
+                Quando iniciar outro mês de divulgação:
+              </span>
+              <span className="text-[9px] text-white/40 block">
+                Zera os disparos, volta para o Dia 1 e mantém os grupos salvos.
+              </span>
+            </div>
+
+            <button
+              type="button"
+              disabled={loading}
+              onClick={handleResetForNewMonth}
+              className="bg-red-500/15 hover:bg-red-500/30 text-red-300 hover:text-red-200 border border-red-500/40 text-xs font-black px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-md"
+              title="Zera a contagem de disparos e volta a campanha para o Dia 1"
+            >
+              🔄 Zerar Contador para Novo Mês
+            </button>
+          </div>
+
         </div>
       )}
     </div>

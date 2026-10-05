@@ -993,7 +993,17 @@ function AppContent() {
   });
   const [isAdLoading, setIsAdLoading] = useState(false);
   const [activeMiniSiteCompany, setActiveMiniSiteCompany] = useState<any | null>(null);
-  const [activeTrackingCompanyId, setActiveTrackingCompanyId] = useState<string | null>(null);
+  const [activeTrackingCompanyId, setActiveTrackingCompanyId] = useState<string | null>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const fullUrl = window.location.href;
+        const searchPart = fullUrl.includes('?') ? fullUrl.split('?')[1] : '';
+        const params = new URLSearchParams(searchPart);
+        return params.get('acompanhar') || params.get('tracking') || null;
+      }
+    } catch (e) {}
+    return null;
+  });
   const [activeTrackingCompanyData, setActiveTrackingCompanyData] = useState<any | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [pixCopied, setPixCopied] = useState(false);
@@ -3830,6 +3840,18 @@ function AppContent() {
               </div>
             </div>
           )}
+
+          {/* Modal de Acompanhamento do Cliente quando o Master abre a visão do cliente */}
+          {activeTrackingCompanyId && (
+            <ClientDispatchTrackerModal
+              companyId={activeTrackingCompanyId}
+              companyData={activeTrackingCompanyData}
+              onClose={() => {
+                setActiveTrackingCompanyId(null);
+                setActiveTrackingCompanyData(null);
+              }}
+            />
+          )}
         </div>
       </div>
     );
@@ -3944,6 +3966,44 @@ function AppContent() {
           </p>
         </div>
       </div>
+    );
+  }
+
+  // Se o visitante abriu o link exclusivo de acompanhamento (?acompanhar=ID ou ?tracking=ID)
+  const isDirectTrackingUrl = typeof window !== 'undefined' && (
+    window.location.search.includes('acompanhar=') || 
+    window.location.search.includes('tracking=')
+  );
+  if (activeTrackingCompanyId && isDirectTrackingUrl && !user?.isAdmin) {
+    const directCompanyData = activeTrackingCompanyData || 
+      displayedCompanies.find((c: any) => 
+        String(c.id) === String(activeTrackingCompanyId) || 
+        slugify(c.name || '') === String(activeTrackingCompanyId)
+      ) || 
+      advertiserCompanies.find((a: any) => String(a.id) === String(activeTrackingCompanyId));
+
+    return (
+      <ClientDispatchTrackerModal
+        companyId={activeTrackingCompanyId}
+        companyData={directCompanyData}
+        isStandalonePage={true}
+        onClose={() => {
+          setActiveTrackingCompanyId(null);
+          setActiveTrackingCompanyData(null);
+          try {
+            const currentUrl = window.location.href;
+            if (currentUrl.includes('?')) {
+              const [baseUrl, searchPart] = currentUrl.split('?');
+              const params = new URLSearchParams(searchPart);
+              params.delete('acompanhar');
+              params.delete('tracking');
+              const remaining = params.toString();
+              const nextUrl = remaining ? `${baseUrl}?${remaining}` : baseUrl;
+              window.history.pushState({}, '', nextUrl);
+            }
+          } catch (e) {}
+        }}
+      />
     );
   }
 

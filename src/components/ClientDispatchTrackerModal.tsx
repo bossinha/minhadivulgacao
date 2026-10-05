@@ -41,7 +41,7 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
   const compCat = companyData?.category || 'Comércio & Serviços';
   const compCity = companyData?.city || 'Brasil';
 
-  // Load tracking data
+  // Load tracking data & subscribe in real-time
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
@@ -72,7 +72,7 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
     };
   }, [companyId, compName]);
 
-  // Live timer tick for 5-minute countdown
+  // Live timer tick for 5-minute countdown if 24h mode is active
   useEffect(() => {
     if (!tracking?.isAuto24hActive || !tracking?.auto24hStartedAt) {
       return;
@@ -105,13 +105,24 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
   const timerFormatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
   const currentTotal = tracking?.totalDispatches || 0;
-  const waGroups = tracking?.groupsWhatsAppReached || Math.max(1, Math.round(currentTotal * 0.7) + 5);
-  const fbGroups = tracking?.groupsFacebookReached || Math.max(1, Math.round(currentTotal * 0.4) + 3);
+  const daysElapsed = tracking?.daysElapsed || 1;
+  const totalCampaignDays = tracking?.totalCampaignDays || 30;
+
+  const waGroups = tracking?.manualWhatsAppGroups !== undefined 
+    ? tracking.manualWhatsAppGroups 
+    : (tracking?.groupsWhatsAppReached !== undefined ? tracking.groupsWhatsAppReached : Math.max(1, Math.round(currentTotal * 0.7) + 5));
+
+  const fbGroups = tracking?.manualFacebookGroups !== undefined 
+    ? tracking.manualFacebookGroups 
+    : (tracking?.groupsFacebookReached !== undefined ? tracking.groupsFacebookReached : Math.max(1, Math.round(currentTotal * 0.4) + 3));
+
+  const totalGroups = waGroups + fbGroups;
   const reach = tracking?.estimatedReach || Math.max(currentTotal * 350, 1200);
+  const dayProgressPercent = Math.min(100, Math.max(3, Math.round((daysElapsed / totalCampaignDays) * 100)));
 
   return (
-    <div className={`${isStandalonePage ? 'min-h-screen bg-[#07080d] py-6 sm:py-10 px-4' : 'fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto'}`}>
-      <div className="w-full max-w-2xl bg-[#0c0d16] border border-amber-500/30 rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.9)] overflow-hidden my-auto relative text-white">
+    <div className={`${isStandalonePage ? 'min-h-screen bg-[#07080e] py-6 sm:py-10 px-3 sm:px-4' : 'fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto'}`}>
+      <div className="w-full max-w-2xl bg-[#0c0d16] border border-amber-500/30 rounded-3xl shadow-[0_0_80px_rgba(0,0,0,0.9)] overflow-hidden my-auto relative text-white">
         
         {/* Top Glow Accent Bar */}
         <div className="h-1.5 w-full bg-gradient-to-r from-amber-500 via-yellow-400 to-emerald-400"></div>
@@ -141,7 +152,7 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
               <p className="text-xs text-white/60 mt-0.5 flex items-center gap-1">
                 <span>📍 {compCity}</span>
                 <span>•</span>
-                <span className="text-emerald-400 font-bold">Painel do Anunciante</span>
+                <span className="text-emerald-400 font-bold">Acompanhamento de Divulgações</span>
               </p>
             </div>
           </div>
@@ -150,17 +161,17 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
             <button
               type="button"
               onClick={handleManualRefresh}
-              className={`p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-all cursor-pointer ${isRefreshing ? 'animate-spin text-amber-400' : ''}`}
-              title="Atualizar Dados"
+              className={`p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold ${isRefreshing ? 'animate-spin text-amber-400' : ''}`}
+              title="Atualizar Dados Agora"
             >
-              🔄
+              🔄 <span className="hidden sm:inline">Atualizar</span>
             </button>
             {onClose && (
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2 rounded-xl bg-white/5 hover:bg-red-500/20 hover:text-red-400 border border-white/10 text-white/60 transition-all text-sm font-bold cursor-pointer"
-                title="Fechar"
+                className="p-2.5 rounded-xl bg-white/5 hover:bg-red-500/20 hover:text-red-400 border border-white/10 text-white/60 transition-all text-sm font-bold cursor-pointer"
+                title="Fechar Janela"
               >
                 ✕
               </button>
@@ -168,22 +179,24 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
           </div>
         </div>
 
-        {/* Status Announcement Banner */}
+        {/* Content Body */}
         <div className="p-4 sm:p-6 space-y-4">
+          
+          {/* Status Announcement Banner */}
           <div className="bg-gradient-to-r from-emerald-950/60 via-[#0d1f18] to-emerald-950/60 border border-emerald-500/40 rounded-2xl p-4 relative overflow-hidden shadow-lg">
             <div className="flex items-start gap-3">
               <span className="text-2xl mt-0.5">📢</span>
               <div className="flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs sm:text-sm font-black text-emerald-300 uppercase tracking-wide">
-                    Sua Empresa Sendo Disparada com Sucesso!
+                    Sua Empresa Sendo Divulgada nos Grupos!
                   </span>
                   <span className="bg-emerald-500 text-black text-[9px] font-black px-2 py-0.5 rounded-full animate-pulse uppercase">
                     AO VIVO
                   </span>
                 </div>
                 <p className="text-xs text-white/80 mt-1 leading-relaxed">
-                  Seu anúncio está circulando ativamente em nossos grupos de WhatsApp, comunidades do Facebook e canais da rede comercial. Acompanhe abaixo o progresso em tempo real.
+                  Seus anúncios estão sendo ativamente disparados em listas e grupos de <strong>WhatsApp</strong> e comunidades do <strong>Facebook</strong>. Acompanhe abaixo o painel exclusivo da sua campanha.
                 </p>
               </div>
             </div>
@@ -197,18 +210,18 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                   </span>
                   <span className="font-bold text-white/90">
-                    Modo 24 Horas Ativo: <span className="text-emerald-400">Disparos de 5 em 5 minutos</span>
+                    Disparos Automáticos Ativos: <span className="text-emerald-400 font-black">+1 a cada 5 minutos</span>
                   </span>
                 </div>
 
                 <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
                   <div className="text-right">
-                    <span className="text-[10px] text-white/50 uppercase block font-bold">Próximo Disparo em</span>
+                    <span className="text-[10px] text-white/50 uppercase block font-bold">Próximo Disparo em:</span>
                     <span className="text-emerald-300 font-mono font-black text-sm tracking-wider">
                       ⏳ {timerFormatted}
                     </span>
                   </div>
-                  <div className="w-24 sm:w-28 bg-white/10 h-2 rounded-full overflow-hidden">
+                  <div className="w-24 sm:w-28 bg-white/10 h-2.5 rounded-full overflow-hidden">
                     <div
                       className="bg-emerald-400 h-full rounded-full transition-all duration-1000 ease-linear shadow-[0_0_8px_rgba(52,211,153,0.8)]"
                       style={{ width: `${Math.min(100, Math.max(0, ((300 - countdownSeconds) / 300) * 100))}%` }}
@@ -219,7 +232,113 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
             )}
           </div>
 
-          {/* MAIN BIG METRICS CARDS */}
+          {/* ======================================================= */}
+          {/* BARRA DE PROGRESSO: SEQUÊNCIA DE DIAS QUE JÁ FORAM */}
+          {/* ======================================================= */}
+          <div className="bg-gradient-to-r from-[#171508] via-[#211d0a] to-[#171508] border border-yellow-500/40 rounded-2xl p-4 shadow-md">
+            <div className="flex items-center justify-between gap-3 flex-wrap mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">📅</span>
+                <div>
+                  <span className="font-black text-yellow-300 text-sm sm:text-base block">
+                    Sequência da Campanha: Dia {daysElapsed} de {totalCampaignDays} Dias
+                  </span>
+                  <span className="text-[11px] text-white/60">
+                    Acompanhamento diário contínuo do seu plano contratado
+                  </span>
+                </div>
+              </div>
+
+              <span className="bg-yellow-400/20 text-yellow-300 border border-yellow-400/40 text-xs font-mono font-black px-2.5 py-1 rounded-lg">
+                {dayProgressPercent}% Concluído
+              </span>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-full bg-white/10 h-3 rounded-full overflow-hidden p-0.5">
+              <div 
+                className="bg-gradient-to-r from-amber-500 via-yellow-400 to-yellow-300 h-full rounded-full transition-all duration-700 shadow-[0_0_12px_rgba(251,191,36,0.6)]"
+                style={{ width: `${dayProgressPercent}%` }}
+              ></div>
+            </div>
+          </div>
+
+          {/* ======================================================= */}
+          {/* CARD EM DESTAQUE: QUANTIDADE DE GRUPOS WHATSAPP & FACEBOOK */}
+          {/* ======================================================= */}
+          <div className="bg-gradient-to-r from-[#0d1624] via-[#0f192b] to-[#0d1624] border border-blue-500/30 rounded-2xl p-4 shadow-md">
+            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🌐</span>
+                <div>
+                  <h3 className="text-xs sm:text-sm font-black text-blue-300 uppercase tracking-wide m-0">
+                    Grupos de Divulgação Ativos no Momento
+                  </h3>
+                  <span className="text-[10px] text-white/50">
+                    Canais onde seus anúncios e banners estão circulando
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs font-mono font-black px-3 py-1 rounded-xl">
+                {totalGroups} Grupos Totais
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* WhatsApp Groups */}
+              <div className="bg-black/50 border border-emerald-500/30 rounded-xl p-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-xl">
+                    💬
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-emerald-400 block">
+                      Grupos de WhatsApp
+                    </span>
+                    <span className="text-xs text-white/70">
+                      Listas & Grupos Comerciais
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span className="text-2xl font-black text-emerald-400 font-mono">
+                    {loading ? '...' : `${waGroups}`}
+                  </span>
+                  <span className="text-[9px] text-white/40 block font-bold">grupos</span>
+                </div>
+              </div>
+
+              {/* Facebook Groups */}
+              <div className="bg-black/50 border border-blue-500/30 rounded-xl p-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-xl">
+                    👥
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-blue-400 block">
+                      Grupos do Facebook
+                    </span>
+                    <span className="text-xs text-white/70">
+                      Comunidades & Classificados
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span className="text-2xl font-black text-blue-400 font-mono">
+                    {loading ? '...' : `${fbGroups}`}
+                  </span>
+                  <span className="text-[9px] text-white/40 block font-bold">comunidades</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ======================================================= */}
+          {/* MÉTRICAS PRINCIPAIS (DISPAROS, DIAS, ALCANCE) */}
+          {/* ======================================================= */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
             {/* Metric 1: Total Disparos */}
             <div className={`col-span-2 sm:col-span-1 bg-gradient-to-b from-amber-500/20 to-black/60 border border-amber-400/40 rounded-2xl p-4 text-center shadow-lg transition-transform duration-300 ${justUpdated ? 'scale-105 border-emerald-400 shadow-emerald-500/30' : ''}`}>
@@ -234,29 +353,29 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
               </span>
             </div>
 
-            {/* Metric 2: Grupos WhatsApp */}
-            <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-3.5 text-center">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-white/50 block mb-1">
-                Grupos WhatsApp
+            {/* Metric 2: Sequência de Dias */}
+            <div className="bg-gradient-to-b from-yellow-500/10 to-black/40 border border-yellow-500/30 rounded-2xl p-3.5 text-center">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-yellow-300/80 block mb-1">
+                Sequência de Dias
               </span>
-              <div className="text-xl sm:text-2xl font-black text-emerald-400 font-mono">
-                {loading ? '...' : `${waGroups}+`}
+              <div className="text-xl sm:text-2xl font-black text-yellow-300 font-mono">
+                {loading ? '...' : `Dia ${daysElapsed}`}
               </div>
-              <span className="text-[9px] text-white/40 block mt-0.5">
-                Alcançados
+              <span className="text-[9px] text-white/50 block mt-0.5">
+                de {totalCampaignDays} dias
               </span>
             </div>
 
-            {/* Metric 3: Grupos Facebook */}
+            {/* Metric 3: Total de Grupos */}
             <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-3.5 text-center">
               <span className="text-[10px] font-bold uppercase tracking-wider text-white/50 block mb-1">
-                Grupos Facebook
+                Grupos Ativos
               </span>
-              <div className="text-xl sm:text-2xl font-black text-blue-400 font-mono">
-                {loading ? '...' : `${fbGroups}+`}
+              <div className="text-xl sm:text-2xl font-black text-emerald-400 font-mono">
+                {loading ? '...' : `${totalGroups}`}
               </div>
               <span className="text-[9px] text-white/40 block mt-0.5">
-                Comunidades
+                Zap + Face
               </span>
             </div>
 
@@ -274,120 +393,62 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
             </div>
           </div>
 
-          {/* REAL-TIME DISPATCH LOG / TIMELINE */}
+          {/* ======================================================= */}
+          {/* LINHA DO TEMPO EM TEMPO REAL (HISTÓRICO DE DISPAROS) */}
+          {/* ======================================================= */}
           <div className="bg-black/50 border border-white/10 rounded-2xl p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs sm:text-sm font-black text-white uppercase tracking-wider flex items-center gap-1.5">
-                <span>📋</span> Histórico de Disparos em Tempo Real
+              <h3 className="text-xs sm:text-sm font-black text-white uppercase tracking-wider flex items-center gap-1.5 m-0">
+                <span>⏱️</span> Registro Recente de Disparos
               </h3>
-              <span className="text-[10px] text-white/40 font-mono">
-                Atualizado ao vivo
+              <span className="text-[10px] text-white/50 font-mono">
+                {tracking?.recentLogs?.length || 0} registros
               </span>
             </div>
 
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-              {tracking?.recentLogs && tracking.recentLogs.length > 0 ? (
-                tracking.recentLogs.slice(0, 10).map((log, idx) => (
+              {(!tracking?.recentLogs || tracking.recentLogs.length === 0) ? (
+                <div className="text-center py-6 text-xs text-white/40 border border-dashed border-white/10 rounded-xl">
+                  Disparos iniciados e sendo computados em tempo real na rede de grupos.
+                </div>
+              ) : (
+                tracking.recentLogs.map((log) => (
                   <div
-                    key={log.id || idx}
-                    className="bg-white/[0.02] border border-white/5 hover:border-white/15 rounded-xl px-3 py-2 flex items-center justify-between text-xs transition-colors"
+                    key={log.id}
+                    className="p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 flex items-center justify-between text-xs transition-colors"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-emerald-400 text-sm">✓</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-emerald-400">
+                        {log.type === 'auto_5min' ? '⏱️' : log.type === 'manual' ? '🚀' : '⚙️'}
+                      </span>
                       <div>
-                        <span className="font-bold text-white/90 block leading-tight">
-                          {log.note || `Disparo em ${log.channel}`}
+                        <span className="text-white/90 font-medium block leading-tight">
+                          {log.note || 'Disparo nos grupos'}
                         </span>
                         <span className="text-[10px] text-white/40 font-mono">
-                          {log.timestamp} • {log.channel}
+                          {log.timestamp}
                         </span>
                       </div>
                     </div>
-                    <span className="text-[10px] font-black font-mono text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20 whitespace-nowrap">
-                      Total: {log.totalAfter}
-                    </span>
+                    {log.totalAfter !== undefined && (
+                      <span className="text-[11px] font-mono font-bold text-amber-300 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20 whitespace-nowrap">
+                        Total: {log.totalAfter}
+                      </span>
+                    )}
                   </div>
                 ))
-              ) : (
-                <div className="text-center py-6 text-white/40 text-xs">
-                  <p>Iniciando o registro dos disparos...</p>
-                  <p className="text-[10px] text-white/30 mt-1">
-                    Cada envio em grupos de WhatsApp e Facebook será listado aqui.
-                  </p>
-                </div>
               )}
             </div>
           </div>
 
-          {/* PREVIEW OF THE AD BEING DISTRIBUTED */}
-          <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-4">
-            <h4 className="text-xs font-black uppercase tracking-wider text-white/70 mb-3 flex items-center gap-1.5">
-              <span>🖼️</span> Prévia do Seu Anúncio Sendo Divulgado:
-            </h4>
-            
-            <div className="flex flex-col sm:flex-row items-center gap-4 bg-black/40 border border-white/5 rounded-xl p-3">
-              <img
-                src={compLogo}
-                alt={compName}
-                className="w-20 h-20 rounded-2xl object-cover border border-white/10"
-              />
-              <div className="flex-1 text-center sm:text-left">
-                <h5 className="font-black text-white text-base">{compName}</h5>
-                <p className="text-xs text-white/70 mt-1 line-clamp-2">
-                  {companyData?.desc || 'Empresa parceira com divulgação ativa na rede Minha Divulgação.'}
-                </p>
-                <div className="flex items-center justify-center sm:justify-start gap-2 mt-2.5 flex-wrap">
-                  {companyData?.wa && (
-                    <a
-                      href={`https://wa.me/${companyData.wa.replace(/[^0-9]/g, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs px-3 py-1.5 rounded-lg flex items-center gap-1"
-                    >
-                      💬 WhatsApp Ativo
-                    </a>
-                  )}
-                  {companyData?.catalogUrl && (
-                    <a
-                      href={companyData.catalogUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-amber-400 hover:bg-amber-300 text-black font-black text-xs px-3 py-1.5 rounded-lg flex items-center gap-1"
-                    >
-                      📖 Ver Catálogo
-                    </a>
-                  )}
-                </div>
-              </div>
-            </div>
+          {/* Footer note */}
+          <div className="text-center pt-2">
+            <p className="text-[11px] text-white/50 leading-relaxed m-0">
+              💡 Este link é atualizado em tempo real com as transmissões automáticas e manuais do portal Minha Divulgação.
+            </p>
           </div>
 
-          {/* Footer Support & Navigation */}
-          <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs border-t border-white/10">
-            <span className="text-white/50 text-[11px] text-center sm:text-left">
-              🔒 Link Privado e Seguro de Acompanhamento • Minha Divulgação
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleManualRefresh}
-                className="bg-white/10 hover:bg-white/15 text-white font-bold px-3 py-2 rounded-xl transition-colors cursor-pointer"
-              >
-                🔄 Atualizar
-              </button>
-              {onClose && (
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="bg-amber-400 hover:bg-amber-300 text-black font-black px-4 py-2 rounded-xl transition-colors cursor-pointer"
-                >
-                  Concluir / Voltar ao Portal
-                </button>
-              )}
-            </div>
-          </div>
         </div>
-
       </div>
     </div>
   );
