@@ -34,6 +34,20 @@ export interface CompanyDispatchTracking {
 
 const STORAGE_PREFIX = 'tracking_dispatch_';
 
+/**
+ * Safely parse numbers from user inputs, accepting Brazilian separators (e.g. 6.568 or 6,568)
+ */
+export function parseNumberWithSeparators(val: string | number | undefined | null): number {
+  if (val === undefined || val === null) return 0;
+  if (typeof val === 'number') return Math.max(0, Math.floor(val));
+  const str = String(val).trim();
+  if (!str) return 0;
+  // If user entered formatted string like "6.568" or "6,568" or "6 568"
+  const cleaned = str.replace(/[^\d]/g, '');
+  const parsed = parseInt(cleaned, 10);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
 export function getDefaultTracking(companyId: string, companyName: string = 'Empresa'): CompanyDispatchTracking {
   return {
     companyId: String(companyId),
@@ -209,13 +223,13 @@ export async function registerManualDispatch(
  */
 export async function setManualInitialCount(
   current: CompanyDispatchTracking,
-  initialCount: number
+  initialCount: number | string
 ): Promise<CompanyDispatchTracking> {
   const now = new Date();
   const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const dateStr = now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
-  const validCount = Math.max(0, Math.floor(initialCount));
+  const validCount = parseNumberWithSeparators(initialCount);
   const newLog: DispatchLogEntry = {
     id: `log_${Date.now()}_init`,
     timestamp: `${dateStr} às ${timeStr}`,
@@ -223,7 +237,7 @@ export async function setManualInitialCount(
     channel: 'Configuração Inicial',
     count: validCount,
     totalAfter: validCount,
-    note: `Contador inicial de disparos definido para ${validCount} disparos.`
+    note: `Contador inicial de disparos definido para ${validCount.toLocaleString('pt-BR')} disparos.`
   };
 
   const updated: CompanyDispatchTracking = {
@@ -250,15 +264,15 @@ export async function setManualInitialCount(
  */
 export async function setManualGroupsCount(
   current: CompanyDispatchTracking,
-  waGroups: number,
-  fbGroups: number
+  waGroups: number | string,
+  fbGroups: number | string
 ): Promise<CompanyDispatchTracking> {
   const now = new Date();
   const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const dateStr = now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
-  const validWa = Math.max(0, Math.floor(waGroups));
-  const validFb = Math.max(0, Math.floor(fbGroups));
+  const validWa = parseNumberWithSeparators(waGroups);
+  const validFb = parseNumberWithSeparators(fbGroups);
 
   const newLog: DispatchLogEntry = {
     id: `log_${Date.now()}_groups`,
@@ -267,7 +281,7 @@ export async function setManualGroupsCount(
     channel: 'Definição de Grupos',
     count: 0,
     totalAfter: current.totalDispatches,
-    note: `Quantidade de grupos definida: ${validWa} grupos de WhatsApp e ${validFb} grupos de Facebook.`
+    note: `Quantidade de grupos definida: ${validWa.toLocaleString('pt-BR')} grupos de WhatsApp e ${validFb.toLocaleString('pt-BR')} grupos de Facebook.`
   };
 
   const updated: CompanyDispatchTracking = {
@@ -322,15 +336,15 @@ export async function resetForNewMonth(
  */
 export async function setManualDaysElapsed(
   current: CompanyDispatchTracking,
-  days: number,
-  totalDays: number = 30
+  days: number | string,
+  totalDays: number | string = 30
 ): Promise<CompanyDispatchTracking> {
   const now = new Date();
   const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const dateStr = now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
-  const validDays = Math.max(1, Math.floor(days));
-  const validTotal = Math.max(validDays, Math.floor(totalDays || 30));
+  const validDays = Math.max(1, parseNumberWithSeparators(days));
+  const validTotal = Math.max(validDays, parseNumberWithSeparators(totalDays) || 30);
 
   const newLog: DispatchLogEntry = {
     id: `log_${Date.now()}_days`,

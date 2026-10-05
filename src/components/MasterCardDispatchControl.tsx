@@ -10,7 +10,8 @@ import {
   toggleAuto24hDispatch,
   subscribeToDispatchTracking,
   generateClientTrackingLink,
-  computeLiveTracking
+  computeLiveTracking,
+  parseNumberWithSeparators
 } from '../lib/dispatchTracking';
 
 interface MasterCardDispatchControlProps {
@@ -83,8 +84,10 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
         setManualInputValue(String(data.totalDispatches || 0));
         setManualDaysValue(String(data.daysElapsed || 1));
         setManualTotalDaysValue(String(data.totalCampaignDays || 30));
-        setManualWaGroups(String(data.manualWhatsAppGroups !== undefined ? data.manualWhatsAppGroups : (data.groupsWhatsAppReached || 0)));
-        setManualFbGroups(String(data.manualFacebookGroups !== undefined ? data.manualFacebookGroups : (data.groupsFacebookReached || 0)));
+        const initWa = data.manualWhatsAppGroups !== undefined ? data.manualWhatsAppGroups : (data.groupsWhatsAppReached || 0);
+        const initFb = data.manualFacebookGroups !== undefined ? data.manualFacebookGroups : (data.groupsFacebookReached || 0);
+        setManualWaGroups(initWa > 0 ? initWa.toLocaleString('pt-BR') : '0');
+        setManualFbGroups(initFb > 0 ? initFb.toLocaleString('pt-BR') : '0');
       }
     });
 
@@ -141,7 +144,7 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
       const updated = await registerManualDispatch(tracking, amount, 'Grupos WhatsApp & Facebook');
       setTracking(updated);
       setManualInputValue(String(updated.totalDispatches));
-      triggerSuccessMsg(`+${amount} disparo(s) registrado(s) com sucesso! Total: ${updated.totalDispatches}`);
+      triggerSuccessMsg(`+${amount} disparo(s) registrado(s) com sucesso! Total: ${updated.totalDispatches.toLocaleString('pt-BR')}`);
     } catch (err) {
       console.error(err);
     } finally {
@@ -151,16 +154,13 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
 
   // Handle saving manual total dispatches
   const handleSaveInitialCount = async () => {
-    const num = parseInt(manualInputValue, 10);
-    if (isNaN(num) || num < 0) {
-      alert('Por favor, digite um número válido de disparos.');
-      return;
-    }
+    const num = parseNumberWithSeparators(manualInputValue);
     setLoading(true);
     try {
       const updated = await setManualInitialCount(tracking, num);
       setTracking(updated);
-      triggerSuccessMsg(`Total de disparos atualizado para ${num}! Salvo no sistema.`);
+      setManualInputValue(num.toLocaleString('pt-BR'));
+      triggerSuccessMsg(`Total de disparos atualizado para ${num.toLocaleString('pt-BR')}! Salvo no sistema.`);
     } catch (err) {
       console.error(err);
     } finally {
@@ -170,12 +170,8 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
 
   // Handle saving manual days elapsed
   const handleSaveDaysElapsed = async () => {
-    const days = parseInt(manualDaysValue, 10);
-    const total = parseInt(manualTotalDaysValue, 10) || 30;
-    if (isNaN(days) || days < 1) {
-      alert('Por favor, informe um número de dias válido (mínimo 1).');
-      return;
-    }
+    const days = Math.max(1, parseNumberWithSeparators(manualDaysValue));
+    const total = Math.max(days, parseNumberWithSeparators(manualTotalDaysValue) || 30);
     setLoading(true);
     try {
       const updated = await setManualDaysElapsed(tracking, days, total);
@@ -207,17 +203,15 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
 
   // Handle saving manual groups count
   const handleSaveGroupsCount = async () => {
-    const wa = parseInt(manualWaGroups, 10);
-    const fb = parseInt(manualFbGroups, 10);
-    if (isNaN(wa) || wa < 0 || isNaN(fb) || fb < 0) {
-      alert('Por favor, digite a quantidade de grupos de WhatsApp e Facebook.');
-      return;
-    }
+    const wa = parseNumberWithSeparators(manualWaGroups);
+    const fb = parseNumberWithSeparators(manualFbGroups);
     setLoading(true);
     try {
       const updated = await setManualGroupsCount(tracking, wa, fb);
       setTracking(updated);
-      triggerSuccessMsg(`Salvo com sucesso: ${wa} grupos de WhatsApp e ${fb} grupos de Facebook! O cliente já pode ver.`);
+      setManualWaGroups(wa > 0 ? wa.toLocaleString('pt-BR') : '0');
+      setManualFbGroups(fb > 0 ? fb.toLocaleString('pt-BR') : '0');
+      triggerSuccessMsg(`Salvo com sucesso: ${wa.toLocaleString('pt-BR')} grupos de WhatsApp e ${fb.toLocaleString('pt-BR')} grupos de Facebook! O cliente já pode ver.`);
     } catch (err) {
       console.error(err);
     } finally {
@@ -282,8 +276,12 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
   const seconds = countdownSeconds % 60;
   const timerFormatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
-  const currentWa = tracking.manualWhatsAppGroups !== undefined ? tracking.manualWhatsAppGroups : (tracking.groupsWhatsAppReached || 0);
-  const currentFb = tracking.manualFacebookGroups !== undefined ? tracking.manualFacebookGroups : (tracking.groupsFacebookReached || 0);
+  const currentWa = parseNumberWithSeparators(
+    tracking.manualWhatsAppGroups !== undefined ? tracking.manualWhatsAppGroups : (tracking.groupsWhatsAppReached || 0)
+  );
+  const currentFb = parseNumberWithSeparators(
+    tracking.manualFacebookGroups !== undefined ? tracking.manualFacebookGroups : (tracking.groupsFacebookReached || 0)
+  );
 
   return (
     <div className="mt-4 pt-3.5 border-t border-amber-500/40 bg-gradient-to-b from-[#131522] via-[#0e0f18] to-[#090a10] rounded-2xl p-4 text-left shadow-2xl relative select-none">
@@ -344,7 +342,7 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
         <div className="border-l border-white/10 pl-2">
           <span className="text-[10px] uppercase font-bold text-white/50 block">Grupos no Ar</span>
           <span className="text-xs sm:text-sm font-bold text-white font-mono tracking-tight block mt-0.5">
-            💬 <strong className="text-emerald-400">{currentWa}</strong> ZAP • 👥 <strong className="text-blue-400">{currentFb}</strong> FB
+            💬 <strong className="text-emerald-400">{currentWa.toLocaleString('pt-BR')}</strong> ZAP • 👥 <strong className="text-blue-400">{currentFb.toLocaleString('pt-BR')}</strong> FB
           </span>
         </div>
 
@@ -377,7 +375,7 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
               </span>
             </div>
             <p className="text-[11px] text-white/70 mb-2 leading-tight">
-              Digite abaixo em quantos grupos de WhatsApp e Facebook essa empresa está sendo divulgada. Ao clicar em <strong>Salvar Grupos</strong>, o valor fica salvo permanente no sistema e o cliente visualiza ao vivo.
+              Digite abaixo em quantos grupos de WhatsApp e Facebook essa empresa está sendo divulgada (aceita números como <strong>900</strong> ou <strong>6.568</strong>). Ao clicar em <strong>Salvar Grupos</strong>, o valor fica salvo permanente no sistema e o cliente visualiza ao vivo.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
@@ -387,11 +385,11 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
                 </label>
                 <div className="flex items-center gap-1.5">
                   <input
-                    type="number"
-                    min="0"
+                    type="text"
+                    inputMode="numeric"
                     value={manualWaGroups}
                     onChange={(e) => setManualWaGroups(e.target.value)}
-                    placeholder="Ex: 85"
+                    placeholder="Ex: 900"
                     className="bg-black/80 border border-emerald-500/40 text-emerald-300 text-sm font-mono font-black px-3 py-1.5 rounded-lg w-full focus:border-emerald-400 focus:outline-none"
                   />
                   <span className="text-xs text-white/50 whitespace-nowrap">grupos</span>
@@ -404,11 +402,11 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
                 </label>
                 <div className="flex items-center gap-1.5">
                   <input
-                    type="number"
-                    min="0"
+                    type="text"
+                    inputMode="numeric"
                     value={manualFbGroups}
                     onChange={(e) => setManualFbGroups(e.target.value)}
-                    placeholder="Ex: 40"
+                    placeholder="Ex: 6.568"
                     className="bg-black/80 border border-blue-500/40 text-blue-300 text-sm font-mono font-black px-3 py-1.5 rounded-lg w-full focus:border-blue-400 focus:outline-none"
                   />
                   <span className="text-xs text-white/50 whitespace-nowrap">grupos</span>
@@ -418,7 +416,7 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
 
             <div className="flex items-center justify-between gap-2 pt-1 border-t border-emerald-500/20">
               <span className="text-[10px] text-white/60">
-                Total atual: <strong className="text-white font-mono">{currentWa + currentFb} grupos alcançados</strong>
+                Total atual: <strong className="text-white font-mono">{(currentWa + currentFb).toLocaleString('pt-BR')} grupos alcançados</strong>
               </span>
               <button
                 type="button"

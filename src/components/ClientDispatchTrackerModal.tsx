@@ -3,7 +3,8 @@ import {
   CompanyDispatchTracking,
   getCompanyDispatchTracking,
   subscribeToDispatchTracking,
-  computeLiveTracking
+  computeLiveTracking,
+  parseNumberWithSeparators
 } from '../lib/dispatchTracking';
 
 interface ClientDispatchTrackerModalProps {
@@ -108,13 +109,17 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
   const daysElapsed = tracking?.daysElapsed || 1;
   const totalCampaignDays = tracking?.totalCampaignDays || 30;
 
-  const waGroups = tracking?.manualWhatsAppGroups !== undefined 
-    ? tracking.manualWhatsAppGroups 
-    : (tracking?.groupsWhatsAppReached !== undefined ? tracking.groupsWhatsAppReached : Math.max(1, Math.round(currentTotal * 0.7) + 5));
+  const waGroups = parseNumberWithSeparators(
+    tracking?.manualWhatsAppGroups !== undefined 
+      ? tracking.manualWhatsAppGroups 
+      : (tracking?.groupsWhatsAppReached !== undefined ? tracking.groupsWhatsAppReached : Math.max(1, Math.round(currentTotal * 0.7) + 5))
+  );
 
-  const fbGroups = tracking?.manualFacebookGroups !== undefined 
-    ? tracking.manualFacebookGroups 
-    : (tracking?.groupsFacebookReached !== undefined ? tracking.groupsFacebookReached : Math.max(1, Math.round(currentTotal * 0.4) + 3));
+  const fbGroups = parseNumberWithSeparators(
+    tracking?.manualFacebookGroups !== undefined 
+      ? tracking.manualFacebookGroups 
+      : (tracking?.groupsFacebookReached !== undefined ? tracking.groupsFacebookReached : Math.max(1, Math.round(currentTotal * 0.4) + 3))
+  );
 
   const totalGroups = waGroups + fbGroups;
   const reach = tracking?.estimatedReach || Math.max(currentTotal * 350, 1200);
@@ -281,7 +286,7 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
               </div>
 
               <div className="bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs font-mono font-black px-3 py-1 rounded-xl">
-                {totalGroups} Grupos Totais
+                {totalGroups.toLocaleString('pt-BR')} Grupos Totais
               </div>
             </div>
 
@@ -304,7 +309,7 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
 
                 <div className="text-right">
                   <span className="text-2xl font-black text-emerald-400 font-mono">
-                    {loading ? '...' : `${waGroups}`}
+                    {loading ? '...' : waGroups.toLocaleString('pt-BR')}
                   </span>
                   <span className="text-[9px] text-white/40 block font-bold">grupos</span>
                 </div>
@@ -328,7 +333,7 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
 
                 <div className="text-right">
                   <span className="text-2xl font-black text-blue-400 font-mono">
-                    {loading ? '...' : `${fbGroups}`}
+                    {loading ? '...' : fbGroups.toLocaleString('pt-BR')}
                   </span>
                   <span className="text-[9px] text-white/40 block font-bold">comunidades</span>
                 </div>
@@ -372,7 +377,7 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
                 Grupos Ativos
               </span>
               <div className="text-xl sm:text-2xl font-black text-emerald-400 font-mono">
-                {loading ? '...' : `${totalGroups}`}
+                {loading ? '...' : totalGroups.toLocaleString('pt-BR')}
               </div>
               <span className="text-[9px] text-white/40 block mt-0.5">
                 Zap + Face
