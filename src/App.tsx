@@ -92,6 +92,8 @@ import {
 } from './components/RealtimeCounters';
 import { SelfServiceTrialModal, OFFICIAL_PIX_DATA } from './components/SelfServiceTrialModal';
 import { CompanyRegistrationModal } from './components/CompanyRegistrationModal';
+import { MasterCardDispatchControl } from './components/MasterCardDispatchControl';
+import { ClientDispatchTrackerModal } from './components/ClientDispatchTrackerModal';
 
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -991,6 +993,8 @@ function AppContent() {
   });
   const [isAdLoading, setIsAdLoading] = useState(false);
   const [activeMiniSiteCompany, setActiveMiniSiteCompany] = useState<any | null>(null);
+  const [activeTrackingCompanyId, setActiveTrackingCompanyId] = useState<string | null>(null);
+  const [activeTrackingCompanyData, setActiveTrackingCompanyData] = useState<any | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [pixCopied, setPixCopied] = useState(false);
   const [shoppingCart, setShoppingCart] = useState<{ [key: string]: { item: any, count: number } }>(() => {
@@ -2354,6 +2358,28 @@ function AppContent() {
         }
       }
     }
+
+    // Check for client dispatch tracking deep link: ?acompanhar=ID or ?tracking=ID
+    const trackingUrlId = urlParams.get('acompanhar') || urlParams.get('tracking');
+    if (trackingUrlId) {
+      setActiveTrackingCompanyId(trackingUrlId);
+      setIsAdPortalOpen(false);
+      setIsCompanyRegModalOpen(false);
+
+      if (displayedCompanies.length > 0) {
+        const cleanTrackId = trackingUrlId.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+        const found = displayedCompanies.find((c: any) => {
+          const cId = String(c.id || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const cAdvId = String(c.advertiserId || c.ownerId || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const cDocId = String(c.docId || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const cNameSlug = slugify(c.name || '').replace(/[^a-z0-9]/g, '');
+          return cId === cleanTrackId || cAdvId === cleanTrackId || cDocId === cleanTrackId || cNameSlug === cleanTrackId;
+        });
+        if (found) {
+          setActiveTrackingCompanyData(found);
+        }
+      }
+    }
   }, [displayedCompanies, location]);
 
   const filteredCompaniesRaw = appData
@@ -2916,6 +2942,132 @@ function AppContent() {
                 Atualizar Tudo
               </button>
             </div>
+          </div>
+
+          {/* ======================================================== */}
+          {/* PAINEL MASTER DE DISPAROS NOS GRUPOS (WHATSAPP & FACEBOOK) */}
+          {/* ======================================================== */}
+          <div className="dev-item-card" style={{ marginBottom: '40px', background: 'linear-gradient(180deg, #111322 0%, #0c0d16 100%)', border: '1px solid rgba(251, 191, 36, 0.3)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <span style={{ fontSize: '10px', color: '#fbbf24', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Sistema de Transmissão & Disparos
+                </span>
+                <h3 style={{ margin: '4px 0 0 0', color: '#fff', fontSize: '1.25rem', fontWeight: 900 }}>
+                  📢 Central Master de Disparos nos Grupos (WhatsApp & Facebook)
+                </h3>
+              </div>
+              <div style={{ background: 'rgba(37, 211, 102, 0.1)', border: '1px solid #25D366', color: '#25D366', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 900 }}>
+                ⚡ Modo 24h & Disparos Manuais Ativos
+              </div>
+            </div>
+
+            <p style={{ color: '#aaa', fontSize: '12px', marginBottom: '20px', lineHeight: '1.5' }}>
+              Aqui você controla o envio dos anúncios em grupos de WhatsApp e Facebook para cada empresa. Você pode dar disparos manuais, ativar o <strong>Ciclo Automático de 24 horas (que soma +1 disparo a cada 5 minutos)</strong>, definir manualmente quantos disparos já foram feitos, e <strong>copiar o link exclusivo para enviar no privado (PV) do cliente</strong> para ele acompanhar ao vivo.
+            </p>
+
+            {/* List all companies and advertisers for master management */}
+            {(() => {
+              const allMasterCompanies: any[] = [];
+              const seenIds = new Set<string>();
+
+              // 1. From all tenants
+              if (allUsers) {
+                Object.entries(allUsers).forEach(([uname, udata]: [string, any]) => {
+                  if (udata.data?.companies && Array.isArray(udata.data.companies)) {
+                    udata.data.companies.forEach((comp: any) => {
+                      const cId = String(comp.id || `${uname}_${comp.name}`);
+                      if (!seenIds.has(cId)) {
+                        seenIds.add(cId);
+                        allMasterCompanies.push({
+                          ...comp,
+                          id: cId,
+                          cityName: udata.city || uname,
+                          tenantSlug: uname
+                        });
+                      }
+                    });
+                  }
+                });
+              }
+
+              // 2. From advertiserCompanies
+              advertiserCompanies.forEach((ad: any) => {
+                const aId = String(ad.id);
+                if (!seenIds.has(aId)) {
+                  seenIds.add(aId);
+                  allMasterCompanies.push({
+                    ...ad,
+                    id: aId,
+                    cityName: ad.city || 'Fortaleza',
+                    tenantSlug: ad.tenantId || 'fortaleza'
+                  });
+                }
+              });
+
+              // 3. Fallback to appData.companies if still empty
+              if (allMasterCompanies.length === 0 && appData?.companies) {
+                appData.companies.forEach((comp: any) => {
+                  allMasterCompanies.push({
+                    ...comp,
+                    cityName: appData?.siteInfo?.city || 'Geral'
+                  });
+                });
+              }
+
+              if (allMasterCompanies.length === 0) {
+                return (
+                  <div style={{ textAlign: 'center', padding: '30px', color: '#666', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '12px' }}>
+                    Nenhuma empresa encontrada no momento. Cadastre novas empresas para começar os disparos.
+                  </div>
+                );
+              }
+
+              return (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+                  {allMasterCompanies.map((comp: any) => (
+                    <div 
+                      key={comp.id} 
+                      style={{ 
+                        background: '#090a10', 
+                        border: '1px solid rgba(255,255,255,0.1)', 
+                        borderRadius: '16px', 
+                        padding: '16px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                        <img 
+                          src={comp.logo || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150'} 
+                          alt={comp.name} 
+                          style={{ width: '44px', height: '44px', borderRadius: '10px', objectFit: 'cover', background: '#222', border: '1px solid rgba(255,255,255,0.1)' }} 
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <h4 style={{ margin: 0, color: '#fff', fontSize: '13px', fontWeight: 900, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {comp.name}
+                          </h4>
+                          <span style={{ fontSize: '10px', color: '#aaa' }}>
+                            📍 {comp.cityName || 'Geral'} • {comp.category || 'Comércio'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Control Widget */}
+                      <MasterCardDispatchControl
+                        company={comp}
+                        compact={false}
+                        onOpenClientView={() => {
+                          setActiveTrackingCompanyId(String(comp.id));
+                          setActiveTrackingCompanyData(comp);
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
 
           <h3 style={{ marginBottom: '20px' }}>GERENCIAR LOJAS (CIDADES)</h3>
@@ -4722,6 +4874,18 @@ function AppContent() {
 
                   {/* Action Buttons */}
                   {renderCardActionButtons(company, false)}
+
+                  {/* Master Dispatch Tracking Control (Visível apenas para o Master/Admin) */}
+                  {user?.isAdmin && (
+                    <MasterCardDispatchControl
+                      company={company}
+                      compact={true}
+                      onOpenClientView={() => {
+                        setActiveTrackingCompanyId(String(company.id));
+                        setActiveTrackingCompanyData(company);
+                      }}
+                    />
+                  )}
                 </div>
               );
             })}
@@ -6329,6 +6493,15 @@ function AppContent() {
                                       Dica: Ocultando o mini-site, toda a atenção do visitante do portal será voltada para mandar mensagem direta e fechar negócio no WhatsApp!
                                     </p>
                                   </div>
+
+                                  {/* Controle Master de Disparos e Link do Cliente */}
+                                  <MasterCardDispatchControl
+                                    company={c}
+                                    onOpenClientView={() => {
+                                      setActiveTrackingCompanyId(String(c.id));
+                                      setActiveTrackingCompanyData(c);
+                                    }}
+                                  />
                                 </div>
                               </div>
                             </motion.div>
@@ -6899,6 +7072,15 @@ function AppContent() {
                                   </small>
                                 </div>
                               </div>
+
+                              {/* Controle de Disparos Master e Link de Acompanhamento do Cliente */}
+                              <MasterCardDispatchControl
+                                company={ad}
+                                onOpenClientView={() => {
+                                  setActiveTrackingCompanyId(String(ad.id));
+                                  setActiveTrackingCompanyData(ad);
+                                }}
+                              />
                             </div>
                           );
                         })}
@@ -12949,6 +13131,41 @@ function AppContent() {
           window.open(`https://wa.me/${adminWa}?text=${encodeURIComponent(msg)}`, '_blank');
         }}
       />
+
+      {/* PAINEL DE ACOMPANHAMENTO DE DISPAROS DO CLIENTE (LINK EXCLUSIVO ENVIADO NO PV) */}
+      {activeTrackingCompanyId && (
+        <ClientDispatchTrackerModal
+          companyId={activeTrackingCompanyId}
+          companyData={
+            activeTrackingCompanyData ||
+            displayedCompanies.find((c: any) => 
+              String(c.id) === String(activeTrackingCompanyId) || 
+              String(c.advertiserId) === String(activeTrackingCompanyId) || 
+              slugify(c.name || '') === String(activeTrackingCompanyId)
+            ) ||
+            advertiserCompanies.find((a: any) => 
+              String(a.id) === String(activeTrackingCompanyId)
+            )
+          }
+          onClose={() => {
+            setActiveTrackingCompanyId(null);
+            setActiveTrackingCompanyData(null);
+            // Clear URL param without full page reload
+            try {
+              const currentUrl = window.location.href;
+              if (currentUrl.includes('?')) {
+                const [baseUrl, searchPart] = currentUrl.split('?');
+                const params = new URLSearchParams(searchPart);
+                params.delete('acompanhar');
+                params.delete('tracking');
+                const remaining = params.toString();
+                const nextUrl = remaining ? `${baseUrl}?${remaining}` : baseUrl;
+                window.history.pushState({}, '', nextUrl);
+              }
+            } catch (e) {}
+          }}
+        />
+      )}
 
       {/* Botão Flutuante Oficial de Atendimento WhatsApp */}
       <a

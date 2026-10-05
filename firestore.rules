@@ -77,6 +77,11 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Company Dispatch Tracking (WhatsApp/Facebook Group Dispatches)
+    match /dispatch_trackings/{trackingId} {
+      allow read, write: if true;
+    }
+
     // Reviews Collection
     match /reviews/{reviewId} {
       allow read, create: if true;
