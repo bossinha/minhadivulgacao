@@ -5441,13 +5441,14 @@ function AppContent() {
               </div>
 
               <div className="dev-tabs">
-                {['geral', 'seções', 'categorias', 'empresas', 'anunciantes', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'banners-horizontais', 'depoimentos-whats', 'preços', 'segmentos', 'chat', (hasAffiliateSystem || user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'divulgadores' : null].filter(Boolean).map(tab => (
+                {['geral', 'seções', 'categorias', 'empresas', 'disparos', 'anunciantes', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'banners-horizontais', 'depoimentos-whats', 'preços', 'segmentos', 'chat', (hasAffiliateSystem || user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'divulgadores' : null].filter(Boolean).map(tab => (
                   <button 
                     key={tab} 
                     className={`dev-tab ${activeTab === tab ? 'active' : ''}`}
                     onClick={() => setActiveTab(tab)}
+                    style={tab === 'disparos' ? { background: activeTab === 'disparos' ? '#fbbf24' : '#1e1b10', color: activeTab === 'disparos' ? '#000' : '#fbbf24', border: '1px solid #fbbf24', fontWeight: 900 } : undefined}
                   >
-                    {tab === 'depoimentos-whats' ? 'DEPOIMENTOS ZAP' : tab === 'banners-horizontais' ? 'BANNERS HORIZONTAIS' : tab.toUpperCase()}
+                    {tab === 'disparos' ? '📢 DISPAROS (24H & PV)' : tab === 'depoimentos-whats' ? 'DEPOIMENTOS ZAP' : tab === 'banners-horizontais' ? 'BANNERS HORIZONTAIS' : tab.toUpperCase()}
                   </button>
                 ))}
               </div>
@@ -6226,6 +6227,34 @@ function AppContent() {
                             >
                               {c.active !== false ? '👁️ ATIVO' : '🙈 OCULTO'}
                             </button>
+
+                            {/* Botão de Disparos e Link PV diretamente no card fechado */}
+                            <button 
+                              type="button"
+                              className="dev-btn" 
+                              style={{ 
+                                padding: '5px 10px', 
+                                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', 
+                                color: '#000',
+                                border: 'none', 
+                                fontSize: '0.68rem', 
+                                fontWeight: 900,
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                cursor: 'pointer',
+                                boxShadow: '0 0 10px rgba(251, 191, 36, 0.4)'
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenCompanyIndex(openCompanyIndex === idx ? null : idx);
+                              }}
+                              title="Configurar Disparos e Copiar Link do Cliente (PV)"
+                            >
+                              📢 Disparos & Link PV
+                            </button>
+
                             <button className="dev-remove-btn" style={{ position: 'static', padding: '5px' }} onClick={(e) => { e.stopPropagation(); updateData('companies', appData.companies.filter((_, i) => i !== idx)); }}>✕</button>
                             <span>{openCompanyIndex === idx ? '▲' : '▼'}</span>
                           </div>
@@ -6240,6 +6269,17 @@ function AppContent() {
                               style={{ overflow: 'hidden' }}
                             >
                               <div style={{ padding: '20px', borderTop: '1px solid #222' }}>
+                                {/* CONTROLE MASTER DE DISPAROS NO TOPO DO CARD */}
+                                <div style={{ marginBottom: '20px' }}>
+                                  <MasterCardDispatchControl
+                                    company={c}
+                                    onOpenClientView={() => {
+                                      setActiveTrackingCompanyId(String(c.id));
+                                      setActiveTrackingCompanyData(c);
+                                    }}
+                                  />
+                                </div>
+
                                 <div className="dev-grid-2">
                                   <div className="dev-form-group">
                                     <label>Nome</label>
@@ -6493,15 +6533,6 @@ function AppContent() {
                                       Dica: Ocultando o mini-site, toda a atenção do visitante do portal será voltada para mandar mensagem direta e fechar negócio no WhatsApp!
                                     </p>
                                   </div>
-
-                                  {/* Controle Master de Disparos e Link do Cliente */}
-                                  <MasterCardDispatchControl
-                                    company={c}
-                                    onOpenClientView={() => {
-                                      setActiveTrackingCompanyId(String(c.id));
-                                      setActiveTrackingCompanyData(c);
-                                    }}
-                                  />
                                 </div>
                               </div>
                             </motion.div>
@@ -6514,6 +6545,134 @@ function AppContent() {
                       updateData('companies', [...appData.companies, { id: Date.now(), name: "Nova Empresa", category: "Geral", desc: "Descrição aqui", logo: "", wa: "", ig: "", catalogUrl: "", website: "", fb: "", featured: false }]);
                       setOpenCompanyIndex(newIdx);
                     }}>+ Adicionar Empresa</button>
+                  </div>
+                )}
+
+                {/* ======================================================== */}
+                {/* ABA DEDICADA: DISPAROS NOS GRUPOS (WHATSAPP & FACEBOOK) */}
+                {/* ======================================================== */}
+                {activeTab === 'disparos' && (
+                  <div className="dev-forms-container">
+                    <div style={{ background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%)', border: '1px solid rgba(251, 191, 36, 0.3)', padding: '20px', borderRadius: '16px', marginBottom: '25px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                        <div>
+                          <span style={{ fontSize: '10px', color: '#fbbf24', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
+                            Painel de Disparos em Grupos
+                          </span>
+                          <h3 style={{ margin: '4px 0 0 0', color: '#fff', fontSize: '1.3rem', fontWeight: 900 }}>
+                            📢 Disparador nos Grupos & Links de Acompanhamento (PV)
+                          </h3>
+                        </div>
+                        <div style={{ background: '#25D366', color: '#000', padding: '6px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: 900, boxShadow: '0 0 15px rgba(37, 211, 102, 0.4)' }}>
+                          🟢 Sistema Ativo 24h & Disparos Manuais
+                        </div>
+                      </div>
+
+                      <p style={{ color: '#ccc', fontSize: '12px', marginTop: '10px', lineHeight: '1.5' }}>
+                        Aqui você gerencia individualmente cada card/anunciante:
+                        <br />• <strong>Botão "+1 Disparo":</strong> aperte toda vez que fizer um envio manual nos grupos.
+                        <br />• <strong>Modo 24h Automático:</strong> clique no botão e ele soma <strong>+1 disparo a cada 5 minutos</strong> automaticamente durante 24 horas.
+                        <br />• <strong>Ajuste de Valor Inicial:</strong> digite quantos disparos já foram feitos manualmente para começar daquele número.
+                        <br />• <strong>Link do PV:</strong> copie o link exclusivo que aparece em cada card e mande no WhatsApp privado do cliente para ele acompanhar ao vivo!
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {(() => {
+                        const allCompaniesList: any[] = [];
+                        const seen = new Set<string>();
+
+                        // 1. From appData.companies
+                        (appData?.companies || []).forEach((c: any) => {
+                          const idStr = String(c.id);
+                          if (!seen.has(idStr)) {
+                            seen.add(idStr);
+                            allCompaniesList.push(c);
+                          }
+                        });
+
+                        // 2. From advertiserCompanies
+                        (advertiserCompanies || []).forEach((ad: any) => {
+                          const idStr = String(ad.id);
+                          if (!seen.has(idStr)) {
+                            seen.add(idStr);
+                            allCompaniesList.push(ad);
+                          }
+                        });
+
+                        if (allCompaniesList.length === 0) {
+                          return (
+                            <div style={{ textAlign: 'center', padding: '40px', color: '#888', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '16px' }}>
+                              Nenhuma empresa cadastrada no momento.
+                            </div>
+                          );
+                        }
+
+                        return allCompaniesList.map((companyItem: any, idx: number) => (
+                          <div 
+                            key={companyItem.id || idx} 
+                            style={{ 
+                              background: '#11121c', 
+                              border: '1px solid rgba(255,255,255,0.1)', 
+                              borderRadius: '20px', 
+                              padding: '20px',
+                              boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '15px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                <img 
+                                  src={companyItem.logo || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150'} 
+                                  alt={companyItem.name} 
+                                  style={{ width: '48px', height: '48px', borderRadius: '12px', objectFit: 'cover', background: '#222', border: '1px solid rgba(255,255,255,0.15)' }} 
+                                />
+                                <div>
+                                  <h4 style={{ margin: 0, color: '#fff', fontSize: '15px', fontWeight: 900 }}>
+                                    {companyItem.name}
+                                  </h4>
+                                  <span style={{ fontSize: '11px', color: '#aaa' }}>
+                                    {companyItem.category || 'Geral'} • {companyItem.city || appData?.siteInfo?.city || 'Fortaleza'}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveTrackingCompanyId(String(companyItem.id));
+                                  setActiveTrackingCompanyData(companyItem);
+                                }}
+                                style={{
+                                  background: 'rgba(255,255,255,0.06)',
+                                  color: '#fff',
+                                  border: '1px solid rgba(255,255,255,0.15)',
+                                  padding: '8px 14px',
+                                  borderRadius: '10px',
+                                  fontSize: '11px',
+                                  fontWeight: 'bold',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px'
+                                }}
+                              >
+                                👁️ Abrir Tela do Cliente
+                              </button>
+                            </div>
+
+                            {/* Full Master Card Control Widget */}
+                            <MasterCardDispatchControl
+                              company={companyItem}
+                              compact={false}
+                              onOpenClientView={() => {
+                                setActiveTrackingCompanyId(String(companyItem.id));
+                                setActiveTrackingCompanyData(companyItem);
+                              }}
+                            />
+                          </div>
+                        ));
+                      })()}
+                    </div>
                   </div>
                 )}
 
@@ -6649,6 +6808,19 @@ function AppContent() {
                                   </div>
                                 </div>
                                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                  {/* Botão Acompanhamento e Disparos */}
+                                  <button 
+                                    className="dev-btn"
+                                    style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', color: '#000', border: 'none', fontSize: '11px', padding: '6px 12px', cursor: 'pointer', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 0 10px rgba(251, 191, 36, 0.4)' }}
+                                    onClick={() => {
+                                      setActiveTrackingCompanyId(String(ad.id));
+                                      setActiveTrackingCompanyData(ad);
+                                    }}
+                                    title="Ver Painel de Acompanhamento do Cliente"
+                                  >
+                                    📢 Disparos & Link PV
+                                  </button>
+
                                   {/* BOTÃO LIBERAR / APROVAR PIX */}
                                   {isPending ? (
                                     <button 
