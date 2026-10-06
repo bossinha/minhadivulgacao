@@ -992,6 +992,34 @@ function AppContent() {
     } catch (e) {}
     return [];
   });
+
+  const displayedCompanies = useMemo(() => {
+    if (!appData) return [];
+    const baseCompanies = appData.companies || [];
+    const merged = [...baseCompanies];
+    
+    advertiserCompanies.forEach((ad: any) => {
+      // Check if advertiser is blocked
+      if (ad.isBlocked) return;
+
+      // Pending self-service registration waiting for PIX approval from admin
+      if (ad.status === 'pending') return;
+
+      // Check if advertiser trial has expired
+      const isExpired = ad.expiresAt && !ad.hasPlan && ad.expiresAt < new Date().toISOString().split('T')[0];
+      if (isExpired) return; // Skip showing expired advertisers in the public directory!
+
+      const idx = merged.findIndex((c: any) => slugify(c.name) === slugify(ad.name) || String(c.id) === String(ad.id));
+      if (idx !== -1) {
+        merged[idx] = { ...merged[idx], ...ad };
+      } else {
+        merged.push(ad);
+      }
+    });
+    
+    return merged;
+  }, [appData, advertiserCompanies]);
+
   const [isAdLoading, setIsAdLoading] = useState(false);
   const [activeMiniSiteCompany, setActiveMiniSiteCompany] = useState<any | null>(null);
   const [activeTrackingCompanyId, setActiveTrackingCompanyId] = useState<string | null>(() => {
@@ -1567,14 +1595,85 @@ function AppContent() {
 
 
 
-  const getWaLinkWithReferral = (baseUrl: string) => {
+  const getCompanyWhatsAppMessage = (companyName: string = 'sua empresa', customItemName?: string) => {
+    const siteName = appData?.siteInfo?.name || 'Minha Divulgação';
+    const tid = slugify(tenantId || 'fortaleza');
+    const ref = sessionStorage.getItem(`ref_${tid}`);
+    let msg = customItemName
+      ? `Olá! Vi o anúncio da *${companyName}* no portal *${siteName}* e gostaria de mais informações sobre: *${customItemName}*!`
+      : `Olá! Vi o anúncio da *${companyName}* no portal *${siteName}* e gostaria de mais informações sobre o produto ou serviço!`;
+    if (ref) {
+      msg += `\n(Indicação: ${ref})`;
+    }
+    return msg;
+  };
+
+  const getCompanyWhatsAppUrl = (company: any, customItemName?: string) => {
+    if (!company) return '#';
+    const rawWa = company.wa || company.whatsapp || company.phone || '';
+    if (!rawWa) return '#';
+
+    // Extrai com segurança apenas os dígitos do telefone sem contaminar com textos de URL anteriores
+    let phoneStr = String(rawWa);
+    if (phoneStr.includes('wa.me/')) {
+      phoneStr = phoneStr.split('wa.me/')[1]?.split('?')[0] || phoneStr;
+    } else if (phoneStr.includes('whatsapp.com/send?phone=')) {
+      phoneStr = phoneStr.split('phone=')[1]?.split('&')[0] || phoneStr;
+    } else if (phoneStr.includes('api.whatsapp.com/send')) {
+      const m = phoneStr.match(/phone=([0-9]+)/);
+      if (m) phoneStr = m[1];
+    }
+    const cleanWa = phoneStr.replace(/\D/g, '');
+    if (!cleanWa) return '#';
+    const formattedPhone = cleanWa.length <= 11 ? `55${cleanWa}` : cleanWa;
+    const msg = getCompanyWhatsAppMessage(company.name || 'sua empresa', customItemName);
+    return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`;
+  };
+
+  const getWaLinkWithReferral = (baseUrl: string, forCompany?: any) => {
     if (!baseUrl) return '#';
     const tid = slugify(tenantId || 'fortaleza');
     const ref = sessionStorage.getItem(`ref_${tid}`);
     const siteName = appData?.siteInfo?.name || 'Minha Divulgação';
-    
+
+    // 1. Se foi passada uma empresa explicitamente, SEMPRE usa a mensagem exclusiva da empresa com nome do portal
+    if (forCompany && (forCompany.name || forCompany.wa)) {
+      return getCompanyWhatsAppUrl(forCompany);
+    }
+
+    // 2. Extrai dígitos de telefone do link
+    let phoneDigits = baseUrl;
+    if (phoneDigits.includes('wa.me/')) {
+      phoneDigits = phoneDigits.split('wa.me/')[1]?.split('?')[0] || phoneDigits;
+    } else if (phoneDigits.includes('phone=')) {
+      phoneDigits = phoneDigits.split('phone=')[1]?.split('&')[0] || phoneDigits;
+    }
+    const cleanDigits = phoneDigits.replace(/\D/g, '');
+
+    // 3. Se o número bater com algum cliente cadastrado nos cards, usa a mensagem do cliente
+    if (cleanDigits.length >= 8) {
+      const allComps = [
+        ...(displayedCompanies || []),
+        ...(appData?.companies || []),
+        ...(advertiserCompanies || [])
+      ];
+      const matched = allComps.find((c: any) => {
+        const cRaw = c.wa || c.whatsapp || c.phone || '';
+        let cPhone = String(cRaw);
+        if (cPhone.includes('wa.me/')) {
+          cPhone = cPhone.split('wa.me/')[1]?.split('?')[0] || cPhone;
+        }
+        const cWa = cPhone.replace(/\D/g, '');
+        return cWa && (cleanDigits.endsWith(cWa) || cWa.endsWith(cleanDigits));
+      });
+
+      if (matched) {
+        return getCompanyWhatsAppUrl(matched);
+      }
+    }
+
+    // 4. Se NÃO for cliente cadastrado, é contato OFICIAL DO PORTAL (suporte, planos ou adesão)
     if (!ref) {
-      // Se não há divulgador indicado e o link não possui texto predefinido, definimos uma mensagem comercial profissional
       if (!baseUrl.toLowerCase().includes('text=')) {
         const defaultProfessionalText = `Olá! Gostaria de obter informações sobre a divulgação da minha empresa no portal ${siteName}.\n\nTenho interesse nos planos comerciais e gostaria de entender como colocar meu negócio em destaque. Poderia me atender, por gentileza?`;
         const sep = baseUrl.includes('?') ? '&' : '?';
@@ -1585,7 +1684,6 @@ function AppContent() {
     
     const referralText = `Olá! Gostaria de obter informações comerciais sobre a divulgação da minha empresa no portal ${siteName}.\n\nFui indicado pelo parceiro divulgador: *${ref}*.\nGostaria de conhecer os planos comerciais e orientações para o cadastro da minha empresa. Poderia me atender, por gentileza?`;
     
-    // Se o link já tem text=, substituímos para manter o indicativo do divulgador de forma profissional
     if (baseUrl.toLowerCase().includes('text=')) {
       return baseUrl.replace(/([?&])text=[^&]*/i, `$1text=${encodeURIComponent(referralText)}`);
     }
@@ -1813,10 +1911,7 @@ function AppContent() {
     const hasWebsite = Boolean(company.website && company.website !== '#' && company.website.trim());
     const hasFb = Boolean(company.fb && company.fb !== '#' && company.fb.trim());
 
-    const refCode = sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`);
-    const waMessage = `Olá, vi seu anúncio no portal ${appData?.siteInfo?.name || 'Minha Divulgação'}!${refCode ? ` Fui indicado pelo parceiro: ${refCode}` : ''}`;
-    const waClean = hasWa ? company.wa.replace(/[^0-9]/g, '') : '';
-    const waUrl = `https://wa.me/${waClean}?text=${encodeURIComponent(waMessage)}`;
+    const waUrl = getCompanyWhatsAppUrl(company);
     const websiteUrl = hasWebsite ? (company.website.trim().startsWith('http') ? company.website.trim() : `https://${company.website.trim()}`) : '#';
     const cleanCatalogUrl = hasCatalogLink ? (catalogUrl.startsWith('http') ? catalogUrl : `https://${catalogUrl}`) : '#';
     const igUrl = hasIg ? (company.ig.trim().startsWith('http') ? company.ig.trim() : `https://instagram.com/${company.ig.trim().replace('@', '')}`) : '#';
@@ -2254,33 +2349,6 @@ function AppContent() {
       }
     };
   }, [radioPlaying, isRadioBuffering, reconnectRadio]);
-
-  const displayedCompanies = useMemo(() => {
-    if (!appData) return [];
-    const baseCompanies = appData.companies || [];
-    const merged = [...baseCompanies];
-    
-    advertiserCompanies.forEach((ad: any) => {
-      // Check if advertiser is blocked
-      if (ad.isBlocked) return;
-
-      // Pending self-service registration waiting for PIX approval from admin
-      if (ad.status === 'pending') return;
-
-      // Check if advertiser trial has expired
-      const isExpired = ad.expiresAt && !ad.hasPlan && ad.expiresAt < new Date().toISOString().split('T')[0];
-      if (isExpired) return; // Skip showing expired advertisers in the public directory!
-
-      const idx = merged.findIndex((c: any) => slugify(c.name) === slugify(ad.name) || String(c.id) === String(ad.id));
-      if (idx !== -1) {
-        merged[idx] = { ...merged[idx], ...ad };
-      } else {
-        merged.push(ad);
-      }
-    });
-    
-    return merged;
-  }, [appData, advertiserCompanies]);
 
   const displayedCategories = useMemo(() => {
     if (!appData) return [];
@@ -4358,7 +4426,7 @@ function AppContent() {
                         if (activeFlyer.actionType === 'company' && targetComp) {
                           setActiveMiniSiteCompany(targetComp);
                         } else if (activeFlyer.link) {
-                          window.open(getWaLinkWithReferral(activeFlyer.link), '_blank');
+                          window.open(getWaLinkWithReferral(activeFlyer.link, targetComp), '_blank');
                         } else if (targetComp) {
                           setActiveMiniSiteCompany(targetComp);
                         }
@@ -4424,7 +4492,7 @@ function AppContent() {
                         <div className="flex flex-wrap items-center gap-3 mt-7 justify-center md:justify-start">
                           {typeof activeFlyer === 'object' && activeFlyer?.link && (
                             <a 
-                              href={getWaLinkWithReferral(activeFlyer.link)} 
+                              href={getWaLinkWithReferral(activeFlyer.link, targetComp)} 
                               target="_blank" 
                               rel="noreferrer" 
                               className="inline-flex items-center gap-3 bg-emerald-600 hover:bg-emerald-500 hover:scale-[1.03] text-white font-extrabold text-xs uppercase tracking-wider px-7 py-4 rounded-2xl shadow-xl transition-all duration-300 decoration-transparent"
@@ -4520,7 +4588,7 @@ function AppContent() {
                         if (activeBanner.actionType === 'company' && targetComp) {
                           setActiveMiniSiteCompany(targetComp);
                         } else if (activeBanner.link) {
-                          window.open(getWaLinkWithReferral(activeBanner.link), '_blank');
+                          window.open(getWaLinkWithReferral(activeBanner.link, targetComp), '_blank');
                         } else if (targetComp) {
                           setActiveMiniSiteCompany(targetComp);
                         }
@@ -4881,10 +4949,7 @@ function AppContent() {
                     <div 
                       onClick={() => {
                         if (company.wa) {
-                          const waClean = company.wa.replace(/[^0-9]/g, '');
-                          const refCode = sessionStorage.getItem(`ref_${slugify(tenantId || 'fortaleza')}`);
-                          const waMessage = `Olá, vi seu anúncio no portal ${appData?.siteInfo?.name || 'Minha Divulgação'}!${refCode ? ` Fui indicado pelo parceiro: ${refCode}` : ''}`;
-                          window.open(`https://wa.me/${waClean}?text=${encodeURIComponent(waMessage)}`, '_blank');
+                          window.open(getCompanyWhatsAppUrl(company), '_blank');
                         } else if (company.catalogUrl) {
                           window.open(company.catalogUrl, '_blank');
                         } else if (company.website) {
@@ -8869,7 +8934,7 @@ function AppContent() {
                           </div>
                         </div>
                         <div className="chat-result-actions" style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
-                          <a href={`https://wa.me/${(c.wa || '').replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="chat-result-wa" style={{ flex: 1 }}>
+                          <a href={getCompanyWhatsAppUrl(c)} target="_blank" rel="noreferrer" className="chat-result-wa" style={{ flex: 1 }}>
                             WhatsApp 💬
                           </a>
                           {c.ig && c.ig !== '' && c.ig !== '#' && (
@@ -9051,7 +9116,7 @@ function AppContent() {
                     
                     <div className="flex flex-wrap gap-3 mt-6 pt-5 border-t border-white/5">
                       <a 
-                        href={`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}`} 
+                        href={getCompanyWhatsAppUrl(company)} 
                         target="_blank" 
                         rel="noreferrer"
                         onClick={() => trackCompanyInteraction(company, 'whatsapp')}
@@ -9402,7 +9467,7 @@ function AppContent() {
                                   <button 
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      const textMsg = `Olá! Gostaria de solicitar um orçamento para o serviço comercial: *${item.name}* no portal ${appData.siteInfo.name}`;
+                                      const textMsg = getCompanyWhatsAppMessage(company.name, item.name);
                                       window.open(`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
                                     }}
                                     className="px-4 py-2 rounded-xl bg-[var(--primary)]/10 hover:bg-[var(--primary)] text-[var(--primary)] hover:text-black border border-[var(--primary)]/30 text-[10px] font-black uppercase tracking-widest transition-all duration-200 flex items-center gap-1.5"
@@ -13087,7 +13152,7 @@ function AppContent() {
                       <div className="flex flex-col sm:flex-row gap-2.5 w-full">
                         <button
                           onClick={() => {
-                            const textMsg = `Olá! Gostaria de solicitar um orçamento para o serviço: *${selectedItemForDetail.name}* no portal ${appData.siteInfo.name}`;
+                            const textMsg = `Olá! Vi o anúncio da *${activeMiniSiteCompany.name}* no portal *${appData.siteInfo.name}* e gostaria de solicitar um orçamento para o serviço: *${selectedItemForDetail.name}*!`;
                             window.open(`https://wa.me/${activeMiniSiteCompany.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
                           }}
                           className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-[1.02] text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/10 cursor-pointer transition-all duration-200"
@@ -13118,7 +13183,7 @@ function AppContent() {
                       <div className="flex flex-col sm:flex-row gap-2.5 w-full">
                         <button
                           onClick={() => {
-                            const textMsg = `Olá! Gostaria de agendar um horário para o serviço: *${selectedItemForDetail.name}* no portal ${appData.siteInfo.name}`;
+                            const textMsg = `Olá! Vi o anúncio da *${activeMiniSiteCompany.name}* no portal *${appData.siteInfo.name}* e gostaria de agendar um horário para o serviço: *${selectedItemForDetail.name}*!`;
                             window.open(`https://wa.me/${activeMiniSiteCompany.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
                           }}
                           className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-[1.02] text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/10 cursor-pointer transition-all duration-200"
@@ -13160,7 +13225,7 @@ function AppContent() {
                             const totalUnit = baseVal + extraVal;
                             const priceText = totalUnit > 0 ? `R$ ${totalUnit.toFixed(2).replace('.', ',')}` : 'Sob Consulta';
 
-                            let textMsg = `Olá! Tenho interesse no item listado no portal ${appData.siteInfo.name}:\n\n`;
+                            let textMsg = `Olá! Vi o anúncio da *${activeMiniSiteCompany.name}* no portal *${appData.siteInfo.name}* e tenho interesse no produto:\n\n`;
                             textMsg += `📌 *${selectedItemForDetail.name}*\n`;
                             if (itemSelectedSize) textMsg += `👟 *Tamanho/Numeração:* ${itemSelectedSize}\n`;
                             if (itemSelectedColor) textMsg += `🎨 *Cor:* ${itemSelectedColor}\n`;
