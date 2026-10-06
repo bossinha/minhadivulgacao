@@ -94,6 +94,7 @@ import { SelfServiceTrialModal, OFFICIAL_PIX_DATA } from './components/SelfServi
 import { CompanyRegistrationModal } from './components/CompanyRegistrationModal';
 import { MasterCardDispatchControl } from './components/MasterCardDispatchControl';
 import { ClientDispatchTrackerModal } from './components/ClientDispatchTrackerModal';
+import { GlobalDispatchGroupsBar } from './components/GlobalDispatchGroupsBar';
 
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -2975,6 +2976,9 @@ function AppContent() {
             <p style={{ color: '#aaa', fontSize: '12px', marginBottom: '20px', lineHeight: '1.5' }}>
               Aqui você controla o envio dos anúncios em grupos de WhatsApp e Facebook para cada empresa. Você pode dar disparos manuais, ativar o <strong>Ciclo Automático de 24 horas (que soma +1 disparo a cada 5 minutos)</strong>, definir manualmente quantos disparos já foram feitos, e <strong>copiar o link exclusivo para enviar no privado (PV) do cliente</strong> para ele acompanhar ao vivo.
             </p>
+
+            {/* Barra Global de Configuração de Grupos sincronizada para todos os cards */}
+            <GlobalDispatchGroupsBar />
 
             {/* List all companies and advertisers for master management */}
             {(() => {
@@ -6636,6 +6640,9 @@ function AppContent() {
                         <br />• <strong>Link do PV:</strong> copie o link exclusivo que aparece em cada card e mande no WhatsApp privado do cliente para ele acompanhar ao vivo!
                       </p>
                     </div>
+
+                    {/* Barra Global de Grupos compartilhada para todos os cards */}
+                    <GlobalDispatchGroupsBar />
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                       {(() => {

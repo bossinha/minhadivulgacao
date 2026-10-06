@@ -11,7 +11,10 @@ import {
   subscribeToDispatchTracking,
   generateClientTrackingLink,
   computeLiveTracking,
-  parseNumberWithSeparators
+  parseNumberWithSeparators,
+  subscribeToGlobalDispatchGroups,
+  getCachedGlobalGroups,
+  getGlobalDispatchGroups
 } from '../lib/dispatchTracking';
 
 interface MasterCardDispatchControlProps {
@@ -78,16 +81,32 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
   // Load initial and subscribe to real-time updates
   useEffect(() => {
     let isMounted = true;
+    const globalConfig = getCachedGlobalGroups();
+
+    // Inicializa imediatamente os campos com os grupos globais para que apareçam em todos os cards sem demora
+    setManualWaGroups(globalConfig.whatsAppGroups > 0 ? globalConfig.whatsAppGroups.toLocaleString('pt-BR') : '900');
+    setManualFbGroups(globalConfig.facebookGroups > 0 ? globalConfig.facebookGroups.toLocaleString('pt-BR') : '6.568');
+
     getCompanyDispatchTracking(companyId, companyName).then(data => {
       if (isMounted) {
         setTracking(data);
         setManualInputValue(String(data.totalDispatches || 0));
         setManualDaysValue(String(data.daysElapsed || 1));
         setManualTotalDaysValue(String(data.totalCampaignDays || 30));
-        const initWa = data.manualWhatsAppGroups !== undefined ? data.manualWhatsAppGroups : (data.groupsWhatsAppReached || 0);
-        const initFb = data.manualFacebookGroups !== undefined ? data.manualFacebookGroups : (data.groupsFacebookReached || 0);
-        setManualWaGroups(initWa > 0 ? initWa.toLocaleString('pt-BR') : '0');
-        setManualFbGroups(initFb > 0 ? initFb.toLocaleString('pt-BR') : '0');
+      }
+    });
+
+    getGlobalDispatchGroups().then(latestGlobal => {
+      if (isMounted) {
+        setManualWaGroups(latestGlobal.whatsAppGroups > 0 ? latestGlobal.whatsAppGroups.toLocaleString('pt-BR') : '900');
+        setManualFbGroups(latestGlobal.facebookGroups > 0 ? latestGlobal.facebookGroups.toLocaleString('pt-BR') : '6.568');
+        setTracking(prev => ({
+          ...prev,
+          manualWhatsAppGroups: latestGlobal.whatsAppGroups,
+          manualFacebookGroups: latestGlobal.facebookGroups,
+          groupsWhatsAppReached: latestGlobal.whatsAppGroups,
+          groupsFacebookReached: latestGlobal.facebookGroups
+        }));
       }
     });
 
@@ -97,9 +116,25 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
       }
     });
 
+    // Escuta atualizações globais para mudar em todos os cards automaticamente
+    const unsubscribeGlobal = subscribeToGlobalDispatchGroups((latestGlobal) => {
+      if (isMounted) {
+        setTracking(prev => ({
+          ...prev,
+          manualWhatsAppGroups: latestGlobal.whatsAppGroups,
+          manualFacebookGroups: latestGlobal.facebookGroups,
+          groupsWhatsAppReached: latestGlobal.whatsAppGroups,
+          groupsFacebookReached: latestGlobal.facebookGroups
+        }));
+        setManualWaGroups(latestGlobal.whatsAppGroups.toLocaleString('pt-BR'));
+        setManualFbGroups(latestGlobal.facebookGroups.toLocaleString('pt-BR'));
+      }
+    });
+
     return () => {
       isMounted = false;
       unsubscribe();
+      unsubscribeGlobal();
     };
   }, [companyId, companyName]);
 
@@ -176,7 +211,7 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
     try {
       const updated = await setManualDaysElapsed(tracking, days, total);
       setTracking(updated);
-      triggerSuccessMsg(`Sequência de dias definida: Dia ${days} de ${total} dias!`);
+      triggerSuccessMsg(`Sequência definida: Dia ${days} de ${total} dias! O sistema agora avança +1 dia automaticamente a cada novo dia de veiculação.`);
     } catch (err) {
       console.error(err);
     } finally {
@@ -211,7 +246,7 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
       setTracking(updated);
       setManualWaGroups(wa > 0 ? wa.toLocaleString('pt-BR') : '0');
       setManualFbGroups(fb > 0 ? fb.toLocaleString('pt-BR') : '0');
-      triggerSuccessMsg(`Salvo com sucesso: ${wa.toLocaleString('pt-BR')} grupos de WhatsApp e ${fb.toLocaleString('pt-BR')} grupos de Facebook! O cliente já pode ver.`);
+      triggerSuccessMsg(`Salvo com sucesso: ${wa.toLocaleString('pt-BR')} grupos de WhatsApp e ${fb.toLocaleString('pt-BR')} comunidades de Facebook! Aplicado automaticamente para TODOS os cards e clientes.`);
     } catch (err) {
       console.error(err);
     } finally {
@@ -276,11 +311,16 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
   const seconds = countdownSeconds % 60;
   const timerFormatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
+  const globalConfig = getCachedGlobalGroups();
   const currentWa = parseNumberWithSeparators(
-    tracking.manualWhatsAppGroups !== undefined ? tracking.manualWhatsAppGroups : (tracking.groupsWhatsAppReached || 0)
+    (tracking.manualWhatsAppGroups && tracking.manualWhatsAppGroups > 0 && tracking.manualWhatsAppGroups !== 6)
+      ? tracking.manualWhatsAppGroups
+      : (globalConfig.whatsAppGroups > 0 ? globalConfig.whatsAppGroups : 900)
   );
   const currentFb = parseNumberWithSeparators(
-    tracking.manualFacebookGroups !== undefined ? tracking.manualFacebookGroups : (tracking.groupsFacebookReached || 0)
+    (tracking.manualFacebookGroups && tracking.manualFacebookGroups > 0 && tracking.manualFacebookGroups !== 6)
+      ? tracking.manualFacebookGroups
+      : (globalConfig.facebookGroups > 0 ? globalConfig.facebookGroups : 6568)
   );
 
   return (
@@ -368,14 +408,14 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
           <div className="bg-gradient-to-r from-emerald-950/40 via-[#0e1c15] to-[#0e1c15] border border-emerald-500/40 rounded-xl p-3 shadow-md">
             <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
               <span className="text-xs font-black text-emerald-300 flex items-center gap-1.5">
-                👥 Definir Quantidade de Grupos (WhatsApp & Facebook):
+                👥 Grupos de Divulgação (WhatsApp & Facebook):
               </span>
-              <span className="text-[10px] text-emerald-400/80 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                Aparece para o cliente • Não sai ao atualizar
+              <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+                🌐 Aplica para todos os cards automaticamente
               </span>
             </div>
             <p className="text-[11px] text-white/70 mb-2 leading-tight">
-              Digite abaixo em quantos grupos de WhatsApp e Facebook essa empresa está sendo divulgada (aceita números como <strong>900</strong> ou <strong>6.568</strong>). Ao clicar em <strong>Salvar Grupos</strong>, o valor fica salvo permanente no sistema e o cliente visualiza ao vivo.
+              Defina a quantidade de grupos. Como você usa os mesmos grupos para todas as divulgações, <strong>ao salvar aqui essa numeração atualiza automaticamente para todos os cards e telas dos clientes</strong>.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
@@ -406,7 +446,7 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
                     inputMode="numeric"
                     value={manualFbGroups}
                     onChange={(e) => setManualFbGroups(e.target.value)}
-                    placeholder="Ex: 6.568"
+                    placeholder="Ex: 7.850"
                     className="bg-black/80 border border-blue-500/40 text-blue-300 text-sm font-mono font-black px-3 py-1.5 rounded-lg w-full focus:border-blue-400 focus:outline-none"
                   />
                   <span className="text-xs text-white/50 whitespace-nowrap">grupos</span>
@@ -424,7 +464,7 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
                 onClick={handleSaveGroupsCount}
                 className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 active:scale-95 text-black font-black text-xs px-4 py-2 rounded-lg transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
               >
-                💾 Salvar Quantidade de Grupos
+                💾 Salvar e Aplicar em TODOS os Cards
               </button>
             </div>
           </div>
@@ -435,14 +475,15 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
           <div className="bg-gradient-to-r from-yellow-950/40 via-[#1c190a] to-[#1c190a] border border-yellow-500/40 rounded-xl p-3 shadow-md">
             <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
               <span className="text-xs font-black text-yellow-300 flex items-center gap-1.5">
-                📅 Sequência dos Dias (Dias que já foram):
+                📅 Sequência de Dias (Avanço Diário Automático):
               </span>
-              <span className="text-[10px] text-yellow-400/80 font-bold bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">
-                Dia Atual: {tracking.daysElapsed || 1} de {tracking.totalCampaignDays || 30}
+              <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                Avança +1 dia sozinho todo dia
               </span>
             </div>
             <p className="text-[11px] text-white/70 mb-2 leading-tight">
-              Coloque manualmente o número do dia que a divulgação já está para dar sequência (ex: Dia 4, Dia 10) e o total de dias do plano contratado.
+              Defina o dia em que a campanha está (ex: Dia 7 de 30). <strong>A partir dessa data, o sistema avança sozinho +1 dia diariamente</strong> para que o cliente veja o progresso contínuo e automático sem você precisar alterar manualmente todo dia.
             </p>
 
             <div className="grid grid-cols-2 gap-2 mb-2">

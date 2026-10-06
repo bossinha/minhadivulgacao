@@ -4,7 +4,11 @@ import {
   getCompanyDispatchTracking,
   subscribeToDispatchTracking,
   computeLiveTracking,
-  parseNumberWithSeparators
+  parseNumberWithSeparators,
+  subscribeToGlobalDispatchGroups,
+  getCachedGlobalGroups,
+  getGlobalDispatchGroups,
+  computeCurrentCalendarDays
 } from '../lib/dispatchTracking';
 
 interface ClientDispatchTrackerModalProps {
@@ -67,9 +71,35 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
       }
     });
 
+    getGlobalDispatchGroups().then((latestGlobal) => {
+      if (isMounted) {
+        setTracking(prev => prev ? ({
+          ...prev,
+          manualWhatsAppGroups: latestGlobal.whatsAppGroups,
+          manualFacebookGroups: latestGlobal.facebookGroups,
+          groupsWhatsAppReached: latestGlobal.whatsAppGroups,
+          groupsFacebookReached: latestGlobal.facebookGroups
+        }) : prev);
+      }
+    });
+
+    // Escuta atualizações globais para atualizar a tela do cliente em tempo real
+    const unsubscribeGlobal = subscribeToGlobalDispatchGroups((latestGlobal) => {
+      if (isMounted) {
+        setTracking(prev => prev ? ({
+          ...prev,
+          manualWhatsAppGroups: latestGlobal.whatsAppGroups,
+          manualFacebookGroups: latestGlobal.facebookGroups,
+          groupsWhatsAppReached: latestGlobal.whatsAppGroups,
+          groupsFacebookReached: latestGlobal.facebookGroups
+        }) : prev);
+      }
+    });
+
     return () => {
       isMounted = false;
       unsubscribe();
+      unsubscribeGlobal();
     };
   }, [companyId, compName]);
 
@@ -106,19 +136,21 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
   const timerFormatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
   const currentTotal = tracking?.totalDispatches || 0;
-  const daysElapsed = tracking?.daysElapsed || 1;
-  const totalCampaignDays = tracking?.totalCampaignDays || 30;
+  const calendarDays = tracking ? computeCurrentCalendarDays(tracking) : { currentDay: 1, totalDays: 30 };
+  const daysElapsed = calendarDays.currentDay;
+  const totalCampaignDays = calendarDays.totalDays;
 
+  const globalGroups = getCachedGlobalGroups();
   const waGroups = parseNumberWithSeparators(
-    tracking?.manualWhatsAppGroups !== undefined 
+    (tracking?.manualWhatsAppGroups !== undefined && tracking.manualWhatsAppGroups > 0 && tracking.manualWhatsAppGroups !== 6)
       ? tracking.manualWhatsAppGroups 
-      : (tracking?.groupsWhatsAppReached !== undefined ? tracking.groupsWhatsAppReached : Math.max(1, Math.round(currentTotal * 0.7) + 5))
+      : (globalGroups.whatsAppGroups > 0 ? globalGroups.whatsAppGroups : 900)
   );
 
   const fbGroups = parseNumberWithSeparators(
-    tracking?.manualFacebookGroups !== undefined 
+    (tracking?.manualFacebookGroups !== undefined && tracking.manualFacebookGroups > 0 && tracking.manualFacebookGroups !== 6)
       ? tracking.manualFacebookGroups 
-      : (tracking?.groupsFacebookReached !== undefined ? tracking.groupsFacebookReached : Math.max(1, Math.round(currentTotal * 0.4) + 3))
+      : (globalGroups.facebookGroups > 0 ? globalGroups.facebookGroups : 6568)
   );
 
   const totalGroups = waGroups + fbGroups;
@@ -245,11 +277,17 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
               <div className="flex items-center gap-2">
                 <span className="text-2xl">📅</span>
                 <div>
-                  <span className="font-black text-yellow-300 text-sm sm:text-base block">
-                    Sequência da Campanha: Dia {daysElapsed} de {totalCampaignDays} Dias
-                  </span>
-                  <span className="text-[11px] text-white/60">
-                    Acompanhamento diário contínuo do seu plano contratado
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-black text-yellow-300 text-sm sm:text-base">
+                      Sequência da Campanha: Dia {daysElapsed} de {totalCampaignDays} Dias
+                    </span>
+                    <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                      Avanço Diário Automático
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-white/60 block mt-0.5">
+                    Acompanhamento diário contínuo do seu plano contratado • Atualizado automaticamente todo dia
                   </span>
                 </div>
               </div>
@@ -366,8 +404,8 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
               <div className="text-xl sm:text-2xl font-black text-yellow-300 font-mono">
                 {loading ? '...' : `Dia ${daysElapsed}`}
               </div>
-              <span className="text-[9px] text-white/50 block mt-0.5">
-                de {totalCampaignDays} dias
+              <span className="text-[9px] text-emerald-400 font-medium block mt-0.5">
+                de {totalCampaignDays} dias • 🟢 Automático
               </span>
             </div>
 
