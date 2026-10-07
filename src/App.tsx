@@ -2588,30 +2588,6 @@ function AppContent() {
     return obj.active !== false;
   });
 
-  // Load affiliates when tab is active
-  useEffect(() => {
-    if (activeTab === 'divulgadores' && (tenantId || location.pathname !== '/login')) {
-      const fetchAffiliates = async () => {
-        setIsAffLoading(true);
-        try {
-          const tid = slugify(tenantId || 'fortaleza');
-          console.log("Fetching affiliates for:", tid);
-          const q = collection(db, 'tenants', tid, 'affiliates');
-          const snap = await getDocs(q);
-          const list: any[] = [];
-          snap.forEach(d => list.push({ id: d.id, ...d.data() }));
-          setAffiliates(list);
-          console.log("Affiliates loaded:", list.length);
-        } catch (e) {
-          console.error("Error fetching affiliates:", e);
-        } finally {
-          setIsAffLoading(false);
-        }
-      };
-      fetchAffiliates();
-    }
-  }, [activeTab, tenantId, location.pathname]);
-
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const catNavRef = useRef<HTMLDivElement>(null);
@@ -2906,12 +2882,103 @@ function AppContent() {
   };
 
   if (user?.isAdmin && (!tenantId || tenantId.toLowerCase() === 'master')) {
+    // Coleta todas as empresas de todos os portais e anunciantes para Disparos e Notificações
+    const allMasterCompanies: any[] = [];
+    const seenIds = new Set<string>();
+
+    if (allUsers) {
+      Object.entries(allUsers).forEach(([uname, udata]: [string, any]) => {
+        if (udata.data?.companies && Array.isArray(udata.data.companies)) {
+          udata.data.companies.forEach((comp: any) => {
+            const cId = String(comp.id || `${uname}_${comp.name}`);
+            if (!seenIds.has(cId)) {
+              seenIds.add(cId);
+              allMasterCompanies.push({
+                ...comp,
+                id: cId,
+                cityName: udata.city || uname,
+                tenantSlug: uname
+              });
+            }
+          });
+        }
+      });
+    }
+
+    advertiserCompanies.forEach((ad: any) => {
+      const aId = String(ad.id);
+      if (!seenIds.has(aId)) {
+        seenIds.add(aId);
+        allMasterCompanies.push({
+          ...ad,
+          id: aId,
+          cityName: ad.city || 'Fortaleza',
+          tenantSlug: ad.tenantId || 'fortaleza'
+        });
+      }
+    });
+
+    if (allMasterCompanies.length === 0 && appData?.companies) {
+      appData.companies.forEach((comp: any) => {
+        allMasterCompanies.push({
+          ...comp,
+          cityName: appData?.siteInfo?.city || 'Geral'
+        });
+      });
+    }
+
     return (
       <div className="master-portal-container">
         <div className="master-portal-inner">
-          <div className="master-header">
-            <h1>ADMIN MASTER PORTAL</h1>
-            <button className="dev-btn dev-btn-secondary" onClick={logout}>Sair</button>
+          <div className="master-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+            <div>
+              <h1 style={{ margin: 0 }}>ADMIN MASTER PORTAL</h1>
+              <span style={{ fontSize: '12px', color: '#888' }}>Painel Central de Gestão, Disparos e Notificações Push</span>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <button 
+                className="dev-btn" 
+                style={{ background: '#f59e0b', color: '#000', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(245, 158, 11, 0.3)' }}
+                onClick={() => {
+                  const el = document.getElementById('master-push-notifications');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                <span>🔔</span> ENVIAR NOTIFICAÇÕES PUSH
+              </button>
+              <button 
+                className="dev-btn" 
+                style={{ background: '#1e1b10', color: '#fbbf24', border: '1px solid #fbbf24', fontWeight: 800, padding: '10px 14px', borderRadius: '10px', cursor: 'pointer' }}
+                onClick={() => {
+                  const el = document.getElementById('master-disparos-section');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                📢 Disparos 24h
+              </button>
+              <button 
+                className="dev-btn" 
+                style={{ background: '#222', color: '#fff', border: '1px solid #333', fontWeight: 700, padding: '10px 14px', borderRadius: '10px', cursor: 'pointer' }}
+                onClick={() => {
+                  const el = document.getElementById('master-lojas-section');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                🏙️ Lojas / Cidades
+              </button>
+              <button className="dev-btn dev-btn-secondary" onClick={logout}>Sair</button>
+            </div>
+          </div>
+
+          {/* ======================================================== */}
+          {/* PAINEL MASTER DE NOTIFICAÇÕES PUSH (AUDIÊNCIA & OFERTAS) */}
+          {/* ======================================================== */}
+          <div id="master-push-notifications" className="dev-item-card" style={{ marginBottom: '40px', background: 'linear-gradient(180deg, #181308 0%, #0d0c0a 100%)', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '20px', padding: '24px' }}>
+            <AdminPushNotificationsPanel
+              companies={allMasterCompanies}
+              adminEmail={user?.email || 'bossinhaa80@gmail.com'}
+              portalName="Minha Divulgação"
+            />
           </div>
 
           <div className="dev-item-card" style={{ marginBottom: '40px' }}>
@@ -3047,7 +3114,7 @@ function AppContent() {
           {/* ======================================================== */}
           {/* PAINEL MASTER DE DISPAROS NOS GRUPOS (WHATSAPP & FACEBOOK) */}
           {/* ======================================================== */}
-          <div className="dev-item-card" style={{ marginBottom: '40px', background: 'linear-gradient(180deg, #111322 0%, #0c0d16 100%)', border: '1px solid rgba(251, 191, 36, 0.3)' }}>
+          <div id="master-disparos-section" className="dev-item-card" style={{ marginBottom: '40px', background: 'linear-gradient(180deg, #111322 0%, #0c0d16 100%)', border: '1px solid rgba(251, 191, 36, 0.3)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
               <div>
                 <span style={{ fontSize: '10px', color: '#fbbf24', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
@@ -3173,7 +3240,7 @@ function AppContent() {
             })()}
           </div>
 
-          <h3 style={{ marginBottom: '20px' }}>GERENCIAR LOJAS (CIDADES)</h3>
+          <h3 id="master-lojas-section" style={{ marginBottom: '20px' }}>GERENCIAR LOJAS (CIDADES)</h3>
           <div style={{ display: 'grid', gap: '15px' }}>
             {allUsers && Object.entries(allUsers).map(([uname, udata]: [string, any]) => (
               <div key={uname} className="dev-item-card store-card">
@@ -3209,18 +3276,14 @@ function AppContent() {
                 <div className="store-actions">
                      <button 
                         className="dev-btn" 
-                        style={{ height: '36px', background: udata.hasAffiliateSystem === true ? '#4285F4' : '#333', borderColor: udata.hasAffiliateSystem === true ? '#4285F4' : '#444' }}
-                        onClick={async () => {
-                          await updateDoc(doc(db, 'tenants', uname), { hasAffiliateSystem: udata.hasAffiliateSystem !== true });
-                          // Refresh list
-                          const s = await getDocs(collection(db, 'tenants'));
-                          const u: any = {};
-                          s.forEach(d => u[d.id] = d.data());
-                          setAllUsers(u);
+                        style={{ height: '36px', background: '#f59e0b', borderColor: '#f59e0b', color: '#000', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '5px', padding: '0 10px', fontSize: '11px' }}
+                        onClick={() => {
+                          const el = document.getElementById('master-push-notifications');
+                          if (el) el.scrollIntoView({ behavior: 'smooth' });
                         }}
-                        title={udata.hasAffiliateSystem === true ? "Sistema de Divulgadores Ativo (Clique para DESATIVAR)" : "Sistema de Divulgadores Inativo (Clique para ATIVAR)"}
+                        title="Painel de Notificações Push: Enviar Ofertas aos Visitantes Deste Portal e Geral"
                       >
-                        {udata.hasAffiliateSystem === true ? '🤝✅' : '🤝❌'}
+                        🔔 Notificações
                       </button>
                     <button 
                       className="dev-btn" 
@@ -3811,122 +3874,6 @@ function AppContent() {
                       }}
                     >
                       Salvar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ADD AFFILIATE (DIVULGADOR) MODAL */}
-          {showAddAffiliateModal && (
-            <div className="modal-overlay">
-              <div className="modal-content" style={{ maxWidth: '450px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                  <h3 style={{ margin: 0, color: '#fff' }}>Adicionar Novo Divulgador</h3>
-                  <button onClick={() => setShowAddAffiliateModal(false)} style={{ background: '#222', border: 'none', color: '#fff', width: '30px', height: '30px', borderRadius: '50%', cursor: 'pointer' }}>✕</button>
-                </div>
-                <div style={{ display: 'grid', gap: '15px' }}>
-                  <div className="dev-form-group">
-                    <label>Nome do Divulgador / Parceiro</label>
-                    <input 
-                      type="text" 
-                      className="dev-input" 
-                      style={{ width: '100%' }}
-                      placeholder="Ex: João Silva"
-                      value={newAffName} 
-                      onChange={e => setNewAffName(e.target.value)}
-                    />
-                  </div>
-                  <div className="dev-form-group">
-                    <label>Código do Link (ex: joao)</label>
-                    <input 
-                      type="text" 
-                      className="dev-input" 
-                      style={{ width: '100%' }}
-                      placeholder="Somente minúsculas e sem espaços, exemplo: joao"
-                      value={newAffCode} 
-                      onChange={e => setNewAffCode(e.target.value.toLowerCase().replace(/\s+/g, ''))}
-                    />
-                  </div>
-                  <div className="dev-form-group">
-                    <label>Nome do Portal do Divulgador (Opcional)</label>
-                    <input 
-                      type="text" 
-                      className="dev-input" 
-                      style={{ width: '100%' }}
-                      placeholder="Ex: Jucervi"
-                      value={newAffCustomTitle} 
-                      onChange={e => setNewAffCustomTitle(e.target.value)}
-                    />
-                  </div>
-                  <div className="dev-form-group">
-                    <label>URL do Logo / Foto do Divulgador (Opcional)</label>
-                    <input 
-                      type="text" 
-                      className="dev-input" 
-                      style={{ width: '100%' }}
-                      placeholder="Ex: https://i.postimg.cc/..."
-                      value={newAffLogo} 
-                      onChange={e => setNewAffLogo(e.target.value)}
-                    />
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '10px' }}>
-                    <button className="dev-btn dev-btn-secondary" onClick={() => { setShowAddAffiliateModal(false); setNewAffName(''); setNewAffCode(''); setNewAffLogo(''); setNewAffCustomTitle(''); }}>
-                      Cancelar
-                    </button>
-                    <button 
-                      className="dev-btn dev-btn-primary" 
-                      style={{ background: '#25D366', color: '#000' }}
-                      onClick={async () => {
-                        const nameVal = newAffName.trim();
-                        const codeVal = newAffCode.toLowerCase().trim();
-                        if (!nameVal || !codeVal) {
-                          alert("Por favor, preencha o nome e o código.");
-                          return;
-                        }
-                        const tid = slugify(tenantId || 'fortaleza');
-                        const slug = slugify(codeVal);
-                        const affDoc = doc(db, 'tenants', tid, 'affiliates', slug);
-                        try {
-                          const check = await getDoc(affDoc);
-                          if (check.exists()) {
-                            alert("Este código já está em uso por outro divulgador.");
-                            return;
-                          }
-                          const newAff = {
-                            name: nameVal,
-                            code: slug,
-                            commission: "20%",
-                            whatsapp: "",
-                            clicks: 0,
-                            sales: 0,
-                            totalEarned: 0,
-                            logo: newAffLogo.trim(),
-                            customTitle: newAffCustomTitle.trim(),
-                            heroTitle: "",
-                            heroSub: "",
-                            radioTitle: "",
-                            radioSub: "",
-                            ctaTitle: "",
-                            ctaSub: "",
-                            _auth: localStorage.getItem('tenantPass')
-                          };
-                          await setDoc(affDoc, newAff);
-                          setAffiliates(prev => [...(prev || []), { ...newAff, id: slug }]);
-                          setNewAffName('');
-                          setNewAffCode('');
-                          setNewAffLogo('');
-                          setNewAffCustomTitle('');
-                          setShowAddAffiliateModal(false);
-                          alert("Divulgador adicionado com sucesso!");
-                        } catch (err: any) {
-                          console.error("Erro ao adicionar divulgador:", err);
-                          alert("Erro ao adicionar: " + err.message);
-                        }
-                      }}
-                    >
-                      Cadastrar
                     </button>
                   </div>
                 </div>
@@ -5594,18 +5541,18 @@ function AppContent() {
               </div>
 
               <div className="dev-tabs">
-                {['geral', 'seções', 'categorias', 'empresas', 'disparos', 'anunciantes', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'banners-horizontais', 'depoimentos-whats', 'preços', 'segmentos', 'chat', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'notificacoes' : null].filter(Boolean).map(tab => (
+                {['geral', 'seções', 'categorias', 'empresas', 'disparos', 'notificacoes', 'anunciantes', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'banners-horizontais', 'depoimentos-whats', 'preços', 'segmentos', 'chat'].filter(Boolean).map(tab => (
                   <button 
                     key={tab} 
                     className={`dev-tab ${activeTab === tab ? 'active' : ''}`}
                     onClick={() => setActiveTab(tab)}
                     style={
                       tab === 'disparos' ? { background: activeTab === 'disparos' ? '#fbbf24' : '#1e1b10', color: activeTab === 'disparos' ? '#000' : '#fbbf24', border: '1px solid #fbbf24', fontWeight: 900 }
-                      : tab === 'notificacoes' ? { background: activeTab === 'notificacoes' ? '#f59e0b' : '#1e1b10', color: activeTab === 'notificacoes' ? '#000' : '#fbbf24', border: '1px solid #f59e0b', fontWeight: 900 }
+                      : tab === 'notificacoes' ? { background: activeTab === 'notificacoes' ? '#f59e0b' : '#2a1a04', color: activeTab === 'notificacoes' ? '#000' : '#fbbf24', border: '1px solid #f59e0b', fontWeight: 900, boxShadow: activeTab === 'notificacoes' ? '0 0 15px rgba(245, 158, 11, 0.4)' : undefined }
                       : undefined
                     }
                   >
-                    {tab === 'disparos' ? '📢 DISPAROS (24H & PV)' : tab === 'notificacoes' ? '🔔 NOTIFICAÇÕES' : tab === 'depoimentos-whats' ? 'DEPOIMENTOS ZAP' : tab === 'banners-horizontais' ? 'BANNERS HORIZONTAIS' : tab.toUpperCase()}
+                    {tab === 'disparos' ? '📢 DISPAROS (24H & PV)' : tab === 'notificacoes' ? '🔔 NOTIFICAÇÕES PUSH' : tab === 'depoimentos-whats' ? 'DEPOIMENTOS ZAP' : tab === 'banners-horizontais' ? 'BANNERS HORIZONTAIS' : tab.toUpperCase()}
                   </button>
                 ))}
               </div>
