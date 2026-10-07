@@ -95,6 +95,9 @@ import { CompanyRegistrationModal } from './components/CompanyRegistrationModal'
 import { MasterCardDispatchControl } from './components/MasterCardDispatchControl';
 import { ClientDispatchTrackerModal } from './components/ClientDispatchTrackerModal';
 import { GlobalDispatchGroupsBar } from './components/GlobalDispatchGroupsBar';
+import { AdminPushNotificationsPanel } from './components/AdminPushNotificationsPanel';
+import { PushNotificationOptInBanner } from './components/PushNotificationOptInBanner';
+import { registerServiceWorker, recordNotificationClick } from './lib/pushNotifications';
 
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -1563,6 +1566,24 @@ function AppContent() {
       clearInterval(onlineInterval); 
     };
   }, [tenantId, navigate]);
+
+  // Inicialização do Service Worker para Notificações Push & Rastreio de Cliques
+  useEffect(() => {
+    registerServiceWorker();
+
+    const handleSwMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'PUSH_NOTIFICATION_CLICKED' && event.data.notificationId) {
+        recordNotificationClick(event.data.notificationId);
+      }
+    };
+
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleSwMessage);
+      return () => {
+        navigator.serviceWorker.removeEventListener('message', handleSwMessage);
+      };
+    }
+  }, []);
 
   useEffect(() => {
     const fetchReferralPartner = async () => {
@@ -4885,6 +4906,9 @@ function AppContent() {
             })()}
           </div>
 
+          {/* Banner Oficial de Notificações Push para Visitantes */}
+          <PushNotificationOptInBanner city={tenantId || 'geral'} />
+
           {/* Header for Category or Search Filter Results */}
           {(selectedCategory || searchQuery) && filteredCompanies.length > 0 && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-6 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border border-amber-500/20 p-4 rounded-2xl">
@@ -5570,14 +5594,18 @@ function AppContent() {
               </div>
 
               <div className="dev-tabs">
-                {['geral', 'seções', 'categorias', 'empresas', 'disparos', 'anunciantes', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'banners-horizontais', 'depoimentos-whats', 'preços', 'segmentos', 'chat', (hasAffiliateSystem || user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'divulgadores' : null].filter(Boolean).map(tab => (
+                {['geral', 'seções', 'categorias', 'empresas', 'disparos', 'anunciantes', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'banners-horizontais', 'depoimentos-whats', 'preços', 'segmentos', 'chat', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'notificacoes' : null].filter(Boolean).map(tab => (
                   <button 
                     key={tab} 
                     className={`dev-tab ${activeTab === tab ? 'active' : ''}`}
                     onClick={() => setActiveTab(tab)}
-                    style={tab === 'disparos' ? { background: activeTab === 'disparos' ? '#fbbf24' : '#1e1b10', color: activeTab === 'disparos' ? '#000' : '#fbbf24', border: '1px solid #fbbf24', fontWeight: 900 } : undefined}
+                    style={
+                      tab === 'disparos' ? { background: activeTab === 'disparos' ? '#fbbf24' : '#1e1b10', color: activeTab === 'disparos' ? '#000' : '#fbbf24', border: '1px solid #fbbf24', fontWeight: 900 }
+                      : tab === 'notificacoes' ? { background: activeTab === 'notificacoes' ? '#f59e0b' : '#1e1b10', color: activeTab === 'notificacoes' ? '#000' : '#fbbf24', border: '1px solid #f59e0b', fontWeight: 900 }
+                      : undefined
+                    }
                   >
-                    {tab === 'disparos' ? '📢 DISPAROS (24H & PV)' : tab === 'depoimentos-whats' ? 'DEPOIMENTOS ZAP' : tab === 'banners-horizontais' ? 'BANNERS HORIZONTAIS' : tab.toUpperCase()}
+                    {tab === 'disparos' ? '📢 DISPAROS (24H & PV)' : tab === 'notificacoes' ? '🔔 NOTIFICAÇÕES' : tab === 'depoimentos-whats' ? 'DEPOIMENTOS ZAP' : tab === 'banners-horizontais' ? 'BANNERS HORIZONTAIS' : tab.toUpperCase()}
                   </button>
                 ))}
               </div>
@@ -8447,393 +8475,13 @@ function AppContent() {
                   </div>
                 )}
 
-                {activeTab === 'divulgadores' && (
-                  <div className="dev-forms-container">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                      <h3>Gerenciar Divulgadores (Afiliados)</h3>
-                      
-                      <div style={{ display: 'flex', gap: '10px' }}>
-                        <button className="dev-add-btn" style={{ margin: 0 }} onClick={() => {
-                          setNewAffName('');
-                          setNewAffCode('');
-                          setShowAddAffiliateModal(true);
-                        }}>+ Novo Divulgador</button>
-                      </div>
-                    </div>
-
-                    {isAffLoading ? (
-                      <div style={{ color: '#888' }}>Carregando divulgadores...</div>
-                    ) : (
-                      <div className="dev-items-grid">
-                        {!affiliates || affiliates.length === 0 ? (
-                          <p style={{ color: '#555', fontSize: '0.8rem' }}>Nenhum divulgador cadastrado ainda.</p>
-                        ) : (
-                          affiliates.map((aff, i) => {
-                              const cleanTenantId = tenantId || 'fortaleza';
-                              const affLink = cleanTenantId === 'fortaleza' 
-                                ? `${window.location.origin}/?ref=${aff.code}` 
-                                : `${window.location.origin}/#/${cleanTenantId}?ref=${aff.code}`;
-
-                              return (
-                                <div key={aff.code} className="dev-item-card">
-                                  <button className="dev-remove-btn" onClick={async () => {
-                                    if (confirm(`Excluir divulgador ${aff.name}?`)) {
-                                      try {
-                                        const tid = slugify(tenantId || 'fortaleza');
-                                        const pass = localStorage.getItem('tenantPass');
-                                        const docRef = doc(db, 'tenants', tid, 'affiliates', aff.id || aff.code);
-                                        
-                                        // Tenta deletar. Se falhar por ser cadastro antigo (sem campo _auth), 
-                                        // a gente "conserta" o doc com a senha e deleta de novo.
-                                        try {
-                                          await deleteDoc(docRef);
-                                        } catch (e) {
-                                          if (pass) {
-                                            await updateDoc(docRef, { _auth: pass });
-                                            await deleteDoc(docRef);
-                                          } else {
-                                            throw e;
-                                          }
-                                        }
-                                        
-                                        setAffiliates(prev => prev.filter(item => (item.id || item.code) !== (aff.id || aff.code)));
-                                      } catch (err: any) {
-                                        console.error("Erro ao excluir:", err);
-                                        alert("Erro ao excluir: " + err.message);
-                                      }
-                                    }
-                                  }}>✕</button>
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
-                                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                      {aff.logo ? (
-                                        <img src={aff.logo} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #333' }} alt="" referrerPolicy="no-referrer" />
-                                      ) : (
-                                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', border: '1px solid #333' }}>👤</div>
-                                      )}
-                                      <div>
-                                        <h4 style={{ color: 'var(--primary)', margin: 0 }}>{aff.name}</h4>
-                                        <code style={{ fontSize: '10px', color: '#888' }}>Código: {aff.code}</code>
-                                        {aff.customTitle && <div style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>Portal: {aff.customTitle}</div>}
-                                      </div>
-                                    </div>
-                                    <div style={{ background: 'rgba(37, 211, 102, 0.1)', color: '#25D366', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 900 }}>
-                                      {aff.commission} de Comissão
-                                    </div>
-                                  </div>
-     
-                                  <div style={{ background: '#080808', padding: '10px', borderRadius: '8px', border: '1px solid #222', marginBottom: '15px' }}>
-                                     <div style={{ fontSize: '10px', color: '#555', marginBottom: '5px' }}>Link para Divulgar:</div>
-                                     <div style={{ fontSize: '11px', color: '#4285F4', wordBreak: 'break-all' }}>
-                                       {affLink}
-                                     </div>
-                                     <button 
-                                       className="dev-btn" 
-                                       style={{ marginTop: '10px', width: '100%', fontSize: '11px', padding: '6px' }}
-                                       onClick={() => {
-                                         navigator.clipboard.writeText(affLink);
-                                         alert("Link copiado!");
-                                       }}
-                                     >
-                                       Copiar Link
-                                     </button>
-                                  </div>
-     
-                                  <div className="dev-grid-2" style={{ gap: '10px' }}>
-                                     <div style={{ background: '#111', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
-                                        <div style={{ fontSize: '10px', color: '#666' }}>CLIQUES</div>
-                                        <div style={{ fontWeight: 900, color: '#fff' }}>{aff.clicks || 0}</div>
-                                     </div>
-                                     <div style={{ background: '#111', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
-                                        <div style={{ fontSize: '10px', color: '#666' }}>VENDAS</div>
-                                        <div style={{ fontWeight: 900, color: '#ff8a00' }}>{aff.sales || 0}</div>
-                                     </div>
-                                  </div>
-     
-                                  <div className="dev-form-group" style={{ marginTop: '15px' }}>
-                                    <label>Ajustar Comissão / WhatsApp</label>
-                                    <div className="dev-grid-2" style={{ gap: '10px' }}>
-                                      <input 
-                                        type="text" 
-                                        className="dev-input" 
-                                        value={aff.commission} 
-                                        placeholder="20%"
-                                        onChange={async (e) => {
-                                          const val = e.target.value;
-                                          const tid = slugify(tenantId || 'fortaleza');
-                                          setAffiliates(prev => {
-                                            const newList = [...prev];
-                                            newList[i] = { ...newList[i], commission: val };
-                                            return newList;
-                                          });
-                                          await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
-                                            commission: val,
-                                            _auth: localStorage.getItem('tenantPass')
-                                          });
-                                        }}
-                                      />
-                                      <input 
-                                        type="text" 
-                                        className="dev-input" 
-                                        value={aff.whatsapp || ''} 
-                                        placeholder="WhatsApp"
-                                        onChange={async (e) => {
-                                          const val = e.target.value;
-                                          const tid = slugify(tenantId || 'fortaleza');
-                                          setAffiliates(prev => {
-                                            const newList = [...prev];
-                                            newList[i] = { ...newList[i], whatsapp: val };
-                                            return newList;
-                                          });
-                                          await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
-                                            whatsapp: val,
-                                            _auth: localStorage.getItem('tenantPass')
-                                          });
-                                        }}
-                                      />
-                                    </div>
-
-                                    <label style={{ marginTop: '10px', display: 'block' }}>Nome do Portal & Logo do Divulgador (Opcional)</label>
-                                    <div className="dev-grid-2" style={{ gap: '10px', marginTop: '5px' }}>
-                                      <input 
-                                        type="text" 
-                                        className="dev-input" 
-                                        value={aff.customTitle || ''} 
-                                        placeholder="Nome do Portal (ex: Jucervi)"
-                                        onChange={async (e) => {
-                                          const val = e.target.value;
-                                          const tid = slugify(tenantId || 'fortaleza');
-                                          setAffiliates(prev => {
-                                            const newList = [...prev];
-                                            newList[i] = { ...newList[i], customTitle: val };
-                                            return newList;
-                                          });
-                                          await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
-                                            customTitle: val,
-                                            _auth: localStorage.getItem('tenantPass')
-                                          });
-                                        }}
-                                      />
-                                      <input 
-                                        type="text" 
-                                        className="dev-input" 
-                                        value={aff.logo || ''} 
-                                        placeholder="URL do Logo (ex: https://...)"
-                                        onChange={async (e) => {
-                                          const val = e.target.value;
-                                          const tid = slugify(tenantId || 'fortaleza');
-                                          setAffiliates(prev => {
-                                            const newList = [...prev];
-                                            newList[i] = { ...newList[i], logo: val };
-                                            return newList;
-                                          });
-                                          await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
-                                            logo: val,
-                                            _auth: localStorage.getItem('tenantPass')
-                                          });
-                                        }}
-                                      />
-                                    </div>
-
-                                    <label style={{ marginTop: '15px', display: 'block', color: 'var(--primary)', fontWeight: 'bold' }}>📻 Configuração de Web Rádio (Exclusivo para Parceiros Rádio)</label>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px', background: 'rgba(251, 191, 36, 0.03)', border: '1px dashed rgba(251, 191, 36, 0.15)', borderRadius: '12px', padding: '12px', marginBottom: '10px' }}>
-                                      <div className="dev-form-group">
-                                        <label style={{ fontSize: '11px', color: '#888', display: 'block', marginBottom: '4px' }}>Ativar Player de Rádio no Topo (Início da Página)?</label>
-                                        <select 
-                                          className="dev-input" 
-                                          style={{ width: '100%' }}
-                                          value={aff.hasRadioPlayer ? "sim" : "nao"}
-                                          onChange={async (e) => {
-                                            const val = e.target.value === "sim";
-                                            const tid = slugify(tenantId || 'fortaleza');
-                                            setAffiliates(prev => {
-                                              const newList = [...prev];
-                                              newList[i] = { ...newList[i], hasRadioPlayer: val };
-                                              return newList;
-                                            });
-                                            await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
-                                              hasRadioPlayer: val,
-                                              _auth: localStorage.getItem('tenantPass')
-                                            });
-                                          }}
-                                        >
-                                          <option value="nao">Não (Layout Padrão) ❌</option>
-                                          <option value="sim">Sim (Ativar Player no Topo) 📻</option>
-                                        </select>
-                                        <small style={{ color: '#aaa', fontSize: '0.7rem' }}>Se ativado, um player de rádio exclusivo aparecerá no início da página (logo abaixo da introdução) apenas para este parceiro.</small>
-                                      </div>
-                                      <div className="dev-form-group">
-                                        <label style={{ fontSize: '11px', color: '#888', display: 'block', marginBottom: '4px' }}>Link de Transmissão da Rádio (Streaming URL)</label>
-                                        <input 
-                                          type="text" 
-                                          className="dev-input" 
-                                          style={{ width: '100%' }}
-                                          value={aff.radioLink || ''} 
-                                          placeholder="Ex: https://stream.suaradio.com/stream"
-                                          onChange={async (e) => {
-                                            const val = e.target.value;
-                                            const tid = slugify(tenantId || 'fortaleza');
-                                            setAffiliates(prev => {
-                                              const newList = [...prev];
-                                              newList[i] = { ...newList[i], radioLink: val };
-                                              return newList;
-                                            });
-                                            await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
-                                              radioLink: val,
-                                              _auth: localStorage.getItem('tenantPass')
-                                            });
-                                          }}
-                                        />
-                                        <small style={{ color: '#aaa', fontSize: '0.7rem' }}>Caso fique vazio, usará o link de rádio padrão do portal.</small>
-                                      </div>
-                                    </div>
-
-                                    <label style={{ marginTop: '15px', display: 'block', color: 'var(--primary)', fontWeight: 'bold' }}>📝 Textos Personalizados da Página (Opcional)</label>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
-                                      <div className="dev-form-group">
-                                        <label style={{ fontSize: '11px', color: '#888', display: 'block', marginBottom: '4px' }}>Título Principal (Hero)</label>
-                                        <input 
-                                          type="text" 
-                                          className="dev-input" 
-                                          style={{ width: '100%' }}
-                                          value={aff.heroTitle || ''} 
-                                          placeholder="Ex: A maior vitrine digital para seu negócio no Brasil!"
-                                          onChange={async (e) => {
-                                            const val = e.target.value;
-                                            const tid = slugify(tenantId || 'fortaleza');
-                                            setAffiliates(prev => {
-                                              const newList = [...prev];
-                                              newList[i] = { ...newList[i], heroTitle: val };
-                                              return newList;
-                                            });
-                                            await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
-                                              heroTitle: val,
-                                              _auth: localStorage.getItem('tenantPass')
-                                            });
-                                          }}
-                                        />
-                                      </div>
-                                      <div className="dev-form-group">
-                                        <label style={{ fontSize: '11px', color: '#888', display: 'block', marginBottom: '4px' }}>Subtítulo Principal (Hero)</label>
-                                        <textarea 
-                                          className="dev-input" 
-                                          style={{ width: '100%', minHeight: '60px', resize: 'vertical' }}
-                                          value={aff.heroSub || ''} 
-                                          placeholder="Ex: Coloque seu negócio na maior vitrine..."
-                                          onChange={async (e) => {
-                                            const val = e.target.value;
-                                            const tid = slugify(tenantId || 'fortaleza');
-                                            setAffiliates(prev => {
-                                              const newList = [...prev];
-                                              newList[i] = { ...newList[i], heroSub: val };
-                                              return newList;
-                                            });
-                                            await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
-                                              heroSub: val,
-                                              _auth: localStorage.getItem('tenantPass')
-                                            });
-                                          }}
-                                        />
-                                      </div>
-                                      <div className="dev-form-group">
-                                        <label style={{ fontSize: '11px', color: '#888', display: 'block', marginBottom: '4px' }}>Título da Rádio & TV</label>
-                                        <input 
-                                          type="text" 
-                                          className="dev-input" 
-                                          style={{ width: '100%' }}
-                                          value={aff.radioTitle || ''} 
-                                          placeholder="Ex: Rádio & TV Online Ao Vivo"
-                                          onChange={async (e) => {
-                                            const val = e.target.value;
-                                            const tid = slugify(tenantId || 'fortaleza');
-                                            setAffiliates(prev => {
-                                              const newList = [...prev];
-                                              newList[i] = { ...newList[i], radioTitle: val };
-                                              return newList;
-                                            });
-                                            await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
-                                              radioTitle: val,
-                                              _auth: localStorage.getItem('tenantPass')
-                                            });
-                                          }}
-                                        />
-                                      </div>
-                                      <div className="dev-form-group">
-                                        <label style={{ fontSize: '11px', color: '#888', display: 'block', marginBottom: '4px' }}>Subtítulo da Rádio & TV</label>
-                                        <textarea 
-                                          className="dev-input" 
-                                          style={{ width: '100%', minHeight: '60px', resize: 'vertical' }}
-                                          value={aff.radioSub || ''} 
-                                          placeholder="Ex: Acompanhe nossa programação musical completa..."
-                                          onChange={async (e) => {
-                                            const val = e.target.value;
-                                            const tid = slugify(tenantId || 'fortaleza');
-                                            setAffiliates(prev => {
-                                              const newList = [...prev];
-                                              newList[i] = { ...newList[i], radioSub: val };
-                                              return newList;
-                                            });
-                                            await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
-                                              radioSub: val,
-                                              _auth: localStorage.getItem('tenantPass')
-                                            });
-                                          }}
-                                        />
-                                      </div>
-                                      <div className="dev-form-group">
-                                        <label style={{ fontSize: '11px', color: '#888', display: 'block', marginBottom: '4px' }}>Título do Banner Call-to-Action (CTA)</label>
-                                        <input 
-                                          type="text" 
-                                          className="dev-input" 
-                                          style={{ width: '100%' }}
-                                          value={aff.ctaTitle || ''} 
-                                          placeholder="Ex: Pronto para dominar seu segmento comercial?"
-                                          onChange={async (e) => {
-                                            const val = e.target.value;
-                                            const tid = slugify(tenantId || 'fortaleza');
-                                            setAffiliates(prev => {
-                                              const newList = [...prev];
-                                              newList[i] = { ...newList[i], ctaTitle: val };
-                                              return newList;
-                                            });
-                                            await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
-                                              ctaTitle: val,
-                                              _auth: localStorage.getItem('tenantPass')
-                                            });
-                                          }}
-                                        />
-                                      </div>
-                                      <div className="dev-form-group">
-                                        <label style={{ fontSize: '11px', color: '#888', display: 'block', marginBottom: '4px' }}>Subtítulo do Banner Call-to-Action (CTA)</label>
-                                        <textarea 
-                                          className="dev-input" 
-                                          style={{ width: '100%', minHeight: '60px', resize: 'vertical' }}
-                                          value={aff.ctaSub || ''} 
-                                          placeholder="Ex: Não perca vendas para seu maior concorrente..."
-                                          onChange={async (e) => {
-                                            const val = e.target.value;
-                                            const tid = slugify(tenantId || 'fortaleza');
-                                            setAffiliates(prev => {
-                                              const newList = [...prev];
-                                              newList[i] = { ...newList[i], ctaSub: val };
-                                              return newList;
-                                            });
-                                            await updateDoc(doc(db, 'tenants', tid, 'affiliates', aff.code), { 
-                                              ctaSub: val,
-                                              _auth: localStorage.getItem('tenantPass')
-                                            });
-                                          }}
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                          })
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                {activeTab === 'notificacoes' && (
+                  <AdminPushNotificationsPanel
+                    companies={displayedCompanies || []}
+                    adminEmail={user?.email || 'bossinhaa80@gmail.com'}
+                    portalName={appData?.siteInfo?.name || 'Minha Divulgação'}
+                  />
+                )}
                 </div>
 
               <div className="dev-actions">

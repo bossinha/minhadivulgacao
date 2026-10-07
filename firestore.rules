@@ -87,5 +87,19 @@ service cloud.firestore {
       allow read, create: if true;
       allow update, delete: if isAdmin();
     }
+
+    // Push Notification Subscribers (Audience)
+    match /push_subscribers/{subscriberId} {
+      allow read, write: if true;
+    }
+
+    // Push Notifications History and Stats
+    match /push_notifications/{notificationId} {
+      allow read, write: if true;
+    }
+
+    match /push_stats/{statId} {
+      allow read, write: if true;
+    }
   }
 }
