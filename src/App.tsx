@@ -4091,6 +4091,9 @@ function AppContent() {
         '--text-dim': appData?.theme?.textDim || '#a0a0a0'
       }}
     >
+      {/* Prompt Flutuante Superior de Notificações Push ao Entrar no Portal */}
+      <PushNotificationOptInBanner city={tenantId || 'geral'} />
+
       {/* Floating Dev Button - SHOW ONLY IF LOGGED IN MANAGER OR MASTER ADMIN */}
       {user?.isAdmin && tenantId !== 'master' && (
         <button 
@@ -4852,9 +4855,6 @@ function AppContent() {
               );
             })()}
           </div>
-
-          {/* Banner Oficial de Notificações Push para Visitantes */}
-          <PushNotificationOptInBanner city={tenantId || 'geral'} />
 
           {/* Header for Category or Search Filter Results */}
           {(selectedCategory || searchQuery) && filteredCompanies.length > 0 && (
