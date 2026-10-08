@@ -1568,7 +1568,7 @@ function AppContent() {
     };
   }, [tenantId, navigate]);
 
-  // Inicialização do Service Worker para Notificações Push & Rastreio de Cliques
+  // Inicialização do Service Worker para Notificações Push & Métrica de Cliques
   useEffect(() => {
     registerServiceWorker();
 
@@ -4021,13 +4021,15 @@ function AppContent() {
     const directCompanyData = activeTrackingCompanyData || 
       displayedCompanies.find((c: any) => 
         String(c.id) === String(activeTrackingCompanyId) || 
+        String(c.advertiserId) === String(activeTrackingCompanyId) ||
         slugify(c.name || '') === String(activeTrackingCompanyId)
       ) || 
       advertiserCompanies.find((a: any) => String(a.id) === String(activeTrackingCompanyId));
+    const resolvedCompanyId = String(directCompanyData?.id || directCompanyData?.advertiserId || activeTrackingCompanyId);
 
     return (
       <ClientDispatchTrackerModal
-        companyId={activeTrackingCompanyId}
+        companyId={resolvedCompanyId}
         companyData={directCompanyData}
         isStandalonePage={true}
         onClose={() => {
@@ -13040,39 +13042,42 @@ function AppContent() {
       />
 
       {/* PAINEL DE ACOMPANHAMENTO DE DISPAROS DO CLIENTE (LINK EXCLUSIVO ENVIADO NO PV) */}
-      {activeTrackingCompanyId && (
-        <ClientDispatchTrackerModal
-          companyId={activeTrackingCompanyId}
-          companyData={
-            activeTrackingCompanyData ||
-            displayedCompanies.find((c: any) => 
-              String(c.id) === String(activeTrackingCompanyId) || 
-              String(c.advertiserId) === String(activeTrackingCompanyId) || 
-              slugify(c.name || '') === String(activeTrackingCompanyId)
-            ) ||
-            advertiserCompanies.find((a: any) => 
-              String(a.id) === String(activeTrackingCompanyId)
-            )
-          }
-          onClose={() => {
-            setActiveTrackingCompanyId(null);
-            setActiveTrackingCompanyData(null);
-            // Clear URL param without full page reload
-            try {
-              const currentUrl = window.location.href;
-              if (currentUrl.includes('?')) {
-                const [baseUrl, searchPart] = currentUrl.split('?');
-                const params = new URLSearchParams(searchPart);
-                params.delete('acompanhar');
-                params.delete('tracking');
-                const remaining = params.toString();
-                const nextUrl = remaining ? `${baseUrl}?${remaining}` : baseUrl;
-                window.history.pushState({}, '', nextUrl);
-              }
-            } catch (e) {}
-          }}
-        />
-      )}
+      {activeTrackingCompanyId && (() => {
+        const foundCompany = activeTrackingCompanyData ||
+          displayedCompanies.find((c: any) => 
+            String(c.id) === String(activeTrackingCompanyId) || 
+            String(c.advertiserId) === String(activeTrackingCompanyId) || 
+            slugify(c.name || '') === String(activeTrackingCompanyId)
+          ) ||
+          advertiserCompanies.find((a: any) => 
+            String(a.id) === String(activeTrackingCompanyId)
+          );
+        const resolvedId = String(foundCompany?.id || foundCompany?.advertiserId || activeTrackingCompanyId);
+
+        return (
+          <ClientDispatchTrackerModal
+            companyId={resolvedId}
+            companyData={foundCompany}
+            onClose={() => {
+              setActiveTrackingCompanyId(null);
+              setActiveTrackingCompanyData(null);
+              // Clear URL param without full page reload
+              try {
+                const currentUrl = window.location.href;
+                if (currentUrl.includes('?')) {
+                  const [baseUrl, searchPart] = currentUrl.split('?');
+                  const params = new URLSearchParams(searchPart);
+                  params.delete('acompanhar');
+                  params.delete('tracking');
+                  const remaining = params.toString();
+                  const nextUrl = remaining ? `${baseUrl}?${remaining}` : baseUrl;
+                  window.history.pushState({}, '', nextUrl);
+                }
+              } catch (e) {}
+            }}
+          />
+        );
+      })()}
 
       {/* Botão Flutuante Oficial de Atendimento WhatsApp */}
       <a

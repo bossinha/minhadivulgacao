@@ -106,6 +106,17 @@ export async function displayNotificationSafely(
   playNotificationSound();
 
   if (!('Notification' in window)) return false;
+
+  // Se a permissão estiver como 'default', solicita ao usuário antes de falhar
+  if (Notification.permission === 'default') {
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   if (Notification.permission !== 'granted') return false;
 
   const notifOptions: any = {
@@ -429,9 +440,8 @@ export function subscribeToLiveBroadcastNotifications(
         const storageKey = 'seen_push_broadcast_' + latest.id;
         const alreadySeen = localStorage.getItem(storageKey);
 
-        // Se for muito recente e nunca foi vista nesta máquina, exibe
-        if (isVeryRecent && !alreadySeen && !sessionHandledNotifs.has(latest.id)) {
-          sessionHandledNotifs.add(latest.id);
+        // Se for muito recente, exibe para o visitante
+        if (isVeryRecent && !alreadySeen) {
           localStorage.setItem(storageKey, 'true');
 
           playNotificationSound();
@@ -451,9 +461,11 @@ export function subscribeToLiveBroadcastNotifications(
       }
 
       // Se for um evento em tempo real após a carga inicial (novo disparo pelo admin)
-      if (!sessionHandledNotifs.has(latest.id)) {
+      const storageKey = 'seen_push_broadcast_' + latest.id;
+      const alreadyHandledInSession = sessionHandledNotifs.has(latest.id);
+      
+      if (!alreadyHandledInSession) {
         sessionHandledNotifs.add(latest.id);
-        const storageKey = 'seen_push_broadcast_' + latest.id;
         localStorage.setItem(storageKey, 'true');
 
         playNotificationSound();
@@ -530,12 +542,6 @@ export async function sendBroadcastPushNotification(params: {
     sentBy: params.adminEmail || 'admin'
   };
 
-  // Marca como tratada na sessão para não duplicar som no remetente
-  sessionHandledNotifs.add(notifId);
-  try {
-    localStorage.setItem('seen_push_broadcast_' + notifId, 'true');
-  } catch (_) {}
-
   // Salva no cache local imediatamente
   const currentLocal = getLocalHistory();
   saveLocalHistory([payload, ...currentLocal.filter(x => x.id !== notifId)]);
@@ -547,10 +553,11 @@ export async function sendBroadcastPushNotification(params: {
     console.error('Erro ao gravar notificação no Firestore:', err);
   }
 
-  // 3. Toca som e dispara localmente sem travar
+  // 3. Toca som e vibração
   playNotificationSound();
   vibrateDevice();
 
+  // 4. Exibe notificação nativa do sistema se suportado
   await displayNotificationSafely(payload.title, {
     body: payload.message,
     image: payload.image,
@@ -559,8 +566,11 @@ export async function sendBroadcastPushNotification(params: {
     data: { url: payload.url, notificationId: notifId }
   });
 
-  // 4. Emite evento local imediato para o toast em tela aparecer instantaneamente para quem enviou
+  // 5. Emite evento local imediato para o toast em tela aparecer instantaneamente para quem enviou
   if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('minhadivulgacao_last_emitted_push', JSON.stringify(payload));
+    } catch (_) {}
     window.dispatchEvent(new CustomEvent('PUSH_NOTIFICATION_EMITTED', { detail: payload }));
   }
 
@@ -643,6 +653,30 @@ export async function deletePushNotification(notificationId: string): Promise<bo
     return true;
   } catch (err) {
     console.error('Erro ao excluir notificação do Firestore:', err);
+    throw err;
+  }
+}
+
+/**
+ * Atualiza os dados de uma notificação existente no histórico do banco de dados (Firestore)
+ */
+export async function updatePushNotification(
+  notificationId: string, 
+  data: Partial<PushNotificationPayload>
+): Promise<boolean> {
+  if (!notificationId) return false;
+  try {
+    const notifRef = doc(db, 'push_notifications', notificationId);
+    await updateDoc(notifRef, data);
+
+    // Atualiza também no cache local
+    const local = getLocalHistory();
+    const updated = local.map(item => item.id === notificationId ? { ...item, ...data } : item);
+    saveLocalHistory(updated);
+
+    return true;
+  } catch (err) {
+    console.error('Erro ao atualizar notificação no Firestore:', err);
     throw err;
   }
 }

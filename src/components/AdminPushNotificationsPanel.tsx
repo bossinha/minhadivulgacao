@@ -9,7 +9,8 @@ import {
   clearAllPushNotifications,
   getNotificationPermission,
   requestAndRegisterPushSubscriber,
-  triggerLocalTestNotification
+  triggerLocalTestNotification,
+  updatePushNotification
 } from '../lib/pushNotifications';
 
 const IMGBB_API_KEY = "b84e5dcba9b322fbb2c1adde190bfe95";
@@ -107,8 +108,131 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
   const [image, setImage] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const formContainerRef = useRef<HTMLDivElement>(null);
+  const [loadedFromHistoryMsg, setLoadedFromHistoryMsg] = useState<string | null>(null);
+
+  // Estados do Modal de Edição de Notificação Existente
+  const [editingNotification, setEditingNotification] = useState<PushNotificationPayload | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editMessage, setEditMessage] = useState('');
+  const [editImage, setEditImage] = useState('');
+  const [editUrl, setEditUrl] = useState('');
+  const [editActionTitle, setEditActionTitle] = useState('VER OFERTA');
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [isEditUploading, setIsEditUploading] = useState(false);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
   const [url, setUrl] = useState('');
   const [actionTitle, setActionTitle] = useState('VER OFERTA');
+
+  // Reaproveita notificação do histórico carregando no formulário
+  const handleReuseNotification = (item: PushNotificationPayload) => {
+    setTitle(item.title || '🔥 OFERTA DO DIA');
+    setMessage(item.message || '');
+    setImage(item.image || '');
+    setUrl(item.url || '');
+    setActionTitle(item.actionTitle || 'VER OFERTA');
+
+    setLoadedFromHistoryMsg(`Notificação "${item.title}" carregada no formulário! Edite o que desejar e clique em Enviar Agora.`);
+    
+    setTimeout(() => {
+      formContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+
+    setTimeout(() => {
+      setLoadedFromHistoryMsg(null);
+    }, 8000);
+  };
+
+  const handleResetFormToDefault = () => {
+    setTitle('🔥 OFERTA DO DIA');
+    setMessage('Confira a promoção especial de hoje na Minha Divulgação!');
+    setImage('');
+    setUrl('');
+    setActionTitle('VER OFERTA');
+    setLoadedFromHistoryMsg(null);
+  };
+
+  // Abre modal para editar os dados gravados no banco
+  const handleOpenEditModal = (item: PushNotificationPayload) => {
+    setEditingNotification(item);
+    setEditTitle(item.title || '');
+    setEditMessage(item.message || '');
+    setEditImage(item.image || '');
+    setEditUrl(item.url || '');
+    setEditActionTitle(item.actionTitle || 'VER OFERTA');
+  };
+
+  const handleEditImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione um arquivo de imagem válido (JPG, PNG, WEBP, etc.).');
+      return;
+    }
+
+    setIsEditUploading(true);
+    try {
+      const uploadedUrl = await uploadToImgBB(file);
+      setEditImage(uploadedUrl);
+    } catch (err: any) {
+      console.error("ImgBB upload error:", err);
+      alert(err?.message || "Falha ao enviar imagem para o ImgBB. Tente novamente.");
+    } finally {
+      setIsEditUploading(false);
+      if (editFileInputRef.current) editFileInputRef.current.value = '';
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingNotification?.id) return;
+    if (!editTitle.trim() || !editMessage.trim()) {
+      alert('Por favor, preencha o Título e a Mensagem.');
+      return;
+    }
+
+    setIsSavingEdit(true);
+    try {
+      const updatedData: Partial<PushNotificationPayload> = {
+        title: editTitle.trim(),
+        message: editMessage.trim(),
+        image: editImage.trim(),
+        url: editUrl.trim() || '/',
+        actionTitle: editActionTitle.trim() || 'VER OFERTA'
+      };
+
+      await updatePushNotification(editingNotification.id, updatedData);
+
+      setHistory(prev => prev.map(item => item.id === editingNotification.id ? { ...item, ...updatedData } : item));
+      setSuccessMessage('💾 Notificação atualizada no banco de dados com sucesso!');
+      setTimeout(() => setSuccessMessage(null), 4000);
+      setEditingNotification(null);
+    } catch (err: any) {
+      alert('Erro ao salvar edição: ' + (err?.message || 'Falha inesperada'));
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const handleLoadFromEditModalToForm = () => {
+    if (!editingNotification) return;
+    setTitle(editTitle.trim() || '🔥 OFERTA DO DIA');
+    setMessage(editMessage.trim() || '');
+    setImage(editImage.trim() || '');
+    setUrl(editUrl.trim() || '');
+    setActionTitle(editActionTitle.trim() || 'VER OFERTA');
+
+    setLoadedFromHistoryMsg(`Notificação carregada no formulário com suas alterações! Pronto para novo envio.`);
+    setEditingNotification(null);
+
+    setTimeout(() => {
+      formContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+
+    setTimeout(() => {
+      setLoadedFromHistoryMsg(null);
+    }, 8000);
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -228,7 +352,24 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
       });
 
       if (result.success) {
-        // Dispara teste sonoro e notificação local caso permissão já esteja concedida
+        const now = new Date();
+        const dateFormatted = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} — ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const newEntry: PushNotificationPayload = {
+          id: result.notificationId,
+          title,
+          message,
+          image,
+          url: url.trim() || window.location.origin,
+          actionTitle: actionTitle || 'VER OFERTA',
+          sentAt: dateFormatted,
+          sentAtTimestamp: Date.now(),
+          recipientsCount: result.recipientsCount,
+          sentCount: result.sentCount,
+          clicksCount: 0,
+          status: 'enviada',
+          sentBy: adminEmail
+        };
+        setHistory(prev => [newEntry, ...prev.filter(x => x.id !== newEntry.id)]);
         setSuccessMessage(`🚀 Notificação enviada com sucesso para ${result.recipientsCount} pessoas na audiência!`);
         setTimeout(() => setSuccessMessage(null), 6000);
       }
@@ -428,10 +569,65 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px', marginBottom: '35px' }}>
         
         {/* LADO ESQUERDO: Formulário de Criação */}
-        <div style={{ background: '#0e1017', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '22px' }}>
-          <h4 style={{ margin: '0 0 15px', color: '#fff', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>✏️</span> Criar Nova Notificação
-          </h4>
+        <div ref={formContainerRef} style={{ background: '#0e1017', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '22px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '8px' }}>
+            <h4 style={{ margin: 0, color: '#fff', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>✏️</span> Criar Nova Notificação
+            </h4>
+            <button
+              type="button"
+              onClick={handleResetFormToDefault}
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: '#aaa',
+                borderRadius: '8px',
+                padding: '4px 10px',
+                fontSize: '11px',
+                cursor: 'pointer'
+              }}
+              title="Limpar formulário e voltar aos textos padrões"
+            >
+              🔄 Limpar Campos
+            </button>
+          </div>
+
+          {loadedFromHistoryMsg && (
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(245,158,11,0.2), rgba(217,119,6,0.1))',
+              border: '1px solid #f59e0b',
+              color: '#fbbf24',
+              padding: '12px 14px',
+              borderRadius: '12px',
+              marginBottom: '16px',
+              fontSize: '12px',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px',
+              boxShadow: '0 4px 15px rgba(245,158,11,0.2)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '18px' }}>♻️</span>
+                <span>{loadedFromHistoryMsg}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLoadedFromHistoryMsg(null)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#fbbf24',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  padding: '2px 6px'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           <form onSubmit={handleOpenConfirm}>
             {/* Título */}
@@ -805,7 +1001,7 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
                   <th style={{ padding: '10px 8px', textAlign: 'center' }}>DESTINATÁRIOS</th>
                   <th style={{ padding: '10px 8px', textAlign: 'center' }}>CLIQUES</th>
                   <th style={{ padding: '10px 8px', textAlign: 'center' }}>STATUS</th>
-                  <th style={{ padding: '10px 8px', textAlign: 'center' }}>EXCLUIR DO BANCO</th>
+                  <th style={{ padding: '10px 8px', textAlign: 'center' }}>AÇÕES (REAPROVEITAR / EDITAR / EXCLUIR)</th>
                 </tr>
               </thead>
               <tbody>
@@ -851,28 +1047,78 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
                       </span>
                     </td>
                     <td style={{ padding: '12px 8px', textAlign: 'center' }}>
-                      <button
-                        type="button"
-                        disabled={deletingId === item.id}
-                        onClick={() => handleDeleteItem(item.id, item.title)}
-                        style={{
-                          background: 'rgba(239, 68, 68, 0.15)',
-                          color: '#ef4444',
-                          border: '1px solid rgba(239, 68, 68, 0.3)',
-                          borderRadius: '6px',
-                          padding: '5px 10px',
-                          fontSize: '11px',
-                          fontWeight: 800,
-                          cursor: deletingId === item.id ? 'not-allowed' : 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
-                        title="Apagar esta notificação e seu link permanentemente do banco de dados"
-                      >
-                        {deletingId === item.id ? '⏳' : '🗑️'}
-                        <span>Excluir</span>
-                      </button>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                        {/* Botão Reaproveitar */}
+                        <button
+                          type="button"
+                          onClick={() => handleReuseNotification(item)}
+                          style={{
+                            background: 'linear-gradient(135deg, rgba(245,158,11,0.25), rgba(217,119,6,0.35))',
+                            color: '#fbbf24',
+                            border: '1px solid rgba(245,158,11,0.6)',
+                            borderRadius: '6px',
+                            padding: '5px 10px',
+                            fontSize: '11px',
+                            fontWeight: 900,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            boxShadow: '0 2px 6px rgba(245,158,11,0.15)'
+                          }}
+                          title="Reaproveitar: carrega os textos, imagem e links desta notificação no formulário para você disparar novamente com 1 clique"
+                        >
+                          <span>♻️</span>
+                          <span>Reaproveitar</span>
+                        </button>
+
+                        {/* Botão Editar */}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditModal(item)}
+                          style={{
+                            background: 'rgba(59, 130, 246, 0.18)',
+                            color: '#60a5fa',
+                            border: '1px solid rgba(59, 130, 246, 0.45)',
+                            borderRadius: '6px',
+                            padding: '5px 10px',
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                          title="Editar os dados desta notificação (título, mensagem, imagem, link) gravados no banco de dados"
+                        >
+                          <span>✏️</span>
+                          <span>Editar</span>
+                        </button>
+
+                        {/* Botão Excluir */}
+                        <button
+                          type="button"
+                          disabled={deletingId === item.id}
+                          onClick={() => handleDeleteItem(item.id, item.title)}
+                          style={{
+                            background: 'rgba(239, 68, 68, 0.15)',
+                            color: '#ef4444',
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                            borderRadius: '6px',
+                            padding: '5px 10px',
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            cursor: deletingId === item.id ? 'not-allowed' : 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                          title="Apagar esta notificação e seu link permanentemente do banco de dados para não acumular"
+                        >
+                          {deletingId === item.id ? '⏳' : '🗑️'}
+                          <span>Excluir</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -964,6 +1210,269 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
                 }}
               >
                 CONFIRMAR ENVIO 🚀
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE EDIÇÃO DE NOTIFICAÇÃO GRAVADA NO BANCO */}
+      {editingNotification && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.85)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100000,
+          padding: '16px',
+          overflowY: 'auto'
+        }}>
+          <div style={{
+            background: '#131520',
+            border: '1px solid rgba(59, 130, 246, 0.5)',
+            borderRadius: '20px',
+            maxWidth: '560px',
+            width: '100%',
+            padding: '24px',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.9)',
+            textAlign: 'left',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            {/* Cabeçalho do Modal de Edição */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.4rem' }}>✏️</span>
+                <h3 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: 900 }}>
+                  Editar Notificação Gravada
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingNotification(null)}
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  color: '#aaa',
+                  border: 'none',
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ margin: '0 0 18px', color: '#aaa', fontSize: '0.82rem', lineHeight: '1.4' }}>
+              Atualize as informações desta notificação no banco de dados. Você também pode carregá-la no formulário principal para disparar com as novas informações.
+            </p>
+
+            {/* Campo Título */}
+            <div className="dev-form-group" style={{ marginBottom: '14px' }}>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#ddd', marginBottom: '4px' }}>
+                Título da Notificação *
+              </label>
+              <input
+                type="text"
+                className="dev-input"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                maxLength={60}
+                required
+              />
+            </div>
+
+            {/* Campo Mensagem */}
+            <div className="dev-form-group" style={{ marginBottom: '14px' }}>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#ddd', marginBottom: '4px' }}>
+                Mensagem *
+              </label>
+              <textarea
+                className="dev-input"
+                style={{ height: '70px', resize: 'vertical' }}
+                value={editMessage}
+                onChange={(e) => setEditMessage(e.target.value)}
+                maxLength={180}
+                required
+              />
+            </div>
+
+            {/* Campo Imagem / Upload ImgBB */}
+            <div className="dev-form-group" style={{ marginBottom: '14px' }}>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#ddd', marginBottom: '6px' }}>
+                Imagem / Banner (ImgBB)
+              </label>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap' }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={editFileInputRef}
+                  style={{ display: 'none' }}
+                  onChange={handleEditImageUpload}
+                />
+                <button
+                  type="button"
+                  disabled={isEditUploading}
+                  onClick={() => editFileInputRef.current?.click()}
+                  style={{
+                    background: '#25D366',
+                    color: '#000',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '6px 12px',
+                    fontSize: '11px',
+                    fontWeight: 900,
+                    cursor: isEditUploading ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  {isEditUploading ? '⏳ Enviando ao ImgBB...' : '📷 Trocar Foto (ImgBB)'}
+                </button>
+
+                {editImage && (
+                  <button
+                    type="button"
+                    onClick={() => setEditImage('')}
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.15)',
+                      color: '#ef4444',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      borderRadius: '8px',
+                      padding: '6px 10px',
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ✕ Remover Foto
+                  </button>
+                )}
+              </div>
+
+              <input
+                type="url"
+                className="dev-input"
+                value={editImage}
+                onChange={(e) => setEditImage(e.target.value)}
+                placeholder="Link da imagem (https://i.ibb.co/...)"
+              />
+
+              {editImage && (
+                <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.04)', padding: '6px 10px', borderRadius: '8px' }}>
+                  <img src={editImage} alt="Preview" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '6px' }} />
+                  <span style={{ fontSize: '10px', color: '#aaa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{editImage}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Campo Link */}
+            <div className="dev-form-group" style={{ marginBottom: '14px' }}>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#ddd', marginBottom: '4px' }}>
+                Link de Destino
+              </label>
+              <input
+                type="text"
+                className="dev-input"
+                value={editUrl}
+                onChange={(e) => setEditUrl(e.target.value)}
+                placeholder="Link de destino (WhatsApp, página, etc.)"
+              />
+            </div>
+
+            {/* Campo Botão de Ação */}
+            <div className="dev-form-group" style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#ddd', marginBottom: '4px' }}>
+                Texto do Botão
+              </label>
+              <input
+                type="text"
+                className="dev-input"
+                value={editActionTitle}
+                onChange={(e) => setEditActionTitle(e.target.value)}
+                maxLength={25}
+              />
+            </div>
+
+            {/* Botões de Ação do Modal */}
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setEditingNotification(null)}
+                style={{
+                  flex: '1 1 100px',
+                  background: 'rgba(255,255,255,0.08)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                disabled={isSavingEdit}
+                onClick={handleSaveEdit}
+                style={{
+                  flex: '2 1 160px',
+                  background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  fontWeight: 900,
+                  fontSize: '0.85rem',
+                  cursor: isSavingEdit ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)'
+                }}
+              >
+                <span>💾</span>
+                <span>{isSavingEdit ? 'Salvando no Banco...' : 'Salvar Alterações'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleLoadFromEditModalToForm}
+                style={{
+                  flex: '2 1 180px',
+                  background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                  color: '#000',
+                  border: 'none',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  fontWeight: 900,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  boxShadow: '0 4px 15px rgba(245, 158, 11, 0.3)'
+                }}
+              >
+                <span>🚀</span>
+                <span>Carregar e Disparar</span>
               </button>
             </div>
           </div>

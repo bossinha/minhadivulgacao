@@ -294,14 +294,12 @@ export function computeLiveTracking(tracking: CompanyDispatchTracking): CompanyD
       const intervalMs = (tracking.autoIntervalMinutes || 5) * 60 * 1000;
       const autoCycles = Math.floor(elapsedMs / intervalMs);
 
-      const baseCount = tracking.manualInitialCount || 0;
-      // Conta disparos manuais adicionados
-      const manualAdds = (tracking.recentLogs || [])
-        .filter(l => l.type === 'manual')
-        .reduce((sum, l) => sum + (l.count || 1), 0);
+      const baseCount = tracking.manualInitialCount !== undefined
+        ? tracking.manualInitialCount
+        : (tracking.totalDispatches || 0);
 
-      const calculatedTotal = baseCount + manualAdds + autoCycles;
-      total = Math.max(tracking.totalDispatches, calculatedTotal);
+      const calculatedTotal = baseCount + autoCycles;
+      total = Math.max(total, calculatedTotal);
     }
   }
 

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   PushNotificationPayload,
   subscribeToLiveBroadcastNotifications,
-  recordNotificationClick
+  recordNotificationClick,
+  playNotificationSound,
+  vibrateDevice
 } from '../lib/pushNotifications';
 
 export const IncomingPushNotificationToast: React.FC = () => {
@@ -17,29 +20,47 @@ export const IncomingPushNotificationToast: React.FC = () => {
     // 2. Escuta notificações disparadas localmente pelo próprio admin
     const handleLocalEmit = (event: any) => {
       if (event.detail) {
+        playNotificationSound();
+        vibrateDevice();
         setActiveNotification(event.detail);
       }
     };
     window.addEventListener('PUSH_NOTIFICATION_EMITTED', handleLocalEmit);
 
+    // 3. Escuta eventos entre abas (cross-tab sync)
+    const handleStorageEvent = (event: StorageEvent) => {
+      if (event.key === 'minhadivulgacao_last_emitted_push' && event.newValue) {
+        try {
+          const payload = JSON.parse(event.newValue);
+          if (payload && payload.id) {
+            playNotificationSound();
+            vibrateDevice();
+            setActiveNotification(payload);
+          }
+        } catch (_) {}
+      }
+    };
+    window.addEventListener('storage', handleStorageEvent);
+
     return () => {
       unsub();
       window.removeEventListener('PUSH_NOTIFICATION_EMITTED', handleLocalEmit);
+      window.removeEventListener('storage', handleStorageEvent);
     };
   }, []);
 
-  // Timer para fechar automaticamente após 12 segundos
+  // Timer para fechar automaticamente após 14 segundos
   useEffect(() => {
     if (!activeNotification) return;
 
     const timer = setTimeout(() => {
       setActiveNotification(null);
-    }, 12000);
+    }, 14000);
 
     return () => clearTimeout(timer);
   }, [activeNotification]);
 
-  if (!activeNotification) return null;
+  if (!activeNotification || typeof document === 'undefined') return null;
 
   const handleActionClick = () => {
     if (activeNotification.id) {
@@ -56,12 +77,12 @@ export const IncomingPushNotificationToast: React.FC = () => {
     }
   };
 
-  return (
+  const toastContent = (
     <div 
       className="w-[95%] max-w-md transition-all duration-300 animate-in fade-in slide-in-from-top-6"
       style={{
         position: 'fixed',
-        top: '16px',
+        top: '20px',
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 2147483647,
@@ -74,9 +95,9 @@ export const IncomingPushNotificationToast: React.FC = () => {
           boxShadow: '0 20px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(245, 158, 11, 0.25)'
         }}
       >
-        {/* Barra de progresso animada de 12s */}
+        {/* Barra de progresso animada de 14s */}
         <div 
-          className="absolute top-0 left-0 h-1 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 animate-[shrink_12s_linear_forwards]"
+          className="absolute top-0 left-0 h-1 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 animate-[shrink_14s_linear_forwards]"
           style={{ width: '100%' }}
         />
 
@@ -160,4 +181,6 @@ export const IncomingPushNotificationToast: React.FC = () => {
       </div>
     </div>
   );
+
+  return createPortal(toastContent, document.body);
 };

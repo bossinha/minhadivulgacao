@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   isPushSupported,
   requestAndRegisterPushSubscriber
@@ -37,7 +38,7 @@ export const PushNotificationOptInBanner: React.FC<PushNotificationOptInBannerPr
     }
   }, []);
 
-  if (!isVisible) {
+  if (!isVisible || typeof document === 'undefined') {
     return null;
   }
 
@@ -76,7 +77,7 @@ export const PushNotificationOptInBanner: React.FC<PushNotificationOptInBannerPr
     }
   };
 
-  return (
+  const bannerContent = (
     <div 
       className="w-[95%] max-w-xl transition-all duration-300 animate-in fade-in slide-in-from-top-4"
       style={{
@@ -153,4 +154,6 @@ export const PushNotificationOptInBanner: React.FC<PushNotificationOptInBannerPr
       </div>
     </div>
   );
+
+  return createPortal(bannerContent, document.body);
 };
