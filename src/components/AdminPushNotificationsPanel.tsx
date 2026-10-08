@@ -1,11 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   PushNotificationPayload,
   subscribeToActiveSubscribersCount,
   subscribeToNotificationsHistory,
   sendBroadcastPushNotification,
-  isPushSupported
+  isPushSupported,
+  deletePushNotification,
+  clearAllPushNotifications
 } from '../lib/pushNotifications';
+
+const IMGBB_API_KEY = "b84e5dcba9b322fbb2c1adde190bfe95";
+
+const uploadToImgBB = async (file: File): Promise<string> => {
+  const apiKey = (import.meta as any).env?.VITE_IMGBB_API_KEY || IMGBB_API_KEY;
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = await res.json();
+  if (data && data.success && data.data && (data.data.url || data.data.display_url)) {
+    return data.data.url || data.data.display_url;
+  } else {
+    throw new Error(data?.error?.message || "Erro ao fazer upload da imagem no ImgBB.");
+  }
+};
 
 interface AdminPushNotificationsPanelProps {
   companies?: any[];
@@ -28,11 +50,73 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
   const [title, setTitle] = useState('🔥 OFERTA DO DIA');
   const [message, setMessage] = useState('Confira a promoção especial de hoje na Minha Divulgação!');
   const [image, setImage] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [url, setUrl] = useState('');
   const [actionTitle, setActionTitle] = useState('VER OFERTA');
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione um arquivo de imagem válido (JPG, PNG, WEBP, etc.).');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const uploadedUrl = await uploadToImgBB(file);
+      setImage(uploadedUrl);
+    } catch (err: any) {
+      console.error("ImgBB upload error:", err);
+      alert(err?.message || "Falha ao enviar imagem para o ImgBB. Tente novamente.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   // Modal de Confirmação antes do envio
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  // Estados de Exclusão do Banco de Dados
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isClearingAll, setIsClearingAll] = useState(false);
+
+  const handleDeleteItem = async (id?: string, titleName?: string) => {
+    if (!id) return;
+    if (!confirm(`Deseja apagar permanentemente esta notificação ("${titleName || 'Oferta'}") do banco de dados?\n\nIsso remove os dados e links para não acumular nem sobrecarregar o banco.`)) {
+      return;
+    }
+    setDeletingId(id);
+    try {
+      await deletePushNotification(id);
+      setSuccessMessage('🗑️ Notificação excluída do banco de dados com sucesso!');
+      setTimeout(() => setSuccessMessage(null), 4000);
+    } catch (e: any) {
+      alert('Erro ao excluir do banco de dados: ' + (e?.message || 'Falha inesperada'));
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (history.length === 0) return;
+    if (!confirm(`ATENÇÃO: Deseja apagar permanentemente TODAS as ${history.length} notificações gravadas no banco de dados?\n\nIsso faz uma limpeza completa, apagando links de promoções expiradas e liberando espaço no banco de dados.`)) {
+      return;
+    }
+    setIsClearingAll(true);
+    try {
+      const totalDeleted = await clearAllPushNotifications();
+      setSuccessMessage(`🧹 Banco de dados limpo com sucesso! ${totalDeleted} registro(s) foram excluídos permanentemente.`);
+      setTimeout(() => setSuccessMessage(null), 4000);
+    } catch (e: any) {
+      alert('Erro ao limpar banco de dados: ' + (e?.message || 'Falha inesperada'));
+    } finally {
+      setIsClearingAll(false);
+    }
+  };
 
   // Carrega contadores e histórico em tempo real
   useEffect(() => {
@@ -224,11 +308,11 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
 
             {/* Imagem / Banner Opcional */}
             <div className="dev-form-group">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <label style={{ margin: 0 }}>Imagem ou Banner (Opcional)</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                <label style={{ margin: 0, fontWeight: 800 }}>IMAGEM OU BANNER (OPCIONAL)</label>
                 {companies.length > 0 && (
                   <select
-                    style={{ background: '#222', color: '#aaa', fontSize: '10px', border: '1px solid #444', borderRadius: '4px', padding: '2px 6px' }}
+                    style={{ background: '#222', color: '#aaa', fontSize: '11px', border: '1px solid #444', borderRadius: '6px', padding: '3px 8px' }}
                     onChange={(e) => {
                       if (e.target.value) {
                         setImage(e.target.value);
@@ -242,13 +326,90 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
                   </select>
                 )}
               </div>
+
+              {/* Botão de Upload Direto ImgBB */}
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap' }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  onChange={handleImageUpload}
+                />
+                <button
+                  type="button"
+                  disabled={isUploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    background: '#25D366',
+                    color: '#000',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '8px 14px',
+                    fontSize: '12px',
+                    fontWeight: 900,
+                    cursor: isUploading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 2px 8px rgba(37, 211, 102, 0.25)',
+                    opacity: isUploading ? 0.7 : 1
+                  }}
+                >
+                  {isUploading ? (
+                    <>
+                      <span className="animate-spin">⏳</span>
+                      <span>Enviando para o ImgBB...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>📷</span>
+                      <span>Carregar Foto / Banner (ImgBB)</span>
+                    </>
+                  )}
+                </button>
+
+                {image && (
+                  <button
+                    type="button"
+                    onClick={() => setImage('')}
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.15)',
+                      color: '#ef4444',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      cursor: 'pointer'
+                    }}
+                    title="Remover o link da foto para não gravar no banco de dados"
+                  >
+                    ✕ Descartar Foto (Não salvar no banco)
+                  </button>
+                )}
+              </div>
+
               <input
                 type="url"
                 className="dev-input"
                 value={image}
                 onChange={(e) => setImage(e.target.value)}
-                placeholder="https://exemplo.com/banner-promocao.jpg"
+                placeholder="https://i.ibb.co/... ou digite o link da imagem"
               />
+              <span style={{ fontSize: '10px', color: '#888', display: 'block', marginTop: '4px' }}>
+                💡 Você pode clicar em <strong>"Carregar Foto / Banner"</strong> para selecionar uma imagem do celular ou PC. Ela será enviada ao ImgBB e convertida em link direto automaticamente, gravando apenas o link no banco de dados.
+              </span>
+
+              {image && (
+                <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(37, 211, 102, 0.08)', border: '1px solid rgba(37, 211, 102, 0.3)', padding: '10px 14px', borderRadius: '10px' }}>
+                  <img src={image} alt="Preview Uploaded" style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: '11px', color: '#25D366', fontWeight: 900, display: 'block' }}>✓ Imagem Hospedada no ImgBB (Link Pronto)</span>
+                    <span style={{ fontSize: '10px', color: '#aaa', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{image}</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Link de Destino */}
@@ -426,13 +587,41 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
 
       {/* Histórico de Notificações Enviadas */}
       <div style={{ background: '#0e1017', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '22px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h4 style={{ margin: 0, color: '#fff', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>📜</span> Histórico de Notificações Enviadas
-          </h4>
-          <span style={{ fontSize: '11px', color: '#888' }}>
-            {history.length} envios registrados
-          </span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+          <div>
+            <h4 style={{ margin: 0, color: '#fff', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>📜</span> Histórico de Notificações Enviadas
+            </h4>
+            <span style={{ fontSize: '11px', color: '#888' }}>
+              {history.length} envios registrados no banco de dados
+            </span>
+          </div>
+
+          {history.length > 0 && (
+            <button
+              type="button"
+              disabled={isClearingAll}
+              onClick={handleClearAll}
+              style={{
+                background: 'rgba(239, 68, 68, 0.15)',
+                color: '#ef4444',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                borderRadius: '8px',
+                padding: '7px 14px',
+                fontSize: '11px',
+                fontWeight: 900,
+                cursor: isClearingAll ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.2s ease'
+              }}
+              title="Apagar todas as notificações gravadas no banco de dados para liberar espaço e não acumular links expirados"
+            >
+              <span>🧹</span>
+              <span>{isClearingAll ? 'Limpando Banco...' : 'Limpar Todo o Histórico do Banco'}</span>
+            </button>
+          )}
         </div>
 
         {history.length === 0 ? (
@@ -446,10 +635,12 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#888' }}>
                   <th style={{ padding: '10px 8px' }}>DATA / HORA</th>
+                  <th style={{ padding: '10px 8px' }}>IMAGEM</th>
                   <th style={{ padding: '10px 8px' }}>TÍTULO / MENSAGEM</th>
                   <th style={{ padding: '10px 8px', textAlign: 'center' }}>DESTINATÁRIOS</th>
                   <th style={{ padding: '10px 8px', textAlign: 'center' }}>CLIQUES</th>
                   <th style={{ padding: '10px 8px', textAlign: 'center' }}>STATUS</th>
+                  <th style={{ padding: '10px 8px', textAlign: 'center' }}>EXCLUIR DO BANCO</th>
                 </tr>
               </thead>
               <tbody>
@@ -459,8 +650,18 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
                       {item.sentAt || 'Recente'}
                     </td>
                     <td style={{ padding: '12px 8px' }}>
+                      {item.image ? (
+                        <a href={item.image} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
+                          <img src={item.image} alt="Thumb" style={{ width: '32px', height: '32px', borderRadius: '6px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.15)' }} />
+                          <span style={{ fontSize: '10px', color: '#60a5fa' }}>Ver ↗</span>
+                        </a>
+                      ) : (
+                        <span style={{ fontSize: '10px', color: '#555' }}>Sem foto</span>
+                      )}
+                    </td>
+                    <td style={{ padding: '12px 8px' }}>
                       <div style={{ fontWeight: 800, color: '#fff' }}>{item.title}</div>
-                      <div style={{ color: '#888', fontSize: '11px', maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ color: '#888', fontSize: '11px', maxWidth: '280px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {item.message}
                       </div>
                     </td>
@@ -483,6 +684,30 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
                       }}>
                         Concluída
                       </span>
+                    </td>
+                    <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                      <button
+                        type="button"
+                        disabled={deletingId === item.id}
+                        onClick={() => handleDeleteItem(item.id, item.title)}
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.15)',
+                          color: '#ef4444',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          borderRadius: '6px',
+                          padding: '5px 10px',
+                          fontSize: '11px',
+                          fontWeight: 800,
+                          cursor: deletingId === item.id ? 'not-allowed' : 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                        title="Apagar esta notificação e seu link permanentemente do banco de dados"
+                      >
+                        {deletingId === item.id ? '⏳' : '🗑️'}
+                        <span>Excluir</span>
+                      </button>
                     </td>
                   </tr>
                 ))}

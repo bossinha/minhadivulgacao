@@ -11,7 +11,8 @@ import {
   onSnapshot,
   updateDoc,
   increment,
-  serverTimestamp
+  serverTimestamp,
+  deleteDoc
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -317,5 +318,35 @@ export async function recordNotificationClick(notificationId: string): Promise<v
     });
   } catch (err) {
     console.warn('Não foi possível incrementar clique na notificação:', err);
+  }
+}
+
+/**
+ * Exclui uma notificação específica do histórico do banco de dados (Firestore)
+ */
+export async function deletePushNotification(notificationId: string): Promise<boolean> {
+  if (!notificationId) return false;
+  try {
+    const notifRef = doc(db, 'push_notifications', notificationId);
+    await deleteDoc(notifRef);
+    return true;
+  } catch (err) {
+    console.error('Erro ao excluir notificação do Firestore:', err);
+    throw err;
+  }
+}
+
+/**
+ * Exclui todas as notificações do histórico do banco de dados (limpeza geral para não sobrecarregar)
+ */
+export async function clearAllPushNotifications(): Promise<number> {
+  try {
+    const snap = await getDocs(collection(db, 'push_notifications'));
+    const deletePromises = snap.docs.map(d => deleteDoc(d.ref));
+    await Promise.all(deletePromises);
+    return snap.size;
+  } catch (err) {
+    console.error('Erro ao limpar histórico de notificações do Firestore:', err);
+    throw err;
   }
 }
