@@ -261,34 +261,12 @@ export function computeCurrentCalendarDays(tracking: CompanyDispatchTracking): {
 }
 
 /**
- * Computes live auto-increment if 24h mode is active and automatically advances calendar days.
+ * Computes live auto-increment if auto mode is active and automatically advances calendar days.
+ * Runs continuously until the campaign contract days expire or until the admin pauses manually.
  * Calculates how many 5-min intervals elapsed since auto24hStartedAt.
  */
 export function computeLiveTracking(tracking: CompanyDispatchTracking): CompanyDispatchTracking {
   let total = tracking.totalDispatches || 0;
-  let isExpired = false;
-
-  if (tracking.isAuto24hActive && tracking.auto24hStartedAt) {
-    const now = Date.now();
-    const startTime = tracking.auto24hStartedAt;
-    const expireTime = tracking.auto24hExpiresAt || (startTime + 24 * 60 * 60 * 1000);
-
-    // If 24h period has already ended
-    isExpired = now >= expireTime;
-    const effectiveEnd = isExpired ? expireTime : now;
-    const elapsedMs = Math.max(0, effectiveEnd - startTime);
-    const intervalMs = (tracking.autoIntervalMinutes || 5) * 60 * 1000;
-    const autoCycles = Math.floor(elapsedMs / intervalMs);
-
-    const baseCount = tracking.manualInitialCount || 0;
-    // Count manual logs not related to auto cycles
-    const manualAdds = (tracking.recentLogs || [])
-      .filter(l => l.type === 'manual')
-      .reduce((sum, l) => sum + (l.count || 1), 0);
-
-    const calculatedTotal = baseCount + manualAdds + autoCycles;
-    total = Math.max(tracking.totalDispatches, calculatedTotal);
-  }
 
   // Avanço automático dos dias corridos baseado no calendário
   const now = new Date();
@@ -302,6 +280,31 @@ export function computeLiveTracking(tracking: CompanyDispatchTracking): CompanyD
     daysAnchorElapsed: effectiveAnchorDay
   });
 
+  // O contrato encerra quando ultrapassa o total de dias contratados (ex: Dia > 30)
+  const isContractExpired = currentDay > totalDays;
+
+  if (tracking.isAuto24hActive && tracking.auto24hStartedAt) {
+    if (isContractExpired) {
+      // Se o contrato expirou por tempo de plano, o modo automático para
+    } else {
+      // RODA DIRETO SEM PARAR: dia e noite até expirar o contrato ou o admin pausar manualmente
+      const nowMs = Date.now();
+      const startTime = tracking.auto24hStartedAt;
+      const elapsedMs = Math.max(0, nowMs - startTime);
+      const intervalMs = (tracking.autoIntervalMinutes || 5) * 60 * 1000;
+      const autoCycles = Math.floor(elapsedMs / intervalMs);
+
+      const baseCount = tracking.manualInitialCount || 0;
+      // Conta disparos manuais adicionados
+      const manualAdds = (tracking.recentLogs || [])
+        .filter(l => l.type === 'manual')
+        .reduce((sum, l) => sum + (l.count || 1), 0);
+
+      const calculatedTotal = baseCount + manualAdds + autoCycles;
+      total = Math.max(tracking.totalDispatches, calculatedTotal);
+    }
+  }
+
   const global = getCachedGlobalGroups();
   const waGroups = global.whatsAppGroups > 0 ? global.whatsAppGroups : DEFAULT_GLOBAL_WA;
   const fbGroups = (global.facebookGroups > 0 && global.facebookGroups !== 6) 
@@ -312,7 +315,7 @@ export function computeLiveTracking(tracking: CompanyDispatchTracking): CompanyD
   return {
     ...tracking,
     totalDispatches: total,
-    isAuto24hActive: tracking.isAuto24hActive ? !isExpired : false,
+    isAuto24hActive: tracking.isAuto24hActive ? !isContractExpired : false,
     daysElapsed: currentDay,
     totalCampaignDays: totalDays,
     daysAnchorDate: effectiveAnchorDate,
@@ -390,11 +393,12 @@ export async function registerManualDispatch(
   countToAdd: number = 1,
   channel: string = 'Grupos WhatsApp & Facebook'
 ): Promise<CompanyDispatchTracking> {
+  const live = computeLiveTracking(current);
   const now = new Date();
   const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const dateStr = now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
   
-  const newTotal = (current.totalDispatches || 0) + countToAdd;
+  const newTotal = (live.totalDispatches || 0) + countToAdd;
   const newLog: DispatchLogEntry = {
     id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
     timestamp: `${dateStr} às ${timeStr}`,
@@ -405,18 +409,20 @@ export async function registerManualDispatch(
     note: `Disparo realizado com sucesso em ${channel}.`
   };
 
-  const updatedLogs = [newLog, ...(current.recentLogs || [])].slice(0, 50);
+  const updatedLogs = [newLog, ...(live.recentLogs || [])].slice(0, 50);
 
   const updated: CompanyDispatchTracking = {
-    ...current,
+    ...live,
     totalDispatches: newTotal,
+    manualInitialCount: newTotal,
+    auto24hStartedAt: live.isAuto24hActive ? Date.now() : live.auto24hStartedAt,
     lastDispatchedAt: now.toISOString(),
-    groupsWhatsAppReached: current.manualWhatsAppGroups !== undefined && current.manualWhatsAppGroups > 0 
-      ? current.manualWhatsAppGroups 
-      : (current.groupsWhatsAppReached > 0 ? current.groupsWhatsAppReached : Math.max(1, Math.round(newTotal * 0.7) + 5)),
-    groupsFacebookReached: current.manualFacebookGroups !== undefined && current.manualFacebookGroups > 0 
-      ? current.manualFacebookGroups 
-      : (current.groupsFacebookReached > 0 ? current.groupsFacebookReached : Math.max(1, Math.round(newTotal * 0.4) + 3)),
+    groupsWhatsAppReached: live.manualWhatsAppGroups !== undefined && live.manualWhatsAppGroups > 0 
+      ? live.manualWhatsAppGroups 
+      : (live.groupsWhatsAppReached > 0 ? live.groupsWhatsAppReached : Math.max(1, Math.round(newTotal * 0.7) + 5)),
+    groupsFacebookReached: live.manualFacebookGroups !== undefined && live.manualFacebookGroups > 0 
+      ? live.manualFacebookGroups 
+      : (live.groupsFacebookReached > 0 ? live.groupsFacebookReached : Math.max(1, Math.round(newTotal * 0.4) + 3)),
     estimatedReach: Math.max(newTotal * 350, 1200),
     recentLogs: updatedLogs
   };
@@ -432,6 +438,7 @@ export async function setManualInitialCount(
   current: CompanyDispatchTracking,
   initialCount: number | string
 ): Promise<CompanyDispatchTracking> {
+  const live = computeLiveTracking(current);
   const now = new Date();
   const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const dateStr = now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
@@ -444,22 +451,23 @@ export async function setManualInitialCount(
     channel: 'Configuração Inicial',
     count: validCount,
     totalAfter: validCount,
-    note: `Contador inicial de disparos definido para ${validCount.toLocaleString('pt-BR')} disparos.`
+    note: `Contador de disparos ajustado para ${validCount.toLocaleString('pt-BR')} disparos.`
   };
 
   const updated: CompanyDispatchTracking = {
-    ...current,
+    ...live,
     manualInitialCount: validCount,
     totalDispatches: validCount,
+    auto24hStartedAt: live.isAuto24hActive ? Date.now() : live.auto24hStartedAt,
     lastDispatchedAt: now.toISOString(),
-    groupsWhatsAppReached: current.manualWhatsAppGroups !== undefined && current.manualWhatsAppGroups > 0 
-      ? current.manualWhatsAppGroups 
-      : (current.groupsWhatsAppReached > 0 ? current.groupsWhatsAppReached : Math.max(1, Math.round(validCount * 0.7) + 5)),
-    groupsFacebookReached: current.manualFacebookGroups !== undefined && current.manualFacebookGroups > 0 
-      ? current.manualFacebookGroups 
-      : (current.groupsFacebookReached > 0 ? current.groupsFacebookReached : Math.max(1, Math.round(validCount * 0.4) + 3)),
+    groupsWhatsAppReached: live.manualWhatsAppGroups !== undefined && live.manualWhatsAppGroups > 0 
+      ? live.manualWhatsAppGroups 
+      : (live.groupsWhatsAppReached > 0 ? live.groupsWhatsAppReached : Math.max(1, Math.round(validCount * 0.7) + 5)),
+    groupsFacebookReached: live.manualFacebookGroups !== undefined && live.manualFacebookGroups > 0 
+      ? live.manualFacebookGroups 
+      : (live.groupsFacebookReached > 0 ? live.groupsFacebookReached : Math.max(1, Math.round(validCount * 0.4) + 3)),
     estimatedReach: Math.max(validCount * 350, 1200),
-    recentLogs: [newLog, ...(current.recentLogs || [])].slice(0, 50)
+    recentLogs: [newLog, ...(live.recentLogs || [])].slice(0, 50)
   };
 
   await saveCompanyDispatchTracking(updated);
@@ -590,7 +598,8 @@ export async function setManualDaysElapsed(
 }
 
 /**
- * Toggle 24-hour Auto-Dispatch mode (5-minute interval)
+ * Ativa ou pausa o Modo de Disparo Automático Contínuo (de 5 em 5 minutos)
+ * Fica ativo continuamente dia e noite até expirar o término do contrato ou pausa manual
  */
 export async function toggleAuto24hDispatch(
   current: CompanyDispatchTracking,
@@ -601,44 +610,52 @@ export async function toggleAuto24hDispatch(
   const timeStr = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const dateStr = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
+  // Calcula o total mais recente ao vivo para consolidar a contagem exata
+  const live = computeLiveTracking(current);
+  const currentTotal = live.totalDispatches || 0;
+
   let updated: CompanyDispatchTracking;
 
   if (enable) {
     const startedAt = now;
-    const expiresAt = now + (24 * 60 * 60 * 1000); // 24 hours from now
     const log: DispatchLogEntry = {
       id: `log_${now}_auto_start`,
       timestamp: `${dateStr} às ${timeStr}`,
       type: 'auto_5min',
-      channel: 'Disparador Automático 24h',
+      channel: 'Disparador Automático Contínuo',
       count: 0,
-      totalAfter: current.totalDispatches,
-      note: 'Ciclo de 24 horas ativado! Disparos automáticos programados a cada 5 minutos.'
+      totalAfter: currentTotal,
+      note: 'Disparo automático contínuo ativado! Seguirá sem parar até o término do contrato ou pausa manual (+1 a cada 5 minutos).'
     };
 
     updated = {
-      ...current,
+      ...live,
       isAuto24hActive: true,
       auto24hStartedAt: startedAt,
-      auto24hExpiresAt: expiresAt,
+      manualInitialCount: currentTotal,
+      totalDispatches: currentTotal,
       autoIntervalMinutes: 5,
-      recentLogs: [log, ...(current.recentLogs || [])].slice(0, 50)
+      recentLogs: [log, ...(live.recentLogs || [])].slice(0, 50)
     };
   } else {
     const log: DispatchLogEntry = {
       id: `log_${now}_auto_stop`,
       timestamp: `${dateStr} às ${timeStr}`,
       type: 'auto_5min',
-      channel: 'Disparador Automático 24h',
+      channel: 'Disparador Automático Contínuo',
       count: 0,
-      totalAfter: current.totalDispatches,
-      note: 'Disparos automáticos de 24h pausados pelo administrador.'
+      totalAfter: currentTotal,
+      note: 'Disparos automáticos pausados manualmente pelo administrador.'
     };
 
     updated = {
-      ...current,
+      ...live,
       isAuto24hActive: false,
-      recentLogs: [log, ...(current.recentLogs || [])].slice(0, 50)
+      auto24hStartedAt: undefined,
+      auto24hExpiresAt: undefined,
+      manualInitialCount: currentTotal,
+      totalDispatches: currentTotal,
+      recentLogs: [log, ...(live.recentLogs || [])].slice(0, 50)
     };
   }
 

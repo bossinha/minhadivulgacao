@@ -6,7 +6,10 @@ import {
   sendBroadcastPushNotification,
   isPushSupported,
   deletePushNotification,
-  clearAllPushNotifications
+  clearAllPushNotifications,
+  getNotificationPermission,
+  requestAndRegisterPushSubscriber,
+  triggerLocalTestNotification
 } from '../lib/pushNotifications';
 
 const IMGBB_API_KEY = "b84e5dcba9b322fbb2c1adde190bfe95";
@@ -45,6 +48,58 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
   const [history, setHistory] = useState<PushNotificationPayload[]>([]);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Status de Permissão de Notificações no Aparelho do Administrador
+  const [devicePermission, setDevicePermission] = useState<NotificationPermission>('default');
+  const [isTestingDevice, setIsTestingDevice] = useState(false);
+  const [isActivatingDevice, setIsActivatingDevice] = useState(false);
+
+  useEffect(() => {
+    setDevicePermission(getNotificationPermission());
+  }, []);
+
+  const handleActivateThisDevice = async () => {
+    setIsActivatingDevice(true);
+    try {
+      const res = await requestAndRegisterPushSubscriber('admin');
+      setDevicePermission(res.permission);
+      if (res.success) {
+        setSuccessMessage('🎉 Notificações ativadas com sucesso neste aparelho! Você receberá os testes.');
+        setTimeout(() => setSuccessMessage(null), 5000);
+      } else if (res.permission === 'denied') {
+        alert('As notificações foram negadas nas configurações do seu navegador. Por favor, clique no ícone de cadeado na barra de endereço e altere para "Permitir".');
+      }
+    } catch (e: any) {
+      alert('Erro ao ativar notificações: ' + (e?.message || 'Falha inesperada'));
+    } finally {
+      setIsActivatingDevice(false);
+    }
+  };
+
+  const handleTestThisDevice = async () => {
+    setIsTestingDevice(true);
+    try {
+      // Se ainda não tiver permissão, pede primeiro
+      if (devicePermission === 'default') {
+        await handleActivateThisDevice();
+      }
+
+      await triggerLocalTestNotification({
+        title: title || '🔔 TESTE: Notificações Ativas!',
+        message: message || 'Seu dispositivo está pronto para receber todas as ofertas da Minha Divulgação.',
+        image: image || undefined,
+        url: url.trim() || window.location.origin,
+        actionTitle: actionTitle || 'VER OFERTA'
+      });
+
+      setSuccessMessage('🔔 Teste disparado! Veja o aviso no topo da tela e ouça o alerta sonoro.');
+      setTimeout(() => setSuccessMessage(null), 5000);
+    } catch (e: any) {
+      alert('Erro no teste: ' + (e?.message || 'Falha'));
+    } finally {
+      setIsTestingDevice(false);
+    }
+  };
 
   // Estados do Formulário de Criação de Notificação
   const [title, setTitle] = useState('🔥 OFERTA DO DIA');
@@ -92,6 +147,7 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
     setDeletingId(id);
     try {
       await deletePushNotification(id);
+      setHistory(prev => prev.filter(x => x.id !== id));
       setSuccessMessage('🗑️ Notificação excluída do banco de dados com sucesso!');
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (e: any) {
@@ -109,6 +165,7 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
     setIsClearingAll(true);
     try {
       const totalDeleted = await clearAllPushNotifications();
+      setHistory([]);
       setSuccessMessage(`🧹 Banco de dados limpo com sucesso! ${totalDeleted} registro(s) foram excluídos permanentemente.`);
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (e: any) {
@@ -153,6 +210,14 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
     setLoading(true);
 
     try {
+      // Se este aparelho do admin ainda não tiver permissão, tenta registrar também para que receba
+      if (devicePermission === 'default') {
+        try {
+          const permRes = await requestAndRegisterPushSubscriber('admin');
+          setDevicePermission(permRes.permission);
+        } catch (_) {}
+      }
+
       const result = await sendBroadcastPushNotification({
         title,
         message,
@@ -163,6 +228,7 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
       });
 
       if (result.success) {
+        // Dispara teste sonoro e notificação local caso permissão já esteja concedida
         setSuccessMessage(`🚀 Notificação enviada com sucesso para ${result.recipientsCount} pessoas na audiência!`);
         setTimeout(() => setSuccessMessage(null), 6000);
       }
@@ -258,6 +324,105 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
           <span>{successMessage}</span>
         </div>
       )}
+
+      {/* STATUS DE NOTIFICAÇÕES DESTE APARELHO (DIAGNÓSTICO E TESTE) */}
+      <div style={{
+        background: devicePermission === 'granted' 
+          ? 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(6,78,59,0.25))' 
+          : devicePermission === 'denied'
+          ? 'linear-gradient(135deg, rgba(239,68,68,0.1), rgba(127,29,29,0.25))'
+          : 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(120,53,15,0.25))',
+        border: devicePermission === 'granted' 
+          ? '1px solid rgba(16,185,129,0.4)' 
+          : devicePermission === 'denied'
+          ? '1px solid rgba(239,68,68,0.4)'
+          : '1px solid rgba(245,158,11,0.4)',
+        borderRadius: '16px',
+        padding: '16px 20px',
+        marginBottom: '25px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '12px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ fontSize: '1.8rem' }}>
+            {devicePermission === 'granted' ? '📱✅' : devicePermission === 'denied' ? '🚫' : '🔔⚠️'}
+          </span>
+          <div>
+            <div style={{ 
+              fontWeight: 900, 
+              color: devicePermission === 'granted' ? '#34d399' : devicePermission === 'denied' ? '#f87171' : '#fbbf24',
+              fontSize: '0.92rem'
+            }}>
+              {devicePermission === 'granted' 
+                ? 'NOTIFICAÇÕES ATIVAS NESTE SEU APARELHO'
+                : devicePermission === 'denied'
+                ? 'NOTIFICAÇÕES BLOQUEADAS NESTE NAVEGADOR'
+                : 'NOTIFICAÇÕES DESTE APARELHO AINDA NÃO FORAM AUTORIZADAS'}
+            </div>
+            <p style={{ margin: '3px 0 0', fontSize: '0.8rem', color: '#aaa', maxWidth: '600px', lineHeight: '1.4' }}>
+              {devicePermission === 'granted'
+                ? 'Este seu celular ou computador já tem permissão concedida. Ao disparar uma notificação, seu aparelho receberá o aviso sonoro e a notificação na tela.'
+                : devicePermission === 'denied'
+                ? 'As notificações estão bloqueadas nas configurações do navegador. Toque no ícone de cadeado na barra de endereços para permitir notificações.'
+                : 'Para receber os testes na tela do seu celular e ouvir o aviso sonoro, clique no botão ao lado para autorizar agora.'}
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          {devicePermission !== 'granted' && (
+            <button
+              type="button"
+              disabled={isActivatingDevice}
+              onClick={handleActivateThisDevice}
+              style={{
+                background: '#00c980',
+                color: '#000',
+                border: 'none',
+                fontWeight: 900,
+                fontSize: '0.8rem',
+                padding: '9px 15px',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 4px 12px rgba(0, 201, 128, 0.3)'
+              }}
+            >
+              <span>🔔</span>
+              <span>{isActivatingDevice ? 'Ativando...' : 'AUTORIZAR MEU APARELHO'}</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            disabled={isTestingDevice}
+            onClick={handleTestThisDevice}
+            style={{
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              color: '#000',
+              border: 'none',
+              fontWeight: 900,
+              fontSize: '0.8rem',
+              padding: '9px 15px',
+              borderRadius: '10px',
+              cursor: isTestingDevice ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 4px 15px rgba(245, 158, 11, 0.25)'
+            }}
+            title="Dispara uma notificação de teste imediatamente com som, vibração e banner na tela"
+          >
+            <span>⚡</span>
+            <span>{isTestingDevice ? 'Disparando...' : 'TESTAR NO MEU APARELHO AGORA'}</span>
+          </button>
+        </div>
+      </div>
 
       {/* Grid Principal: Formulário + Prévia da Notificação */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px', marginBottom: '35px' }}>

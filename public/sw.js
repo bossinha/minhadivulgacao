@@ -14,8 +14,8 @@ self.addEventListener('push', (event) => {
   let data = {
     title: '🔥 Minha Divulgação - Nova Oferta!',
     body: 'Confira as promoções e novidades exclusivas de hoje.',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: 'https://i.postimg.cc/Gpykbbz5/nova_logo_bossa_infor_png.png',
+    badge: 'https://i.postimg.cc/Gpykbbz5/nova_logo_bossa_infor_png.png',
     url: '/',
     actionTitle: 'VER OFERTA'
   };

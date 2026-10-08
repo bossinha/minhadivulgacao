@@ -97,6 +97,7 @@ import { ClientDispatchTrackerModal } from './components/ClientDispatchTrackerMo
 import { GlobalDispatchGroupsBar } from './components/GlobalDispatchGroupsBar';
 import { AdminPushNotificationsPanel } from './components/AdminPushNotificationsPanel';
 import { PushNotificationOptInBanner } from './components/PushNotificationOptInBanner';
+import { IncomingPushNotificationToast } from './components/IncomingPushNotificationToast';
 import { registerServiceWorker, recordNotificationClick } from './lib/pushNotifications';
 
 import { auth, db, googleProvider } from './lib/firebase';
@@ -2929,6 +2930,8 @@ function AppContent() {
 
     return (
       <div className="master-portal-container">
+        {/* Toast Notificação ao Vivo para o Master */}
+        <IncomingPushNotificationToast />
         <div className="master-portal-inner">
           <div className="master-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
             <div>
@@ -4091,6 +4094,9 @@ function AppContent() {
         '--text-dim': appData?.theme?.textDim || '#a0a0a0'
       }}
     >
+      {/* Toast Flutuante em Tempo Real para Notificações Recebidas */}
+      <IncomingPushNotificationToast />
+
       {/* Prompt Flutuante Superior de Notificações Push ao Entrar no Portal */}
       <PushNotificationOptInBanner city={tenantId || 'geral'} />
 
@@ -5526,6 +5532,8 @@ function AppContent() {
             className="dev-area-overlay"
           >
             <div className="dev-area-content">
+              {/* Toast Flutuante de Notificação no Painel do Gestor */}
+              <IncomingPushNotificationToast />
               <div className="dev-header">
                 <h2 className="dev-title">ÁREA DO GESTOR</h2>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>

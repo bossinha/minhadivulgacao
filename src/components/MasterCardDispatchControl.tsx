@@ -14,7 +14,8 @@ import {
   parseNumberWithSeparators,
   subscribeToGlobalDispatchGroups,
   getCachedGlobalGroups,
-  getGlobalDispatchGroups
+  getGlobalDispatchGroups,
+  computeCurrentCalendarDays
 } from '../lib/dispatchTracking';
 
 interface MasterCardDispatchControlProps {
@@ -138,7 +139,7 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
     };
   }, [companyId, companyName]);
 
-  // Live timer tick for 5-minute countdown and 24h expiration
+  // Live timer tick for 5-minute countdown and continuous contract duration
   useEffect(() => {
     if (!tracking.isAuto24hActive || !tracking.auto24hStartedAt) {
       return;
@@ -147,21 +148,25 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
     const interval = setInterval(() => {
       const now = Date.now();
       const startTime = tracking.auto24hStartedAt!;
-      const expiresAt = tracking.auto24hExpiresAt || (startTime + 24 * 60 * 60 * 1000);
 
-      if (now >= expiresAt) {
+      const calendar = computeCurrentCalendarDays(tracking);
+      const isContractExpired = calendar.currentDay > calendar.totalDays;
+
+      if (isContractExpired) {
         setTracking(prev => ({ ...prev, isAuto24hActive: false }));
-        setRemainingHoursStr('Ciclo de 24h concluído');
+        setRemainingHoursStr(`Contrato finalizado (${calendar.totalDays} dias concluídos)`);
         return;
       }
 
-      const msLeft = expiresAt - now;
-      const hoursLeft = Math.floor(msLeft / (1000 * 60 * 60));
-      const minsLeft = Math.floor((msLeft % (1000 * 60 * 60)) / (1000 * 60));
-      setRemainingHoursStr(`${hoursLeft}h ${minsLeft}m restantes`);
+      const daysLeft = Math.max(0, calendar.totalDays - calendar.currentDay);
+      setRemainingHoursStr(
+        daysLeft === 0 
+          ? 'Último dia da campanha (ativo)' 
+          : `${daysLeft} dia(s) restante(s) do contrato`
+      );
 
-      const elapsedSinceStart = now - startTime;
       const cycleMs = (tracking.autoIntervalMinutes || 5) * 60 * 1000;
+      const elapsedSinceStart = now - startTime;
       const msIntoCurrentCycle = elapsedSinceStart % cycleMs;
       const secRemaining = Math.max(0, Math.ceil((cycleMs - msIntoCurrentCycle) / 1000));
       setCountdownSeconds(secRemaining);
@@ -170,7 +175,7 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [tracking.isAuto24hActive, tracking.auto24hStartedAt, tracking.auto24hExpiresAt, tracking.autoIntervalMinutes]);
+  }, [tracking.isAuto24hActive, tracking.auto24hStartedAt, tracking.daysElapsed, tracking.totalCampaignDays, tracking.daysAnchorDate, tracking.daysAnchorElapsed, tracking.autoIntervalMinutes]);
 
   // Handle manual dispatch
   const handleManualDispatch = async (amount: number = 1) => {
@@ -275,7 +280,7 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
     }
   };
 
-  // Toggle 24h mode
+  // Toggle continuous auto-dispatch mode
   const handleToggle24h = async () => {
     setLoading(true);
     try {
@@ -284,9 +289,9 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
       setTracking(updated);
       if (nextState) {
         setCountdownSeconds(300);
-        triggerSuccessMsg('Modo 24h ativado! +1 disparo será somado a cada 5 minutos.');
+        triggerSuccessMsg('Disparo Automático Contínuo ATIVADO! Roda direto dia e noite sem parar (+1 a cada 5 min) até o término do contrato ou pausa manual.');
       } else {
-        triggerSuccessMsg('Modo 24h pausado com sucesso.');
+        triggerSuccessMsg('Disparo Automático PAUSADO manualmente.');
       }
     } catch (err) {
       console.error(err);
@@ -620,7 +625,7 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
           </div>
 
           {/* ========================================================= */}
-          {/* SEÇÃO 4: MODO 24 HORAS AUTOMÁTICO (DE 5 EM 5 MINUTOS) */}
+          {/* SEÇÃO 4: MODO DE DISPARO AUTOMÁTICO CONTÍNUO (DE 5 EM 5 MINUTOS) */}
           {/* ========================================================= */}
           <div className={`border rounded-xl p-3 transition-all ${
             tracking.isAuto24hActive 
@@ -630,10 +635,10 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
             <div className="flex items-center justify-between mb-2">
               <div>
                 <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                  ⏱️ Modo Automático 24h (Disparo a cada 5 minutos):
+                  ⏱️ Modo Automático Contínuo (Disparo a cada 5 minutos):
                 </span>
                 <span className="text-[10px] text-white/60 block mt-0.5">
-                  Muda automaticamente de 5 em 5 minutos contando +1 disparo para o cliente.
+                  Muda automaticamente de 5 em 5 minutos contando +1 disparo para o cliente. Não para até o fim do contrato ou pausa manual.
                 </span>
               </div>
             </div>
@@ -648,9 +653,9 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-white/60 text-[10px] block font-bold">Tempo Restante de 24h:</span>
-                    <span className="text-white font-bold text-xs font-mono">
-                      {remainingHoursStr || 'Ciclo de 24 horas ativo'}
+                    <span className="text-white/60 text-[10px] block font-bold">Status do Contrato:</span>
+                    <span className="text-emerald-300 font-bold text-xs font-mono">
+                      🟢 {remainingHoursStr || 'Ativo Contínuo'}
                     </span>
                   </div>
                 </div>
@@ -669,18 +674,27 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
                   onClick={handleToggle24h}
                   className="w-full bg-red-600/90 hover:bg-red-600 text-white font-black text-xs py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-lg"
                 >
-                  ⏸️ Pausar Disparo Automático 24h
+                  ⏸️ Pausar Disparo Automático (Salvo no Banco)
                 </button>
+
+                <p className="text-[10px] text-emerald-300/80 text-center m-0 leading-tight">
+                  🔒 <strong>Ativado!</strong> O sistema roda direto dia e noite sem parar (+1 a cada 5 min) até expirar o final do contrato ({tracking.totalCampaignDays || 30} dias) ou até você clicar acima para pausar.
+                </p>
               </div>
             ) : (
-              <button
-                type="button"
-                disabled={loading}
-                onClick={handleToggle24h}
-                className="w-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:brightness-110 active:scale-95 text-black font-black text-xs py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
-              >
-                ▶️ Ativar Disparo Automático 24h (a cada 5 min)
-              </button>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={handleToggle24h}
+                  className="w-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:brightness-110 active:scale-95 text-black font-black text-xs py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  ▶️ Ativar Disparo Automático Contínuo (Até o Fim do Contrato)
+                </button>
+                <p className="text-[10px] text-white/50 text-center m-0 leading-tight">
+                  💡 Ao ativar, o sistema dispara sem parar (+1 a cada 5 minutos) direto até finalizar o período do contrato de {tracking.totalCampaignDays || 30} dias ou até você pausar manualmente.
+                </p>
+              </div>
             )}
           </div>
 

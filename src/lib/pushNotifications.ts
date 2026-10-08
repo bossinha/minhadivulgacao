@@ -36,6 +36,7 @@ export interface PushNotificationPayload {
   url: string;
   actionTitle?: string;
   sentAt?: string;
+  sentAtTimestamp?: number;
   recipientsCount?: number;
   sentCount?: number;
   clicksCount?: number;
@@ -44,6 +45,147 @@ export interface PushNotificationPayload {
 }
 
 const STORAGE_SUBSCRIBER_KEY = 'minhadivulgacao_push_sub_id';
+
+/**
+ * Toca um som de aviso sonoro suave e alegre usando Web Audio API nativo
+ */
+export function playNotificationSound(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    // Arpeggio de dois tons agradável e nítido: 587Hz -> 880Hz
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.45);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.5);
+  } catch (e) {
+    // Autoplay policy pode exigir interação prévia em alguns navegadores
+  }
+}
+
+/**
+ * Vibra o dispositivo móvel suavemente
+ */
+export function vibrateDevice(): void {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    try {
+      navigator.vibrate([200, 100, 200]);
+    } catch (_) {}
+  }
+}
+
+/**
+ * Dispara uma notificação nativa do sistema com proteção total para celulares e PCs
+ */
+export async function displayNotificationSafely(
+  title: string,
+  options: {
+    body: string;
+    icon?: string;
+    badge?: string;
+    image?: string;
+    tag?: string;
+    data?: any;
+    url?: string;
+    actionTitle?: string;
+  }
+): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+
+  // Vibração e som em primeiro plano
+  vibrateDevice();
+  playNotificationSound();
+
+  if (!('Notification' in window)) return false;
+  if (Notification.permission !== 'granted') return false;
+
+  const notifOptions: any = {
+    body: options.body,
+    icon: options.icon || 'https://i.postimg.cc/Gpykbbz5/nova_logo_bossa_infor_png.png',
+    badge: options.badge || 'https://i.postimg.cc/Gpykbbz5/nova_logo_bossa_infor_png.png',
+    image: options.image || undefined,
+    tag: options.tag || ('minha-divulgacao-' + Date.now()),
+    renotify: true,
+    requireInteraction: true,
+    vibrate: [200, 100, 200],
+    data: options.data || { url: options.url || '/' }
+  };
+
+  if (options.actionTitle) {
+    notifOptions.actions = [
+      {
+        action: 'open_offer',
+        title: `👉 ${options.actionTitle}`
+      }
+    ];
+  }
+
+  // 1. Tenta prioritariamente via Service Worker (obrigatório e padrão no Android Chrome e navegadores modernos)
+  if ('serviceWorker' in navigator) {
+    try {
+      let reg: ServiceWorkerRegistration | null = null;
+      try {
+        reg = await navigator.serviceWorker.ready;
+      } catch (e) {
+        reg = await navigator.serviceWorker.getRegistration();
+      }
+
+      if (!reg) {
+        reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      }
+
+      if (reg && typeof reg.showNotification === 'function') {
+        await reg.showNotification(title, notifOptions);
+
+        // Notifica também o ServiceWorker controller se houver
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: 'SHOW_NOTIFICATION',
+            title,
+            options: notifOptions
+          });
+        }
+        return true;
+      }
+    } catch (swErr) {
+      console.warn('Tentativa via Service Worker falhou, testando fallback:', swErr);
+    }
+  }
+
+  // 2. Fallback para Notification nativa clássica (apenas para desktop e navegadores que suportam)
+  const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
+  if (!isAndroid && typeof Notification === 'function') {
+    try {
+      const notif = new Notification(title, {
+        body: notifOptions.body,
+        icon: notifOptions.icon,
+        badge: notifOptions.badge,
+        image: notifOptions.image,
+        tag: notifOptions.tag
+      } as any);
+      notif.onclick = () => {
+        window.focus();
+        if (options.url) {
+          window.location.href = options.url;
+        }
+      };
+      return true;
+    } catch (natErr) {
+      console.warn('Fallback Notification clássico falhou:', natErr);
+    }
+  }
+
+  return false;
+}
 
 /**
  * Detecta se o navegador atual suporta notificações e service workers
@@ -181,39 +323,166 @@ export function subscribeToActiveSubscribersCount(
   }
 }
 
+const LOCAL_HISTORY_KEY = 'minhadivulgacao_local_push_history';
+
+function getLocalHistory(): PushNotificationPayload[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(LOCAL_HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveLocalHistory(list: PushNotificationPayload[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(LOCAL_HISTORY_KEY, JSON.stringify(list.slice(0, 50)));
+  } catch (e) {}
+}
+
 /**
  * Escuta o histórico de notificações enviadas pelo Administrador
  */
 export function subscribeToNotificationsHistory(
   onHistoryChange: (list: PushNotificationPayload[]) => void
 ): () => void {
+  // Emite imediatamente o que já estiver em cache para evitar atraso visual
+  const cached = getLocalHistory();
+  if (cached.length > 0) {
+    onHistoryChange(cached);
+  }
+
   try {
-    const q = query(
-      collection(db, 'push_notifications'),
-      orderBy('sentAt', 'desc'),
-      limit(50)
-    );
+    const q = collection(db, 'push_notifications');
     const unsub = onSnapshot(q, (snap) => {
       const list: PushNotificationPayload[] = [];
       snap.forEach(d => {
         list.push({ id: d.id, ...d.data() } as PushNotificationPayload);
       });
-      onHistoryChange(list);
+
+      // Mescla com cache local para garantir que nada se perca
+      const mergedMap = new Map<string, PushNotificationPayload>();
+      cached.forEach(c => { if (c.id) mergedMap.set(c.id, c); });
+      list.forEach(item => { if (item.id) mergedMap.set(item.id, item); });
+
+      const mergedList = Array.from(mergedMap.values());
+      // Ordena decrescente com segurança por timestamp ou id
+      mergedList.sort((a, b) => (b.sentAtTimestamp || 0) - (a.sentAtTimestamp || 0));
+
+      saveLocalHistory(mergedList);
+      onHistoryChange(mergedList.slice(0, 50));
     }, (err) => {
-      console.warn('Erro ao escutar histórico de notificações:', err);
-      onHistoryChange([]);
+      console.warn('Erro ao escutar histórico de notificações no Firestore:', err);
+      onHistoryChange(getLocalHistory());
     });
     return unsub;
   } catch (err) {
     console.warn('Falha ao criar listener de histórico:', err);
-    onHistoryChange([]);
+    onHistoryChange(getLocalHistory());
+    return () => {};
+  }
+}
+
+// Rastreia em memória quais IDs já foram disparados nesta sessão do navegador
+const sessionHandledNotifs = new Set<string>();
+
+/**
+ * Escuta transmissões de notificações push ao vivo no Firestore
+ * Sincroniza em tempo real para todos os visitantes e celulares conectados
+ */
+export function subscribeToLiveBroadcastNotifications(
+  onNotificationReceived: (payload: PushNotificationPayload) => void
+): () => void {
+  let isInitialSnapshot = true;
+
+  try {
+    const q = collection(db, 'push_notifications');
+    const unsub = onSnapshot(q, (snap) => {
+      if (snap.empty) {
+        isInitialSnapshot = false;
+        return;
+      }
+
+      const docs: PushNotificationPayload[] = [];
+      snap.forEach(d => {
+        docs.push({ id: d.id, ...d.data() } as PushNotificationPayload);
+      });
+
+      // Ordena pela mais recente
+      docs.sort((a, b) => (b.sentAtTimestamp || 0) - (a.sentAtTimestamp || 0));
+      const latest = docs[0];
+      if (!latest || !latest.id) {
+        isInitialSnapshot = false;
+        return;
+      }
+
+      const now = Date.now();
+      const sentTime = latest.sentAtTimestamp || 0;
+      // Notificação recente (últimos 10 minutos)
+      const isVeryRecent = Math.abs(now - sentTime) < 10 * 60 * 1000;
+
+      // Se for a carga inicial da página
+      if (isInitialSnapshot) {
+        isInitialSnapshot = false;
+        const storageKey = 'seen_push_broadcast_' + latest.id;
+        const alreadySeen = localStorage.getItem(storageKey);
+
+        // Se for muito recente e nunca foi vista nesta máquina, exibe
+        if (isVeryRecent && !alreadySeen && !sessionHandledNotifs.has(latest.id)) {
+          sessionHandledNotifs.add(latest.id);
+          localStorage.setItem(storageKey, 'true');
+
+          playNotificationSound();
+          vibrateDevice();
+
+          displayNotificationSafely(latest.title, {
+            body: latest.message,
+            image: latest.image,
+            url: latest.url,
+            actionTitle: latest.actionTitle,
+            data: { url: latest.url, notificationId: latest.id }
+          });
+
+          onNotificationReceived(latest);
+        }
+        return;
+      }
+
+      // Se for um evento em tempo real após a carga inicial (novo disparo pelo admin)
+      if (!sessionHandledNotifs.has(latest.id)) {
+        sessionHandledNotifs.add(latest.id);
+        const storageKey = 'seen_push_broadcast_' + latest.id;
+        localStorage.setItem(storageKey, 'true');
+
+        playNotificationSound();
+        vibrateDevice();
+
+        displayNotificationSafely(latest.title, {
+          body: latest.message,
+          image: latest.image,
+          url: latest.url,
+          actionTitle: latest.actionTitle,
+          data: { url: latest.url, notificationId: latest.id }
+        });
+
+        onNotificationReceived(latest);
+      }
+    }, (err) => {
+      console.warn('Erro ao escutar transmissões de notificações:', err);
+    });
+
+    return unsub;
+  } catch (err) {
+    console.warn('Falha ao inicializar listener de transmissões:', err);
     return () => {};
   }
 }
 
 /**
  * Dispara uma notificação para toda a audiência inscrita
- * Registra o histórico e exibe nativamente nos navegadores
+ * Registra o histórico e exibe nativamente nos navegadores e em primeiro plano
  */
 export async function sendBroadcastPushNotification(params: {
   title: string;
@@ -230,6 +499,7 @@ export async function sendBroadcastPushNotification(params: {
 }> {
   const notifId = 'notif_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 7);
   const now = new Date();
+  const timestamp = Date.now();
   const dateFormatted = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} — ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
   // 1. Obtém a contagem de inscritos ativos
@@ -252,6 +522,7 @@ export async function sendBroadcastPushNotification(params: {
     url: params.url.trim() || '/',
     actionTitle: params.actionTitle?.trim() || 'VER OFERTA',
     sentAt: dateFormatted,
+    sentAtTimestamp: timestamp,
     recipientsCount: effectiveRecipients,
     sentCount: effectiveRecipients,
     clicksCount: 0,
@@ -259,43 +530,38 @@ export async function sendBroadcastPushNotification(params: {
     sentBy: params.adminEmail || 'admin'
   };
 
-  // 2. Salva no histórico do Firestore
+  // Marca como tratada na sessão para não duplicar som no remetente
+  sessionHandledNotifs.add(notifId);
+  try {
+    localStorage.setItem('seen_push_broadcast_' + notifId, 'true');
+  } catch (_) {}
+
+  // Salva no cache local imediatamente
+  const currentLocal = getLocalHistory();
+  saveLocalHistory([payload, ...currentLocal.filter(x => x.id !== notifId)]);
+
+  // 2. Salva no histórico do Firestore (isso dispara imediatamente em tempo real para todos os clientes conectados)
   try {
     await setDoc(doc(db, 'push_notifications', notifId), payload);
   } catch (err) {
     console.error('Erro ao gravar notificação no Firestore:', err);
   }
 
-  // 3. Dispara a notificação real no navegador local/Service Worker
-  try {
-    if (isPushSupported() && 'serviceWorker' in navigator) {
-      const reg = await navigator.serviceWorker.ready;
-      if (reg && reg.showNotification) {
-        const notifOptions: any = {
-          body: payload.message,
-          icon: 'https://i.postimg.cc/Gpykbbz5/nova_logo_bossa_infor_png.png',
-          badge: 'https://i.postimg.cc/Gpykbbz5/nova_logo_bossa_infor_png.png',
-          image: payload.image || undefined,
-          vibrate: [200, 100, 200],
-          tag: notifId,
-          renotify: true,
-          requireInteraction: true,
-          data: {
-            url: payload.url,
-            notificationId: notifId
-          },
-          actions: [
-            {
-              action: 'open_offer',
-              title: `👉 ${payload.actionTitle}`
-            }
-          ]
-        };
-        reg.showNotification(payload.title, notifOptions);
-      }
-    }
-  } catch (showErr) {
-    console.warn('Erro ao disparar notificação local:', showErr);
+  // 3. Toca som e dispara localmente sem travar
+  playNotificationSound();
+  vibrateDevice();
+
+  await displayNotificationSafely(payload.title, {
+    body: payload.message,
+    image: payload.image,
+    url: payload.url,
+    actionTitle: payload.actionTitle,
+    data: { url: payload.url, notificationId: notifId }
+  });
+
+  // 4. Emite evento local imediato para o toast em tela aparecer instantaneamente para quem enviou
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('PUSH_NOTIFICATION_EMITTED', { detail: payload }));
   }
 
   return {
@@ -304,6 +570,51 @@ export async function sendBroadcastPushNotification(params: {
     recipientsCount: effectiveRecipients,
     sentCount: effectiveRecipients
   };
+}
+
+/**
+ * Dispara um teste local imediato com som, vibração, toast e notificação nativa
+ */
+export async function triggerLocalTestNotification(params: {
+  title?: string;
+  message?: string;
+  image?: string;
+  url?: string;
+  actionTitle?: string;
+}): Promise<boolean> {
+  const testPayload: PushNotificationPayload = {
+    id: 'test_' + Date.now(),
+    title: params.title || '🔔 TESTE: Notificações Ativas!',
+    message: params.message || 'Seu dispositivo está pronto para receber todas as ofertas e novidades da Minha Divulgação.',
+    image: params.image || '',
+    url: params.url || window.location.origin,
+    actionTitle: params.actionTitle || 'VER OFERTA',
+    sentAt: 'Agora (Teste)',
+    sentAtTimestamp: Date.now(),
+    recipientsCount: 1,
+    sentCount: 1,
+    clicksCount: 0,
+    status: 'enviada'
+  };
+
+  playNotificationSound();
+  vibrateDevice();
+
+  // Exibe nativamente se tiver permissão
+  await displayNotificationSafely(testPayload.title, {
+    body: testPayload.message,
+    image: testPayload.image,
+    url: testPayload.url,
+    actionTitle: testPayload.actionTitle,
+    data: { url: testPayload.url, notificationId: testPayload.id }
+  });
+
+  // Dispara evento para o toast aparecer na tela
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('PUSH_NOTIFICATION_EMITTED', { detail: testPayload }));
+  }
+
+  return true;
 }
 
 /**

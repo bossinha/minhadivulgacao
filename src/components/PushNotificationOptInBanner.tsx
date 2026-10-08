@@ -78,8 +78,15 @@ export const PushNotificationOptInBanner: React.FC<PushNotificationOptInBannerPr
 
   return (
     <div 
-      className="fixed top-3 sm:top-5 left-1/2 -translate-x-1/2 z-[99999] w-[95%] max-w-xl transition-all duration-300 animate-in fade-in slide-in-from-top-4"
-      style={{ pointerEvents: 'auto' }}
+      className="w-[95%] max-w-xl transition-all duration-300 animate-in fade-in slide-in-from-top-4"
+      style={{
+        position: 'fixed',
+        top: '12px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 99999999,
+        pointerEvents: 'auto'
+      }}
     >
       <div 
         className="relative overflow-hidden rounded-2xl bg-[#0f1724]/95 backdrop-blur-md border border-[#233549] shadow-[0_12px_40px_rgba(0,0,0,0.7)] px-3.5 py-2.5 sm:px-5 sm:py-3.5 flex items-center justify-between gap-3 sm:gap-4"
@@ -113,15 +120,15 @@ export const PushNotificationOptInBanner: React.FC<PushNotificationOptInBannerPr
               {/* Textos */}
               <div className="flex flex-col text-left min-w-0">
                 <span className="text-[11px] sm:text-xs font-black text-white tracking-wide uppercase leading-tight truncate">
-                  RECEBER OFERTAS & NOVIDADES
+                  🔥 RECEBA OFERTAS E NOVIDADES
                 </span>
                 <span className="text-[10px] sm:text-[11px] text-white/70 font-medium leading-tight mt-0.5 line-clamp-2">
-                  Ative avisos no seu navegador para não perder promoções exclusivas!
+                  Receba promoções, ofertas e oportunidades direto no seu celular.
                 </span>
               </div>
             </div>
 
-            {/* Lado Direito: Ações (Agora não + ATIVAR) */}
+            {/* Lado Direito: Ações (Agora não + QUERO RECEBER) */}
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <button
                 type="button"
@@ -137,8 +144,8 @@ export const PushNotificationOptInBanner: React.FC<PushNotificationOptInBannerPr
                 onClick={handleActivate}
                 className="bg-[#00c980] hover:bg-[#00e28f] active:scale-95 text-[#041a0e] font-black text-[11px] sm:text-xs uppercase px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full shadow-lg shadow-emerald-500/20 flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap border-0 select-none"
               >
-                <span>{loading ? 'ATIVANDO...' : 'ATIVAR'}</span>
-                <span className="text-xs">🔔</span>
+                <span>🔔</span>
+                <span>{loading ? 'ATIVANDO...' : 'QUERO RECEBER'}</span>
               </button>
             </div>
           </>
