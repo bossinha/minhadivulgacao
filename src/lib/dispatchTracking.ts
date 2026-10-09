@@ -216,7 +216,8 @@ export function getDefaultTracking(companyId: string, companyName: string = 'Emp
     manualInitialCount: 0,
     daysElapsed: 1,
     totalCampaignDays: 30,
-    isAuto24hActive: false,
+    isAuto24hActive: true,
+    auto24hStartedAt: Date.now() - (5 * 60 * 1000 * 0.4),
     autoIntervalMinutes: 5,
     groupsWhatsAppReached: global.whatsAppGroups,
     groupsFacebookReached: global.facebookGroups,
@@ -283,13 +284,16 @@ export function computeLiveTracking(tracking: CompanyDispatchTracking): CompanyD
   // O contrato encerra quando ultrapassa o total de dias contratados (ex: Dia > 30)
   const isContractExpired = currentDay > totalDays;
 
-  if (tracking.isAuto24hActive && tracking.auto24hStartedAt) {
+  const isAutoActive = tracking.isAuto24hActive !== false;
+  const autoStartTime = tracking.auto24hStartedAt || (Date.now() - 145000);
+
+  if (isAutoActive) {
     if (isContractExpired) {
       // Se o contrato expirou por tempo de plano, o modo automático para
     } else {
       // RODA DIRETO SEM PARAR: dia e noite até expirar o contrato ou o admin pausar manualmente
       const nowMs = Date.now();
-      const startTime = tracking.auto24hStartedAt;
+      const startTime = autoStartTime;
       const elapsedMs = Math.max(0, nowMs - startTime);
       const intervalMs = (tracking.autoIntervalMinutes || 5) * 60 * 1000;
       const autoCycles = Math.floor(elapsedMs / intervalMs);
@@ -307,6 +311,9 @@ export function computeLiveTracking(tracking: CompanyDispatchTracking): CompanyD
         const existingAutoLogIds = new Set(existingLogs.map(l => l.id));
         const newAutoLogs: DispatchLogEntry[] = [];
 
+        const globalG = getCachedGlobalGroups();
+        const totalGCount = Math.max(100, (globalG.whatsAppGroups || 900) + (globalG.facebookGroups || 6568));
+
         // Gera os últimos ciclos (limite dos últimos 25 para não pesar)
         const cyclesToGenerate = Math.min(autoCycles, 25);
         for (let c = autoCycles; c > autoCycles - cyclesToGenerate; c--) {
@@ -317,25 +324,27 @@ export function computeLiveTracking(tracking: CompanyDispatchTracking): CompanyD
             const dateStr = cycleDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
             const timeStr = cycleDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-            // Sorteia um dos 7.000 grupos realisticamente
-            const groupIndex = ((c * 43) + 7) % 7000;
-            const channelType = (c % 2 === 0) ? 'WhatsApp' : 'Facebook';
+            const totalForCycle = baseCount + c;
+            // Grupo sequencial exato do ciclo: se total é 289 -> grupo 289!
+            // Ao chegar no total de grupos, reinicia do 1
+            const groupIndex = totalForCycle > 0 ? (((totalForCycle - 1) % totalGCount) + 1) : 1;
+            const channelType = (groupIndex % 2 === 0) ? 'Facebook' : 'WhatsApp';
             const locationSamples = [
               'Fortaleza (Aldeota)', 'Fortaleza (Messejana)', 'Fortaleza (Centro)',
               'Fortaleza (Parangaba)', 'Fortaleza (Montese)', 'Fortaleza (Papicu)',
               'Juazeiro do Norte', 'Sobral', 'Maracanaú', 'Caucaia', 'Eusébio',
               'OLX Brasil Vendas', 'Classificados Ceará', 'Feirão de Negócios Brasil'
             ];
-            const loc = locationSamples[c % locationSamples.length];
+            const loc = locationSamples[(groupIndex - 1) % locationSamples.length];
 
             newAutoLogs.push({
               id: logId,
               timestamp: `${dateStr} às ${timeStr}`,
               type: 'auto_5min',
-              channel: `Grupo ${channelType} #${groupIndex + 1}`,
+              channel: `Grupo ${channelType} #${groupIndex}`,
               count: 1,
-              totalAfter: baseCount + c,
-              note: `Disparo transmitido com sucesso no grupo de ${loc}.`
+              totalAfter: totalForCycle,
+              note: `Disparo transmitido com sucesso no grupo #${groupIndex}: ${loc}.`
             });
           }
         }

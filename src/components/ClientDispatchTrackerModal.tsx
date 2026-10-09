@@ -47,6 +47,7 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
   const [groupSearch, setGroupSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(60);
   const [livePulse, setLivePulse] = useState(false);
+  const [liveExtraViews, setLiveExtraViews] = useState(0);
   const [activeGroupTicker, setActiveGroupTicker] = useState<{ name: string; channel: string; time: string } | null>(null);
 
   const compName = companyData?.name || tracking?.companyName || 'Sua Empresa';
@@ -113,41 +114,40 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
 
   // Live timer tick for 5-minute countdown and live visual pulse movements
   useEffect(() => {
-    if (!tracking?.isAuto24hActive || !tracking?.auto24hStartedAt) {
-      return;
-    }
+    const cycleMs = (tracking?.autoIntervalMinutes || 5) * 60 * 1000;
+    const baseStartTime = tracking?.auto24hStartedAt || (Date.now() - 145000);
 
     const interval = setInterval(() => {
       const now = Date.now();
-      const startTime = tracking.auto24hStartedAt!;
-      const cycleMs = (tracking.autoIntervalMinutes || 5) * 60 * 1000;
-      const elapsedSinceStart = now - startTime;
+      const elapsedSinceStart = Math.max(0, now - baseStartTime);
       const msIntoCurrentCycle = elapsedSinceStart % cycleMs;
       const secRemaining = Math.max(0, Math.ceil((cycleMs - msIntoCurrentCycle) / 1000));
       setCountdownSeconds(secRemaining);
 
-      // Simula transmissão viva a cada ~30 a 45 segundos para movimentar a tela
       const secondsIntoCycle = Math.floor(msIntoCurrentCycle / 1000);
-      if (secondsIntoCycle > 0 && secondsIntoCycle % 35 === 0) {
+
+      // Micro-increment de visualizações ao vivo a cada ~8s para movimentar o alcance
+      if (secondsIntoCycle > 0 && secondsIntoCycle % 8 === 0) {
+        setLiveExtraViews(prev => prev + Math.floor(Math.random() * 2) + 1);
+      }
+
+      // Transmissão viva / pulso de atividade a cada ~20s
+      if (secondsIntoCycle > 0 && secondsIntoCycle % 20 === 0) {
         setLivePulse(true);
-        const randomGroupIndex = Math.floor(Math.random() * Math.min(100, FICTITIOUS_GROUPS_LIST.length));
-        const sampleGroup = FICTITIOUS_GROUPS_LIST[randomGroupIndex];
-        if (sampleGroup) {
-          const nowTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-          setActiveGroupTicker({
-            name: sampleGroup.name,
-            channel: sampleGroup.type === 'whatsapp' ? 'WhatsApp' : 'Facebook',
-            time: nowTime
-          });
-        }
-        setTimeout(() => setLivePulse(false), 2500);
+        setTimeout(() => setLivePulse(false), 2000);
+      }
+
+      // Quando o cronômetro atinge 1s ou zera (novo disparo nos grupos)
+      if (secRemaining <= 1) {
+        setJustUpdated(true);
+        setTimeout(() => setJustUpdated(false), 3000);
       }
 
       setTracking(prev => prev ? computeLiveTracking(prev) : prev);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [tracking?.isAuto24hActive, tracking?.auto24hStartedAt, tracking?.autoIntervalMinutes]);
+  }, [tracking?.auto24hStartedAt, tracking?.autoIntervalMinutes]);
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
@@ -178,9 +178,26 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
       : (globalGroups.facebookGroups > 0 ? globalGroups.facebookGroups : 6568)
   );
 
-  const totalGroups = waGroups + fbGroups;
-  const reach = tracking?.estimatedReach || Math.max(currentTotal * 350, 1200);
+  const totalGroups = (waGroups + fbGroups) > 0 ? (waGroups + fbGroups) : 7468;
+  const reach = (tracking?.estimatedReach || Math.max(currentTotal * 350, 1200)) + liveExtraViews;
   const dayProgressPercent = Math.min(100, Math.max(3, Math.round((daysElapsed / totalCampaignDays) * 100)));
+
+  // CÁLCULO EXATO DO NÚMERO DO GRUPO SE MOVENDO:
+  // Se currentTotal é 289 -> o grupo divulgado no momento é o #289!
+  // Vai avançando a cada disparo (289, 290, 291...) até o total de grupos.
+  // Ao atingir totalGroups (ex: 7468), reinicia do 1 (ciclo concluído)!
+  const currentGroupInCycle = currentTotal > 0 
+    ? (((currentTotal - 1) % totalGroups) + 1)
+    : 1;
+  const currentCycleNumber = currentTotal > 0 
+    ? Math.floor((currentTotal - 1) / totalGroups) + 1 
+    : 1;
+  const cycleProgressPercent = Math.min(100, Math.max(0.1, Number(((currentGroupInCycle / totalGroups) * 100).toFixed(1))));
+
+  // Objeto do grupo atual e do próximo grupo da fila
+  const currentGroupObj = FICTITIOUS_GROUPS_LIST[(currentGroupInCycle - 1) % FICTITIOUS_GROUPS_LIST.length] || FICTITIOUS_GROUPS_LIST[0];
+  const nextGroupInCycle = ((currentGroupInCycle % totalGroups) + 1);
+  const nextGroupObj = FICTITIOUS_GROUPS_LIST[(nextGroupInCycle - 1) % FICTITIOUS_GROUPS_LIST.length] || FICTITIOUS_GROUPS_LIST[0];
 
   // Filter fictitious groups (over 7,000 groups) based on region, type and search term
   const filteredGroups = useMemo(() => {
@@ -293,52 +310,105 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
               </div>
             </div>
 
-            {/* 24h Auto Mode Countdown */}
-            {tracking?.isAuto24hActive && (
-              <div className="mt-3.5 pt-3 border-t border-emerald-500/20 bg-black/40 -mx-4 -mb-4 p-3.5">
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="flex h-2.5 w-2.5 relative">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            {/* 24h Auto Mode Countdown & Real-Time Group Rotation */}
+            <div className="mt-3.5 pt-3 border-t border-emerald-500/20 bg-black/60 -mx-4 -mb-4 p-3.5 rounded-b-2xl">
+              {/* Row 1: Disparos Automáticos & Timer de 5 Minutos */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-3 border-b border-white/10">
+                <div className="flex items-center gap-2.5 text-xs">
+                  <span className="flex h-3 w-3 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                  </span>
+                  <div>
+                    <span className="font-bold text-white block">
+                      Disparos Automáticos Contínuos: <strong className="text-emerald-400 font-black">+1 a cada 5 minutos</strong>
                     </span>
-                    <span className="font-bold text-white/90">
-                      Disparos Automáticos Ativos: <span className="text-emerald-400 font-black">+1 a cada 5 minutos</span>
+                    <span className="text-[10px] text-white/50">
+                      Transmissão ativa dia e noite na rede de grupos
                     </span>
-                  </div>
-
-                  <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                    <div className="text-right">
-                      <span className="text-[10px] text-white/50 uppercase block font-bold">Próximo Disparo em:</span>
-                      <span className="text-emerald-300 font-mono font-black text-sm tracking-wider">
-                        ⏳ {timerFormatted}
-                      </span>
-                    </div>
-                    <div className="w-24 sm:w-28 bg-white/10 h-2.5 rounded-full overflow-hidden">
-                      <div
-                        className="bg-emerald-400 h-full rounded-full transition-all duration-1000 ease-linear shadow-[0_0_8px_rgba(52,211,153,0.8)]"
-                        style={{ width: `${Math.min(100, Math.max(0, ((300 - countdownSeconds) / 300) * 100))}%` }}
-                      ></div>
-                    </div>
                   </div>
                 </div>
 
-                {/* Real-Time Live Activity Notification Bar */}
-                {activeGroupTicker && (
-                  <div className="mt-2.5 pt-2 border-t border-emerald-500/20 bg-emerald-950/60 -mx-3.5 -mb-3.5 p-2 px-3 flex items-center justify-between text-xs rounded-b-xl">
-                    <div className="flex items-center gap-2 truncate mr-2">
-                      <span className="text-emerald-400 animate-spin shrink-0">🔄</span>
-                      <span className="text-white/90 text-[11px] truncate">
-                        Transmitindo agora em: <strong className="text-emerald-300 font-bold">{activeGroupTicker.name}</strong>
-                      </span>
-                    </div>
-                    <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 shrink-0">
-                      {activeGroupTicker.time} • Ao Vivo
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end bg-black/60 px-3 py-1.5 rounded-xl border border-emerald-500/30">
+                  <div className="text-right">
+                    <span className="text-[9px] text-white/50 uppercase block font-bold">Próximo Disparo em:</span>
+                    <span className="text-emerald-300 font-mono font-black text-sm tracking-wider">
+                      ⏳ {timerFormatted}
                     </span>
                   </div>
-                )}
+                  <div className="w-20 sm:w-24 bg-white/10 h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-emerald-400 h-full rounded-full transition-all duration-1000 ease-linear shadow-[0_0_8px_rgba(52,211,153,0.8)]"
+                      style={{ width: `${Math.min(100, Math.max(0, ((300 - countdownSeconds) / 300) * 100))}%` }}
+                    ></div>
+                  </div>
+                </div>
               </div>
-            )}
+
+              {/* Row 2: ROTAÇÃO DO GRUPO ATUAL (EX: #289 DE 7.468 GRUPOS) */}
+              <div className="pt-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">🎯</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-amber-300">
+                      Grupo Atual na Rotação: <strong className="text-emerald-300 text-sm font-mono font-black bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/40">#{currentGroupInCycle.toLocaleString('pt-BR')}</strong> de <span className="text-white/80 font-mono">{totalGroups.toLocaleString('pt-BR')}</span>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 font-bold">
+                      Ciclo #{currentCycleNumber} • {cycleProgressPercent}% Percorrido
+                    </span>
+                  </div>
+                </div>
+
+                {/* Progress bar of group rotation cycle */}
+                <div className="w-full bg-white/10 h-2.5 rounded-full overflow-hidden p-0.5 mb-2.5">
+                  <div 
+                    className="bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 h-full rounded-full transition-all duration-700 shadow-[0_0_10px_rgba(52,211,153,0.7)]"
+                    style={{ width: `${cycleProgressPercent}%` }}
+                  />
+                </div>
+
+                {/* Live Current Group Card */}
+                <div className="p-2.5 rounded-xl bg-gradient-to-r from-emerald-950/70 via-black/80 to-emerald-950/70 border border-emerald-500/30 flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0 ${
+                      currentGroupObj.type === 'whatsapp' 
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' 
+                        : 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
+                    }`}>
+                      {currentGroupObj.type === 'whatsapp' ? '💬' : '👥'}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-white font-bold truncate block leading-tight">
+                          {currentGroupObj.name}
+                        </span>
+                        <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20 shrink-0 font-bold">
+                          Ao Vivo
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-white/50 block truncate">
+                        {currentGroupObj.category} • {currentGroupObj.members} • {currentGroupObj.region}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <span className="text-[10px] font-bold text-amber-300 block">
+                      Próximo: #{nextGroupInCycle.toLocaleString('pt-BR')}
+                    </span>
+                    <span className="text-[9px] text-white/40 block">
+                      em {timerFormatted}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-white/50 mt-2 m-0 text-center sm:text-left leading-relaxed">
+                  🔄 <strong>Rotação Contínua:</strong> A cada 5 minutos, o disparo avança para o próximo grupo. Ao alcançar o grupo #{totalGroups.toLocaleString('pt-BR')}, o ciclo completa e reinicia automaticamente a partir do grupo #001 para que seus anúncios continuem circulando sem parar.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* ======================================================= */}
@@ -622,11 +692,11 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
           </div>
 
           {/* ======================================================= */}
-          {/* MÉTRICAS PRINCIPAIS (DISPAROS, DIAS, ALCANCE) */}
+          {/* MÉTRICAS PRINCIPAIS (TODAS COM MOVIMENTOS VIVOS) */}
           {/* ======================================================= */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3">
             {/* Metric 1: Total Disparos */}
-            <div className={`col-span-2 sm:col-span-1 bg-gradient-to-b from-amber-500/20 via-black/70 to-black/90 border rounded-2xl p-4 text-center shadow-lg transition-all duration-500 relative overflow-hidden ${
+            <div className={`col-span-2 sm:col-span-1 bg-gradient-to-b from-amber-500/20 via-black/70 to-black/90 border rounded-2xl p-3.5 text-center shadow-lg transition-all duration-500 relative overflow-hidden ${
               justUpdated || livePulse 
                 ? 'scale-[1.03] border-emerald-400 shadow-[0_0_25px_rgba(52,211,153,0.35)]' 
                 : 'border-amber-400/40'
@@ -644,7 +714,7 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
                 </span>
               </div>
 
-              <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight flex items-center justify-center gap-1 my-0.5">
+              <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight flex items-center justify-center gap-1 my-0.5">
                 <span className={`transition-all duration-300 ${livePulse || justUpdated ? 'text-emerald-300 scale-110' : 'text-white'}`}>
                   {loading ? '...' : currentTotal.toLocaleString('pt-BR')}
                 </span>
@@ -653,12 +723,34 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
               <div className="flex items-center justify-center gap-1 text-[9px] font-bold mt-1">
                 <span className="text-emerald-400 flex items-center gap-1">
                   <span className="inline-block animate-bounce">⚡</span>
-                  <span>{tracking?.isAuto24hActive ? 'Transmitindo nos Grupos' : '✓ Confirmados'}</span>
+                  <span>+1 a cada 5 min</span>
                 </span>
               </div>
             </div>
 
-            {/* Metric 2: Sequência de Dias */}
+            {/* Metric 2: GRUPO ATUAL NO CICLO */}
+            <div className={`col-span-2 sm:col-span-1 bg-gradient-to-b from-emerald-500/20 via-black/70 to-black/90 border rounded-2xl p-3.5 text-center shadow-lg transition-all duration-500 relative overflow-hidden ${
+              justUpdated || livePulse 
+                ? 'border-emerald-400 scale-[1.02] shadow-[0_0_20px_rgba(52,211,153,0.3)]' 
+                : 'border-emerald-500/40'
+            }`}>
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <span className="text-emerald-400 text-xs">🎯</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-300">
+                  Grupo no Ciclo
+                </span>
+              </div>
+
+              <div className="text-2xl sm:text-3xl font-black font-mono text-emerald-400 tracking-tight flex items-center justify-center gap-1 my-0.5">
+                <span>#{loading ? '...' : currentGroupInCycle.toLocaleString('pt-BR')}</span>
+              </div>
+
+              <span className="text-[9px] text-white/60 font-medium block mt-1 truncate">
+                de {totalGroups.toLocaleString('pt-BR')} • Ciclo #{currentCycleNumber}
+              </span>
+            </div>
+
+            {/* Metric 3: Sequência de Dias */}
             <div className="bg-gradient-to-b from-yellow-500/10 to-black/40 border border-yellow-500/30 rounded-2xl p-3.5 text-center">
               <span className="text-[10px] font-bold uppercase tracking-wider text-yellow-300/80 block mb-1">
                 Sequência de Dias
@@ -671,29 +763,29 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
               </span>
             </div>
 
-            {/* Metric 3: Total de Grupos */}
+            {/* Metric 4: Rede de Grupos */}
             <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-3.5 text-center">
               <span className="text-[10px] font-bold uppercase tracking-wider text-white/50 block mb-1">
-                Grupos Ativos
+                Rede de Grupos
               </span>
               <div className="text-xl sm:text-2xl font-black text-emerald-400 font-mono">
                 {loading ? '...' : totalGroups.toLocaleString('pt-BR')}
               </div>
               <span className="text-[9px] text-white/40 block mt-0.5">
-                Zap + Face
+                {waGroups} Zap • {fbGroups} Face
               </span>
             </div>
 
-            {/* Metric 4: Alcance Estimado */}
-            <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-3.5 text-center">
+            {/* Metric 5: Alcance Estimado */}
+            <div className="col-span-2 sm:col-span-1 bg-white/[0.03] border border-white/10 rounded-2xl p-3.5 text-center relative overflow-hidden">
               <span className="text-[10px] font-bold uppercase tracking-wider text-white/50 block mb-1">
                 Alcance Estimado
               </span>
               <div className="text-xl sm:text-2xl font-black text-yellow-300 font-mono">
                 {loading ? '...' : `${reach.toLocaleString('pt-BR')}+`}
               </div>
-              <span className="text-[9px] text-white/40 block mt-0.5">
-                Visualizações
+              <span className="text-[9px] text-emerald-400 font-bold block mt-0.5 animate-pulse">
+                👁️ +{liveExtraViews} ao vivo
               </span>
             </div>
           </div>
