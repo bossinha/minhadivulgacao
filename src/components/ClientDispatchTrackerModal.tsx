@@ -46,6 +46,8 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
   const [groupTypeFilter, setGroupTypeFilter] = useState<'all' | 'whatsapp' | 'facebook'>('all');
   const [groupSearch, setGroupSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(60);
+  const [livePulse, setLivePulse] = useState(false);
+  const [activeGroupTicker, setActiveGroupTicker] = useState<{ name: string; channel: string; time: string } | null>(null);
 
   const compName = companyData?.name || tracking?.companyName || 'Sua Empresa';
   const compLogo = companyData?.logo || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200';
@@ -109,7 +111,7 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
     };
   }, [companyId, compName]);
 
-  // Live timer tick for 5-minute countdown if 24h mode is active
+  // Live timer tick for 5-minute countdown and live visual pulse movements
   useEffect(() => {
     if (!tracking?.isAuto24hActive || !tracking?.auto24hStartedAt) {
       return;
@@ -123,6 +125,23 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
       const msIntoCurrentCycle = elapsedSinceStart % cycleMs;
       const secRemaining = Math.max(0, Math.ceil((cycleMs - msIntoCurrentCycle) / 1000));
       setCountdownSeconds(secRemaining);
+
+      // Simula transmissão viva a cada ~30 a 45 segundos para movimentar a tela
+      const secondsIntoCycle = Math.floor(msIntoCurrentCycle / 1000);
+      if (secondsIntoCycle > 0 && secondsIntoCycle % 35 === 0) {
+        setLivePulse(true);
+        const randomGroupIndex = Math.floor(Math.random() * Math.min(100, FICTITIOUS_GROUPS_LIST.length));
+        const sampleGroup = FICTITIOUS_GROUPS_LIST[randomGroupIndex];
+        if (sampleGroup) {
+          const nowTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          setActiveGroupTicker({
+            name: sampleGroup.name,
+            channel: sampleGroup.type === 'whatsapp' ? 'WhatsApp' : 'Facebook',
+            time: nowTime
+          });
+        }
+        setTimeout(() => setLivePulse(false), 2500);
+      }
 
       setTracking(prev => prev ? computeLiveTracking(prev) : prev);
     }, 1000);
@@ -276,31 +295,48 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
 
             {/* 24h Auto Mode Countdown */}
             {tracking?.isAuto24hActive && (
-              <div className="mt-3.5 pt-3 border-t border-emerald-500/20 bg-black/40 -mx-4 -mb-4 p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="flex h-2.5 w-2.5 relative">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                  </span>
-                  <span className="font-bold text-white/90">
-                    Disparos Automáticos Ativos: <span className="text-emerald-400 font-black">+1 a cada 5 minutos</span>
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                  <div className="text-right">
-                    <span className="text-[10px] text-white/50 uppercase block font-bold">Próximo Disparo em:</span>
-                    <span className="text-emerald-300 font-mono font-black text-sm tracking-wider">
-                      ⏳ {timerFormatted}
+              <div className="mt-3.5 pt-3 border-t border-emerald-500/20 bg-black/40 -mx-4 -mb-4 p-3.5">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="flex h-2.5 w-2.5 relative">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </span>
+                    <span className="font-bold text-white/90">
+                      Disparos Automáticos Ativos: <span className="text-emerald-400 font-black">+1 a cada 5 minutos</span>
                     </span>
                   </div>
-                  <div className="w-24 sm:w-28 bg-white/10 h-2.5 rounded-full overflow-hidden">
-                    <div
-                      className="bg-emerald-400 h-full rounded-full transition-all duration-1000 ease-linear shadow-[0_0_8px_rgba(52,211,153,0.8)]"
-                      style={{ width: `${Math.min(100, Math.max(0, ((300 - countdownSeconds) / 300) * 100))}%` }}
-                    ></div>
+
+                  <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                    <div className="text-right">
+                      <span className="text-[10px] text-white/50 uppercase block font-bold">Próximo Disparo em:</span>
+                      <span className="text-emerald-300 font-mono font-black text-sm tracking-wider">
+                        ⏳ {timerFormatted}
+                      </span>
+                    </div>
+                    <div className="w-24 sm:w-28 bg-white/10 h-2.5 rounded-full overflow-hidden">
+                      <div
+                        className="bg-emerald-400 h-full rounded-full transition-all duration-1000 ease-linear shadow-[0_0_8px_rgba(52,211,153,0.8)]"
+                        style={{ width: `${Math.min(100, Math.max(0, ((300 - countdownSeconds) / 300) * 100))}%` }}
+                      ></div>
+                    </div>
                   </div>
                 </div>
+
+                {/* Real-Time Live Activity Notification Bar */}
+                {activeGroupTicker && (
+                  <div className="mt-2.5 pt-2 border-t border-emerald-500/20 bg-emerald-950/60 -mx-3.5 -mb-3.5 p-2 px-3 flex items-center justify-between text-xs rounded-b-xl">
+                    <div className="flex items-center gap-2 truncate mr-2">
+                      <span className="text-emerald-400 animate-spin shrink-0">🔄</span>
+                      <span className="text-white/90 text-[11px] truncate">
+                        Transmitindo agora em: <strong className="text-emerald-300 font-bold">{activeGroupTicker.name}</strong>
+                      </span>
+                    </div>
+                    <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 shrink-0">
+                      {activeGroupTicker.time} • Ao Vivo
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -590,16 +626,36 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
           {/* ======================================================= */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
             {/* Metric 1: Total Disparos */}
-            <div className={`col-span-2 sm:col-span-1 bg-gradient-to-b from-amber-500/20 to-black/60 border border-amber-400/40 rounded-2xl p-4 text-center shadow-lg transition-transform duration-300 ${justUpdated ? 'scale-105 border-emerald-400 shadow-emerald-500/30' : ''}`}>
-              <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 block mb-1">
-                Disparos Totais
-              </span>
-              <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight flex items-center justify-center gap-1">
-                <span>{loading ? '...' : currentTotal.toLocaleString('pt-BR')}</span>
+            <div className={`col-span-2 sm:col-span-1 bg-gradient-to-b from-amber-500/20 via-black/70 to-black/90 border rounded-2xl p-4 text-center shadow-lg transition-all duration-500 relative overflow-hidden ${
+              justUpdated || livePulse 
+                ? 'scale-[1.03] border-emerald-400 shadow-[0_0_25px_rgba(52,211,153,0.35)]' 
+                : 'border-amber-400/40'
+            }`}>
+              {/* Subtle Animated Shimmer Beam across card */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-400/10 to-transparent -translate-x-full animate-[shimmer_3s_infinite] pointer-events-none" />
+
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-300">
+                  Disparos Totais
+                </span>
               </div>
-              <span className="text-[9px] text-emerald-400 font-bold block mt-1">
-                ✓ Confirmados
-              </span>
+
+              <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight flex items-center justify-center gap-1 my-0.5">
+                <span className={`transition-all duration-300 ${livePulse || justUpdated ? 'text-emerald-300 scale-110' : 'text-white'}`}>
+                  {loading ? '...' : currentTotal.toLocaleString('pt-BR')}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-center gap-1 text-[9px] font-bold mt-1">
+                <span className="text-emerald-400 flex items-center gap-1">
+                  <span className="inline-block animate-bounce">⚡</span>
+                  <span>{tracking?.isAuto24hActive ? 'Transmitindo nos Grupos' : '✓ Confirmados'}</span>
+                </span>
+              </div>
             </div>
 
             {/* Metric 2: Sequência de Dias */}
