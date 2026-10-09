@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   PushNotificationPayload,
   subscribeToActiveSubscribersCount,
@@ -326,7 +327,7 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
       alert('Por favor, preencha o Título e a Mensagem da notificação.');
       return;
     }
-    setShowConfirmModal(true);
+    handleConfirmSend();
   };
 
   const handleConfirmSend = async () => {
@@ -805,11 +806,10 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
                 className="dev-input"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                placeholder="Ex: https://wa.me/5585999999999 ou link do portal"
-                required
+                placeholder="Ex: https://wa.me/5585999999999 ou deixe em branco para o portal"
               />
               <span style={{ fontSize: '10px', color: '#888', marginTop: '3px', display: 'block' }}>
-                Pode ser o WhatsApp do anunciante, página de produto ou qualquer link na internet.
+                Opcional: WhatsApp do anunciante, página de produto ou link do portal.
               </span>
             </div>
 
@@ -846,11 +846,12 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px'
+                  gap: '8px',
+                  opacity: loading ? 0.75 : 1
                 }}
               >
                 <span>🚀</span>
-                <span>{loading ? 'Disparando...' : 'ENVIAR AGORA PARA A AUDIÊNCIA'}</span>
+                <span>{loading ? 'DISPARANDO NOTIFICAÇÃO AGORA...' : 'ENVIAR AGORA PARA A AUDIÊNCIA'}</span>
               </button>
             </div>
           </form>
@@ -1217,7 +1218,7 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
       )}
 
       {/* MODAL DE EDIÇÃO DE NOTIFICAÇÃO GRAVADA NO BANCO */}
-      {editingNotification && (
+      {editingNotification && typeof document !== 'undefined' && createPortal(
         <div style={{
           position: 'fixed',
           top: 0,
@@ -1476,7 +1477,8 @@ export const AdminPushNotificationsPanel: React.FC<AdminPushNotificationsPanelPr
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

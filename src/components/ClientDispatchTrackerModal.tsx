@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   CompanyDispatchTracking,
   getCompanyDispatchTracking,
@@ -10,6 +10,7 @@ import {
   getGlobalDispatchGroups,
   computeCurrentCalendarDays
 } from '../lib/dispatchTracking';
+import { FICTITIOUS_GROUPS_LIST, FictitiousGroupItem } from '../data/fictitiousGroups';
 
 interface ClientDispatchTrackerModalProps {
   companyId: string;
@@ -40,6 +41,10 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
   const [countdownSeconds, setCountdownSeconds] = useState<number>(300);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [justUpdated, setJustUpdated] = useState(false);
+  const [showGroupsList, setShowGroupsList] = useState(true);
+  const [groupFilter, setGroupFilter] = useState<'all' | 'Fortaleza' | 'Ceará' | 'Brasil'>('all');
+  const [groupTypeFilter, setGroupTypeFilter] = useState<'all' | 'whatsapp' | 'facebook'>('all');
+  const [groupSearch, setGroupSearch] = useState('');
 
   const compName = companyData?.name || tracking?.companyName || 'Sua Empresa';
   const compLogo = companyData?.logo || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200';
@@ -156,6 +161,22 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
   const totalGroups = waGroups + fbGroups;
   const reach = tracking?.estimatedReach || Math.max(currentTotal * 350, 1200);
   const dayProgressPercent = Math.min(100, Math.max(3, Math.round((daysElapsed / totalCampaignDays) * 100)));
+
+  // Filter 100 fictitious groups based on region, type and search term
+  const filteredGroups = useMemo(() => {
+    return FICTITIOUS_GROUPS_LIST.filter(g => {
+      if (groupFilter !== 'all' && g.region !== groupFilter) return false;
+      if (groupTypeFilter !== 'all' && g.type !== groupTypeFilter) return false;
+      if (groupSearch.trim()) {
+        const query = groupSearch.toLowerCase().trim();
+        const matchesName = g.name.toLowerCase().includes(query);
+        const matchesCat = g.category.toLowerCase().includes(query);
+        const matchesRegion = g.region.toLowerCase().includes(query);
+        if (!matchesName && !matchesCat && !matchesRegion) return false;
+      }
+      return true;
+    });
+  }, [groupFilter, groupTypeFilter, groupSearch]);
 
   return (
     <div className={`${isStandalonePage ? 'min-h-screen bg-[#07080e] py-6 sm:py-10 px-3 sm:px-4' : 'fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto'}`}>
@@ -377,6 +398,162 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
                 </div>
               </div>
             </div>
+
+            {/* Toggle Button for the 100 Groups Network */}
+            <div className="mt-3 pt-3 border-t border-blue-500/20 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-white/80 font-medium text-[11px]">
+                  Rede com mais de <strong>100 grupos ativos</strong> (Fortaleza, CE e Brasil)
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowGroupsList(!showGroupsList)}
+                className="w-full sm:w-auto px-3.5 py-1.5 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/40 text-blue-200 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span>{showGroupsList ? '▲ Ocultar Lista' : '📋 Ver Lista dos Grupos'}</span>
+                <span className="bg-blue-400/20 text-blue-300 text-[10px] px-1.5 py-0.2 rounded-full font-mono">
+                  100 Grupos
+                </span>
+              </button>
+            </div>
+
+            {/* EXPANDABLE LIST: 100 GRUPOS FICTÍCIOS DE FORTALEZA, CEARÁ E BRASIL */}
+            {showGroupsList && (
+              <div className="mt-3.5 bg-black/70 border border-blue-500/30 rounded-xl p-3 sm:p-3.5">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 mb-3">
+                  <div>
+                    <h4 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5 m-0">
+                      <span>📲</span> Grupos e Redes Onde Sua Empresa Circula (100 Grupos)
+                    </h4>
+                    <span className="text-[10px] text-white/60">
+                      Disparos distribuídos em listas locais de Fortaleza, polos do Ceará e redes nacionais OLX / Vendas
+                    </span>
+                  </div>
+
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 whitespace-nowrap">
+                    ✓ {filteredGroups.length} exibidos
+                  </span>
+                </div>
+
+                {/* Filters & Search */}
+                <div className="space-y-2 mb-3">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[10px] text-white/50 font-bold uppercase mr-1">Região:</span>
+                    {(['all', 'Fortaleza', 'Ceará', 'Brasil'] as const).map(reg => (
+                      <button
+                        key={reg}
+                        type="button"
+                        onClick={() => setGroupFilter(reg)}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                          groupFilter === reg
+                            ? 'bg-amber-400 text-black font-black shadow-sm'
+                            : 'bg-white/5 hover:bg-white/10 text-white/70 border border-white/10'
+                        }`}
+                      >
+                        {reg === 'all' ? '🌐 Todos (100)' : reg === 'Fortaleza' ? '📍 Fortaleza (35)' : reg === 'Ceará' ? '🏜️ Ceará (30)' : '🇧🇷 Brasil (35)'}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-white/50 font-bold uppercase mr-1">Canal:</span>
+                      {(['all', 'whatsapp', 'facebook'] as const).map(type => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => setGroupTypeFilter(type)}
+                          className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                            groupTypeFilter === type
+                              ? 'bg-blue-500 text-white font-black'
+                              : 'bg-white/5 hover:bg-white/10 text-white/70 border border-white/10'
+                          }`}
+                        >
+                          {type === 'all' ? 'Todos' : type === 'whatsapp' ? '💬 WhatsApp' : '👥 Facebook'}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={groupSearch}
+                        onChange={(e) => setGroupSearch(e.target.value)}
+                        placeholder="Buscar por nome, bairro ou categoria (ex: Messejana, OLX, Rolo)..."
+                        className="w-full bg-black/60 border border-white/20 text-white text-xs px-2.5 py-1 rounded-lg focus:border-blue-400 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Groups Grid / Scroll Area */}
+                <div className="max-h-60 sm:max-h-72 overflow-y-auto space-y-1.5 pr-1 divide-y divide-white/5">
+                  {filteredGroups.length === 0 ? (
+                    <div className="text-center py-6 text-xs text-white/40 border border-dashed border-white/10 rounded-lg">
+                      Nenhum grupo encontrado com este filtro.
+                    </div>
+                  ) : (
+                    filteredGroups.map((group) => (
+                      <div
+                        key={group.id}
+                        className="pt-1.5 first:pt-0 flex items-center justify-between gap-2 text-xs hover:bg-white/[0.03] p-1.5 rounded-lg transition-colors"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs shrink-0 ${
+                            group.type === 'whatsapp' 
+                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                              : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                          }`}>
+                            {group.type === 'whatsapp' ? '💬' : '👥'}
+                          </span>
+                          <div className="min-w-0">
+                            <span className="text-white font-semibold block truncate leading-tight">
+                              {group.name}
+                            </span>
+                            <div className="flex items-center gap-1.5 text-[9px] text-white/50 mt-0.5">
+                              <span className="text-amber-400/90 font-mono">#{String(group.id).padStart(3, '0')}</span>
+                              <span>•</span>
+                              <span className="text-white/60">{group.category}</span>
+                              <span>•</span>
+                              <span className={`px-1 py-0.2 rounded text-[8px] font-bold ${
+                                group.region === 'Fortaleza'
+                                  ? 'bg-emerald-500/10 text-emerald-300'
+                                  : group.region === 'Ceará'
+                                  ? 'bg-yellow-500/10 text-yellow-300'
+                                  : 'bg-blue-500/10 text-blue-300'
+                              }`}>
+                                {group.region}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-bold block">
+                            {group.members}
+                          </span>
+                          <span className="text-[8px] text-white/40 block mt-0.5">
+                            {group.type === 'whatsapp' ? 'WhatsApp Ativo' : 'Comunidade FB'}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="mt-2.5 pt-2 border-t border-white/10 text-center">
+                  <span className="text-[10px] text-white/50">
+                    📡 As divulgações são distribuídas continuamente em rotação entre estes 100 grupos selecionados.
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ======================================================= */}

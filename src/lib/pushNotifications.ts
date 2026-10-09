@@ -145,13 +145,24 @@ export async function displayNotificationSafely(
     try {
       let reg: ServiceWorkerRegistration | null = null;
       try {
-        reg = await navigator.serviceWorker.ready;
+        // Usa Promise.race com timeout de 1500ms para nunca travar a aplicação
+        reg = await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500))
+        ]);
+        if (!reg) {
+          reg = await navigator.serviceWorker.getRegistration();
+        }
       } catch (e) {
-        reg = await navigator.serviceWorker.getRegistration();
+        try {
+          reg = await navigator.serviceWorker.getRegistration();
+        } catch (_) {}
       }
 
       if (!reg) {
-        reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        try {
+          reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        } catch (_) {}
       }
 
       if (reg && typeof reg.showNotification === 'function') {
@@ -172,10 +183,9 @@ export async function displayNotificationSafely(
     }
   }
 
-  // 2. Fallback para Notification nativa clássica (apenas para desktop e navegadores que suportam)
-  const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
-  if (!isAndroid && typeof Notification === 'function') {
-    try {
+  // 2. Fallback para Notification nativa clássica (desktop e navegadores que suportam)
+  try {
+    if (typeof Notification === 'function') {
       const notif = new Notification(title, {
         body: notifOptions.body,
         icon: notifOptions.icon,
@@ -190,9 +200,9 @@ export async function displayNotificationSafely(
         }
       };
       return true;
-    } catch (natErr) {
-      console.warn('Fallback Notification clássico falhou:', natErr);
     }
+  } catch (natErr) {
+    console.warn('Fallback Notification clássico falhou:', natErr);
   }
 
   return false;
@@ -610,18 +620,25 @@ export async function triggerLocalTestNotification(params: {
   playNotificationSound();
   vibrateDevice();
 
-  // Exibe nativamente se tiver permissão
-  await displayNotificationSafely(testPayload.title, {
-    body: testPayload.message,
-    image: testPayload.image,
-    url: testPayload.url,
-    actionTitle: testPayload.actionTitle,
-    data: { url: testPayload.url, notificationId: testPayload.id }
-  });
-
-  // Dispara evento para o toast aparecer na tela
+  // 1. Dispara imediatamente evento para o toast em tela e sincroniza abas sem esperar
   if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('minhadivulgacao_last_emitted_push', JSON.stringify(testPayload));
+    } catch (_) {}
     window.dispatchEvent(new CustomEvent('PUSH_NOTIFICATION_EMITTED', { detail: testPayload }));
+  }
+
+  // 2. Dispara notificação nativa do sistema em segundo plano
+  try {
+    await displayNotificationSafely(testPayload.title, {
+      body: testPayload.message,
+      image: testPayload.image,
+      url: testPayload.url,
+      actionTitle: testPayload.actionTitle,
+      data: { url: testPayload.url, notificationId: testPayload.id }
+    });
+  } catch (err) {
+    console.warn('Erro ao disparar nativo no teste:', err);
   }
 
   return true;
