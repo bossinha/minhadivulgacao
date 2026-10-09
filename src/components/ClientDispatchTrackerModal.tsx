@@ -45,6 +45,7 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
   const [groupFilter, setGroupFilter] = useState<'all' | 'Fortaleza' | 'Ceará' | 'Brasil'>('all');
   const [groupTypeFilter, setGroupTypeFilter] = useState<'all' | 'whatsapp' | 'facebook'>('all');
   const [groupSearch, setGroupSearch] = useState('');
+  const [visibleCount, setVisibleCount] = useState(60);
 
   const compName = companyData?.name || tracking?.companyName || 'Sua Empresa';
   const compLogo = companyData?.logo || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200';
@@ -162,7 +163,7 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
   const reach = tracking?.estimatedReach || Math.max(currentTotal * 350, 1200);
   const dayProgressPercent = Math.min(100, Math.max(3, Math.round((daysElapsed / totalCampaignDays) * 100)));
 
-  // Filter 100 fictitious groups based on region, type and search term
+  // Filter fictitious groups (over 7,000 groups) based on region, type and search term
   const filteredGroups = useMemo(() => {
     return FICTITIOUS_GROUPS_LIST.filter(g => {
       if (groupFilter !== 'all' && g.region !== groupFilter) return false;
@@ -177,6 +178,20 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
       return true;
     });
   }, [groupFilter, groupTypeFilter, groupSearch]);
+
+  // Infinite scroll / progressive rendering slice for silky smooth performance
+  const displayedGroups = useMemo(() => {
+    return filteredGroups.slice(0, visibleCount);
+  }, [filteredGroups, visibleCount]);
+
+  const handleGroupsScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 200) {
+      if (visibleCount < filteredGroups.length) {
+        setVisibleCount(prev => Math.min(filteredGroups.length, prev + 50));
+      }
+    }
+  };
 
   return (
     <div className={`${isStandalonePage ? 'min-h-screen bg-[#07080e] py-6 sm:py-10 px-3 sm:px-4' : 'fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto'}`}>
@@ -399,7 +414,7 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
               </div>
             </div>
 
-            {/* Toggle Button for the 100 Groups Network */}
+            {/* Toggle Button for the Groups Network */}
             <div className="mt-3 pt-3 border-t border-blue-500/20 flex flex-col sm:flex-row items-center justify-between gap-2.5">
               <div className="flex items-center gap-2 text-xs">
                 <span className="flex h-2 w-2 relative">
@@ -407,7 +422,7 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
                 <span className="text-white/80 font-medium text-[11px]">
-                  Rede com mais de <strong>100 grupos ativos</strong> (Fortaleza, CE e Brasil)
+                  Rede de grupos e canais ativos (Fortaleza, Ceará e Brasil)
                 </span>
               </div>
 
@@ -417,19 +432,16 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
                 className="w-full sm:w-auto px-3.5 py-1.5 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/40 text-blue-200 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <span>{showGroupsList ? '▲ Ocultar Lista' : '📋 Ver Lista dos Grupos'}</span>
-                <span className="bg-blue-400/20 text-blue-300 text-[10px] px-1.5 py-0.2 rounded-full font-mono">
-                  100 Grupos
-                </span>
               </button>
             </div>
 
-            {/* EXPANDABLE LIST: 100 GRUPOS FICTÍCIOS DE FORTALEZA, CEARÁ E BRASIL */}
+            {/* EXPANDABLE LIST: GRUPOS FICTÍCIOS DE FORTALEZA, CEARÁ E BRASIL */}
             {showGroupsList && (
               <div className="mt-3.5 bg-black/70 border border-blue-500/30 rounded-xl p-3 sm:p-3.5">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 mb-3">
                   <div>
                     <h4 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5 m-0">
-                      <span>📲</span> Grupos e Redes Onde Sua Empresa Circula (100 Grupos)
+                      <span>📲</span> Grupos e Redes Onde Sua Empresa Circula
                     </h4>
                     <span className="text-[10px] text-white/60">
                       Disparos distribuídos em listas locais de Fortaleza, polos do Ceará e redes nacionais OLX / Vendas
@@ -437,7 +449,7 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
                   </div>
 
                   <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 whitespace-nowrap">
-                    ✓ {filteredGroups.length} exibidos
+                    🟢 Transmissão Ativa
                   </span>
                 </div>
 
@@ -449,14 +461,17 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
                       <button
                         key={reg}
                         type="button"
-                        onClick={() => setGroupFilter(reg)}
+                        onClick={() => {
+                          setGroupFilter(reg);
+                          setVisibleCount(60);
+                        }}
                         className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
                           groupFilter === reg
                             ? 'bg-amber-400 text-black font-black shadow-sm'
                             : 'bg-white/5 hover:bg-white/10 text-white/70 border border-white/10'
                         }`}
                       >
-                        {reg === 'all' ? '🌐 Todos (100)' : reg === 'Fortaleza' ? '📍 Fortaleza (35)' : reg === 'Ceará' ? '🏜️ Ceará (30)' : '🇧🇷 Brasil (35)'}
+                        {reg === 'all' ? '🌐 Todos' : reg === 'Fortaleza' ? '📍 Fortaleza' : reg === 'Ceará' ? '🏜️ Ceará' : '🇧🇷 Brasil'}
                       </button>
                     ))}
                   </div>
@@ -468,7 +483,10 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
                         <button
                           key={type}
                           type="button"
-                          onClick={() => setGroupTypeFilter(type)}
+                          onClick={() => {
+                            setGroupTypeFilter(type);
+                            setVisibleCount(60);
+                          }}
                           className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
                             groupTypeFilter === type
                               ? 'bg-blue-500 text-white font-black'
@@ -484,7 +502,10 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
                       <input
                         type="text"
                         value={groupSearch}
-                        onChange={(e) => setGroupSearch(e.target.value)}
+                        onChange={(e) => {
+                          setGroupSearch(e.target.value);
+                          setVisibleCount(60);
+                        }}
                         placeholder="Buscar por nome, bairro ou categoria (ex: Messejana, OLX, Rolo)..."
                         className="w-full bg-black/60 border border-white/20 text-white text-xs px-2.5 py-1 rounded-lg focus:border-blue-400 focus:outline-none"
                       />
@@ -492,14 +513,17 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
                   </div>
                 </div>
 
-                {/* Groups Grid / Scroll Area */}
-                <div className="max-h-60 sm:max-h-72 overflow-y-auto space-y-1.5 pr-1 divide-y divide-white/5">
-                  {filteredGroups.length === 0 ? (
+                {/* Groups Grid / Scroll Area with Smooth Infinite Scroll */}
+                <div 
+                  onScroll={handleGroupsScroll}
+                  className="max-h-60 sm:max-h-72 overflow-y-auto space-y-1.5 pr-1 divide-y divide-white/5"
+                >
+                  {displayedGroups.length === 0 ? (
                     <div className="text-center py-6 text-xs text-white/40 border border-dashed border-white/10 rounded-lg">
                       Nenhum grupo encontrado com este filtro.
                     </div>
                   ) : (
-                    filteredGroups.map((group) => (
+                    displayedGroups.map((group) => (
                       <div
                         key={group.id}
                         className="pt-1.5 first:pt-0 flex items-center justify-between gap-2 text-xs hover:bg-white/[0.03] p-1.5 rounded-lg transition-colors"
@@ -517,7 +541,7 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
                               {group.name}
                             </span>
                             <div className="flex items-center gap-1.5 text-[9px] text-white/50 mt-0.5">
-                              <span className="text-amber-400/90 font-mono">#{String(group.id).padStart(3, '0')}</span>
+                              <span className="text-amber-400/90 font-mono">#{String(group.id).padStart(4, '0')}</span>
                               <span>•</span>
                               <span className="text-white/60">{group.category}</span>
                               <span>•</span>
@@ -545,11 +569,16 @@ export const ClientDispatchTrackerModal: React.FC<ClientDispatchTrackerModalProp
                       </div>
                     ))
                   )}
+                  {visibleCount < filteredGroups.length && (
+                    <div className="text-center py-2 text-[10px] text-white/40">
+                      Role para ver mais grupos em rotação...
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-2.5 pt-2 border-t border-white/10 text-center">
                   <span className="text-[10px] text-white/50">
-                    📡 As divulgações são distribuídas continuamente em rotação entre estes 100 grupos selecionados.
+                    📡 As divulgações são distribuídas continuamente em rotação entre os grupos selecionados.
                   </span>
                 </div>
               </div>

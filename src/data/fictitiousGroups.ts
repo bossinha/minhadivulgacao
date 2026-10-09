@@ -1,5 +1,6 @@
-// 100 nomes fictícios e realistas de grupos e comunidades de divulgação
-// com foco em Fortaleza, Região Metropolitana, Ceará e Brasil (OLX, Vendas, Feiras, Classificados, Negócios)
+// Gerador otimizado e determinístico de 7.000+ grupos fictícios e realistas
+// com foco em Fortaleza (bairros), Região Metropolitana, Ceará e Brasil (OLX, Vendas, Feiras, Classificados, Negócios)
+// Sem sobrecarregar memória do navegador e com rolagem ultra rápida
 
 export interface FictitiousGroupItem {
   id: number;
@@ -10,110 +11,132 @@ export interface FictitiousGroupItem {
   region: 'Fortaleza' | 'Ceará' | 'Brasil';
 }
 
-export const FICTITIOUS_GROUPS_LIST: FictitiousGroupItem[] = [
-  // 1-35: FORTALEZA E BAIRROS
-  { id: 1, name: "OLX Vendas Fortaleza & Região", type: "whatsapp", category: "Vendas Gerais", members: "1.024 membros", region: "Fortaleza" },
-  { id: 2, name: "Feirão do Rolo Fortaleza - Centro", type: "whatsapp", category: "Classificados", members: "980 membros", region: "Fortaleza" },
-  { id: 3, name: "Classificados Aldeota & Meireles", type: "whatsapp", category: "Comércio Local", members: "840 membros", region: "Fortaleza" },
-  { id: 4, name: "Vende Tudo Messejana & Cambeba", type: "facebook", category: "Comunidade", members: "45.200 membros", region: "Fortaleza" },
-  { id: 5, name: "Divulgações Parangaba & Maraponga", type: "whatsapp", category: "Bairros", members: "1.012 membros", region: "Fortaleza" },
-  { id: 6, name: "Barganhas e Ofertas Montese", type: "whatsapp", category: "Ofertas", members: "760 membros", region: "Fortaleza" },
-  { id: 7, name: "Desapega Fortaleza Zona Sul", type: "facebook", category: "Desapego", members: "62.800 membros", region: "Fortaleza" },
-  { id: 8, name: "Grupo de Vendas Papicu & Varjota", type: "whatsapp", category: "Vendas", members: "890 membros", region: "Fortaleza" },
-  { id: 9, name: "Classificados Barra do Ceará & Pirambu", type: "whatsapp", category: "Comércio", members: "670 membros", region: "Fortaleza" },
-  { id: 10, name: "Mercadão Virtual Fortaleza", type: "facebook", category: "Marketplace", members: "88.400 membros", region: "Fortaleza" },
-  { id: 11, name: "Compre e Venda Benfica & Fátima", type: "whatsapp", category: "Comércio", members: "930 membros", region: "Fortaleza" },
-  { id: 12, name: "Brique e Trocas Beira Mar Fortaleza", type: "whatsapp", category: "Brique", members: "550 membros", region: "Fortaleza" },
-  { id: 13, name: "Autônomos e Lojistas de Fortaleza", type: "whatsapp", category: "Negócios", members: "1.020 membros", region: "Fortaleza" },
-  { id: 14, name: "Feira da José Avelino & Moda Fortaleza", type: "facebook", category: "Moda & Confecção", members: "112.000 membros", region: "Fortaleza" },
-  { id: 15, name: "Vendas e Serviços Antônio Bezerra", type: "whatsapp", category: "Serviços", members: "820 membros", region: "Fortaleza" },
-  { id: 16, name: "Balcão de Negócios Cocó & Cidade 2000", type: "whatsapp", category: "Negócios", members: "790 membros", region: "Fortaleza" },
-  { id: 17, name: "Feira do Rolo Conjunto Ceará", type: "facebook", category: "Comunidade", members: "34.500 membros", region: "Fortaleza" },
-  { id: 18, name: "Empresas & Ofertas Lagoa Redonda", type: "whatsapp", category: "Ofertas", members: "610 membros", region: "Fortaleza" },
-  { id: 19, name: "Divulgação Ativa Maracanaú & Fortaleza", type: "whatsapp", category: "Comércio", members: "1.005 membros", region: "Fortaleza" },
-  { id: 20, name: "Caucaia & Fortaleza Comércio Aberto", type: "facebook", category: "Classificados", members: "53.200 membros", region: "Fortaleza" },
-  { id: 21, name: "Classificados Eusébio & Fortaleza", type: "whatsapp", category: "Alto Padrão", members: "940 membros", region: "Fortaleza" },
-  { id: 22, name: "Vende Rápido Castelão & Passaré", type: "whatsapp", category: "Vendas", members: "870 membros", region: "Fortaleza" },
-  { id: 23, name: "Portal de Divulgações Jangurussu", type: "whatsapp", category: "Divulgações", members: "730 membros", region: "Fortaleza" },
-  { id: 24, name: "Rolo e Vendas Bom Jardim & Granja", type: "facebook", category: "Comunidade", members: "29.800 membros", region: "Fortaleza" },
-  { id: 25, name: "Promoções do Dia Fortaleza", type: "whatsapp", category: "Promoções", members: "1.024 membros", region: "Fortaleza" },
-  { id: 26, name: "Anuncie Aqui Fortaleza Empregos & Vendas", type: "facebook", category: "Divulgações", members: "71.000 membros", region: "Fortaleza" },
-  { id: 27, name: "Comércio Popular Centro Fortaleza", type: "whatsapp", category: "Varejo", members: "1.015 membros", region: "Fortaleza" },
-  { id: 28, name: "Rede de Negócios Dionísio Torres", type: "whatsapp", category: "B2B & Serviços", members: "680 membros", region: "Fortaleza" },
-  { id: 29, name: "Desapego e Bazar Sapiranga & Edson Queiroz", type: "whatsapp", category: "Bazar", members: "890 membros", region: "Fortaleza" },
-  { id: 30, name: "Compre Direto do Fabricante Fortaleza", type: "facebook", category: "Fabricantes", members: "48.900 membros", region: "Fortaleza" },
-  { id: 31, name: "Feira Livre Vila Velha & Jardim Guanabara", type: "whatsapp", category: "Bairros", members: "640 membros", region: "Fortaleza" },
-  { id: 32, name: "Fortaleza Vende Tudo & Trocas", type: "facebook", category: "Classificados", members: "95.400 membros", region: "Fortaleza" },
-  { id: 33, name: "Divulga Fácil Messejana e Vizinhança", type: "whatsapp", category: "Vendas", members: "880 membros", region: "Fortaleza" },
-  { id: 34, name: "Classificados Parque Manibura & Cambeba", type: "whatsapp", category: "Comércio", members: "710 membros", region: "Fortaleza" },
-  { id: 35, name: "Rede Empreendedora Fortaleza CE", type: "whatsapp", category: "Empreendedorismo", members: "1.024 membros", region: "Fortaleza" },
-
-  // 36-65: CEARÁ (INTERIOR E LITORAL)
-  { id: 36, name: "Grupo OLX Ceará Vende Tudo", type: "facebook", category: "Classificados", members: "142.000 membros", region: "Ceará" },
-  { id: 37, name: "Feira de Negócios Juazeiro do Norte & Cariri", type: "whatsapp", category: "Regional", members: "1.024 membros", region: "Ceará" },
-  { id: 38, name: "Classificados Sobral & Região Norte", type: "facebook", category: "Comércio", members: "68.300 membros", region: "Ceará" },
-  { id: 39, name: "Vendas e Trocas Iguatu Online", type: "whatsapp", category: "Vendas", members: "790 membros", region: "Ceará" },
-  { id: 40, name: "Maracanaú Vende Tudo & Serviços", type: "facebook", category: "Comunidade", members: "54.100 membros", region: "Ceará" },
-  { id: 41, name: "Itapipoca Negócios & Classificados", type: "whatsapp", category: "Negócios", members: "860 membros", region: "Ceará" },
-  { id: 42, name: "Divulgações Quixadá & Sertão Central", type: "whatsapp", category: "Regional", members: "740 membros", region: "Ceará" },
-  { id: 43, name: "Crato & Barbalha Comércio Forte", type: "facebook", category: "Cariri", members: "39.400 membros", region: "Ceará" },
-  { id: 44, name: "Classificados Ceará Litoral Leste (Canoa/Aracati)", type: "whatsapp", category: "Turismo & Vendas", members: "920 membros", region: "Ceará" },
-  { id: 45, name: "Desapega Ceará Oeste (Crateús & Tauá)", type: "whatsapp", category: "Desapego", members: "670 membros", region: "Ceará" },
-  { id: 46, name: "Feirão Automotivo e Imóveis Ceará", type: "facebook", category: "Autos & Imóveis", members: "125.000 membros", region: "Ceará" },
-  { id: 47, name: "Aquiraz & Prainha Vendas e Divulgações", type: "whatsapp", category: "Litoral", members: "810 membros", region: "Ceará" },
-  { id: 48, name: "Cascavel & Beberibe Balcão de Ofertas", type: "whatsapp", category: "Comércio", members: "750 membros", region: "Ceará" },
-  { id: 49, name: "Russas & Limoeiro do Norte Vendas", type: "facebook", category: "Jaguaribe", members: "31.200 membros", region: "Ceará" },
-  { id: 50, name: "Tianguá & Serra da Ibiapaba Divulgações", type: "whatsapp", category: "Serra", members: "890 membros", region: "Ceará" },
-  { id: 51, name: "Canindé Negócios & Fé no Comércio", type: "whatsapp", category: "Comércio", members: "680 membros", region: "Ceará" },
-  { id: 52, name: "Pacatuba & Guaiúba Classificados", type: "whatsapp", category: "Metropolitana", members: "720 membros", region: "Ceará" },
-  { id: 53, name: "Horizonte & Pacajus Polos e Vendas", type: "facebook", category: "Indústria & Vendas", members: "42.000 membros", region: "Ceará" },
-  { id: 54, name: "Camocim & Jericoacoara Serviços & Vendas", type: "whatsapp", category: "Litoral Norte", members: "850 membros", region: "Ceará" },
-  { id: 55, name: "Baturité & Maciço de Baturité Ofertas", type: "whatsapp", category: "Serrano", members: "640 membros", region: "Ceará" },
-  { id: 56, name: "Morada Nova & Banabuiú Classificados", type: "whatsapp", category: "Sertão", members: "580 membros", region: "Ceará" },
-  { id: 57, name: "São Gonçalo do Amarante & Pecém Negócios", type: "facebook", category: "Porto & Indústria", members: "27.500 membros", region: "Ceará" },
-  { id: 58, name: "Feira Geral do Ceará - WhatsApp", type: "whatsapp", category: "Geral", members: "1.024 membros", region: "Ceará" },
-  { id: 59, name: "Classificados Todo o Ceará Conectado", type: "facebook", category: "Comunidade", members: "180.000 membros", region: "Ceará" },
-  { id: 60, name: "Quixeramobim Vendas & Trocas Rápidas", type: "whatsapp", category: "Vendas", members: "690 membros", region: "Ceará" },
-  { id: 61, name: "Rede de Lojas & Autônomos do Ceará", type: "whatsapp", category: "Lojistas", members: "1.018 membros", region: "Ceará" },
-  { id: 62, name: "Icapuí & Ponta Grossa Divulgações", type: "whatsapp", category: "Comércio", members: "510 membros", region: "Ceará" },
-  { id: 63, name: "Trairi, Flecheiras & Mundaú Classificados", type: "whatsapp", category: "Litoral", members: "630 membros", region: "Ceará" },
-  { id: 64, name: "Acaraú & Itarema Negócios da Região", type: "whatsapp", category: "Vendas", members: "710 membros", region: "Ceará" },
-  { id: 65, name: "Grupo de Ofertas do Sertão Central CE", type: "facebook", category: "Ofertas", members: "36.400 membros", region: "Ceará" },
-
-  // 66-100: BRASIL E GRANDES REDES NACIONAIS
-  { id: 66, name: "Vende Tudo Brasil - Classificados Livres", type: "facebook", category: "Nacional", members: "340.000 membros", region: "Brasil" },
-  { id: 67, name: "OLX Brasil Vendas Rápidas Online", type: "facebook", category: "Marketplace", members: "520.000 membros", region: "Brasil" },
-  { id: 68, name: "Barganhas & Desapegos Brasil", type: "whatsapp", category: "Desapego", members: "1.024 membros", region: "Brasil" },
-  { id: 69, name: "Rede Nacional de Comércio e Serviços", type: "facebook", category: "B2B", members: "215.000 membros", region: "Brasil" },
-  { id: 70, name: "Divulga Geral Brasil - WhatsApp 01", type: "whatsapp", category: "Divulgações", members: "1.024 membros", region: "Brasil" },
-  { id: 71, name: "Divulga Geral Brasil - WhatsApp 02", type: "whatsapp", category: "Divulgações", members: "1.010 membros", region: "Brasil" },
-  { id: 72, name: "Feirão dos Estados - Brasil Vendas", type: "facebook", category: "Comunidade", members: "190.000 membros", region: "Brasil" },
-  { id: 73, name: "Nordeste Forte Negócios & Parcerias", type: "whatsapp", category: "Regional", members: "990 membros", region: "Brasil" },
-  { id: 74, name: "Mercado Aberto Brasil Trocas e Vendas", type: "facebook", category: "Classificados", members: "278.000 membros", region: "Brasil" },
-  { id: 75, name: "Ofertas Relâmpago Brasil - WhatsApp", type: "whatsapp", category: "Ofertas", members: "1.024 membros", region: "Brasil" },
-  { id: 76, name: "Classificados Brasil Zona Leste a Oeste", type: "facebook", category: "Classificados", members: "165.000 membros", region: "Brasil" },
-  { id: 77, name: "Empreendedores do Brasil Conectados", type: "whatsapp", category: "Networking", members: "1.015 membros", region: "Brasil" },
-  { id: 78, name: "Bazar e Feira Virtual Brasil", type: "facebook", category: "Bazar", members: "134.000 membros", region: "Brasil" },
-  { id: 79, name: "Anúncios Grátis Brasil & Estados", type: "whatsapp", category: "Anúncios", members: "960 membros", region: "Brasil" },
-  { id: 80, name: "Mega Feirão dos Lojistas Brasileiros", type: "facebook", category: "Lojistas", members: "310.000 membros", region: "Brasil" },
-  { id: 81, name: "Compre de Quem Faz - Brasil Artes & Prod", type: "whatsapp", category: "Produção", members: "880 membros", region: "Brasil" },
-  { id: 82, name: "Rede de Divulgação Contínua Brasil", type: "whatsapp", category: "Disparos", members: "1.024 membros", region: "Brasil" },
-  { id: 83, name: "Super Ofertas Nordeste & Brasil", type: "facebook", category: "Ofertas", members: "98.000 membros", region: "Brasil" },
-  { id: 84, name: "Classificados do WhatsApp - Brasil 10", type: "whatsapp", category: "Grupos VIP", members: "1.024 membros", region: "Brasil" },
-  { id: 85, name: "Portal Vende Fácil Brasil", type: "facebook", category: "Marketplace", members: "220.000 membros", region: "Brasil" },
-  { id: 86, name: "Feira de Rolo Brasil - Carros, Motos & Mais", type: "facebook", category: "Veículos & Rolo", members: "410.000 membros", region: "Brasil" },
-  { id: 87, name: "Vendas Diretas & Revenda Brasil", type: "whatsapp", category: "Revenda", members: "950 membros", region: "Brasil" },
-  { id: 88, name: "Central de Anúncios Brasil 24h", type: "whatsapp", category: "Divulgação", members: "1.020 membros", region: "Brasil" },
-  { id: 89, name: "Classificados Brasil - Capitais & Interior", type: "facebook", category: "Classificados", members: "175.000 membros", region: "Brasil" },
-  { id: 90, name: "Comunidade de Vendas Fortaleza & Brasil", type: "whatsapp", category: "Integração", members: "1.024 membros", region: "Brasil" },
-  { id: 91, name: "Balcão dos Negócios Brasil Afora", type: "facebook", category: "Comércio", members: "87.000 membros", region: "Brasil" },
-  { id: 92, name: "Rede Zap Vendas Brasil - Grupo 07", type: "whatsapp", category: "Vendas", members: "1.018 membros", region: "Brasil" },
-  { id: 93, name: "Rede Zap Vendas Brasil - Grupo 12", type: "whatsapp", category: "Vendas", members: "1.012 membros", region: "Brasil" },
-  { id: 94, name: "Ponto das Ofertas Brasil", type: "facebook", category: "Ofertas", members: "155.000 membros", region: "Brasil" },
-  { id: 95, name: "Compre e Venda Sem Intermediários Brasil", type: "facebook", category: "Direto com Dono", members: "305.000 membros", region: "Brasil" },
-  { id: 96, name: "Oportunidades & Negócios Brasil Urgente", type: "whatsapp", category: "Oportunidades", members: "990 membros", region: "Brasil" },
-  { id: 97, name: "Classificados Express Brasil", type: "whatsapp", category: "Express", members: "940 membros", region: "Brasil" },
-  { id: 98, name: "Feira dos Fabricantes & Varejo Brasil", type: "facebook", category: "Fabricantes", members: "260.000 membros", region: "Brasil" },
-  { id: 99, name: "Circuito Nacional de Divulgações Comerciais", type: "whatsapp", category: "Comercial", members: "1.024 membros", region: "Brasil" },
-  { id: 100, name: "Brasil Vende Tudo 24 Horas Online", type: "facebook", category: "Mega Grupo", members: "615.000 membros", region: "Brasil" }
+const FORTALEZA_LOCATIONS = [
+  "Aldeota", "Meireles", "Messejana", "Parangaba", "Montese", "Centro", "Papicu",
+  "Varjota", "Cocó", "Benfica", "Fátima", "Barra do Ceará", "Pirambu", "Conjunto Ceará",
+  "Antônio Bezerra", "Cambeba", "Lagoa Redonda", "Passaré", "Castelão", "Jangurussu",
+  "Bom Jardim", "Granja Portugal", "Granja Lisboa", "Dionísio Torres", "Sapiranga",
+  "Edson Queiroz", "Vila Velha", "Jardim Guanabara", "Parque Manibura", "Cidade 2000",
+  "Maraponga", "Mondubim", "José Walter", "Joaquim Távora", "Bairro de Fátima", "Mucuripe",
+  "Praia de Iracema", "Beira Mar", "Siqueira", "Genibaú", "Henrique Jorge", "Rodolfo Teófilo",
+  "Parquelândia", "Amadeu Furtado", "Bela Vista", "Damas", "Itaperi", "Serrinha",
+  "Dias Macedo", "Cidade dos Funcionários", "Parque Iracema", "Guajeru", "Paupina", "Ancuri",
+  "Pedras", "Curió", "Coaçu", "São Bento", "Aerolândia", "Alto da Balança"
 ];
+
+const CEARA_LOCATIONS = [
+  "Juazeiro do Norte", "Sobral", "Crato", "Barbalha", "Iguatu", "Maracanaú", "Caucaia",
+  "Itapipoca", "Quixadá", "Quixeramobim", "Russas", "Limoeiro do Norte", "Tianguá",
+  "Canindé", "Pacatuba", "Guaiúba", "Horizonte", "Pacajus", "Aquiraz", "Cascavel",
+  "Beberibe", "Camocim", "Jericoacoara", "Baturité", "Morada Nova", "Banabuiú",
+  "São Gonçalo do Amarante", "Pecém", "Eusébio", "Icapuí", "Trairi", "Flecheiras",
+  "Acaraú", "Itarema", "Crateús", "Tauá", "Aracati", "Canoa Quebrada", "Brejo Santo",
+  "Barreira", "Redenção", "Capistrano", "Ubajara", "Viçosa do Ceará", "Santa Quitéria",
+  "Boa Viagem", "Pedra Branca", "Senador Pompeu", "Jaguaribe", "Mombaça", "Várzea Alegre",
+  "Campos Sales", "Lavras da Mangabeira", "Ipu", "Guaraciaba do Norte", "Nova Russas",
+  "Jaguaruana", "Paraipaba", "Paracuru", "Amontada", "Granja", "Massapê", "Coreaú"
+];
+
+const BRASIL_THEMES = [
+  "Brasil Vendas Rápidas", "OLX Brasil Classificados", "Feirão dos Estados Brasil",
+  "Barganhas & Desapegos Brasil", "Rede Nacional de Negócios", "Mercado Aberto Brasil",
+  "Ofertas Relâmpago Brasil", "Empreendedores do Brasil", "Bazar Virtual Brasil",
+  "Anúncios Grátis Brasil", "Mega Feirão dos Lojistas Brasil", "Compre Direto do Fabricante Brasil",
+  "Rede de Divulgação Contínua Brasil", "Super Ofertas Nordeste & Brasil", "Classificados VIP Brasil",
+  "Portal Vende Fácil Brasil", "Feira de Rolo Brasil", "Vendas Diretas & Revenda Brasil",
+  "Central de Anúncios Brasil 24h", "Classificados Brasil Capitais", "Comunidade de Vendas Brasil",
+  "Balcão dos Negócios Brasil", "Rede Zap Vendas Brasil", "Ponto das Ofertas Brasil",
+  "Compre e Venda Sem Intermediários Brasil", "Oportunidades & Negócios Brasil", "Classificados Express Brasil",
+  "Feira dos Fabricantes & Varejo Brasil", "Circuito Nacional de Divulgações", "Brasil Vende Tudo 24h",
+  "Atacado e Varejo Brasil", "Feirão dos Autônomos Brasil", "Vitrine de Negócios Brasil",
+  "Desapega Brasil Nacional", "Rede de Comércio Brasil", "Anuncie Aqui Brasil Geral"
+];
+
+const CATEGORIES = [
+  "Vendas Gerais", "Classificados", "Comércio Local", "Comunidade", "Ofertas & Promoções",
+  "Desapego & Bazar", "Negócios & B2B", "Serviços & Autônomos", "Moda & Confecção",
+  "Marketplace", "Brique & Rolo", "Varejo Popular", "Empreendedorismo", "Oportunidades",
+  "Parcerias Comerciais", "Feira Livre", "Lojistas & Revenda"
+];
+
+const PREFIXES = [
+  "Grupo de Vendas", "OLX & Classificados", "Feirão do Rolo", "Vende Tudo",
+  "Divulgações & Ofertas", "Barganhas & Trocas", "Desapega", "Balcão de Negócios",
+  "Compre e Venda", "Mercadão Virtual", "Rede Comercial", "Feira Livre & Comércio",
+  "Anuncie Aqui", "Promoções do Dia", "Mega Bazar", "Classificados Rápidos",
+  "Vitrine de Ofertas", "Central de Negócios", "Ponto das Vendas", "Circuito Comercial"
+];
+
+// Gera deterministamente exatamente 7.000 grupos estruturados
+function generate7000Groups(): FictitiousGroupItem[] {
+  const TOTAL_GROUPS = 7000;
+  const list: FictitiousGroupItem[] = [];
+
+  for (let i = 1; i <= TOTAL_GROUPS; i++) {
+    const mod3 = i % 3;
+    let region: 'Fortaleza' | 'Ceará' | 'Brasil';
+    let name = '';
+    let category = CATEGORIES[i % CATEGORIES.length];
+    let type: 'whatsapp' | 'facebook' = (i % 5 === 0 || i % 7 === 0) ? 'facebook' : 'whatsapp';
+    let members = '';
+
+    const prefix = PREFIXES[i % PREFIXES.length];
+
+    if (mod3 === 1) {
+      // Fortaleza
+      region = 'Fortaleza';
+      const loc = FORTALEZA_LOCATIONS[Math.floor(i / 3) % FORTALEZA_LOCATIONS.length];
+      const cycle = Math.floor(i / (FORTALEZA_LOCATIONS.length * 3)) + 1;
+      const cycleSuffix = cycle > 1 ? ` #${cycle}` : '';
+      name = `${prefix} ${loc}${cycleSuffix}`;
+      if (type === 'whatsapp') {
+        const memCount = 650 + ((i * 37) % 375); // 650 a 1.024 membros
+        members = `${Math.min(1024, memCount)} membros`;
+      } else {
+        const memK = 18 + ((i * 17) % 110);
+        members = `${memK}.${(i * 13) % 900 || '200'} membros`;
+      }
+    } else if (mod3 === 2) {
+      // Ceará
+      region = 'Ceará';
+      const loc = CEARA_LOCATIONS[Math.floor(i / 3) % CEARA_LOCATIONS.length];
+      const cycle = Math.floor(i / (CEARA_LOCATIONS.length * 3)) + 1;
+      const cycleSuffix = cycle > 1 ? ` #${cycle}` : '';
+      name = `${prefix} ${loc}${cycleSuffix}`;
+      if (type === 'whatsapp') {
+        const memCount = 600 + ((i * 41) % 424);
+        members = `${Math.min(1024, memCount)} membros`;
+      } else {
+        const memK = 22 + ((i * 23) % 150);
+        members = `${memK}.${(i * 19) % 900 || '400'} membros`;
+      }
+    } else {
+      // Brasil
+      region = 'Brasil';
+      const theme = BRASIL_THEMES[Math.floor(i / 3) % BRASIL_THEMES.length];
+      const cycle = Math.floor(i / (BRASIL_THEMES.length * 3)) + 1;
+      name = `${theme} - Rede ${cycle > 1 ? cycle : 'Oficial'}`;
+      if (type === 'whatsapp') {
+        const memCount = 750 + ((i * 29) % 274);
+        members = `${Math.min(1024, memCount)} membros`;
+      } else {
+        const memK = 60 + ((i * 31) % 480);
+        members = `${memK}.${(i * 27) % 900 || '500'} membros`;
+      }
+    }
+
+    list.push({
+      id: i,
+      name,
+      type,
+      category,
+      members,
+      region
+    });
+  }
+
+  return list;
+}
+
+// Cria a coleção em memória de 7.000 grupos fictícios
+export const FICTITIOUS_GROUPS_LIST: FictitiousGroupItem[] = generate7000Groups();

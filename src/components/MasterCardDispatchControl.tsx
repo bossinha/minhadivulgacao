@@ -475,35 +475,38 @@ export const MasterCardDispatchControl: React.FC<MasterCardDispatchControlProps>
               </button>
             </div>
 
-            {/* Toggle Preview of 100 Fictitious Groups for Admin */}
+            {/* Toggle Preview of Fictitious Groups for Admin */}
             <div className="mt-2 pt-2 border-t border-white/5 flex items-center justify-between">
               <span className="text-[10px] text-white/50">
-                Lista oficial com <strong>100 grupos ativos</strong> (Fortaleza, CE e Brasil)
+                Rede com mais de <strong>7.000 grupos em rotação</strong> (Fortaleza, CE e Brasil)
               </span>
               <button
                 type="button"
                 onClick={() => setShowGroupsPreview(!showGroupsPreview)}
                 className="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 underline cursor-pointer"
               >
-                {showGroupsPreview ? '▲ Ocultar 100 Grupos' : '👁️ Visualizar 100 Grupos Ativos'}
+                {showGroupsPreview ? '▲ Ocultar Lista' : '👁️ Visualizar Amostra da Rede'}
               </button>
             </div>
 
             {showGroupsPreview && (
               <div className="mt-2.5 bg-black/60 border border-emerald-500/30 rounded-lg p-2.5 max-h-48 overflow-y-auto space-y-1">
                 <span className="text-[10px] font-bold text-white/70 block mb-1">
-                  Exibição da Rede (100 Grupos):
+                  Exibição da Rede (7.000 Grupos em Rotação Contínua):
                 </span>
-                {FICTITIOUS_GROUPS_LIST.map((g) => (
+                {FICTITIOUS_GROUPS_LIST.slice(0, 100).map((g) => (
                   <div key={g.id} className="flex items-center justify-between text-[11px] py-0.5 border-b border-white/5 last:border-0">
                     <span className="text-white/80 truncate">
-                      {g.type === 'whatsapp' ? '💬' : '👥'} #{g.id} {g.name}
+                      {g.type === 'whatsapp' ? '💬' : '👥'} #{String(g.id).padStart(4, '0')} {g.name}
                     </span>
                     <span className="text-[9px] font-mono text-emerald-400 shrink-0 ml-2">
                       {g.region} • {g.members}
                     </span>
                   </div>
                 ))}
+                <div className="text-center py-1 text-[10px] text-white/40">
+                  + 6.900 grupos adicionais ativos no sistema...
+                </div>
               </div>
             )}
           </div>
