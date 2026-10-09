@@ -98,6 +98,8 @@ import { GlobalDispatchGroupsBar } from './components/GlobalDispatchGroupsBar';
 import { AdminPushNotificationsPanel } from './components/AdminPushNotificationsPanel';
 import { PushNotificationOptInBanner } from './components/PushNotificationOptInBanner';
 import { IncomingPushNotificationToast } from './components/IncomingPushNotificationToast';
+import { PortalWelcomeVideoModal, PortalWelcomeVideoConfig } from './components/PortalWelcomeVideoModal';
+import { AdminWelcomeVideoConfig } from './components/AdminWelcomeVideoConfig';
 import { registerServiceWorker, recordNotificationClick } from './lib/pushNotifications';
 
 import { auth, db, googleProvider } from './lib/firebase';
@@ -376,7 +378,25 @@ const DEFAULT_DATA = {
   testimonials: TESTIMONIALS,
   categories: CATEGORIES,
   whatsappTestimonials: [],
-  horizontalBanners: HORIZONTAL_BANNERS
+  horizontalBanners: HORIZONTAL_BANNERS,
+  welcomeVideo: {
+    enabled: true,
+    videoUrl: '',
+    title: 'Destaque Patrocinado',
+    badge: 'PATROCINADO',
+    buttonText: 'Falar no WhatsApp',
+    targetType: 'company',
+    companyId: '',
+    companyName: '',
+    companyCategory: '',
+    companyLogo: '',
+    whatsappPhone: '',
+    customLink: '',
+    actionType: 'whatsapp',
+    whatsappMessage: 'Olá! Vi o anúncio em vídeo no Portal de Divulgação e gostaria de saber mais informações!',
+    frequency: 'always',
+    autoPlayMuted: true
+  }
 };
 
 // --- Helper Functions ---
@@ -531,6 +551,7 @@ interface AppData {
   categories: any[];
   whatsappTestimonials?: { image: string; active?: boolean }[];
   horizontalBanners?: { image: string; link: string; title?: string; active?: boolean }[];
+  welcomeVideo?: PortalWelcomeVideoConfig;
 }
 
 // --- ImgBB Direct Upload Helpers & Components ---
@@ -1038,6 +1059,54 @@ function AppContent() {
     return null;
   });
   const [activeTrackingCompanyData, setActiveTrackingCompanyData] = useState<any | null>(null);
+
+  // --- Welcome/Sponsored Video Modal State & Logic ---
+  const [showWelcomeVideoModal, setShowWelcomeVideoModal] = useState(false);
+  const [isWelcomeVideoPreviewMode, setIsWelcomeVideoPreviewMode] = useState(false);
+
+  useEffect(() => {
+    if (!appData?.welcomeVideo) return;
+    const { enabled, videoUrl, frequency } = appData.welcomeVideo;
+    if (enabled === false || !videoUrl || !videoUrl.trim()) return;
+
+    if (activeTrackingCompanyId) return;
+
+    const currentCity = tenantId || 'fortaleza';
+    if (frequency === 'once_per_day') {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const storageKey = `seen_portal_video_${currentCity}_${todayStr}`;
+      try {
+        if (localStorage.getItem(storageKey)) return;
+      } catch (e) {}
+    } else {
+      const sessionKey = `seen_portal_video_session_${currentCity}`;
+      try {
+        if (sessionStorage.getItem(sessionKey)) return;
+      } catch (e) {}
+    }
+
+    const timer = setTimeout(() => {
+      setShowWelcomeVideoModal(true);
+    }, 700);
+
+    return () => clearTimeout(timer);
+  }, [appData?.welcomeVideo, tenantId, activeTrackingCompanyId]);
+
+  const handleCloseWelcomeVideo = () => {
+    setShowWelcomeVideoModal(false);
+    setIsWelcomeVideoPreviewMode(false);
+    try {
+      const currentCity = tenantId || 'fortaleza';
+      const todayStr = new Date().toISOString().slice(0, 10);
+      localStorage.setItem(`seen_portal_video_${currentCity}_${todayStr}`, 'true');
+      sessionStorage.setItem(`seen_portal_video_session_${currentCity}`, 'true');
+    } catch (e) {}
+  };
+
+  const handleTestWelcomeVideo = () => {
+    setIsWelcomeVideoPreviewMode(true);
+    setShowWelcomeVideoModal(true);
+  };
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [pixCopied, setPixCopied] = useState(false);
   const [shoppingCart, setShoppingCart] = useState<{ [key: string]: { item: any, count: number } }>(() => {
@@ -4102,6 +4171,29 @@ function AppContent() {
       {/* Prompt Flutuante Superior de Notificações Push ao Entrar no Portal */}
       <PushNotificationOptInBanner city={tenantId || 'geral'} />
 
+      {/* Vídeo Patrocinado de Entrada (Apresentação Popup ao Acessar o Portal) */}
+      <PortalWelcomeVideoModal
+        config={appData?.welcomeVideo}
+        isOpen={showWelcomeVideoModal}
+        onClose={handleCloseWelcomeVideo}
+        isPreviewMode={isWelcomeVideoPreviewMode}
+      />
+
+      {/* Botão Flutuante Discreto para Reabrir Vídeo Patrocinado */}
+      {!showWelcomeVideoModal && appData?.welcomeVideo?.videoUrl?.trim() && appData?.welcomeVideo?.enabled !== false && (
+        <button
+          onClick={() => {
+            setIsWelcomeVideoPreviewMode(false);
+            setShowWelcomeVideoModal(true);
+          }}
+          className="fixed bottom-20 left-4 z-40 px-3.5 py-2 rounded-full bg-black/85 hover:bg-black/95 border border-amber-500/50 text-amber-400 text-xs font-bold shadow-xl backdrop-blur-md flex items-center gap-2 cursor-pointer transition hover:scale-105"
+          title="Assistir Vídeo Patrocinado em Destaque"
+        >
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+          <span>🎬 Ver Vídeo em Destaque</span>
+        </button>
+      )}
+
       {/* Floating Dev Button - SHOW ONLY IF LOGGED IN MANAGER OR MASTER ADMIN */}
       {user?.isAdmin && tenantId !== 'master' && (
         <button 
@@ -5551,7 +5643,7 @@ function AppContent() {
               </div>
 
               <div className="dev-tabs">
-                {['geral', 'seções', 'categorias', 'empresas', 'disparos', 'notificacoes', 'anunciantes', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'banners-horizontais', 'depoimentos-whats', 'preços', 'segmentos', 'chat'].filter(Boolean).map(tab => (
+                {['geral', 'seções', 'categorias', 'empresas', 'disparos', 'notificacoes', 'vídeo-portal', 'anunciantes', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'banners-horizontais', 'depoimentos-whats', 'preços', 'segmentos', 'chat'].filter(Boolean).map(tab => (
                   <button 
                     key={tab} 
                     className={`dev-tab ${activeTab === tab ? 'active' : ''}`}
@@ -5559,10 +5651,11 @@ function AppContent() {
                     style={
                       tab === 'disparos' ? { background: activeTab === 'disparos' ? '#fbbf24' : '#1e1b10', color: activeTab === 'disparos' ? '#000' : '#fbbf24', border: '1px solid #fbbf24', fontWeight: 900 }
                       : tab === 'notificacoes' ? { background: activeTab === 'notificacoes' ? '#f59e0b' : '#2a1a04', color: activeTab === 'notificacoes' ? '#000' : '#fbbf24', border: '1px solid #f59e0b', fontWeight: 900, boxShadow: activeTab === 'notificacoes' ? '0 0 15px rgba(245, 158, 11, 0.4)' : undefined }
+                      : tab === 'vídeo-portal' ? { background: activeTab === 'vídeo-portal' ? '#10b981' : '#042f2e', color: activeTab === 'vídeo-portal' ? '#000' : '#34d399', border: '1px solid #10b981', fontWeight: 900, boxShadow: activeTab === 'vídeo-portal' ? '0 0 15px rgba(16, 185, 129, 0.4)' : undefined }
                       : undefined
                     }
                   >
-                    {tab === 'disparos' ? '📢 DISPAROS (24H & PV)' : tab === 'notificacoes' ? '🔔 NOTIFICAÇÕES PUSH' : tab === 'depoimentos-whats' ? 'DEPOIMENTOS ZAP' : tab === 'banners-horizontais' ? 'BANNERS HORIZONTAIS' : tab.toUpperCase()}
+                    {tab === 'disparos' ? '📢 DISPAROS (24H & PV)' : tab === 'notificacoes' ? '🔔 NOTIFICAÇÕES PUSH' : tab === 'vídeo-portal' ? '🎬 VÍDEO DO PORTAL (ENTRADA)' : tab === 'depoimentos-whats' ? 'DEPOIMENTOS ZAP' : tab === 'banners-horizontais' ? 'BANNERS HORIZONTAIS' : tab.toUpperCase()}
                   </button>
                 ))}
               </div>
@@ -7388,6 +7481,24 @@ function AppContent() {
                         Esta aba e os links abaixo são visíveis apenas para você. O cliente não tem acesso a esta configuração no painel dele.
                       </p>
                     </div>
+                    <div style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(245, 158, 11, 0.15))', border: '1px solid rgba(16, 185, 129, 0.4)', padding: '16px', borderRadius: '16px', marginBottom: '22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                      <div style={{ maxWidth: '480px' }}>
+                        <h4 style={{ color: '#10b981', margin: 0, fontSize: '0.95rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          🎬 VÍDEO PATROCINADO DE ENTRADA (POPUP AO ABRIR O SITE)
+                        </h4>
+                        <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#ccc', lineHeight: '1.4' }}>
+                          Configure o vídeo de destaque que abre na tela quando a pessoa clica no link do portal nos grupos de WhatsApp. Com amostra ao vivo e botão de direcionamento para o WhatsApp da empresa!
+                        </p>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => setActiveTab('vídeo-portal')} 
+                        style={{ background: '#10b981', color: '#000', fontWeight: 900, fontSize: '11px', padding: '9px 18px', borderRadius: '10px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        Abrir Configuração do Vídeo de Entrada ➔
+                      </button>
+                    </div>
+
                     <h3>Vídeos da TV (Links MP4)</h3>
                     {appData.videos.map((vRaw, idx) => {
                       const v = typeof vRaw === 'string' ? { url: vRaw, active: true } : vRaw;
@@ -8437,6 +8548,19 @@ function AppContent() {
                     companies={displayedCompanies || []}
                     adminEmail={user?.email || 'bossinhaa80@gmail.com'}
                     portalName={appData?.siteInfo?.name || 'Minha Divulgação'}
+                  />
+                )}
+
+                {activeTab === 'vídeo-portal' && (
+                  <AdminWelcomeVideoConfig
+                    config={appData?.welcomeVideo}
+                    companies={appData?.companies || []}
+                    advertisers={advertiserCompanies || []}
+                    onChange={(newConfig) => {
+                      updateData('welcomeVideo', newConfig);
+                    }}
+                    onSave={saveToFirebase}
+                    onTestPreview={handleTestWelcomeVideo}
                   />
                 )}
                 </div>
