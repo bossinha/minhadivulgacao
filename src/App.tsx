@@ -381,7 +381,10 @@ const DEFAULT_DATA = {
   horizontalBanners: HORIZONTAL_BANNERS,
   welcomeVideo: {
     enabled: true,
+    mediaType: 'auto',
     videoUrl: '',
+    flyerUrl: '',
+    flyerDeleteUrl: '',
     title: 'Destaque Patrocinado',
     badge: 'PATROCINADO',
     buttonText: 'Falar no WhatsApp',
@@ -393,7 +396,7 @@ const DEFAULT_DATA = {
     whatsappPhone: '',
     customLink: '',
     actionType: 'whatsapp',
-    whatsappMessage: 'Olá! Vi o anúncio em vídeo no Portal de Divulgação e gostaria de saber mais informações!',
+    whatsappMessage: 'Olá! Vi o anúncio no Portal de Divulgação e gostaria de saber mais informações!',
     frequency: 'always',
     autoPlayMuted: true
   }
@@ -1066,8 +1069,9 @@ function AppContent() {
 
   useEffect(() => {
     if (!appData?.welcomeVideo) return;
-    const { enabled, videoUrl, frequency } = appData.welcomeVideo;
-    if (enabled === false || !videoUrl || !videoUrl.trim()) return;
+    const { enabled, videoUrl, flyerUrl, frequency } = appData.welcomeVideo;
+    const hasMedia = Boolean(videoUrl?.trim() || flyerUrl?.trim());
+    if (enabled === false || !hasMedia) return;
 
     if (activeTrackingCompanyId) return;
 
@@ -2264,153 +2268,25 @@ function AppContent() {
     }
   };
 
-  // Reprodução automática da rádio no primeiro gesto (rolar para cima/baixo, toque, movimento, roda do mouse ou clique)
+  // Reprodução da rádio sob demanda (o cliente clica no play para ouvir, sem tocar automaticamente na tela)
   useEffect(() => {
     if (!showRadio) return;
 
-    let hasCleanedUp = false;
-    let isAttemptingPlay = false;
-    let lastScrollY = typeof window !== 'undefined' ? (window.scrollY || document.documentElement.scrollTop || 0) : 0;
-    let touchStartY = 0;
-
-    const unlockAudio = () => {
-      try {
-        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-        if (AudioCtx) {
-          const ctx = new AudioCtx();
-          ctx.resume().catch(() => {});
-        }
-      } catch (_) {}
-    };
-
-    const startRadioOnFirstInteraction = (_e?: Event) => {
-      // Se já tocou ou o usuário pausou manualmente, remove os ouvintes
-      if (hasAutoPlayedRadioRef.current || userManuallyPausedRef.current) {
-        removeInteractionListeners();
-        return;
-      }
-
-      const audio = radioAudioRef.current;
-      if (!audio || isAttemptingPlay) return;
-
-      isAttemptingPlay = true;
-
-      try {
-        unlockAudio();
-
-        audio.muted = false;
-        if (radioVolume > 0) {
-          audio.volume = radioVolume;
-        }
-
-        if (!audio.src || audio.src === window.location.href) {
-          audio.src = baseRadioStreamUrl;
-        }
-
-        setTvMuted(true);
-        setIsMuted(true);
-
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              if (hasCleanedUp) return;
-              hasAutoPlayedRadioRef.current = true;
-              setRadioPlaying(true);
-              setIsRadioBuffering(false);
-              removeInteractionListeners();
-            })
-            .catch((e) => {
-              // Se o navegador ainda restringir esse evento específico, mantém os ouvintes para o próximo gesto (ex: touchend, pointerup)
-              isAttemptingPlay = false;
-            });
-        } else {
-          isAttemptingPlay = false;
-        }
-      } catch (err) {
-        isAttemptingPlay = false;
-      }
-    };
-
-    // Detecção específica de rolagem (tanto para cima quanto para baixo)
-    const handleScrollOrWheel = (e?: Event) => {
-      const currentScrollY = window.scrollY || document.documentElement.scrollTop || 0;
-      // Registra a direção da rolagem
-      lastScrollY = currentScrollY;
-      startRadioOnFirstInteraction(e);
-    };
-
-    const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches && e.touches[0]) {
-        touchStartY = e.touches[0].clientY;
-      }
-      startRadioOnFirstInteraction(e);
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches && e.touches[0]) {
-        const currentY = e.touches[0].clientY;
-        const delta = currentY - touchStartY;
-        // delta > 0 = arrastando para baixo (rolando a página para cima)
-        // delta < 0 = arrastando para cima (rolando a página para baixo)
-        if (Math.abs(delta) > 5) {
-          startRadioOnFirstInteraction(e);
-        }
-      } else {
-        startRadioOnFirstInteraction(e);
-      }
-    };
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      // touchend é o momento em que o dedo solta após rolar - 100% de ativação garantida em celulares
-      startRadioOnFirstInteraction(e);
-    };
-
-    const removeInteractionListeners = () => {
-      window.removeEventListener('scroll', handleScrollOrWheel);
-      window.removeEventListener('scroll', handleScrollOrWheel, true);
-      document.removeEventListener('scroll', handleScrollOrWheel);
-      document.removeEventListener('scroll', handleScrollOrWheel, true);
-      window.removeEventListener('wheel', handleScrollOrWheel);
-      window.removeEventListener('wheel', handleScrollOrWheel, true);
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchstart', handleTouchStart, true);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchmove', handleTouchMove, true);
-      window.removeEventListener('touchend', handleTouchEnd);
-      window.removeEventListener('touchend', handleTouchEnd, true);
-      window.removeEventListener('pointerdown', startRadioOnFirstInteraction);
-      window.removeEventListener('pointerup', startRadioOnFirstInteraction);
-      window.removeEventListener('click', startRadioOnFirstInteraction);
-      window.removeEventListener('keydown', startRadioOnFirstInteraction);
-    };
-
-    // Ouvintes com capture e bubble para garantir captura de rolagem pra cima e pra baixo
-    window.addEventListener('scroll', handleScrollOrWheel, { passive: true, capture: true });
-    window.addEventListener('scroll', handleScrollOrWheel, { passive: true, capture: false });
-    document.addEventListener('scroll', handleScrollOrWheel, { passive: true, capture: true });
-    window.addEventListener('wheel', handleScrollOrWheel, { passive: true, capture: true });
-    window.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: true, capture: true });
-    window.addEventListener('touchend', handleTouchEnd, { passive: true, capture: true });
-    window.addEventListener('pointerdown', startRadioOnFirstInteraction, { passive: true });
-    window.addEventListener('pointerup', startRadioOnFirstInteraction, { passive: true });
-    window.addEventListener('click', startRadioOnFirstInteraction, { passive: true });
-    window.addEventListener('keydown', startRadioOnFirstInteraction, { passive: true });
-
-    // Tentativa imediata caso o navegador já tenha permitido som ou link específico de rádio
+    // Apenas se o link tiver parâmetro explícito de rádio (ex: ?radio=1 ou ?ouvir=1)
     try {
       const urlParams = new URLSearchParams(window.location.search || (window.location.hash.includes('?') ? window.location.hash.split('?')[1] : ''));
       if (urlParams.get('radio') === '1' || urlParams.get('play') === '1' || urlParams.get('ouvir') === '1') {
-        startRadioOnFirstInteraction();
+        const audio = radioAudioRef.current;
+        if (audio) {
+          audio.src = baseRadioStreamUrl;
+          audio.play().then(() => {
+            setRadioPlaying(true);
+            setIsRadioBuffering(false);
+          }).catch(() => {});
+        }
       }
     } catch (e) {}
-
-    return () => {
-      hasCleanedUp = true;
-      removeInteractionListeners();
-    };
-  }, [showRadio, baseRadioStreamUrl, radioVolume]);
+  }, [showRadio, baseRadioStreamUrl]);
 
   // Anti-stall watchdog: If audio is playing but stalled/buffering for > 4.5s, auto-reconnect
   useEffect(() => {
@@ -4179,18 +4055,22 @@ function AppContent() {
         isPreviewMode={isWelcomeVideoPreviewMode}
       />
 
-      {/* Botão Flutuante Discreto para Reabrir Vídeo Patrocinado */}
-      {!showWelcomeVideoModal && appData?.welcomeVideo?.videoUrl?.trim() && appData?.welcomeVideo?.enabled !== false && (
+      {/* Botão Flutuante Discreto para Reabrir Destaque Patrocinado (Vídeo ou Flyer) */}
+      {!showWelcomeVideoModal && (appData?.welcomeVideo?.videoUrl?.trim() || appData?.welcomeVideo?.flyerUrl?.trim()) && appData?.welcomeVideo?.enabled !== false && (
         <button
           onClick={() => {
             setIsWelcomeVideoPreviewMode(false);
             setShowWelcomeVideoModal(true);
           }}
           className="fixed bottom-20 left-4 z-40 px-3.5 py-2 rounded-full bg-black/85 hover:bg-black/95 border border-amber-500/50 text-amber-400 text-xs font-bold shadow-xl backdrop-blur-md flex items-center gap-2 cursor-pointer transition hover:scale-105"
-          title="Assistir Vídeo Patrocinado em Destaque"
+          title="Ver Destaque Patrocinado"
         >
           <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-          <span>🎬 Ver Vídeo em Destaque</span>
+          <span>
+            {appData?.welcomeVideo?.flyerUrl?.trim() && !appData?.welcomeVideo?.videoUrl?.trim()
+              ? '🖼️ Ver Flyer em Destaque'
+              : '🎬 Ver Destaque / Vídeo'}
+          </span>
         </button>
       )}
 
@@ -4429,6 +4309,372 @@ function AppContent() {
 
           {/* Segmentos de empresas atendidas */}
           <SegmentsShowcase />
+
+        </div>
+      </section>
+
+      {/* ======================================================== */}
+      {/* 2. RÁDIO E TV LOGO ABAIXO DE EMPRESAS ATENDIDAS           */}
+      {/* TV Minha Divulgação (prévia) e Rádio Minha Divulgação    */}
+      {/* ======================================================== */}
+      <section id="tv-radio" className="w-full py-16 md:py-24 bg-[#07070d] border-b border-white/5 relative scroll-mt-20">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6">
+          
+          <div className="text-center max-w-3xl mx-auto mb-12 select-none">
+            <span className="text-amber-400 text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
+              CANAIS AO VIVO DA REDE
+            </span>
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
+              TV & RÁDIO MINHA DIVULGAÇÃO
+            </h2>
+            <p className="text-sm sm:text-base text-white/70 mt-3 font-medium max-w-2xl mx-auto">
+              Estes canais fazem parte da estrutura de divulgação da rede Minha Divulgação, exibindo continuamente anúncios, promoções e a programação comercial dos negócios cadastrados.
+            </p>
+          </div>
+
+          {/* TV MINHA DIVULGAÇÃO (Prévia dos anúncios exibidos na TV) */}
+          <div id="tv-destaque" className="mb-14 md:mb-16 scroll-mt-24">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 md:mb-10 gap-3">
+              <div>
+                <h3 className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight mt-1.5 flex items-center gap-2">
+                  📺 TV Minha Divulgação
+                </h3>
+              </div>
+              <p className="text-xs sm:text-sm text-white/70 max-w-md leading-relaxed font-medium">
+                Prévia ao vivo dos anúncios, promoções e destaques das empresas cadastradas.
+              </p>
+            </div>
+
+            {/* TV Frame Container - Fully Responsive for Mobile, Tablet, Notebook & PC */}
+            <div className="relative w-full max-w-4xl lg:max-w-5xl mx-auto bg-[#0a0a10] border-2 sm:border-4 border-[#1c1e2e] rounded-2xl sm:rounded-3xl p-2 sm:p-3.5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-hidden">
+              
+              {/* Top Bezel & Status Bar */}
+              <div className="flex items-center justify-between px-3 sm:px-4 py-2 bg-[#121422] rounded-t-xl sm:rounded-t-2xl border-b border-white/10 mb-2 sm:mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
+                  <span className="text-[10px] sm:text-[11px] font-mono font-black text-emerald-400 tracking-widest uppercase">🔴 CANAL AO VIVO — TV MINHA DIVULGAÇÃO</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={reloadTvPlayer}
+                    className="text-[9px] sm:text-[10px] font-mono font-extrabold text-amber-300 bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/30 px-2.5 py-0.5 rounded-full transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-sm"
+                    title="Clique para recarregar o sinal da TV sem precisar atualizar a página (F5)"
+                  >
+                    <span>🔄 Recarregar TV</span>
+                  </button>
+                  <span className="text-[9px] sm:text-[10px] font-mono text-white/50 tracking-widest uppercase bg-white/5 px-2.5 py-0.5 rounded-full border border-white/10 hidden sm:inline-block">
+                    TRANSMISSÃO 16:9
+                  </span>
+                </div>
+              </div>
+
+              {/* 16:9 Aspect Ratio Frame for Iframe */}
+              <div className="relative w-full aspect-[16/9] rounded-lg sm:rounded-xl overflow-hidden bg-black shadow-inner border border-white/10">
+                {isTvLoading && (
+                  <div className="absolute inset-0 z-10 bg-[#0a0a10]/90 backdrop-blur-sm flex flex-col items-center justify-center gap-2 pointer-events-none">
+                    <div className="w-7 h-7 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest">Sincronizando Sinal da TV...</span>
+                  </div>
+                )}
+
+                <iframe 
+                  key={`tv-frame-${tvKey}`}
+                  ref={tvIframeRef}
+                  src={(() => {
+                    const baseUrl = universalConfig?.horizontalTvLink || (appData && appData.siteInfo && appData.siteInfo.horizontalTvLink) || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando';
+                    const sep = baseUrl.includes('?') ? '&' : '?';
+                    const volParam = `vol=${Math.round(tvVolume * 100)}&muted=${tvMuted ? 1 : 0}&autoplay=1&fs=0&fullscreen=0`;
+                    return `${baseUrl}${sep}_t=${tvKey}&${volParam}`;
+                  })()} 
+                  title="TV Minha Divulgação"
+                  className="w-full h-full border-0 select-none"
+                  loading="lazy"
+                  allow="autoplay *; encrypted-media; audio"
+                  allowFullScreen={false}
+                  onLoad={() => {
+                    setIsTvLoading(false);
+                    sendTvVolume(tvVolume, tvMuted);
+                  }}
+                  onError={() => setIsTvLoading(false)}
+                />
+              </div>
+
+              {/* Bottom Bar Controls - Volume & Status */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-2.5 sm:mt-3 px-3 sm:px-4 py-2.5 bg-[#121422]/90 rounded-b-xl sm:rounded-b-2xl border-t border-white/5">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] sm:text-xs font-bold text-white/80">📺 TV Minha Divulgação</span>
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Ao Vivo</span>
+                </div>
+
+                {/* Volume Control Bar */}
+                <div className="flex items-center gap-3 w-full sm:w-auto bg-black/40 px-3 py-1.5 rounded-xl border border-white/10">
+                  <button
+                    type="button"
+                    onClick={handleTvMuteToggle}
+                    className="text-white/70 hover:text-white transition-colors cursor-pointer"
+                    title={tvMuted || tvVolume === 0 ? "Ativar som da TV" : "Silenciar TV"}
+                  >
+                    {tvMuted || tvVolume === 0 ? (
+                      <VolumeX size={16} className="text-red-400" />
+                    ) : (
+                      <Volume2 size={16} className="text-amber-400" />
+                    )}
+                  </button>
+
+                  <div className="flex items-center gap-2 flex-1 sm:w-36">
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value={tvMuted ? 0 : tvVolume}
+                      onChange={(e) => handleTvVolumeChange(parseFloat(e.target.value))}
+                      className="w-full accent-[var(--primary)] h-1.5 rounded-full cursor-pointer bg-neutral-800"
+                      title="Ajustar volume da TV"
+                    />
+                    <span className="text-[10px] font-mono text-white/60 min-w-[28px] text-right">
+                      {tvMuted ? '0%' : `${Math.round(tvVolume * 100)}%`}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={reloadTvPlayer}
+                    className="text-[10px] font-mono font-bold text-emerald-300 hover:text-emerald-200 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg border border-emerald-500/30 transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                    title="Recarregar player da TV"
+                  >
+                    <span>🔄 Atualizar Sinal</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* PLAYER DE RÁDIO COM BUFFER ANTI-TRAVAMENTO (Demonstração do áudio) */}
+          {showRadio !== false && (
+            <div id="radio-player-section" className="mb-14 sm:mb-16">
+              <div className="relative overflow-hidden bg-gradient-to-r from-[#0c0c14] via-[#12121e] to-[#0c0c14] border border-amber-500/30 rounded-[28px] p-5 sm:p-7 md:p-8 shadow-2xl transition-all duration-300">
+                {/* Subtle top accent line */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-[var(--primary)] to-amber-500 opacity-85" />
+                
+                <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+                  {/* Left: Play button, station info, and equalizer */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 w-full lg:w-auto">
+                    {/* BOTAO DE PLAY BEM DESTACADO COM TEXTO E ICONE */}
+                    <button 
+                      type="button"
+                      id="btn-tocar-radio"
+                      onClick={handleRadioTogglePlay}
+                      className={`w-full sm:w-auto px-6 py-4 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 shrink-0 cursor-pointer font-black text-sm sm:text-base tracking-wide shadow-xl active:scale-95 ${
+                        radioPlaying 
+                          ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-600/40 ring-4 ring-red-500/20' 
+                          : 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black shadow-amber-500/30 hover:scale-[1.02] ring-4 ring-amber-400/20'
+                      }`}
+                      title={radioPlaying ? "Pausar rádio" : "Dar play na rádio ao vivo"}
+                    >
+                      {isRadioBuffering ? (
+                        <>
+                          <RefreshCw size={22} className="animate-spin text-black" />
+                          <span>CONECTANDO SINAL...</span>
+                        </>
+                      ) : radioPlaying ? (
+                        <>
+                          <Pause size={22} className="fill-current" />
+                          <span>PAUSAR RÁDIO</span>
+                        </>
+                      ) : (
+                        <>
+                          <Play size={24} className="fill-current translate-x-0.5" />
+                          <span>DAR PLAY NO RÁDIO</span>
+                        </>
+                      )}
+                    </button>
+
+                    <div className="flex-1 min-w-0">
+                      {/* Status badges */}
+                      <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                        <span className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                          radioPlaying 
+                            ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
+                            : 'bg-white/5 text-white/60 border border-white/10'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${radioPlaying ? 'bg-red-500 animate-pulse' : 'bg-white/30'}`} />
+                          {isRadioBuffering ? 'SINCRONIZANDO SINAL' : radioPlaying ? 'TRANSMISSÃO AO VIVO' : 'RÁDIO WEB AO VIVO'}
+                        </span>
+
+                        <span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
+                          <Wifi size={10} className="stroke-[2.5]" />
+                          Buffer Anti-Travamento Ativo
+                        </span>
+                      </div>
+
+                      {/* Title and Animated Equalizer */}
+                      <div className="flex items-center gap-3">
+                        <h4 className="text-base sm:text-lg font-black text-white truncate">
+                          📻 Rádio Minha Divulgação
+                        </h4>
+                        
+                        {/* Equalizer animation bars */}
+                        {radioPlaying && !isRadioBuffering && (
+                          <div className="flex items-end gap-1 h-5 select-none" title="Transmitindo áudio contínuo">
+                            <span className="w-1 bg-amber-400 rounded-full animate-radio-bar-1" />
+                            <span className="w-1 bg-amber-400 rounded-full animate-radio-bar-2" />
+                            <span className="w-1 bg-amber-400 rounded-full animate-radio-bar-3" />
+                            <span className="w-1 bg-amber-400 rounded-full animate-radio-bar-4" />
+                          </div>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-white/70 truncate mt-0.5">
+                        {isRadioBuffering 
+                          ? "Sincronizando sinal da rádio..." 
+                          : "Ouça nossa programação comercial e ofertas das empresas."}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right: Volume slider and Refresh signal button */}
+                  <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full lg:w-auto shrink-0 justify-end pt-3 lg:pt-0 border-t lg:border-t-0 border-white/5">
+                    {/* Refresh button */}
+                    <button 
+                      type="button"
+                      onClick={() => reconnectRadio(true)}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 text-[11px] font-mono font-bold text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-3.5 py-2.5 rounded-xl transition-all cursor-pointer active:scale-95"
+                      title="Limpar buffer e sincronizar sinal ao vivo"
+                    >
+                      <RefreshCw size={12} className={isRadioBuffering ? "animate-spin" : ""} />
+                      <span>Atualizar Sinal</span>
+                    </button>
+
+                    {/* Volume controls */}
+                    <div className="flex items-center gap-2.5 w-full sm:w-48 bg-white/5 px-3 py-2 rounded-xl border border-white/10">
+                      <button 
+                        type="button"
+                        onClick={() => setRadioVolume(prev => prev === 0 ? 0.8 : 0)}
+                        className="text-white/60 hover:text-white transition-colors cursor-pointer"
+                        title={radioVolume === 0 ? "Ativar som" : "Silenciar"}
+                      >
+                        {radioVolume === 0 ? <VolumeX size={16} className="text-red-400" /> : <Volume2 size={16} className="text-amber-400" />}
+                      </button>
+                      <input 
+                        type="range" 
+                        min="0" 
+                        max="1" 
+                        step="0.01"
+                        value={radioVolume}
+                        onChange={(e) => setRadioVolume(parseFloat(e.target.value))}
+                        className="flex-1 accent-amber-400 h-1.5 rounded-full cursor-pointer bg-neutral-800"
+                      />
+                      <span className="text-[10px] font-mono text-white/50 w-7 text-right">
+                        {Math.round(radioVolume * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <audio 
+                  ref={radioAudioRef}
+                  src={baseRadioStreamUrl}
+                  preload="auto"
+                  onPlay={() => {
+                    setRadioPlaying(true);
+                    setIsRadioBuffering(false);
+                  }}
+                  onPause={() => {
+                    setRadioPlaying(false);
+                    setIsRadioBuffering(false);
+                  }}
+                  onWaiting={() => {
+                    setIsRadioBuffering(true);
+                  }}
+                  onCanPlay={() => {
+                    setIsRadioBuffering(false);
+                  }}
+                  onPlaying={() => {
+                    setIsRadioBuffering(false);
+                    setRadioPlaying(true);
+                  }}
+                  onError={(e) => {
+                    console.warn("Audio stream error:", e);
+                    setIsRadioBuffering(false);
+                    setRadioPlaying(false);
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* CTA ATENDIMENTO ONLINE COM HORÁRIO COMERCIAL DESTACADO */}
+          <div id="cta-atendimento-online" className="mb-4">
+            <div className="relative overflow-hidden bg-gradient-to-r from-[#0d0d18] via-[#141424] to-[#0d0d18] border-2 border-amber-500/40 hover:border-amber-400/80 rounded-[28px] p-6 sm:p-8 md:p-10 shadow-[0_15px_45px_rgba(0,0,0,0.7)] transition-all duration-300">
+              {/* Accent top gradient line */}
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 opacity-90" />
+              
+              <div className="flex flex-col lg:flex-row items-center justify-between gap-6 md:gap-8">
+                {/* Left Column: Info, Title and Highlighted Operating Hours */}
+                <div className="flex-1 text-center lg:text-left">
+                  {/* Status Badges */}
+                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-3">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                      <MessageSquare size={13} className="text-amber-400" />
+                      ATENDIMENTO ONLINE
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-mono font-bold px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      TIRE DÚVIDAS NA HORA
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight leading-snug">
+                    💬 Atendimento Online
+                  </h3>
+                  
+                  <p className="text-xs sm:text-sm text-white/80 max-w-2xl mt-1.5 leading-relaxed font-medium">
+                    Tire suas dúvidas diretamente com nossa equipe sobre como divulgar sua empresa.
+                  </p>
+
+                  {/* HORÁRIO COMERCIAL DESTACADO */}
+                  <div className="mt-4 inline-flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3.5 bg-gradient-to-r from-amber-950/70 via-[#1e1708] to-amber-950/70 border-2 border-amber-400/70 rounded-2xl px-4 sm:px-6 py-3.5 shadow-[0_0_25px_rgba(245,158,11,0.2)]">
+                    <div className="flex items-center gap-2 text-amber-300 shrink-0">
+                      <Clock size={19} className="text-amber-400 shrink-0" />
+                      <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-300">
+                        Horário:
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm font-mono font-bold">
+                      <span className="bg-amber-400/25 text-amber-200 px-3 py-1 rounded-lg border border-amber-400/40 shadow-sm">
+                        Seg a Sex: 08:00 às 20:00
+                      </span>
+                      <span className="text-amber-400 font-bold">•</span>
+                      <span className="bg-amber-400/25 text-amber-200 px-3 py-1 rounded-lg border border-amber-400/40 shadow-sm">
+                        Sáb: 09:00 às 14:00
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Prominent Clickable CTA Button */}
+                <div className="shrink-0 w-full sm:w-auto flex flex-col items-center gap-2">
+                  <a 
+                    href="https://crm-pi-ebon-19.vercel.app/?empresa=minhadivulgacao&view=client"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black font-black text-sm sm:text-base uppercase tracking-wider px-8 py-5 rounded-2xl shadow-[0_10px_35px_rgba(245,158,11,0.35)] hover:scale-105 active:scale-95 transition-all duration-300 border border-amber-300/50 ring-4 ring-amber-400/20 decoration-transparent cursor-pointer"
+                  >
+                    <MessageSquare size={22} className="fill-current text-black" />
+                    <span>TIRAR DÚVIDAS NA HORA</span>
+                    <ExternalLink size={18} className="text-black/80" />
+                  </a>
+                  <span className="text-[11px] text-white/50 font-mono text-center">
+                    Atendimento online direto no seu navegador
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
 
         </div>
       </section>
@@ -5115,372 +5361,6 @@ function AppContent() {
               <span>QUERO PARTICIPAR DA REDE</span>
               <ArrowRight size={16} />
             </a>
-          </div>
-
-        </div>
-      </section>
-
-      {/* ======================================================== */}
-      {/* 3. RÁDIO E TV                                           */}
-      {/* TV Minha Divulgação (prévia) e Rádio Minha Divulgação    */}
-      {/* ======================================================== */}
-      <section id="tv-radio" className="w-full py-16 md:py-24 bg-[#07070d] border-b border-white/5 relative scroll-mt-20">
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-6">
-          
-          <div className="text-center max-w-3xl mx-auto mb-12 select-none">
-            <span className="text-amber-400 text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
-              CANAIS AO VIVO DA REDE
-            </span>
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-              TV & RÁDIO MINHA DIVULGAÇÃO
-            </h2>
-            <p className="text-sm sm:text-base text-white/70 mt-3 font-medium max-w-2xl mx-auto">
-              Estes canais fazem parte da estrutura de divulgação da rede Minha Divulgação, exibindo continuamente anúncios, promoções e a programação comercial dos negócios cadastrados.
-            </p>
-          </div>
-
-          {/* TV MINHA DIVULGAÇÃO (Prévia dos anúncios exibidos na TV) */}
-          <div id="tv-destaque" className="mb-14 md:mb-16 scroll-mt-24">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 md:mb-10 gap-3">
-              <div>
-                <h3 className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight mt-1.5 flex items-center gap-2">
-                  📺 TV Minha Divulgação
-                </h3>
-              </div>
-              <p className="text-xs sm:text-sm text-white/70 max-w-md leading-relaxed font-medium">
-                Prévia ao vivo dos anúncios, promoções e destaques das empresas cadastradas.
-              </p>
-            </div>
-
-            {/* TV Frame Container - Fully Responsive for Mobile, Tablet, Notebook & PC */}
-            <div className="relative w-full max-w-4xl lg:max-w-5xl mx-auto bg-[#0a0a10] border-2 sm:border-4 border-[#1c1e2e] rounded-2xl sm:rounded-3xl p-2 sm:p-3.5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-hidden">
-              
-              {/* Top Bezel & Status Bar */}
-              <div className="flex items-center justify-between px-3 sm:px-4 py-2 bg-[#121422] rounded-t-xl sm:rounded-t-2xl border-b border-white/10 mb-2 sm:mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
-                  <span className="text-[10px] sm:text-[11px] font-mono font-black text-emerald-400 tracking-widest uppercase">🔴 CANAL AO VIVO — TV MINHA DIVULGAÇÃO</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={reloadTvPlayer}
-                    className="text-[9px] sm:text-[10px] font-mono font-extrabold text-amber-300 bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/30 px-2.5 py-0.5 rounded-full transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-sm"
-                    title="Clique para recarregar o sinal da TV sem precisar atualizar a página (F5)"
-                  >
-                    <span>🔄 Recarregar TV</span>
-                  </button>
-                  <span className="text-[9px] sm:text-[10px] font-mono text-white/50 tracking-widest uppercase bg-white/5 px-2.5 py-0.5 rounded-full border border-white/10 hidden sm:inline-block">
-                    TRANSMISSÃO 16:9
-                  </span>
-                </div>
-              </div>
-
-              {/* 16:9 Aspect Ratio Frame for Iframe */}
-              <div className="relative w-full aspect-[16/9] rounded-lg sm:rounded-xl overflow-hidden bg-black shadow-inner border border-white/10">
-                {isTvLoading && (
-                  <div className="absolute inset-0 z-10 bg-[#0a0a10]/90 backdrop-blur-sm flex flex-col items-center justify-center gap-2 pointer-events-none">
-                    <div className="w-7 h-7 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest">Sincronizando Sinal da TV...</span>
-                  </div>
-                )}
-
-                <iframe 
-                  key={`tv-frame-${tvKey}`}
-                  ref={tvIframeRef}
-                  src={(() => {
-                    const baseUrl = universalConfig?.horizontalTvLink || (appData && appData.siteInfo && appData.siteInfo.horizontalTvLink) || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando';
-                    const sep = baseUrl.includes('?') ? '&' : '?';
-                    const volParam = `vol=${Math.round(tvVolume * 100)}&muted=${tvMuted ? 1 : 0}&autoplay=1&fs=0&fullscreen=0`;
-                    return `${baseUrl}${sep}_t=${tvKey}&${volParam}`;
-                  })()} 
-                  title="TV Minha Divulgação"
-                  className="w-full h-full border-0 select-none"
-                  loading="lazy"
-                  allow="autoplay *; encrypted-media; audio"
-                  allowFullScreen={false}
-                  onLoad={() => {
-                    setIsTvLoading(false);
-                    sendTvVolume(tvVolume, tvMuted);
-                  }}
-                  onError={() => setIsTvLoading(false)}
-                />
-              </div>
-
-              {/* Bottom Bar Controls - Volume & Status */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-2.5 sm:mt-3 px-3 sm:px-4 py-2.5 bg-[#121422]/90 rounded-b-xl sm:rounded-b-2xl border-t border-white/5">
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] sm:text-xs font-bold text-white/80">📺 TV Minha Divulgação</span>
-                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Ao Vivo</span>
-                </div>
-
-                {/* Volume Control Bar */}
-                <div className="flex items-center gap-3 w-full sm:w-auto bg-black/40 px-3 py-1.5 rounded-xl border border-white/10">
-                  <button
-                    type="button"
-                    onClick={handleTvMuteToggle}
-                    className="text-white/70 hover:text-white transition-colors cursor-pointer"
-                    title={tvMuted || tvVolume === 0 ? "Ativar som da TV" : "Silenciar TV"}
-                  >
-                    {tvMuted || tvVolume === 0 ? (
-                      <VolumeX size={16} className="text-red-400" />
-                    ) : (
-                      <Volume2 size={16} className="text-amber-400" />
-                    )}
-                  </button>
-
-                  <div className="flex items-center gap-2 flex-1 sm:w-36">
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.01"
-                      value={tvMuted ? 0 : tvVolume}
-                      onChange={(e) => handleTvVolumeChange(parseFloat(e.target.value))}
-                      className="w-full accent-[var(--primary)] h-1.5 rounded-full cursor-pointer bg-neutral-800"
-                      title="Ajustar volume da TV"
-                    />
-                    <span className="text-[10px] font-mono text-white/60 min-w-[28px] text-right">
-                      {tvMuted ? '0%' : `${Math.round(tvVolume * 100)}%`}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={reloadTvPlayer}
-                    className="text-[10px] font-mono font-bold text-emerald-300 hover:text-emerald-200 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg border border-emerald-500/30 transition-all flex items-center gap-1 cursor-pointer active:scale-95"
-                    title="Recarregar player da TV"
-                  >
-                    <span>🔄 Atualizar Sinal</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* PLAYER DE RÁDIO COM BUFFER ANTI-TRAVAMENTO (Demonstração do áudio) */}
-          {showRadio !== false && (
-            <div id="radio-player-section" className="mb-14 sm:mb-16">
-              <div className="relative overflow-hidden bg-gradient-to-r from-[#0c0c14] via-[#12121e] to-[#0c0c14] border border-amber-500/30 rounded-[28px] p-5 sm:p-7 md:p-8 shadow-2xl transition-all duration-300">
-                {/* Subtle top accent line */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-[var(--primary)] to-amber-500 opacity-85" />
-                
-                <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
-                  {/* Left: Play button, station info, and equalizer */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 w-full lg:w-auto">
-                    {/* BOTAO DE PLAY BEM DESTACADO COM TEXTO E ICONE */}
-                    <button 
-                      type="button"
-                      id="btn-tocar-radio"
-                      onClick={handleRadioTogglePlay}
-                      className={`w-full sm:w-auto px-6 py-4 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 shrink-0 cursor-pointer font-black text-sm sm:text-base tracking-wide shadow-xl active:scale-95 ${
-                        radioPlaying 
-                          ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-600/40 ring-4 ring-red-500/20' 
-                          : 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black shadow-amber-500/30 hover:scale-[1.02] ring-4 ring-amber-400/20'
-                      }`}
-                      title={radioPlaying ? "Pausar rádio" : "Dar play na rádio ao vivo"}
-                    >
-                      {isRadioBuffering ? (
-                        <>
-                          <RefreshCw size={22} className="animate-spin text-black" />
-                          <span>CONECTANDO SINAL...</span>
-                        </>
-                      ) : radioPlaying ? (
-                        <>
-                          <Pause size={22} className="fill-current" />
-                          <span>PAUSAR RÁDIO</span>
-                        </>
-                      ) : (
-                        <>
-                          <Play size={24} className="fill-current translate-x-0.5" />
-                          <span>DAR PLAY NO RÁDIO</span>
-                        </>
-                      )}
-                    </button>
-
-                    <div className="flex-1 min-w-0">
-                      {/* Status badges */}
-                      <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                        <span className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
-                          radioPlaying 
-                            ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
-                            : 'bg-white/5 text-white/60 border border-white/10'
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${radioPlaying ? 'bg-red-500 animate-pulse' : 'bg-white/30'}`} />
-                          {isRadioBuffering ? 'SINCRONIZANDO SINAL' : radioPlaying ? 'TRANSMISSÃO AO VIVO' : 'RÁDIO WEB AO VIVO'}
-                        </span>
-
-                        <span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
-                          <Wifi size={10} className="stroke-[2.5]" />
-                          Buffer Anti-Travamento Ativo
-                        </span>
-                      </div>
-
-                      {/* Title and Animated Equalizer */}
-                      <div className="flex items-center gap-3">
-                        <h4 className="text-base sm:text-lg font-black text-white truncate">
-                          📻 Rádio Minha Divulgação
-                        </h4>
-                        
-                        {/* Equalizer animation bars */}
-                        {radioPlaying && !isRadioBuffering && (
-                          <div className="flex items-end gap-1 h-5 select-none" title="Transmitindo áudio contínuo">
-                            <span className="w-1 bg-amber-400 rounded-full animate-radio-bar-1" />
-                            <span className="w-1 bg-amber-400 rounded-full animate-radio-bar-2" />
-                            <span className="w-1 bg-amber-400 rounded-full animate-radio-bar-3" />
-                            <span className="w-1 bg-amber-400 rounded-full animate-radio-bar-4" />
-                          </div>
-                        )}
-                      </div>
-
-                      <p className="text-xs text-white/70 truncate mt-0.5">
-                        {isRadioBuffering 
-                          ? "Sincronizando sinal da rádio..." 
-                          : "Ouça nossa programação comercial e ofertas das empresas."}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Right: Volume slider and Refresh signal button */}
-                  <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full lg:w-auto shrink-0 justify-end pt-3 lg:pt-0 border-t lg:border-t-0 border-white/5">
-                    {/* Refresh button */}
-                    <button 
-                      type="button"
-                      onClick={() => reconnectRadio(true)}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 text-[11px] font-mono font-bold text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-3.5 py-2.5 rounded-xl transition-all cursor-pointer active:scale-95"
-                      title="Limpar buffer e sincronizar sinal ao vivo"
-                    >
-                      <RefreshCw size={12} className={isRadioBuffering ? "animate-spin" : ""} />
-                      <span>Atualizar Sinal</span>
-                    </button>
-
-                    {/* Volume controls */}
-                    <div className="flex items-center gap-2.5 w-full sm:w-48 bg-white/5 px-3 py-2 rounded-xl border border-white/10">
-                      <button 
-                        type="button"
-                        onClick={() => setRadioVolume(prev => prev === 0 ? 0.8 : 0)}
-                        className="text-white/60 hover:text-white transition-colors cursor-pointer"
-                        title={radioVolume === 0 ? "Ativar som" : "Silenciar"}
-                      >
-                        {radioVolume === 0 ? <VolumeX size={16} className="text-red-400" /> : <Volume2 size={16} className="text-amber-400" />}
-                      </button>
-                      <input 
-                        type="range" 
-                        min="0" 
-                        max="1" 
-                        step="0.01"
-                        value={radioVolume}
-                        onChange={(e) => setRadioVolume(parseFloat(e.target.value))}
-                        className="flex-1 accent-amber-400 h-1.5 rounded-full cursor-pointer bg-neutral-800"
-                      />
-                      <span className="text-[10px] font-mono text-white/50 w-7 text-right">
-                        {Math.round(radioVolume * 100)}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <audio 
-                  ref={radioAudioRef}
-                  src={baseRadioStreamUrl}
-                  preload="auto"
-                  onPlay={() => {
-                    setRadioPlaying(true);
-                    setIsRadioBuffering(false);
-                  }}
-                  onPause={() => {
-                    setRadioPlaying(false);
-                    setIsRadioBuffering(false);
-                  }}
-                  onWaiting={() => {
-                    setIsRadioBuffering(true);
-                  }}
-                  onCanPlay={() => {
-                    setIsRadioBuffering(false);
-                  }}
-                  onPlaying={() => {
-                    setIsRadioBuffering(false);
-                    setRadioPlaying(true);
-                  }}
-                  onError={(e) => {
-                    console.warn("Audio stream error:", e);
-                    setIsRadioBuffering(false);
-                    setRadioPlaying(false);
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* CTA ATENDIMENTO ONLINE COM HORÁRIO COMERCIAL DESTACADO */}
-          <div id="cta-atendimento-online" className="mb-4">
-            <div className="relative overflow-hidden bg-gradient-to-r from-[#0d0d18] via-[#141424] to-[#0d0d18] border-2 border-amber-500/40 hover:border-amber-400/80 rounded-[28px] p-6 sm:p-8 md:p-10 shadow-[0_15px_45px_rgba(0,0,0,0.7)] transition-all duration-300">
-              {/* Accent top gradient line */}
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 opacity-90" />
-              
-              <div className="flex flex-col lg:flex-row items-center justify-between gap-6 md:gap-8">
-                {/* Left Column: Info, Title and Highlighted Operating Hours */}
-                <div className="flex-1 text-center lg:text-left">
-                  {/* Status Badges */}
-                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-3">
-                    <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                      <MessageSquare size={13} className="text-amber-400" />
-                      ATENDIMENTO ONLINE
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-mono font-bold px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      TIRE DÚVIDAS NA HORA
-                    </span>
-                  </div>
-
-                  <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight leading-snug">
-                    💬 Atendimento Online
-                  </h3>
-                  
-                  <p className="text-xs sm:text-sm text-white/80 max-w-2xl mt-1.5 leading-relaxed font-medium">
-                    Tire suas dúvidas diretamente com nossa equipe sobre como divulgar sua empresa.
-                  </p>
-
-                  {/* HORÁRIO COMERCIAL DESTACADO */}
-                  <div className="mt-4 inline-flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3.5 bg-gradient-to-r from-amber-950/70 via-[#1e1708] to-amber-950/70 border-2 border-amber-400/70 rounded-2xl px-4 sm:px-6 py-3.5 shadow-[0_0_25px_rgba(245,158,11,0.2)]">
-                    <div className="flex items-center gap-2 text-amber-300 shrink-0">
-                      <Clock size={19} className="text-amber-400 shrink-0" />
-                      <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-300">
-                        Horário:
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm font-mono font-bold">
-                      <span className="bg-amber-400/25 text-amber-200 px-3 py-1 rounded-lg border border-amber-400/40 shadow-sm">
-                        Seg a Sex: 08:00 às 20:00
-                      </span>
-                      <span className="text-amber-400 font-bold">•</span>
-                      <span className="bg-amber-400/25 text-amber-200 px-3 py-1 rounded-lg border border-amber-400/40 shadow-sm">
-                        Sáb: 09:00 às 14:00
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Column: Prominent Clickable CTA Button */}
-                <div className="shrink-0 w-full sm:w-auto flex flex-col items-center gap-2">
-                  <a 
-                    href="https://crm-pi-ebon-19.vercel.app/?empresa=minhadivulgacao&view=client"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black font-black text-sm sm:text-base uppercase tracking-wider px-8 py-5 rounded-2xl shadow-[0_10px_35px_rgba(245,158,11,0.35)] hover:scale-105 active:scale-95 transition-all duration-300 border border-amber-300/50 ring-4 ring-amber-400/20 decoration-transparent cursor-pointer"
-                  >
-                    <MessageSquare size={22} className="fill-current text-black" />
-                    <span>TIRAR DÚVIDAS NA HORA</span>
-                    <ExternalLink size={18} className="text-black/80" />
-                  </a>
-                  <span className="text-[11px] text-white/50 font-mono text-center">
-                    Atendimento online direto no seu navegador
-                  </span>
-                </div>
-              </div>
-            </div>
           </div>
 
         </div>
