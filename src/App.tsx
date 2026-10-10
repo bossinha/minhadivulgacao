@@ -4273,13 +4273,64 @@ function AppContent() {
   
           {/* Main Headline */}
           <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-sans font-black text-white tracking-tight leading-[1.08] max-w-4xl select-none">
-            Sua empresa <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500">merece ser vista!</span>
+            Encontre empresas, produtos, serviços e ofertas <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500">em um só lugar!</span>
           </h1>
   
           {/* Subtitle */}
           <p className="text-base sm:text-xl md:text-2xl text-white/90 font-medium max-w-2xl mt-4 leading-relaxed select-none">
-            Conheça empresas, ofertas e negócios que estão aqui.
+            Conheça empresas, confira promoções e fale diretamente pelo WhatsApp.
           </p>
+
+          {/* 3 Etapas Visuais: Como Funciona */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-8 w-full max-w-4xl mx-auto">
+            {/* Etapa 1: ENCONTRE */}
+            <div className="bg-[#0e101a]/85 hover:bg-[#141724] border border-white/10 hover:border-amber-500/40 rounded-2xl p-4 sm:p-5 flex items-center sm:flex-col sm:text-center gap-3.5 transition-all duration-200 shadow-xl">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0 shadow-inner">
+                <Search size={22} className="stroke-[2.5]" />
+              </div>
+              <div className="text-left sm:text-center min-w-0">
+                <span className="text-[10px] font-mono font-bold text-amber-400/90 tracking-wider uppercase block">Passo 1</span>
+                <h3 className="text-sm sm:text-base font-black text-white tracking-tight leading-tight">
+                  <span className="text-amber-400">ENCONTRE</span> uma empresa
+                </h3>
+                <p className="text-[11px] sm:text-xs text-white/60 mt-0.5 sm:mt-1 font-medium">
+                  Busque por segmento, produtos ou comércio local.
+                </p>
+              </div>
+            </div>
+
+            {/* Etapa 2: CONHEÇA */}
+            <div className="bg-[#0e101a]/85 hover:bg-[#141724] border border-white/10 hover:border-amber-500/40 rounded-2xl p-4 sm:p-5 flex items-center sm:flex-col sm:text-center gap-3.5 transition-all duration-200 shadow-xl">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0 shadow-inner">
+                <Sparkles size={22} className="stroke-[2.5]" />
+              </div>
+              <div className="text-left sm:text-center min-w-0">
+                <span className="text-[10px] font-mono font-bold text-amber-400/90 tracking-wider uppercase block">Passo 2</span>
+                <h3 className="text-sm sm:text-base font-black text-white tracking-tight leading-tight">
+                  <span className="text-amber-400">CONHEÇA</span> produtos e ofertas
+                </h3>
+                <p className="text-[11px] sm:text-xs text-white/60 mt-0.5 sm:mt-1 font-medium">
+                  Veja fotos, catálogo e promoções exclusivas.
+                </p>
+              </div>
+            </div>
+
+            {/* Etapa 3: FALE */}
+            <div className="bg-[#0e101a]/85 hover:bg-[#141724] border border-white/10 hover:border-emerald-500/40 rounded-2xl p-4 sm:p-5 flex items-center sm:flex-col sm:text-center gap-3.5 transition-all duration-200 shadow-xl">
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0 shadow-inner">
+                <WhatsAppIcon className="w-6 h-6 fill-emerald-400" />
+              </div>
+              <div className="text-left sm:text-center min-w-0">
+                <span className="text-[10px] font-mono font-bold text-emerald-400/90 tracking-wider uppercase block">Passo 3</span>
+                <h3 className="text-sm sm:text-base font-black text-white tracking-tight leading-tight">
+                  <span className="text-emerald-400">FALE</span> direto no WhatsApp
+                </h3>
+                <p className="text-[11px] sm:text-xs text-white/60 mt-0.5 sm:mt-1 font-medium">
+                  Converse diretamente com a empresa sem taxas.
+                </p>
+              </div>
+            </div>
+          </div>
 
           {/* Action buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-7 w-full sm:w-auto relative z-20">
@@ -5338,42 +5389,54 @@ function AppContent() {
             </div>
           )}
 
-          {/* Banner Comercial: QUERO PARTICIPAR DA REDE */}
-          <div className="mt-12 bg-gradient-to-r from-[#141208] via-[#1c180b] to-[#141208] border-2 border-amber-400/60 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl">
-            <div className="text-center sm:text-left">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
-                SUA EMPRESA NA REDE
+          {/* Seção Destaque para Anunciantes: Quer divulgar sua empresa? */}
+          <div className="mt-12 bg-gradient-to-r from-[#141208] via-[#1c180b] to-[#141208] border-2 border-amber-400/80 rounded-3xl p-6 sm:p-8 flex flex-col lg:flex-row items-center justify-between gap-6 shadow-[0_15px_40px_rgba(245,158,11,0.2)]">
+            <div className="text-center lg:text-left flex-1">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full inline-block">
+                ESPAÇO DO ANUNCIANTE
               </span>
-              <h3 className="text-lg sm:text-2xl font-black text-white mt-2.5">
-                Quer sua empresa cadastrada na rede Minha Divulgação?
+              <h3 className="text-xl sm:text-3xl font-black text-white mt-2.5">
+                Quer divulgar sua empresa?
               </h3>
-              <p className="text-xs sm:text-sm text-white/70 mt-1 max-w-xl font-medium">
-                Tenha seu perfil comercial, WhatsApp direto, participação nas buscas e espaços de divulgação por apenas R$ 49,90/mês.
+              <p className="text-xs sm:text-sm text-white/80 mt-1.5 max-w-xl font-medium leading-relaxed">
+                Tenha seu espaço no Minha Divulgação, com perfil comercial, WhatsApp direto e participação nas buscas do portal.
               </p>
+              
+              {/* Preço em Destaque */}
+              <div className="flex items-baseline justify-center lg:justify-start gap-1.5 mt-3">
+                <span className="text-amber-400 font-black text-sm">Por apenas</span>
+                <span className="text-2xl sm:text-3xl font-black text-white">R$ 49,90</span>
+                <span className="text-xs font-bold text-white/60 uppercase">por mês</span>
+              </div>
             </div>
 
-            <a
-              href={primaryDivulgarWaLink}
-              target="_blank"
-              rel="noreferrer"
-              className="shrink-0 inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-7 py-4 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 shadow-lg hover:scale-105 cursor-pointer decoration-transparent"
-            >
-              <span>QUERO PARTICIPAR DA REDE</span>
-              <ArrowRight size={16} />
-            </a>
+            <div className="shrink-0 w-full sm:w-auto flex flex-col items-center gap-2">
+              <a
+                href={primaryDivulgarWaLink}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 py-4 sm:py-5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 shadow-xl hover:scale-105 cursor-pointer decoration-transparent"
+              >
+                <span>QUERO DIVULGAR MINHA EMPRESA</span>
+                <ArrowRight size={18} />
+              </a>
+              <span className="text-[10px] font-mono text-white/50">
+                Ativação rápida e suporte direto
+              </span>
+            </div>
           </div>
 
         </div>
       </section>
 
       {/* ======================================================== */}
-      {/* 4. CONVITE PARA ANUNCIAR                                 */}
-      {/* Sua empresa também pode aparecer aqui • R$ 49,90/mês     */}
+      {/* 4. SEÇÃO DE ANUNCIANTES: QUER DIVULGAR SUA EMPRESA?      */}
+      {/* R$ 49,90 por mês • Perfil comercial e WhatsApp direto    */}
       {/* ======================================================== */}
       <div id="anuncie" className="scroll-mt-20">
         <div id="divulgue" />
 
-        {/* 7. SEÇÃO DE PREÇO: SUA EMPRESA NA REDE (R$ 49,90/mês) */}
+        {/* SEÇÃO DE PREÇO: QUER DIVULGAR SUA EMPRESA? (R$ 49,90/mês) */}
         <PlanoPrecoSection 
           primaryWaLink={primaryDivulgarWaLink} 
           onCadastrarClick={() => {
@@ -5381,16 +5444,13 @@ function AppContent() {
           }}
         />
 
-        {/* 2. SEÇÃO: O QUE SUA EMPRESA GANHA? */}
+        {/* VANTAGENS: O QUE SUA EMPRESA GANHA? */}
         <OQueSuaEmpresaGanhaSection />
 
-        {/* 3. SEÇÃO: COMO FUNCIONA? */}
+        {/* PASSO A PASSO: COMO FUNCIONA */}
         <ComoFuncionaSection />
 
-        {/* 4. SEÇÃO: ONDE SUA EMPRESA SERÁ DIVULGADA? */}
-        <OndeSuaEmpresaApareceSection />
-
-        {/* 8. CTA FINAL: SUA EMPRESA PODE ESTAR AQUI */}
+        {/* CTA FINAL: QUERO DIVULGAR MINHA EMPRESA */}
         <CtaFinalSection 
           primaryWaLink={primaryDivulgarWaLink} 
           onCadastrarClick={() => {
