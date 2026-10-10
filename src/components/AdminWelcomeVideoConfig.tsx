@@ -713,8 +713,8 @@ export const AdminWelcomeVideoConfig: React.FC<AdminWelcomeVideoConfigProps> = (
                   className="text-amber-500 focus:ring-0"
                 />
                 <div>
-                  <span className="font-bold block">Sempre que abrir o site</span>
-                  <span className="text-[10px] text-white/50">Ideal para campanhas nos grupos</span>
+                  <span className="font-bold block">Sempre (Todo F5 / Recarregamento)</span>
+                  <span className="text-[10px] text-white/50">Abre em todo acesso, clique no link ou F5</span>
                 </div>
               </label>
 

@@ -1076,16 +1076,13 @@ function AppContent() {
     if (activeTrackingCompanyId) return;
 
     const currentCity = tenantId || 'fortaleza';
+    // Se a frequência configurada for 'once_per_day', respeita a trava de 24 horas no localStorage.
+    // Caso contrário (padrão 'always'), SEMPRE abre em todo F5, recarregamento ou novo acesso.
     if (frequency === 'once_per_day') {
       const todayStr = new Date().toISOString().slice(0, 10);
       const storageKey = `seen_portal_video_${currentCity}_${todayStr}`;
       try {
         if (localStorage.getItem(storageKey)) return;
-      } catch (e) {}
-    } else {
-      const sessionKey = `seen_portal_video_session_${currentCity}`;
-      try {
-        if (sessionStorage.getItem(sessionKey)) return;
       } catch (e) {}
     }
 
@@ -1101,9 +1098,11 @@ function AppContent() {
     setIsWelcomeVideoPreviewMode(false);
     try {
       const currentCity = tenantId || 'fortaleza';
-      const todayStr = new Date().toISOString().slice(0, 10);
-      localStorage.setItem(`seen_portal_video_${currentCity}_${todayStr}`, 'true');
-      sessionStorage.setItem(`seen_portal_video_session_${currentCity}`, 'true');
+      // Só armazena trava se a configuração for de 24 horas
+      if (appData?.welcomeVideo?.frequency === 'once_per_day') {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        localStorage.setItem(`seen_portal_video_${currentCity}_${todayStr}`, 'true');
+      }
     } catch (e) {}
   };
 
