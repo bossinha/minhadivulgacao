@@ -154,7 +154,7 @@ export const CompanyCardViewBadge: React.FC<{ company: any }> = ({ company }) =>
   return (
     <span 
       title={`${totalViews} visualizações deste perfil no portal`}
-      className={`text-[9px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono transition-all duration-300 ${
+      className={`text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono transition-all duration-300 ${
         isPulsing 
           ? 'bg-amber-400/20 text-amber-300 border border-amber-400/50 scale-105 shadow-[0_0_12px_rgba(251,191,36,0.3)]' 
           : 'bg-white/5 text-white/50 hover:text-white/80 border border-white/10 hover:border-white/20'

@@ -2090,9 +2090,9 @@ function AppContent() {
           target="_blank" 
           rel="noreferrer"
           onClick={() => trackCompanyInteraction(company, 'whatsapp')}
-          className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-2.5 sm:py-3 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md active:scale-[0.98]"
+          className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3 sm:py-3.5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-lg active:scale-[0.98]"
         >
-          <Smartphone size={isCompact ? 12 : 14} className="shrink-0" /> Falar no WhatsApp
+          <Smartphone size={isCompact ? 14 : 16} className="shrink-0" /> Falar no WhatsApp
         </a>
       );
     } else if (hasCatalogLink) {
@@ -2102,9 +2102,9 @@ function AppContent() {
           target="_blank" 
           rel="noreferrer"
           onClick={() => trackCompanyInteraction(company, 'catalog')}
-          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-2.5 sm:py-3 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer active:scale-[0.98]"
+          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 sm:py-3.5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-lg cursor-pointer active:scale-[0.98]"
         >
-          <ShoppingBag size={isCompact ? 12 : 14} className="shrink-0" /> Ver Catálogo
+          <ShoppingBag size={isCompact ? 14 : 16} className="shrink-0" /> Ver Catálogo
         </a>
       );
     } else if (hasWebsite) {
@@ -2114,9 +2114,9 @@ function AppContent() {
           target="_blank" 
           rel="noreferrer"
           onClick={() => trackCompanyInteraction(company, 'website')}
-          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-2.5 sm:py-3 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer active:scale-[0.98]"
+          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 sm:py-3.5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-lg cursor-pointer active:scale-[0.98]"
         >
-          <Globe size={isCompact ? 12 : 14} className="shrink-0" /> Visitar Site Oficial
+          <Globe size={isCompact ? 14 : 16} className="shrink-0" /> Visitar Site Oficial
         </a>
       );
     } else if (hasIg) {
@@ -2126,9 +2126,9 @@ function AppContent() {
           target="_blank" 
           rel="noreferrer"
           onClick={() => trackCompanyInteraction(company, 'instagram')}
-          className="w-full bg-[#e1306c] hover:bg-[#d6245d] text-white py-2.5 sm:py-3 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md active:scale-[0.98]"
+          className="w-full bg-[#e1306c] hover:bg-[#d6245d] text-white py-3 sm:py-3.5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-lg active:scale-[0.98]"
         >
-          <Instagram size={isCompact ? 12 : 14} className="shrink-0" /> Instagram Oficial
+          <Instagram size={isCompact ? 14 : 16} className="shrink-0" /> Instagram Oficial
         </a>
       );
     }
@@ -2145,10 +2145,10 @@ function AppContent() {
           target="_blank" 
           rel="noreferrer"
           onClick={() => trackCompanyInteraction(company, 'instagram')}
-          className="flex-1 min-w-0 bg-pink-500/10 border border-pink-500/25 hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 hover:border-transparent text-pink-400 hover:text-white py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all duration-200"
+          className="flex-1 min-w-0 bg-pink-500/10 border border-pink-500/25 hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 hover:border-transparent text-pink-400 hover:text-white py-2.5 px-2 rounded-xl font-black text-xs uppercase tracking-wide text-center flex items-center justify-center gap-1.5 transition-all duration-200"
           title="Ver Instagram"
         >
-          <Instagram size={12} className="shrink-0" />
+          <Instagram size={13} className="shrink-0" />
           <span className="truncate">Instagram</span>
         </a>
       );
@@ -2163,10 +2163,10 @@ function AppContent() {
           target="_blank" 
           rel="noreferrer"
           onClick={() => trackCompanyInteraction(company, 'catalog')}
-          className="flex-1 min-w-0 bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500 hover:border-amber-500 text-amber-400 hover:text-black py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all duration-200"
+          className="flex-1 min-w-0 bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500 hover:border-amber-500 text-amber-400 hover:text-black py-2.5 px-2 rounded-xl font-black text-xs uppercase tracking-wide text-center flex items-center justify-center gap-1.5 transition-all duration-200"
           title="Ver Catálogo / Cardápio"
         >
-          <ShoppingBag size={12} className="shrink-0" />
+          <ShoppingBag size={13} className="shrink-0" />
           <span className="truncate">Catálogo</span>
         </a>
       );
@@ -2181,10 +2181,10 @@ function AppContent() {
           target="_blank" 
           rel="noreferrer"
           onClick={() => trackCompanyInteraction(company, 'website')}
-          className="flex-1 min-w-0 bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500 hover:border-amber-500 text-amber-400 hover:text-black py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all duration-200"
+          className="flex-1 min-w-0 bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500 hover:border-amber-500 text-amber-400 hover:text-black py-2.5 px-2 rounded-xl font-black text-xs uppercase tracking-wide text-center flex items-center justify-center gap-1.5 transition-all duration-200"
           title="Visitar Website"
         >
-          <Globe size={12} className="shrink-0" />
+          <Globe size={13} className="shrink-0" />
           <span className="truncate">Website</span>
         </a>
       );
@@ -2199,10 +2199,10 @@ function AppContent() {
           target="_blank" 
           rel="noreferrer"
           onClick={() => trackCompanyInteraction(company, 'facebook')}
-          className="flex-1 min-w-0 bg-blue-500/10 border border-blue-500/25 hover:bg-blue-600 hover:border-blue-600 text-blue-400 hover:text-white py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all duration-200"
+          className="flex-1 min-w-0 bg-blue-500/10 border border-blue-500/25 hover:bg-blue-600 hover:border-blue-600 text-blue-400 hover:text-white py-2.5 px-2 rounded-xl font-black text-xs uppercase tracking-wide text-center flex items-center justify-center gap-1.5 transition-all duration-200"
           title="Ver Facebook"
         >
-          <span className="text-xs font-black shrink-0 leading-none">f</span>
+          <span className="text-sm font-black shrink-0 leading-none">f</span>
           <span className="truncate">Facebook</span>
         </a>
       );
@@ -2211,7 +2211,7 @@ function AppContent() {
     if (!primaryButton && secondaryList.length === 0) {
       return (
         <div className="mt-4 pt-3 border-t border-white/5 w-full">
-          <span className="text-[9px] text-white/35 text-center py-2.5 bg-white/5 rounded-2xl font-bold uppercase tracking-widest block w-full">
+          <span className="text-xs text-white/40 text-center py-2.5 bg-white/5 rounded-2xl font-bold uppercase tracking-wider block w-full">
             Sem Links Cadastrados
           </span>
         </div>
@@ -4209,8 +4209,8 @@ function AppContent() {
           {/* Clean Menu - Desktop */}
           <div className="hidden lg:flex items-center gap-6 text-xs font-bold uppercase tracking-wider text-white/70">
             <a href="#inicio" onClick={(e) => { e.preventDefault(); scrollToSection('inicio'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Início</a>
-            <a href="#anunciantes" onClick={(e) => { e.preventDefault(); scrollToSection('anunciantes'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Anunciantes</a>
             <a href="#tv-radio" onClick={(e) => { e.preventDefault(); scrollToSection('tv-radio'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Rádio & TV</a>
+            <a href="#anunciantes" onClick={(e) => { e.preventDefault(); scrollToSection('anunciantes'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Anunciantes</a>
             <a href="#anuncie" onClick={(e) => { e.preventDefault(); scrollToSection('anuncie'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Divulgue sua Empresa</a>
           </div>
 
@@ -4279,8 +4279,8 @@ function AppContent() {
             >
               <div className="flex flex-col gap-4 text-sm font-bold uppercase tracking-wider">
                 <a href="#inicio" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('inicio'); }} className="text-white hover:text-[var(--primary)] py-2">🏠 Início</a>
-                <a href="#anunciantes" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('anunciantes'); }} className="text-white hover:text-[var(--primary)] py-2">🏢 Anunciantes</a>
                 <a href="#tv-radio" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('tv-radio'); }} className="text-white hover:text-[var(--primary)] py-2">📺 Rádio & TV</a>
+                <a href="#anunciantes" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('anunciantes'); }} className="text-white hover:text-[var(--primary)] py-2">🏢 Anunciantes</a>
                 <a href="#anuncie" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('anuncie'); }} className="text-white hover:text-[var(--primary)] py-2">🚀 Divulgue sua Empresa</a>
               </div>
               <div className="flex flex-col gap-3 pt-4 border-t border-white/5">
@@ -4499,18 +4499,18 @@ function AppContent() {
               <div className="flex items-center justify-between px-3 sm:px-4 py-2 bg-[#121422] rounded-t-xl sm:rounded-t-2xl border-b border-white/10 mb-2 sm:mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
-                  <span className="text-[10px] sm:text-[11px] font-mono font-black text-emerald-400 tracking-widest uppercase">🔴 CANAL AO VIVO — TV MINHA DIVULGAÇÃO</span>
+                  <span className="text-xs font-mono font-black text-emerald-400 tracking-wider uppercase">🔴 AO VIVO — TV MINHA DIVULGAÇÃO</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={reloadTvPlayer}
-                    className="text-[9px] sm:text-[10px] font-mono font-extrabold text-amber-300 bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/30 px-2.5 py-0.5 rounded-full transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-sm"
+                    className="text-xs font-mono font-extrabold text-amber-300 bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/30 px-3 py-1 rounded-full transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-sm"
                     title="Clique para recarregar o sinal da TV sem precisar atualizar a página (F5)"
                   >
                     <span>🔄 Recarregar TV</span>
                   </button>
-                  <span className="text-[9px] sm:text-[10px] font-mono text-white/50 tracking-widest uppercase bg-white/5 px-2.5 py-0.5 rounded-full border border-white/10 hidden sm:inline-block">
+                  <span className="text-xs font-mono text-white/50 tracking-wider uppercase bg-white/5 px-2.5 py-0.5 rounded-full border border-white/10 hidden sm:inline-block">
                     TRANSMISSÃO 16:9
                   </span>
                 </div>
@@ -4545,12 +4545,12 @@ function AppContent() {
               {/* Bottom Bar Controls - Volume & Status */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-2.5 sm:mt-3 px-3 sm:px-4 py-2.5 bg-[#121422]/90 rounded-b-xl sm:rounded-b-2xl border-t border-white/5">
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] sm:text-xs font-bold text-white/80">📺 TV Minha Divulgação</span>
-                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Ao Vivo</span>
+                  <span className="text-xs sm:text-sm font-bold text-white/90">📺 TV Minha Divulgação</span>
+                  <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20">Ao Vivo</span>
                 </div>
 
                 {/* Volume Control Bar */}
-                <div className="flex items-center gap-3 w-full sm:w-auto bg-black/40 px-3 py-1.5 rounded-xl border border-white/10">
+                <div className="flex items-center gap-3 w-full sm:w-auto bg-black/40 px-3.5 py-2 rounded-xl border border-white/10">
                   <button
                     type="button"
                     onClick={handleTvMuteToggle}
@@ -4558,9 +4558,9 @@ function AppContent() {
                     title={tvMuted || tvVolume === 0 ? "Ativar som da TV" : "Silenciar TV"}
                   >
                     {tvMuted || tvVolume === 0 ? (
-                      <VolumeX size={16} className="text-red-400" />
+                      <VolumeX size={18} className="text-red-400" />
                     ) : (
-                      <Volume2 size={16} className="text-amber-400" />
+                      <Volume2 size={18} className="text-amber-400" />
                     )}
                   </button>
 
@@ -4572,10 +4572,10 @@ function AppContent() {
                       step="0.01"
                       value={tvMuted ? 0 : tvVolume}
                       onChange={(e) => handleTvVolumeChange(parseFloat(e.target.value))}
-                      className="w-full accent-[var(--primary)] h-1.5 rounded-full cursor-pointer bg-neutral-800"
+                      className="w-full accent-[var(--primary)] h-2 rounded-full cursor-pointer bg-neutral-800"
                       title="Ajustar volume da TV"
                     />
-                    <span className="text-[10px] font-mono text-white/60 min-w-[28px] text-right">
+                    <span className="text-xs font-mono text-white/70 min-w-[32px] text-right">
                       {tvMuted ? '0%' : `${Math.round(tvVolume * 100)}%`}
                     </span>
                   </div>
@@ -4585,7 +4585,7 @@ function AppContent() {
                   <button
                     type="button"
                     onClick={reloadTvPlayer}
-                    className="text-[10px] font-mono font-bold text-emerald-300 hover:text-emerald-200 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg border border-emerald-500/30 transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                    className="text-xs font-mono font-bold text-emerald-300 hover:text-emerald-200 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-lg border border-emerald-500/30 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
                     title="Recarregar player da TV"
                   >
                     <span>🔄 Atualizar Sinal</span>
@@ -4637,40 +4637,40 @@ function AppContent() {
 
                     <div className="flex-1 min-w-0">
                       {/* Status badges */}
-                      <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                        <span className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <span className={`inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full ${
                           radioPlaying 
                             ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
-                            : 'bg-white/5 text-white/60 border border-white/10'
+                            : 'bg-white/5 text-white/70 border border-white/10'
                         }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${radioPlaying ? 'bg-red-500 animate-pulse' : 'bg-white/30'}`} />
+                          <span className={`w-2 h-2 rounded-full ${radioPlaying ? 'bg-red-500 animate-pulse' : 'bg-white/30'}`} />
                           {isRadioBuffering ? 'SINCRONIZANDO SINAL' : radioPlaying ? 'TRANSMISSÃO AO VIVO' : 'RÁDIO WEB AO VIVO'}
                         </span>
 
-                        <span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
-                          <Wifi size={10} className="stroke-[2.5]" />
+                        <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
+                          <Wifi size={12} className="stroke-[2.5]" />
                           Buffer Anti-Travamento Ativo
                         </span>
                       </div>
 
                       {/* Title and Animated Equalizer */}
                       <div className="flex items-center gap-3">
-                        <h4 className="text-base sm:text-lg font-black text-white truncate">
+                        <h4 className="text-lg sm:text-xl font-black text-white truncate">
                           📻 Rádio Minha Divulgação
                         </h4>
                         
                         {/* Equalizer animation bars */}
                         {radioPlaying && !isRadioBuffering && (
                           <div className="flex items-end gap-1 h-5 select-none" title="Transmitindo áudio contínuo">
-                            <span className="w-1 bg-amber-400 rounded-full animate-radio-bar-1" />
-                            <span className="w-1 bg-amber-400 rounded-full animate-radio-bar-2" />
-                            <span className="w-1 bg-amber-400 rounded-full animate-radio-bar-3" />
-                            <span className="w-1 bg-amber-400 rounded-full animate-radio-bar-4" />
+                            <span className="w-1.5 bg-amber-400 rounded-full animate-radio-bar-1" />
+                            <span className="w-1.5 bg-amber-400 rounded-full animate-radio-bar-2" />
+                            <span className="w-1.5 bg-amber-400 rounded-full animate-radio-bar-3" />
+                            <span className="w-1.5 bg-amber-400 rounded-full animate-radio-bar-4" />
                           </div>
                         )}
                       </div>
 
-                      <p className="text-xs text-white/70 truncate mt-0.5">
+                      <p className="text-xs sm:text-sm text-white/80 truncate mt-1 font-medium">
                         {isRadioBuffering 
                           ? "Sincronizando sinal da rádio..." 
                           : "Ouça nossa programação comercial e ofertas das empresas."}
@@ -4684,22 +4684,22 @@ function AppContent() {
                     <button 
                       type="button"
                       onClick={() => reconnectRadio(true)}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 text-[11px] font-mono font-bold text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-3.5 py-2.5 rounded-xl transition-all cursor-pointer active:scale-95"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-xs font-mono font-bold text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-4 py-2.5 rounded-xl transition-all cursor-pointer active:scale-95"
                       title="Limpar buffer e sincronizar sinal ao vivo"
                     >
-                      <RefreshCw size={12} className={isRadioBuffering ? "animate-spin" : ""} />
+                      <RefreshCw size={14} className={isRadioBuffering ? "animate-spin" : ""} />
                       <span>Atualizar Sinal</span>
                     </button>
 
                     {/* Volume controls */}
-                    <div className="flex items-center gap-2.5 w-full sm:w-48 bg-white/5 px-3 py-2 rounded-xl border border-white/10">
+                    <div className="flex items-center gap-2.5 w-full sm:w-48 bg-white/5 px-3.5 py-2.5 rounded-xl border border-white/10">
                       <button 
                         type="button"
                         onClick={() => setRadioVolume(prev => prev === 0 ? 0.8 : 0)}
-                        className="text-white/60 hover:text-white transition-colors cursor-pointer"
+                        className="text-white/70 hover:text-white transition-colors cursor-pointer"
                         title={radioVolume === 0 ? "Ativar som" : "Silenciar"}
                       >
-                        {radioVolume === 0 ? <VolumeX size={16} className="text-red-400" /> : <Volume2 size={16} className="text-amber-400" />}
+                        {radioVolume === 0 ? <VolumeX size={18} className="text-red-400" /> : <Volume2 size={18} className="text-amber-400" />}
                       </button>
                       <input 
                         type="range" 
@@ -4708,9 +4708,9 @@ function AppContent() {
                         step="0.01"
                         value={radioVolume}
                         onChange={(e) => setRadioVolume(parseFloat(e.target.value))}
-                        className="flex-1 accent-amber-400 h-1.5 rounded-full cursor-pointer bg-neutral-800"
+                        className="flex-1 accent-amber-400 h-2 rounded-full cursor-pointer bg-neutral-800"
                       />
-                      <span className="text-[10px] font-mono text-white/50 w-7 text-right">
+                      <span className="text-xs font-mono text-white/70 w-8 text-right">
                         {Math.round(radioVolume * 100)}%
                       </span>
                     </div>
@@ -4749,75 +4749,6 @@ function AppContent() {
             </div>
           )}
 
-          {/* CTA ATENDIMENTO ONLINE COM HORÁRIO COMERCIAL DESTACADO */}
-          <div id="cta-atendimento-online" className="mb-4">
-            <div className="relative overflow-hidden bg-gradient-to-r from-[#0d0d18] via-[#141424] to-[#0d0d18] border-2 border-amber-500/40 hover:border-amber-400/80 rounded-[28px] p-6 sm:p-8 md:p-10 shadow-[0_15px_45px_rgba(0,0,0,0.7)] transition-all duration-300">
-              {/* Accent top gradient line */}
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 opacity-90" />
-              
-              <div className="flex flex-col lg:flex-row items-center justify-between gap-6 md:gap-8">
-                {/* Left Column: Info, Title and Highlighted Operating Hours */}
-                <div className="flex-1 text-center lg:text-left">
-                  {/* Status Badges */}
-                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-3">
-                    <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                      <MessageSquare size={13} className="text-amber-400" />
-                      ATENDIMENTO ONLINE
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-mono font-bold px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      TIRE DÚVIDAS NA HORA
-                    </span>
-                  </div>
-
-                  <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight leading-snug">
-                    💬 Atendimento Online
-                  </h3>
-                  
-                  <p className="text-xs sm:text-sm text-white/80 max-w-2xl mt-1.5 leading-relaxed font-medium">
-                    Tire suas dúvidas diretamente com nossa equipe sobre como divulgar sua empresa.
-                  </p>
-
-                  {/* HORÁRIO COMERCIAL DESTACADO */}
-                  <div className="mt-4 inline-flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3.5 bg-gradient-to-r from-amber-950/70 via-[#1e1708] to-amber-950/70 border-2 border-amber-400/70 rounded-2xl px-4 sm:px-6 py-3.5 shadow-[0_0_25px_rgba(245,158,11,0.2)]">
-                    <div className="flex items-center gap-2 text-amber-300 shrink-0">
-                      <Clock size={19} className="text-amber-400 shrink-0" />
-                      <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-300">
-                        Horário:
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm font-mono font-bold">
-                      <span className="bg-amber-400/25 text-amber-200 px-3 py-1 rounded-lg border border-amber-400/40 shadow-sm">
-                        Seg a Sex: 08:00 às 20:00
-                      </span>
-                      <span className="text-amber-400 font-bold">•</span>
-                      <span className="bg-amber-400/25 text-amber-200 px-3 py-1 rounded-lg border border-amber-400/40 shadow-sm">
-                        Sáb: 09:00 às 14:00
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Column: Prominent Clickable CTA Button */}
-                <div className="shrink-0 w-full sm:w-auto flex flex-col items-center gap-2">
-                  <a 
-                    href="https://crm-pi-ebon-19.vercel.app/?empresa=minhadivulgacao&view=client"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black font-black text-sm sm:text-base uppercase tracking-wider px-8 py-5 rounded-2xl shadow-[0_10px_35px_rgba(245,158,11,0.35)] hover:scale-105 active:scale-95 transition-all duration-300 border border-amber-300/50 ring-4 ring-amber-400/20 decoration-transparent cursor-pointer"
-                  >
-                    <MessageSquare size={22} className="fill-current text-black" />
-                    <span>TIRAR DÚVIDAS NA HORA</span>
-                    <ExternalLink size={18} className="text-black/80" />
-                  </a>
-                  <span className="text-[11px] text-white/50 font-mono text-center">
-                    Atendimento online direto no seu navegador
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
         </div>
       </section>
 
@@ -4827,23 +4758,296 @@ function AppContent() {
       {/* ======================================================== */}
       <section id="anunciantes" className="w-full py-16 md:py-24 border-b border-white/5 bg-[#07070c] relative scroll-mt-20">
         <div id="empresas" className="-top-24 relative" />
+        <div id="filtro-empresas" className="-top-24 relative" />
         {/* Subtle decoration */}
         <div className="absolute top-0 right-10 w-96 h-96 bg-amber-500/5 rounded-full blur-[140px] pointer-events-none" />
         
         <div className="w-full max-w-7xl mx-auto px-4 md:px-6">
           
           {/* Header da Seção de Anunciantes */}
-          <div className="text-center max-w-3xl mx-auto mb-12 select-none">
-            <span className="text-amber-400 text-[10px] sm:text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
-              EMPRESAS PARTICIPANTES & OFERTAS
+          <div className="text-center max-w-3xl mx-auto mb-10 select-none">
+            <span className="text-amber-400 text-xs sm:text-sm font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
+              EMPRESAS PARTICIPANTES & GUIA COMERCIAL
             </span>
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
+            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
               Anunciantes do Portal
             </h2>
-            <p className="text-sm sm:text-base text-white/75 mt-3 font-medium max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base text-white/80 mt-3 font-medium max-w-2xl mx-auto leading-relaxed">
               Conheça as empresas presentes no Minha Divulgação, confira ofertas exclusivas e fale direto com cada anunciante pelo WhatsApp.
             </p>
+
+            {/* Dynamic Keywords Search Box */}
+            <div className="relative w-full max-w-lg mx-auto mt-7">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-white/40">
+                <Search size={20} />
+              </div>
+              <input 
+                type="text" 
+                placeholder="Busque por Assai, Ordones, Refrigeração..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-[#11111a] border border-white/10 hover:border-white/20 focus:border-[var(--primary)] outline-none rounded-2xl pl-12 pr-4 py-4 text-base text-white font-medium shadow-2xl transition-all duration-300 placeholder:text-white/40"
+              />
+              {searchQuery && (
+                <button 
+                  type="button" 
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-4 text-xs font-bold font-mono text-white/50 hover:text-white cursor-pointer"
+                >
+                  LIMPAR
+                </button>
+              )}
+            </div>
+
+            {/* Dynamic Active Filters Badges */}
+            {(selectedStateFilter || selectedTypeFilter !== 'all' || selectedCategory || searchQuery) && (
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
+                {selectedStateFilter && (
+                  <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-mono uppercase">
+                    📍 {selectedStateFilter}
+                    <button type="button" onClick={() => setSelectedStateFilter('')} className="hover:text-white text-sm font-extrabold cursor-pointer ml-1">✕</button>
+                  </span>
+                )}
+                {selectedTypeFilter !== 'all' && (
+                  <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-mono uppercase">
+                    📁 {selectedTypeFilter === 'loja' ? 'Lojas' : 'Serviços'}
+                    <button type="button" onClick={() => setSelectedTypeFilter('all')} className="hover:text-white text-sm font-extrabold cursor-pointer ml-1">✕</button>
+                  </span>
+                )}
+                {selectedCategory && (
+                  <span className="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-mono uppercase">
+                    🏷️ {selectedCategory}
+                    <button type="button" onClick={() => setSelectedCategory(null)} className="hover:text-white text-sm font-extrabold cursor-pointer ml-1">✕</button>
+                  </span>
+                )}
+                {searchQuery && (
+                  <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-mono uppercase">
+                    🔍 "{searchQuery}"
+                    <button type="button" onClick={() => setSearchQuery('')} className="hover:text-white text-sm font-extrabold cursor-pointer ml-1">✕</button>
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedStateFilter('');
+                    setSelectedTypeFilter('all');
+                    setSelectedCategory(null);
+                    setSearchQuery('');
+                  }}
+                  className="bg-neutral-900 border border-white/10 hover:bg-white/10 text-white/80 hover:text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all cursor-pointer font-mono"
+                >
+                  🧹 LIMPAR FILTROS
+                </button>
+              </div>
+            )}
           </div>
+
+          {/* Interactive Category Grid Filter */}
+          <div className="mb-12">
+            <h3 className="text-xs sm:text-sm font-black font-mono text-amber-400 tracking-[0.2em] uppercase text-center mb-5">
+              📂 CATEGORIAS POPULARES
+            </h3>
+            
+            {(() => {
+              const mainCats = CATEGORIES.slice(0, 12);
+              const displayedCategories = showAllCategories 
+                ? CATEGORIES 
+                : (selectedCategory && !mainCats.some(c => c.name === selectedCategory) 
+                    ? [...mainCats, ...CATEGORIES.filter(c => c.name === selectedCategory)] 
+                    : mainCats);
+
+              return (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-3">
+                    {displayedCategories.map((cat, idx) => {
+                      const isSelected = selectedCategory === cat.name;
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            const newCat = isSelected ? null : cat.name;
+                            setSelectedCategory(newCat);
+                            setTimeout(() => {
+                              const resultsEl = document.getElementById('destaque');
+                              if (resultsEl) {
+                                resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                              }
+                            }, 50);
+                          }}
+                          className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer ${
+                            isSelected 
+                              ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-black scale-[1.03] shadow-[0_0_15px_rgba(251,191,36,0.25)]' 
+                              : 'bg-[#11121c] border-white/10 text-white/80 hover:border-amber-400/40 hover:text-white hover:bg-neutral-800'
+                          }`}
+                        >
+                          <span className="text-2xl sm:text-3xl mb-1.5">{cat.icon}</span>
+                          <span className="text-xs sm:text-sm font-bold leading-tight">{cat.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {CATEGORIES.length > 12 && (
+                    <div className="text-center mt-5">
+                      <button
+                        type="button"
+                        onClick={() => setShowAllCategories(!showAllCategories)}
+                        className="inline-flex items-center gap-2 bg-[#121422] hover:bg-white/10 border border-white/15 hover:border-amber-400/50 text-amber-300 hover:text-amber-200 font-extrabold text-xs sm:text-sm px-5 py-2.5 rounded-2xl transition-all duration-200 cursor-pointer shadow-md active:scale-95"
+                      >
+                        {showAllCategories ? (
+                          <>
+                            <span>🔼 Mostrar Apenas Principais Categorias</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>📂 Ver Todas as Categorias ({CATEGORIES.length})</span>
+                            <ChevronDown className="w-4 h-4 text-amber-400" />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+
+          {/* Header for Category or Search Filter Results */}
+          {(selectedCategory || searchQuery) && filteredCompanies.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-6 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border border-amber-500/20 p-4 rounded-2xl">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🏷️</span>
+                <h3 className="text-sm sm:text-base font-extrabold text-white">
+                  {selectedCategory ? `Empresas Cadastradas em: ${selectedCategory}` : `Resultados da busca por "${searchQuery}"`}
+                </h3>
+              </div>
+              <span className="text-xs font-mono font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full">
+                {filteredCompanies.length} {filteredCompanies.length === 1 ? 'empresa cadastrada' : 'empresas cadastradas'}
+              </span>
+            </div>
+          )}
+
+          {/* Grid of Company Cards */}
+          {filteredCompanies.length === 0 ? (
+            <div className="text-center py-14 bg-[#11111a]/40 border border-white/5 rounded-3xl mb-16 max-w-xl mx-auto">
+              <Info size={40} className="mx-auto text-white/35 mb-4" />
+              <p className="text-sm sm:text-base text-white/70 font-semibold text-center">Nenhum anunciante encontrado para a sua busca</p>
+              <button 
+                type="button"
+                onClick={() => { setSearchQuery(''); handleCategoryClick(null); }}
+                className="text-xs sm:text-sm text-[var(--primary)] font-extrabold uppercase mt-3 tracking-widest hover:underline cursor-pointer"
+              >
+                Resetar Filtros
+              </button>
+            </div>
+          ) : (
+            <div id="destaque" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-16 scroll-mt-24">
+              {filteredCompanies.map(company => {
+                const planType = getCompanyPlanType(company);
+                return (
+                  <div 
+                    key={company.id} 
+                    className={`bg-[#0f1016] border transition-all duration-300 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1.5 shadow-xl hover:shadow-2xl relative select-none ${
+                      planType === 'patrocinado' 
+                        ? 'border-amber-400/80 shadow-[0_0_25px_rgba(251,191,36,0.25)] ring-1 ring-amber-400/50' 
+                        : planType === 'destaque'
+                        ? 'border-amber-500/50 shadow-lg shadow-amber-500/5'
+                        : planType === 'verificado'
+                        ? 'border-emerald-500/30 hover:border-emerald-500/50'
+                        : 'border-white/5 hover:border-white/20'
+                    }`}
+                  >
+                    {planType === 'patrocinado' && (
+                      <div className="absolute top-4 right-4 bg-gradient-to-r from-red-500 via-amber-500 to-yellow-500 text-black font-black text-xs tracking-wider uppercase px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1 z-10 animate-pulse">
+                        🔥 PATROCINADO
+                      </div>
+                    )}
+                    {planType === 'destaque' && (
+                      <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-black text-xs tracking-wider uppercase px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1 z-10">
+                        ⭐ DESTAQUE
+                      </div>
+                    )}
+                    {planType === 'verificado' && (
+                      <div className="absolute top-4 right-4 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-black text-xs tracking-wider uppercase px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1 z-10">
+                        ✔ VERIFICADO
+                      </div>
+                    )}
+                    
+                    <div 
+                      onClick={() => {
+                        if (company.wa) {
+                          window.open(getCompanyWhatsAppUrl(company), '_blank');
+                        } else if (company.catalogUrl) {
+                          window.open(company.catalogUrl, '_blank');
+                        } else if (company.website) {
+                          window.open(company.website, '_blank');
+                        }
+                      }}
+                      className="cursor-pointer group/cardinfo"
+                      title={`Falar no WhatsApp com ${company.name}`}
+                    >
+                      {/* Logo Frame */}
+                      <div className="w-20 h-20 rounded-full bg-white border border-white/15 overflow-hidden flex items-center justify-center shadow-lg p-0 mb-5 mt-2 transition-transform duration-300 group-hover/cardinfo:scale-105">
+                        <img src={company.logo} alt={company.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
+                      </div>
+
+                      <div className="flex flex-wrap gap-1.5 items-center">
+                        <span className="text-xs font-black uppercase tracking-wider bg-[var(--primary)]/15 text-[var(--primary)] px-3 py-1 rounded-full select-none">
+                          {company.category}
+                        </span>
+                        {(() => {
+                          const { average, count } = getCompanyReviewStats(company.id);
+                          if (count > 0) {
+                            return (
+                              <span className="text-xs text-amber-400 font-extrabold uppercase tracking-wide bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
+                                ⭐ {average.toFixed(1)} ({count})
+                              </span>
+                            );
+                          } else {
+                            return (
+                              <span className="text-xs text-white/50 font-bold uppercase tracking-wide bg-white/5 border border-white/10 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
+                                ⭐ Novo
+                              </span>
+                            );
+                          }
+                        })()}
+                        {(company.city || company.state || company.uf) && (
+                          <span className="text-xs text-white/60 font-bold uppercase tracking-wide bg-white/5 border border-white/10 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
+                            📍 {company.city || 'Fortaleza'}{company.state || company.uf ? ` - ${company.state || company.uf}` : ''}
+                          </span>
+                        )}
+                        <CompanyCardViewBadge company={company} />
+                      </div>
+
+                      <h3 className="text-xl sm:text-2xl font-black text-white mt-4 line-clamp-1 flex items-center gap-1.5 group-hover/cardinfo:text-amber-300 transition-colors">
+                        {company.name}
+                        {planType === 'verificado' && (
+                          <span className="text-emerald-400 text-xs" title="Empresa Verificada">✔</span>
+                        )}
+                      </h3>
+                      <p className="text-sm sm:text-base font-medium text-white/90 mt-2.5 line-clamp-3 leading-relaxed min-h-[4.2rem]">{company.desc || 'Anunciante comercial verificado de alta qualidade e atendimento dedicado.'}</p>
+                    </div>
+
+                  {/* Action Buttons */}
+                  {renderCardActionButtons(company, false)}
+
+                  {/* Master Dispatch Tracking Control (Visível apenas para o Master/Admin) */}
+                  {user?.isAdmin && (
+                    <MasterCardDispatchControl
+                      company={company}
+                      compact={true}
+                      onOpenClientView={() => {
+                        setActiveTrackingCompanyId(String(company.id));
+                        setActiveTrackingCompanyData(company);
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            })}
+            </div>
+          )}
 
           {/* 1. SEÇÃO PRINCIPAL: PROMOÇÕES DA SEMANA CARROSSEL */}
           {visibleFlyers.length > 0 && (
@@ -5186,337 +5390,118 @@ function AppContent() {
               </div>
             </div>
 
+            {/* Seção Destaque para Anunciantes: Quer divulgar sua empresa? */}
+            <div className="mt-14 bg-gradient-to-r from-[#141208] via-[#1c180b] to-[#141208] border-2 border-amber-400/80 rounded-3xl p-6 sm:p-8 flex flex-col lg:flex-row items-center justify-between gap-6 shadow-[0_15px_40px_rgba(245,158,11,0.2)]">
+              <div className="text-center lg:text-left flex-1">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3.5 py-1.5 rounded-full inline-block">
+                  ESPAÇO DO ANUNCIANTE
+                </span>
+                <h3 className="text-2xl sm:text-3.5xl font-black text-white mt-3">
+                  Quer divulgar sua empresa?
+                </h3>
+                <p className="text-sm sm:text-base text-white/85 mt-2 max-w-xl font-medium leading-relaxed">
+                  Tenha seu espaço no Minha Divulgação, com perfil comercial, WhatsApp direto e participação nas buscas do portal.
+                </p>
+                
+                {/* Preço em Destaque */}
+                <div className="flex items-baseline justify-center lg:justify-start gap-1.5 mt-3.5">
+                  <span className="text-amber-400 font-black text-sm sm:text-base">Por apenas</span>
+                  <span className="text-3xl sm:text-4xl font-black text-white">R$ 49,90</span>
+                  <span className="text-xs sm:text-sm font-bold text-white/60 uppercase">por mês</span>
+                </div>
+              </div>
 
+              <div className="shrink-0 w-full sm:w-auto flex flex-col items-center gap-2">
+                <a
+                  href={primaryDivulgarWaLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 py-4 sm:py-5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 shadow-xl hover:scale-105 cursor-pointer decoration-transparent"
+                >
+                  <span>QUERO DIVULGAR MINHA EMPRESA</span>
+                  <ArrowRight size={18} />
+                </a>
+                <span className="text-xs font-mono text-white/60">
+                  Ativação rápida e suporte direto
+                </span>
+              </div>
+            </div>
 
           </div>
         </section>
 
-      {/* Filterable Businesses Directory */}
-      <section id="filtro-empresas" className="w-full py-16 md:py-24 bg-[#050508] border-b border-white/5">
+      {/* ======================================================== */}
+      {/* 3. ATENDIMENTO ONLINE COM HORÁRIO COMERCIAL DESTACADO   */}
+      {/* ======================================================== */}
+      <section id="atendimento-online" className="w-full py-12 md:py-16 bg-[#090912] border-b border-white/5 relative scroll-mt-20">
         <div className="w-full max-w-7xl mx-auto px-4 md:px-6">
-          
-          {/* Search Input and Filters layout */}
-          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-12">
-            <span className="text-amber-400 text-[10px] sm:text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
-              EMPRESAS PARTICIPANTES
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-              EMPRESAS QUE JÁ ESTÃO FAZENDO PARTE
-            </h2>
-            <p className="text-sm sm:text-base text-white/80 max-w-2xl mx-auto mt-3 font-medium">
-              Conheça os negócios presentes no Minha Divulgação e veja como diferentes empresas podem apresentar suas marcas, produtos e serviços no portal.
-            </p>
-
-            {/* Dynamic Keywords Search Box */}
-            <div className="relative w-full max-w-lg mt-8">
-              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-white/40">
-                <Search size={18} />
-              </div>
-              <input 
-                type="text" 
-                placeholder="Busque por Assai, Ordones, Refrigeração..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#11111a] border border-white/10 hover:border-white/20 focus:border-[var(--primary)] outline-none rounded-2xl pl-12 pr-4 py-4 text-sm text-white font-medium shadow-2xl transition-all duration-300"
-              />
-              {searchQuery && (
-                <button 
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute inset-y-0 right-4 text-xs font-bold font-mono text-white/50 hover:text-white"
-                >
-                  LIMPAR
-                </button>
-              )}
-            </div>
-
-            {/* Dynamic Active Filters Badges */}
-            {(selectedStateFilter || selectedTypeFilter !== 'all' || selectedCategory || searchQuery) && (
-              <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
-                {selectedStateFilter && (
-                  <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-mono uppercase">
-                    📍 {selectedStateFilter}
-                    <button type="button" onClick={() => setSelectedStateFilter('')} className="hover:text-white text-[12px] font-extrabold cursor-pointer ml-1">✕</button>
-                  </span>
-                )}
-                {selectedTypeFilter !== 'all' && (
-                  <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-mono uppercase">
-                    📁 {selectedTypeFilter === 'loja' ? 'Lojas' : 'Serviços'}
-                    <button type="button" onClick={() => setSelectedTypeFilter('all')} className="hover:text-white text-[12px] font-extrabold cursor-pointer ml-1">✕</button>
-                  </span>
-                )}
-                {selectedCategory && (
-                  <span className="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-mono uppercase">
-                    🏷️ {selectedCategory}
-                    <button type="button" onClick={() => setSelectedCategory(null)} className="hover:text-white text-[12px] font-extrabold cursor-pointer ml-1">✕</button>
-                  </span>
-                )}
-                {searchQuery && (
-                  <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-mono uppercase">
-                    🔍 "{searchQuery}"
-                    <button type="button" onClick={() => setSearchQuery('')} className="hover:text-white text-[12px] font-extrabold cursor-pointer ml-1">✕</button>
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedStateFilter('');
-                    setSelectedTypeFilter('all');
-                    setSelectedCategory(null);
-                    setSearchQuery('');
-                  }}
-                  className="bg-neutral-900 border border-white/5 hover:bg-white/5 text-white/70 hover:text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all cursor-pointer font-mono"
-                >
-                  🧹 LIMPAR FILTROS
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Interactive Category Grid Filter */}
-          <div className="mb-12">
-            <h3 className="text-xs font-black font-mono text-amber-400 tracking-[0.2em] uppercase text-center mb-6">
-              📂 CATEGORIAS POPULARES
-            </h3>
-            
-            {(() => {
-              const mainCats = CATEGORIES.slice(0, 12);
-              const displayedCategories = showAllCategories 
-                ? CATEGORIES 
-                : (selectedCategory && !mainCats.some(c => c.name === selectedCategory) 
-                    ? [...mainCats, ...CATEGORIES.filter(c => c.name === selectedCategory)] 
-                    : mainCats);
-
-              return (
-                <>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-3">
-                    {displayedCategories.map((cat, idx) => {
-                      const isSelected = selectedCategory === cat.name;
-                      return (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => {
-                            const newCat = isSelected ? null : cat.name;
-                            setSelectedCategory(newCat);
-                            setTimeout(() => {
-                              const resultsEl = document.getElementById('destaque');
-                              if (resultsEl) {
-                                resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                              }
-                            }, 50);
-                          }}
-                          className={`p-3.5 rounded-2xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer ${
-                            isSelected 
-                              ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-black scale-[1.03] shadow-[0_0_15px_rgba(251,191,36,0.25)]' 
-                              : 'bg-[#11121c] border-white/10 text-white/80 hover:border-amber-400/40 hover:text-white hover:bg-neutral-800'
-                          }`}
-                        >
-                          <span className="text-2xl mb-1.5">{cat.icon}</span>
-                          <span className="text-[11px] font-extrabold leading-tight">{cat.name}</span>
-                        </button>
-                      );
-                    })}
+          <div id="cta-atendimento-online">
+            <div className="relative overflow-hidden bg-gradient-to-r from-[#0d0d18] via-[#141424] to-[#0d0d18] border-2 border-amber-500/40 hover:border-amber-400/80 rounded-[28px] p-6 sm:p-8 md:p-10 shadow-[0_15px_45px_rgba(0,0,0,0.7)] transition-all duration-300">
+              {/* Accent top gradient line */}
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 opacity-90" />
+              
+              <div className="flex flex-col lg:flex-row items-center justify-between gap-6 md:gap-8">
+                {/* Left Column: Info, Title and Highlighted Operating Hours */}
+                <div className="flex-1 text-center lg:text-left">
+                  {/* Status Badges */}
+                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-3">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                      <MessageSquare size={14} className="text-amber-400" />
+                      ATENDIMENTO ONLINE
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold px-3.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      TIRE DÚVIDAS NA HORA
+                    </span>
                   </div>
 
-                  {CATEGORIES.length > 12 && (
-                    <div className="text-center mt-5">
-                      <button
-                        type="button"
-                        onClick={() => setShowAllCategories(!showAllCategories)}
-                        className="inline-flex items-center gap-2 bg-[#121422] hover:bg-white/10 border border-white/15 hover:border-amber-400/50 text-amber-300 hover:text-amber-200 font-extrabold text-xs px-5 py-2.5 rounded-2xl transition-all duration-200 cursor-pointer shadow-md active:scale-95"
-                      >
-                        {showAllCategories ? (
-                          <>
-                            <span>🔼 Mostrar Apenas Principais Categorias</span>
-                          </>
-                        ) : (
-                          <>
-                            <span>📂 Ver Todas as Categorias ({CATEGORIES.length})</span>
-                            <ChevronDown className="w-3.5 h-3.5 text-amber-400" />
-                          </>
-                        )}
-                      </button>
+                  <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-snug">
+                    💬 Atendimento Online
+                  </h3>
+                  
+                  <p className="text-sm sm:text-base text-white/80 max-w-2xl mt-1.5 leading-relaxed font-medium">
+                    Tire suas dúvidas diretamente com nossa equipe sobre como divulgar sua empresa.
+                  </p>
+
+                  {/* HORÁRIO COMERCIAL DESTACADO */}
+                  <div className="mt-4 inline-flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3.5 bg-gradient-to-r from-amber-950/70 via-[#1e1708] to-amber-950/70 border-2 border-amber-400/70 rounded-2xl px-4 sm:px-6 py-3.5 shadow-[0_0_25px_rgba(245,158,11,0.2)]">
+                    <div className="flex items-center gap-2 text-amber-300 shrink-0">
+                      <Clock size={19} className="text-amber-400 shrink-0" />
+                      <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-300">
+                        Horário:
+                      </span>
                     </div>
-                  )}
-                </>
-              );
-            })()}
-          </div>
-
-          {/* Header for Category or Search Filter Results */}
-          {(selectedCategory || searchQuery) && filteredCompanies.length > 0 && (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-6 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border border-amber-500/20 p-4 rounded-2xl">
-              <div className="flex items-center gap-2">
-                <span className="text-base">🏷️</span>
-                <h3 className="text-sm font-extrabold text-white">
-                  {selectedCategory ? `Empresas Cadastradas em: ${selectedCategory}` : `Resultados da busca por "${searchQuery}"`}
-                </h3>
-              </div>
-              <span className="text-xs font-mono font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full">
-                {filteredCompanies.length} {filteredCompanies.length === 1 ? 'empresa cadastrada' : 'empresas cadastradas'}
-              </span>
-            </div>
-          )}
-
-          {/* Grid of Results */}
-          {filteredCompanies.length === 0 ? (
-            <div className="text-center py-16 bg-[#11111a]/40 border border-white/5 rounded-3xl mt-12 max-w-xl mx-auto">
-              <Info size={40} className="mx-auto text-white/35 mb-4" />
-              <p className="text-sm text-white/60 font-semibold text-center">Nenhum anunciante encontrado para a sua busca</p>
-              <button 
-                type="button"
-                onClick={() => { setSearchQuery(''); handleCategoryClick(null); }}
-                className="text-xs text-[var(--primary)] font-extrabold uppercase mt-3 tracking-widest hover:underline"
-              >
-                Resetar Filtros
-              </button>
-            </div>
-          ) : (
-            <div id="destaque" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-12">
-              {filteredCompanies.map(company => {
-                const planType = getCompanyPlanType(company);
-                return (
-                  <div 
-                    key={company.id} 
-                    className={`bg-[#0f1016] border transition-all duration-300 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1.5 shadow-xl hover:shadow-2xl relative select-none ${
-                      planType === 'patrocinado' 
-                        ? 'border-amber-400/80 shadow-[0_0_25px_rgba(251,191,36,0.25)] ring-1 ring-amber-400/50' 
-                        : planType === 'destaque'
-                        ? 'border-amber-500/50 shadow-lg shadow-amber-500/5'
-                        : planType === 'verificado'
-                        ? 'border-emerald-500/30 hover:border-emerald-500/50'
-                        : 'border-white/5 hover:border-white/20'
-                    }`}
-                  >
-                    {planType === 'patrocinado' && (
-                      <div className="absolute top-4 right-4 bg-gradient-to-r from-red-500 via-amber-500 to-yellow-500 text-black font-black text-[9px] tracking-widest uppercase px-3 py-1 rounded-full shadow-lg flex items-center gap-1 z-10 animate-pulse">
-                        🔥 PATROCINADO
-                      </div>
-                    )}
-                    {planType === 'destaque' && (
-                      <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-black text-[9px] tracking-widest uppercase px-3 py-1 rounded-full shadow-lg flex items-center gap-1 z-10">
-                        ⭐ DESTAQUE
-                      </div>
-                    )}
-                    {planType === 'verificado' && (
-                      <div className="absolute top-4 right-4 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-black text-[9px] tracking-widest uppercase px-3 py-1 rounded-full shadow-lg flex items-center gap-1 z-10">
-                        ✔ VERIFICADO
-                      </div>
-                    )}
-                    
-                    <div 
-                      onClick={() => {
-                        if (company.wa) {
-                          window.open(getCompanyWhatsAppUrl(company), '_blank');
-                        } else if (company.catalogUrl) {
-                          window.open(company.catalogUrl, '_blank');
-                        } else if (company.website) {
-                          window.open(company.website, '_blank');
-                        }
-                      }}
-                      className="cursor-pointer group/cardinfo"
-                      title={`Falar no WhatsApp com ${company.name}`}
-                    >
-                      {/* Logo Frame */}
-                      <div className="w-20 h-20 rounded-full bg-white border border-white/15 overflow-hidden flex items-center justify-center shadow-lg p-0 mb-5 mt-2 transition-transform duration-300 group-hover/cardinfo:scale-105">
-                        <img src={company.logo} alt={company.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
-                      </div>
-
-                      <div className="flex flex-wrap gap-1.5 items-center">
-                        <span className="text-[10px] text-[var(--primary)] font-extrabold uppercase tracking-widest bg-[var(--primary)]/10 px-2.5 py-1 rounded-full select-none">
-                          {company.category}
-                        </span>
-                        {(() => {
-                          const { average, count } = getCompanyReviewStats(company.id);
-                          if (count > 0) {
-                            return (
-                              <span className="text-[9px] text-amber-400 font-extrabold uppercase tracking-wide bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
-                                ⭐ {average.toFixed(1)} ({count})
-                              </span>
-                            );
-                          } else {
-                            return (
-                              <span className="text-[9px] text-white/40 font-bold uppercase tracking-wide bg-white/5 border border-white/10 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
-                                ⭐ Novo
-                              </span>
-                            );
-                          }
-                        })()}
-                        {(company.city || company.state || company.uf) && (
-                          <span className="text-[9px] text-white/50 font-bold uppercase tracking-wide bg-white/5 border border-white/10 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
-                            📍 {company.city || 'Fortaleza'}{company.state || company.uf ? ` - ${company.state || company.uf}` : ''}
-                          </span>
-                        )}
-                        <CompanyCardViewBadge company={company} />
-                      </div>
-
-                      <h3 className="text-lg font-black text-white mt-4 line-clamp-1 flex items-center gap-1.5 group-hover/cardinfo:text-amber-300 transition-colors">
-                        {company.name}
-                        {planType === 'verificado' && (
-                          <span className="text-emerald-400 text-xs" title="Empresa Verificada">✔</span>
-                        )}
-                      </h3>
-                      <p className="text-sm font-bold text-white/95 mt-2.5 line-clamp-3 leading-snug min-h-[3.8rem] tracking-wide">{company.desc || 'Anunciante comercial verificado de alta qualidade e atendimento dedicado.'}</p>
+                    <div className="flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm font-mono font-bold">
+                      <span className="bg-amber-400/25 text-amber-200 px-3 py-1 rounded-lg border border-amber-400/40 shadow-sm">
+                        Seg a Sex: 08:00 às 20:00
+                      </span>
+                      <span className="text-amber-400 font-bold">•</span>
+                      <span className="bg-amber-400/25 text-amber-200 px-3 py-1 rounded-lg border border-amber-400/40 shadow-sm">
+                        Sáb: 09:00 às 14:00
+                      </span>
                     </div>
-
-                  {/* Action Buttons */}
-                  {renderCardActionButtons(company, false)}
-
-                  {/* Master Dispatch Tracking Control (Visível apenas para o Master/Admin) */}
-                  {user?.isAdmin && (
-                    <MasterCardDispatchControl
-                      company={company}
-                      compact={true}
-                      onOpenClientView={() => {
-                        setActiveTrackingCompanyId(String(company.id));
-                        setActiveTrackingCompanyData(company);
-                      }}
-                    />
-                  )}
+                  </div>
                 </div>
-              );
-            })}
-            </div>
-          )}
 
-          {/* Seção Destaque para Anunciantes: Quer divulgar sua empresa? */}
-          <div className="mt-12 bg-gradient-to-r from-[#141208] via-[#1c180b] to-[#141208] border-2 border-amber-400/80 rounded-3xl p-6 sm:p-8 flex flex-col lg:flex-row items-center justify-between gap-6 shadow-[0_15px_40px_rgba(245,158,11,0.2)]">
-            <div className="text-center lg:text-left flex-1">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full inline-block">
-                ESPAÇO DO ANUNCIANTE
-              </span>
-              <h3 className="text-xl sm:text-3xl font-black text-white mt-2.5">
-                Quer divulgar sua empresa?
-              </h3>
-              <p className="text-xs sm:text-sm text-white/80 mt-1.5 max-w-xl font-medium leading-relaxed">
-                Tenha seu espaço no Minha Divulgação, com perfil comercial, WhatsApp direto e participação nas buscas do portal.
-              </p>
-              
-              {/* Preço em Destaque */}
-              <div className="flex items-baseline justify-center lg:justify-start gap-1.5 mt-3">
-                <span className="text-amber-400 font-black text-sm">Por apenas</span>
-                <span className="text-2xl sm:text-3xl font-black text-white">R$ 49,90</span>
-                <span className="text-xs font-bold text-white/60 uppercase">por mês</span>
+                {/* Right Column: Prominent Clickable CTA Button */}
+                <div className="shrink-0 w-full sm:w-auto flex flex-col items-center gap-2">
+                  <a 
+                    href="https://crm-pi-ebon-19.vercel.app/?empresa=minhadivulgacao&view=client"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black font-black text-sm sm:text-base uppercase tracking-wider px-8 py-5 rounded-2xl shadow-[0_10px_35px_rgba(245,158,11,0.35)] hover:scale-105 active:scale-95 transition-all duration-300 border border-amber-300/50 ring-4 ring-amber-400/20 decoration-transparent cursor-pointer"
+                  >
+                    <MessageSquare size={22} className="fill-current text-black" />
+                    <span>TIRAR DÚVIDAS NA HORA</span>
+                    <ExternalLink size={18} className="text-black/80" />
+                  </a>
+                  <span className="text-xs text-white/50 font-mono text-center">
+                    Atendimento online direto no seu navegador
+                  </span>
+                </div>
               </div>
             </div>
-
-            <div className="shrink-0 w-full sm:w-auto flex flex-col items-center gap-2">
-              <a
-                href={primaryDivulgarWaLink}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 py-4 sm:py-5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 shadow-xl hover:scale-105 cursor-pointer decoration-transparent"
-              >
-                <span>QUERO DIVULGAR MINHA EMPRESA</span>
-                <ArrowRight size={18} />
-              </a>
-              <span className="text-[10px] font-mono text-white/50">
-                Ativação rápida e suporte direto
-              </span>
-            </div>
           </div>
-
         </div>
       </section>
 
