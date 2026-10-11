@@ -906,7 +906,16 @@ function AppContent() {
   const [allUsers, setAllUsers] = useState<any>(null);
   const [editingVideosFor, setEditingVideosFor] = useState<{id: string, city: string, videos: string[]} | null>(null);
   const [tvMuted, setTvMuted] = useState(false);
-  const [tvVolume, setTvVolume] = useState(1);
+  const [tvVolume, setTvVolume] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('portal_tv_volume');
+      if (saved !== null) {
+        const parsed = parseFloat(saved);
+        if (!isNaN(parsed) && parsed >= 0 && parsed <= 1) return parsed;
+      }
+    } catch {}
+    return 0.76;
+  });
   const [tvKey, setTvKey] = useState(0);
   const [isTvLoading, setIsTvLoading] = useState(true);
   const tvIframeRef = useRef<HTMLIFrameElement>(null);
@@ -915,18 +924,51 @@ function AppContent() {
     try {
       const cw = tvIframeRef.current?.contentWindow;
       if (cw) {
+        // Envio para protocolos variados de players (Digital Signage, HTML5, etc)
+        const volPercent = Math.round(vol * 100);
         cw.postMessage({ type: 'SET_VOLUME', volume: vol, muted }, '*');
         cw.postMessage({ action: 'setVolume', volume: vol, muted }, '*');
         cw.postMessage({ type: 'volume', value: vol, muted }, '*');
-        cw.postMessage({ event: 'command', func: 'setVolume', args: [vol * 100] }, '*');
+        cw.postMessage({ event: 'command', func: 'setVolume', args: [volPercent] }, '*');
+
+        // Formatos JSON stringified (requerido por YouTube IFrame API e players estritos)
+        try {
+          cw.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [volPercent] }), '*');
+        } catch (_) {}
+
         if (muted || vol === 0) {
           cw.postMessage({ type: 'MUTE' }, '*');
+          cw.postMessage({ action: 'mute' }, '*');
           cw.postMessage({ event: 'command', func: 'mute', args: [] }, '*');
+          try {
+            cw.postMessage(JSON.stringify({ event: 'command', func: 'mute', args: [] }), '*');
+          } catch (_) {}
         } else {
           cw.postMessage({ type: 'UNMUTE' }, '*');
+          cw.postMessage({ action: 'unmute' }, '*');
           cw.postMessage({ event: 'command', func: 'unMute', args: [] }, '*');
+          try {
+            cw.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
+          } catch (_) {}
         }
+
+        // Formato Vimeo
+        try {
+          cw.postMessage(JSON.stringify({ method: 'setVolume', value: muted ? 0 : vol }), '*');
+        } catch (_) {}
       }
+
+      // Se o iframe estiver na mesma origem ou com acesso direto permitido
+      try {
+        const doc = tvIframeRef.current?.contentDocument;
+        if (doc) {
+          const mediaEls = doc.querySelectorAll('video, audio');
+          mediaEls.forEach((media: any) => {
+            media.volume = vol;
+            media.muted = muted || vol === 0;
+          });
+        }
+      } catch (_) {}
     } catch (err) {
       console.error('Error sending volume to TV iframe:', err);
     }
@@ -934,6 +976,9 @@ function AppContent() {
 
   const handleTvVolumeChange = (newVol: number) => {
     setTvVolume(newVol);
+    try {
+      localStorage.setItem('portal_tv_volume', String(newVol));
+    } catch {}
     if (newVol > 0 && tvMuted) {
       setTvMuted(false);
       sendTvVolume(newVol, false);
@@ -952,6 +997,7 @@ function AppContent() {
     setIsTvLoading(true);
     setTvKey(prev => prev + 1);
   };
+
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
@@ -973,6 +1019,15 @@ function AppContent() {
   const [hideAdvertiserAuth, setHideAdvertiserAuth] = useState(true);
   const [affiliates, setAffiliates] = useState<any[]>([]);
   const [isAffLoading, setIsAffLoading] = useState(false);
+
+  // URL estável do player da TV: NÃO inclui volume ou mute no query param para NUNCA reiniciar os vídeos ao regular o volume
+  const tvIframeSrc = useMemo(() => {
+    const baseUrl = universalConfig?.horizontalTvLink || (appData && appData.siteInfo && appData.siteInfo.horizontalTvLink) || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando';
+    const sep = baseUrl.includes('?') ? '&' : '?';
+    const isYouTube = baseUrl.includes('youtube.com') || baseUrl.includes('youtu.be');
+    const extra = isYouTube ? '&enablejsapi=1' : '';
+    return `${baseUrl}${sep}_t=${tvKey}&autoplay=1${extra}`;
+  }, [universalConfig?.horizontalTvLink, appData?.siteInfo?.horizontalTvLink, tvKey]);
 
   // Auto-clear TV loading spinner after safety timeout
   useEffect(() => {
@@ -4473,12 +4528,7 @@ function AppContent() {
                 <iframe 
                   key={`tv-frame-${tvKey}`}
                   ref={tvIframeRef}
-                  src={(() => {
-                    const baseUrl = universalConfig?.horizontalTvLink || (appData && appData.siteInfo && appData.siteInfo.horizontalTvLink) || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando';
-                    const sep = baseUrl.includes('?') ? '&' : '?';
-                    const volParam = `vol=${Math.round(tvVolume * 100)}&muted=${tvMuted ? 1 : 0}&autoplay=1&fs=0&fullscreen=0`;
-                    return `${baseUrl}${sep}_t=${tvKey}&${volParam}`;
-                  })()} 
+                  src={tvIframeSrc} 
                   title="TV Minha Divulgação"
                   className="w-full h-full border-0 select-none"
                   loading="lazy"
