@@ -319,7 +319,7 @@ const NOTIFICATION_ACTIONS = [
 const DEFAULT_DATA = {
   theme: { primary: "#ff8a00", bg: "#090d16", text: "#ffffff", textDim: "#a0a0a0" },
   siteInfo: {
-    name: "Minha", suffix: "Divulgação", description: "Sua maior vitrine digital em todo o Brasil.",
+    name: "Minha Divulgação", suffix: "", description: "Sua maior vitrine digital em todo o Brasil.",
     cnpj: "62.133.196/0001-40", phone: "85 99290-8713", address: "Anúncios em Todo o Brasil",
     radioLink: "https://stream.zeno.fm/gsstolze3mjtv",
     heroTitle: "", heroSub: "", radioTitle: "", radioSub: "", ctaTitle: "", ctaSub: "",
@@ -396,7 +396,7 @@ const DEFAULT_DATA = {
     whatsappPhone: '',
     customLink: '',
     actionType: 'whatsapp',
-    whatsappMessage: 'Olá! Vi o anúncio no Portal de Divulgação e gostaria de saber mais informações!',
+    whatsappMessage: 'Olá! Vi seu anúncio no portal Minha Divulgação e gostaria de mais informações.',
     frequency: 'always',
     autoPlayMuted: true
   }
@@ -1069,8 +1069,10 @@ function AppContent() {
 
   useEffect(() => {
     if (!appData?.welcomeVideo) return;
-    const { enabled, videoUrl, flyerUrl, frequency } = appData.welcomeVideo;
-    const hasMedia = Boolean(videoUrl?.trim() || flyerUrl?.trim());
+    const { enabled, videoUrl, flyerUrl, frequency, items } = appData.welcomeVideo;
+    const hasDirectMedia = Boolean(videoUrl?.trim() || flyerUrl?.trim());
+    const hasItemsMedia = Array.isArray(items) && items.some(it => it && it.enabled !== false && Boolean(it.videoUrl?.trim() || it.flyerUrl?.trim()));
+    const hasMedia = hasDirectMedia || hasItemsMedia;
     if (enabled === false || !hasMedia) return;
 
     if (activeTrackingCompanyId) return;
@@ -1689,13 +1691,24 @@ function AppContent() {
 
 
 
+  const getFullPortalName = (info?: any) => {
+    const raw = info?.name || 'Minha Divulgação';
+    if (raw.trim().toLowerCase() === 'minha') {
+      return 'Minha Divulgação';
+    }
+    if (info?.suffix && !raw.includes(info.suffix)) {
+      return `${raw} ${info.suffix}`;
+    }
+    return raw;
+  };
+
   const getCompanyWhatsAppMessage = (companyName: string = 'sua empresa', customItemName?: string) => {
-    const siteName = appData?.siteInfo?.name || 'Minha Divulgação';
+    const portalName = getFullPortalName(appData?.siteInfo);
     const tid = slugify(tenantId || 'fortaleza');
     const ref = sessionStorage.getItem(`ref_${tid}`);
     let msg = customItemName
-      ? `Olá! Vi o anúncio da *${companyName}* no portal *${siteName}* e gostaria de mais informações sobre: *${customItemName}*!`
-      : `Olá! Vi o anúncio da *${companyName}* no portal *${siteName}* e gostaria de mais informações sobre o produto ou serviço!`;
+      ? `Olá! Vi seu anúncio no portal ${portalName} e gostaria de informações sobre: *${customItemName}*.`
+      : `Olá! Vi seu anúncio no portal ${portalName} e gostaria de mais informações.`;
     if (ref) {
       msg += `\n(Indicação: ${ref})`;
     }
@@ -1728,7 +1741,7 @@ function AppContent() {
     if (!baseUrl) return '#';
     const tid = slugify(tenantId || 'fortaleza');
     const ref = sessionStorage.getItem(`ref_${tid}`);
-    const siteName = appData?.siteInfo?.name || 'Minha Divulgação';
+    const siteName = getFullPortalName(appData?.siteInfo);
 
     // 1. Se foi passada uma empresa explicitamente, SEMPRE usa a mensagem exclusiva da empresa com nome do portal
     if (forCompany && (forCompany.name || forCompany.wa)) {
@@ -4055,7 +4068,11 @@ function AppContent() {
       />
 
       {/* Botão Flutuante Discreto para Reabrir Destaque Patrocinado (Vídeo ou Flyer) */}
-      {!showWelcomeVideoModal && (appData?.welcomeVideo?.videoUrl?.trim() || appData?.welcomeVideo?.flyerUrl?.trim()) && appData?.welcomeVideo?.enabled !== false && (
+      {!showWelcomeVideoModal && (
+        appData?.welcomeVideo?.videoUrl?.trim() || 
+        appData?.welcomeVideo?.flyerUrl?.trim() || 
+        (Array.isArray(appData?.welcomeVideo?.items) && appData.welcomeVideo.items.some(it => it && it.enabled !== false && (it.videoUrl?.trim() || it.flyerUrl?.trim())))
+      ) && appData?.welcomeVideo?.enabled !== false && (
         <button
           onClick={() => {
             setIsWelcomeVideoPreviewMode(false);
@@ -4068,7 +4085,7 @@ function AppContent() {
           <span>
             {appData?.welcomeVideo?.flyerUrl?.trim() && !appData?.welcomeVideo?.videoUrl?.trim()
               ? '🖼️ Ver Flyer em Destaque'
-              : '🎬 Ver Destaque / Vídeo'}
+              : '🎬 Ver Destaque Patrocinado'}
           </span>
         </button>
       )}
@@ -9794,7 +9811,7 @@ function AppContent() {
                                   textMsg += `*Taxa de Entrega:* R$ ${finalDeliveryFee.toFixed(2).replace('.', ',')}\n`;
                                 }
                                 textMsg += `*TOTAL GERAL:* R$ ${finalTotal.toFixed(2).replace('.', ',')}\n\n`;
-                                textMsg += `Enviado através do portal *${appData.siteInfo.name}*!\n`;
+                                textMsg += `Enviado através do portal *${getFullPortalName(appData?.siteInfo)}*!\n`;
                                 textMsg += `Por favor, confirme meu pedido. Obrigado!`;
                                 
                                 window.open(`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
@@ -9869,7 +9886,7 @@ function AppContent() {
                             textMsg += `*Serviço Requerido:* ${serv}\n`;
                             textMsg += `------------------------------------\n`;
                             textMsg += `*Mensagem/Detalhes:*\n${notes}\n\n`;
-                            textMsg += `Solicitação realizada via atendimento digital no portal *${appData.siteInfo.name}*!`;
+                            textMsg += `Solicitação realizada via atendimento digital no portal *${getFullPortalName(appData?.siteInfo)}*!`;
                             
                             window.open(`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
                           }}
@@ -9988,7 +10005,7 @@ function AppContent() {
                               textMsg += `*Observações:* ${notes}\n`;
                             }
                             textMsg += `====================================\n`;
-                            textMsg += `Gostaria de confirmar a disponibilidade deste horário no portal *${appData.siteInfo.name}*!`;
+                            textMsg += `Gostaria de confirmar a disponibilidade deste horário no portal *${getFullPortalName(appData?.siteInfo)}*!`;
                             
                             window.open(`https://wa.me/${company.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
                           }}
@@ -12820,7 +12837,7 @@ function AppContent() {
                       <div className="flex flex-col sm:flex-row gap-2.5 w-full">
                         <button
                           onClick={() => {
-                            const textMsg = `Olá! Vi o anúncio da *${activeMiniSiteCompany.name}* no portal *${appData.siteInfo.name}* e gostaria de solicitar um orçamento para o serviço: *${selectedItemForDetail.name}*!`;
+                            const textMsg = `Olá! Vi seu anúncio no portal ${getFullPortalName(appData?.siteInfo)} e gostaria de solicitar um orçamento para o serviço: *${selectedItemForDetail.name}*!`;
                             window.open(`https://wa.me/${activeMiniSiteCompany.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
                           }}
                           className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-[1.02] text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/10 cursor-pointer transition-all duration-200"
@@ -12851,7 +12868,7 @@ function AppContent() {
                       <div className="flex flex-col sm:flex-row gap-2.5 w-full">
                         <button
                           onClick={() => {
-                            const textMsg = `Olá! Vi o anúncio da *${activeMiniSiteCompany.name}* no portal *${appData.siteInfo.name}* e gostaria de agendar um horário para o serviço: *${selectedItemForDetail.name}*!`;
+                            const textMsg = `Olá! Vi seu anúncio no portal ${getFullPortalName(appData?.siteInfo)} e gostaria de agendar um horário para o serviço: *${selectedItemForDetail.name}*!`;
                             window.open(`https://wa.me/${activeMiniSiteCompany.wa.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(textMsg)}`, '_blank');
                           }}
                           className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] hover:scale-[1.02] text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/10 cursor-pointer transition-all duration-200"
@@ -12893,7 +12910,7 @@ function AppContent() {
                             const totalUnit = baseVal + extraVal;
                             const priceText = totalUnit > 0 ? `R$ ${totalUnit.toFixed(2).replace('.', ',')}` : 'Sob Consulta';
 
-                            let textMsg = `Olá! Vi o anúncio da *${activeMiniSiteCompany.name}* no portal *${appData.siteInfo.name}* e tenho interesse no produto:\n\n`;
+                            let textMsg = `Olá! Vi seu anúncio no portal ${getFullPortalName(appData?.siteInfo)} e tenho interesse no produto:\n\n`;
                             textMsg += `📌 *${selectedItemForDetail.name}*\n`;
                             if (itemSelectedSize) textMsg += `👟 *Tamanho/Numeração:* ${itemSelectedSize}\n`;
                             if (itemSelectedColor) textMsg += `🎨 *Cor:* ${itemSelectedColor}\n`;

@@ -239,7 +239,7 @@ export const SelfServiceTrialModal: React.FC<SelfServiceTrialModalProps> = ({
                     {/* Action buttons on card */}
                     <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
                       <a
-                        href={`https://wa.me/${cleanWa}?text=${encodeURIComponent(`Olá! Vi o anúncio da empresa "${company.name}" no portal Minha Divulgação e gostaria de mais informações sobre seus produtos e serviços.`)}`}
+                        href={`https://wa.me/${cleanWa}?text=${encodeURIComponent(`Olá! Vi seu anúncio no portal Minha Divulgação e gostaria de mais informações.`)}`}
                         target="_blank"
                         rel="noreferrer"
                         className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-center flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer decoration-transparent"

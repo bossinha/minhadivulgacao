@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   X, 
   Volume2, 
@@ -14,6 +14,28 @@ import {
   Film
 } from 'lucide-react';
 import { WhatsAppIcon } from './SocialMediaIcons';
+
+export interface SponsoredItem {
+  id: string;
+  name?: string;
+  mediaType: 'video' | 'flyer' | 'auto';
+  videoUrl?: string;
+  flyerUrl?: string;
+  flyerDeleteUrl?: string;
+  title?: string;
+  badge?: string;
+  buttonText?: string;
+  targetType?: 'company' | 'manual';
+  companyId?: string | number;
+  companyName?: string;
+  companyCategory?: string;
+  companyLogo?: string;
+  whatsappPhone?: string;
+  customLink?: string;
+  actionType?: 'whatsapp' | 'link';
+  whatsappMessage?: string;
+  enabled?: boolean;
+}
 
 export interface PortalWelcomeVideoConfig {
   enabled: boolean;
@@ -35,6 +57,8 @@ export interface PortalWelcomeVideoConfig {
   whatsappMessage?: string;
   frequency?: 'always' | 'once_per_day';
   autoPlayMuted?: boolean;
+  // Lista de múltiplos patrocinadores cadastrados para revezamento a cada F5/atualização
+  items?: SponsoredItem[];
 }
 
 interface PortalWelcomeVideoModalProps {
@@ -90,23 +114,91 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
   const [activeTabMedia, setActiveTabMedia] = useState<'video' | 'flyer'>('video');
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const videoUrl = config?.videoUrl?.trim() || '';
-  const flyerUrl = config?.flyerUrl?.trim() || '';
+  // Determinar todos os patrocinadores disponíveis para revezamento (rotativo)
+  const allActiveSponsors = useMemo(() => {
+    const list: SponsoredItem[] = [];
+
+    // Se houver lista de patrocinadores cadastrados no items
+    if (config?.items && Array.isArray(config.items) && config.items.length > 0) {
+      config.items.forEach(it => {
+        if (it && it.enabled !== false && (it.videoUrl?.trim() || it.flyerUrl?.trim())) {
+          list.push(it);
+        }
+      });
+    }
+
+    // Se a lista estiver vazia ou se houver a mídia principal individual configurada
+    if (list.length === 0 && config && (config.videoUrl?.trim() || config.flyerUrl?.trim())) {
+      list.push({
+        id: 'principal',
+        name: config.companyName || config.title || 'Patrocinador',
+        mediaType: config.mediaType || 'auto',
+        videoUrl: config.videoUrl,
+        flyerUrl: config.flyerUrl,
+        flyerDeleteUrl: config.flyerDeleteUrl,
+        title: config.title,
+        badge: config.badge,
+        buttonText: config.buttonText,
+        targetType: config.targetType,
+        companyId: config.companyId,
+        companyName: config.companyName,
+        companyCategory: config.companyCategory,
+        companyLogo: config.companyLogo,
+        whatsappPhone: config.whatsappPhone,
+        customLink: config.customLink,
+        actionType: config.actionType,
+        whatsappMessage: config.whatsappMessage,
+        enabled: config.enabled
+      });
+    }
+
+    return list;
+  }, [config]);
+
+  // Índice do patrocinador atual (rotativo a cada visualização/F5)
+  const [currentSponsorIndex, setCurrentSponsorIndex] = useState<number>(0);
+
+  // Ao abrir o modal, avança para o próximo patrocinador de forma ordenada e justa
+  useEffect(() => {
+    if (isOpen && allActiveSponsors.length > 0) {
+      try {
+        const storedIdxStr = localStorage.getItem('last_seen_sponsor_idx');
+        let nextIdx = 0;
+        if (storedIdxStr !== null) {
+          const parsedIdx = parseInt(storedIdxStr, 10);
+          if (!isNaN(parsedIdx)) {
+            nextIdx = (parsedIdx + 1) % allActiveSponsors.length;
+          }
+        }
+        localStorage.setItem('last_seen_sponsor_idx', String(nextIdx));
+        setCurrentSponsorIndex(nextIdx);
+      } catch (e) {
+        setCurrentSponsorIndex(prev => (prev + 1) % allActiveSponsors.length);
+      }
+    }
+  }, [isOpen, allActiveSponsors.length]);
+
+  // Patrocinador atualmente em exibição
+  const activeSponsor: SponsoredItem | null = allActiveSponsors[currentSponsorIndex] || allActiveSponsors[0] || null;
+
+  const videoUrl = (activeSponsor?.videoUrl || config?.videoUrl || '').trim();
+  const flyerUrl = (activeSponsor?.flyerUrl || config?.flyerUrl || '').trim();
   const hasVideo = Boolean(videoUrl);
   const hasFlyer = Boolean(flyerUrl);
+  const mediaType = activeSponsor?.mediaType || config?.mediaType || 'auto';
 
-  // Set initial active media tab based on config
+  // Set initial active media tab based on current sponsor config
   useEffect(() => {
-    if (config?.mediaType === 'flyer' && hasFlyer) {
+    if (mediaType === 'flyer' && hasFlyer) {
       setActiveTabMedia('flyer');
-    } else if (config?.mediaType === 'video' && hasVideo) {
+    } else if (mediaType === 'video' && hasVideo) {
       setActiveTabMedia('video');
     } else if (!hasVideo && hasFlyer) {
       setActiveTabMedia('flyer');
     } else {
       setActiveTabMedia('video');
     }
-  }, [config?.mediaType, hasVideo, hasFlyer, isOpen]);
+  }, [mediaType, hasVideo, hasFlyer, isOpen, currentSponsorIndex]);
 
   // Reset states when opening
   useEffect(() => {
@@ -179,35 +271,46 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
     }
   };
 
-  // Build redirection link
+  // Build redirection link for the active sponsor
   const buildActionUrl = () => {
-    if (config?.actionType === 'link' && config.customLink) {
-      return config.customLink;
+    const itemActionType = activeSponsor?.actionType || config?.actionType;
+    const itemCustomLink = activeSponsor?.customLink || config?.customLink;
+    const itemPhone = activeSponsor?.whatsappPhone || config?.whatsappPhone || '';
+    const itemMessage = activeSponsor?.whatsappMessage || config?.whatsappMessage || '';
+
+    if (itemActionType === 'link' && itemCustomLink) {
+      return itemCustomLink;
     }
 
-    const rawPhone = config?.whatsappPhone || '';
-    const digits = rawPhone.replace(/\D/g, '');
+    const digits = itemPhone.replace(/\D/g, '');
     const cleanPhone = digits.length === 10 || digits.length === 11 ? `55${digits}` : digits;
 
-    const baseMessage = config?.whatsappMessage?.trim() || 
-      `Olá! Vi o anúncio no Portal de Divulgação e gostaria de saber mais informações!`;
+    const baseMessage = itemMessage.trim() || 
+      `Olá! Vi seu anúncio no portal Minha Divulgação e gostaria de mais informações.`;
 
     if (cleanPhone) {
       return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(baseMessage)}`;
     }
 
-    if (config?.customLink) {
-      return config.customLink;
+    if (itemCustomLink) {
+      return itemCustomLink;
     }
 
     return '#';
   };
 
   const actionUrl = buildActionUrl();
-  const isWhatsApp = config?.actionType !== 'link' && (config?.whatsappPhone || !config?.customLink);
-  const buttonLabel = config?.buttonText?.trim() || (isWhatsApp ? 'Falar no WhatsApp' : 'Acessar Link');
-  const badgeLabel = config?.badge?.trim() || 'PATROCINADO';
-  const companyTitle = config?.companyName?.trim() || config?.title?.trim() || 'Destaque Especial';
+  const sponsorActionType = activeSponsor?.actionType || config?.actionType;
+  const sponsorPhone = activeSponsor?.whatsappPhone || config?.whatsappPhone;
+  const sponsorCustomLink = activeSponsor?.customLink || config?.customLink;
+  const isWhatsApp = sponsorActionType !== 'link' && (sponsorPhone || !sponsorCustomLink);
+
+  const buttonLabel = activeSponsor?.buttonText?.trim() || config?.buttonText?.trim() || (isWhatsApp ? 'Falar no WhatsApp' : 'Acessar Link');
+  const badgeLabel = activeSponsor?.badge?.trim() || config?.badge?.trim() || 'PATROCINADO';
+  const companyTitle = activeSponsor?.companyName?.trim() || activeSponsor?.title?.trim() || config?.companyName?.trim() || config?.title?.trim() || 'Destaque Especial';
+  const companyCategory = activeSponsor?.companyCategory || config?.companyCategory || '';
+  const companyLogo = activeSponsor?.companyLogo || config?.companyLogo || '';
+  const displayPhone = activeSponsor?.whatsappPhone || config?.whatsappPhone || '';
 
   const handleActionClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -240,26 +343,45 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
             <div className="truncate">
               <h4 className="text-white font-bold text-xs sm:text-sm truncate leading-tight flex items-center gap-1.5">
                 {companyTitle}
-                {config?.companyCategory && (
+                {companyCategory && (
                   <span className="text-[10px] text-white/50 font-normal hidden sm:inline">
-                    • {config.companyCategory}
+                    • {companyCategory}
                   </span>
                 )}
               </h4>
               <p className="text-[10px] text-white/50 truncate">
-                {isPreviewMode ? 'Modo de Teste do Administrador' : 'Exibição em Destaque no Portal'}
+                {allActiveSponsors.length > 1 ? (
+                  <span className="text-amber-300 font-medium">
+                    Patrocinador {currentSponsorIndex + 1} de {allActiveSponsors.length} (Revezamento a cada acesso/F5)
+                  </span>
+                ) : (
+                  isPreviewMode ? 'Modo de Teste do Administrador' : 'Exibição em Destaque no Portal'
+                )}
               </p>
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 sm:px-3 sm:py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition flex items-center gap-1.5 text-xs font-semibold shrink-0 cursor-pointer"
-            title="Fechar e ir para o portal"
-          >
-            <span className="hidden sm:inline text-[11px]">Ir para o Portal</span>
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {isPreviewMode && allActiveSponsors.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setCurrentSponsorIndex(prev => (prev + 1) % allActiveSponsors.length)}
+                className="px-2.5 py-1.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[10px] font-bold flex items-center gap-1 transition cursor-pointer"
+                title="Avançar para o próximo anunciante da fila"
+              >
+                <span>Próximo Anúncio ➔</span>
+              </button>
+            )}
+
+            <button
+              onClick={onClose}
+              className="p-1.5 sm:px-3 sm:py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition flex items-center gap-1.5 text-xs font-semibold shrink-0 cursor-pointer"
+              title="Fechar e ir para o portal"
+            >
+              <span className="hidden sm:inline text-[11px]">Ir para o Portal</span>
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Media Switcher Tabs if BOTH video and flyer are available */}
@@ -422,13 +544,13 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
 
         {/* Call to Action Direct Redirection Area */}
         <div className="p-4 sm:p-5 bg-gradient-to-b from-[#0c101c] via-[#101524] to-[#090d16] border-t border-white/10 flex flex-col gap-3 shrink-0">
-          {/* Target Company Info Card (if pulled from platform) */}
-          {config?.companyName && (
+          {/* Target Company Info Card (if pulled from platform or manually named) */}
+          {companyTitle && (
             <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/5 border border-white/10">
-              {config.companyLogo ? (
+              {companyLogo ? (
                 <img 
-                  src={config.companyLogo} 
-                  alt={config.companyName} 
+                  src={companyLogo} 
+                  alt={companyTitle} 
                   className="w-10 h-10 rounded-full object-cover border border-white/20 bg-black shrink-0" 
                 />
               ) : (
@@ -437,11 +559,13 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] text-white/50 uppercase font-bold tracking-wider">Anunciante Oficial</p>
-                <h5 className="text-white font-bold text-xs sm:text-sm truncate">{config.companyName}</h5>
-                {config.whatsappPhone && (
+                <p className="text-[10px] text-white/50 uppercase font-bold tracking-wider">
+                  {allActiveSponsors.length > 1 ? `Patrocinador #${currentSponsorIndex + 1}` : 'Anunciante Oficial'}
+                </p>
+                <h5 className="text-white font-bold text-xs sm:text-sm truncate">{companyTitle}</h5>
+                {displayPhone && (
                   <p className="text-[10px] text-emerald-400 font-mono truncate">
-                    WhatsApp: {config.whatsappPhone}
+                    WhatsApp: {displayPhone}
                   </p>
                 )}
               </div>
