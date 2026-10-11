@@ -93,27 +93,27 @@ export const SegmentsShowcase: React.FC = () => {
 export const OQueSuaEmpresaGanhaSection: React.FC = () => {
   const cards = [
     {
-      icon: Star,
-      badge: 'VISIBILIDADE',
-      title: 'MAIS VISIBILIDADE',
-      subtitle: 'Sua marca ganha um espaço de apresentação.',
-      desc: 'Um espaço dedicado para que o público conheça o que sua empresa oferece, seus produtos e seus serviços.',
+      icon: Flame,
+      badge: 'TRÁFEGO PAGO NO PORTAL',
+      title: 'IMPULSIONAMENTO EM TRÁFEGO PAGO',
+      subtitle: 'A plataforma investe em anúncios para atrair milhares de pessoas.',
+      desc: 'Nós investimos constantemente em tráfego pago na internet promovendo a plataforma inteira. Milhares de pessoas acessam a vitrine diariamente buscando comércio e serviços locais.',
       color: 'from-amber-400/20 to-yellow-500/5 text-amber-300 border-amber-500/30'
     },
     {
-      icon: Search,
-      badge: 'PRESENÇA DIGITAL',
-      title: 'MAIS PRESENÇA DIGITAL',
-      subtitle: 'Sua empresa passa a ter mais um canal para ser encontrada.',
-      desc: 'Fortaleça a presença da sua marca no ambiente digital com perfil organizado e informações sempre acessíveis.',
+      icon: Users,
+      badge: 'MAIS DE 7 MIL GRUPOS',
+      title: 'DIVULGAÇÃO MASSIVA EM REDES',
+      subtitle: 'Compartilhamento contínuo em grupos de WhatsApp e Facebook.',
+      desc: 'O link do portal é divulgado diariamente em mais de 7.000 grupos qualificados, direcionando uma audiência gigantesca de clientes reais para os negócios cadastrados.',
       color: 'from-blue-500/20 to-cyan-500/5 text-cyan-300 border-cyan-500/30'
     },
     {
       icon: Smartphone,
-      badge: 'OPORTUNIDADES',
-      title: 'MAIS OPORTUNIDADES',
-      subtitle: 'Sua divulgação pode aproximar seu negócio de pessoas interessadas.',
-      desc: 'Crie pontos de contato práticos para que quem busca seus serviços possa falar direto com você no WhatsApp.',
+      badge: 'MUITO MAIS CHANCES',
+      title: 'CHANCES MULTIPLICADAS DE CONTATO',
+      subtitle: 'Não divulgamos empresas isoladas: impulsionamos a plataforma toda!',
+      desc: 'Com o tráfego pago e a rede de grupos concentrados no portal, as chances da sua empresa ser descoberta e receber mensagens no WhatsApp são infinitamente maiores.',
       color: 'from-emerald-500/20 to-emerald-500/5 text-emerald-300 border-emerald-500/30'
     }
   ];
@@ -127,13 +127,13 @@ export const OQueSuaEmpresaGanhaSection: React.FC = () => {
         {/* Título da Seção */}
         <div className="text-center max-w-4xl mx-auto mb-10 sm:mb-14">
           <span className="text-amber-400 text-[10px] sm:text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
-            VANTAGENS PARA SUA EMPRESA
+            A FORÇA DA DIVULGAÇÃO COLETIVA
           </span>
           <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
-            Mais visibilidade para o seu negócio
+            Por que sua empresa ganha muito mais visibilidade aqui
           </h2>
           <p className="text-sm sm:text-base md:text-lg text-white/80 mt-3 leading-relaxed max-w-2xl mx-auto font-medium">
-            Apresente seus produtos, ofertas e serviços em um portal moderno, conectado direto ao seu WhatsApp.
+            Em vez de divulgar empresas sozinhas no vazio, impulsionamos a plataforma inteira com <strong>Tráfego Pago</strong> e <strong>mais de 7 mil grupos</strong>, atraindo um fluxo contínuo de clientes prontos para falar no seu WhatsApp.
           </p>
         </div>
 
@@ -225,33 +225,33 @@ export const ComoFuncionaSection: React.FC = () => {
   const steps = [
     {
       num: '1',
-      title: 'ESCOLHA SEU ESPAÇO',
-      desc: 'Sua empresa faz o cadastro com seus dados principais, contatos e fotos.',
-      tag: 'Presença comercial ativa'
+      title: 'CADASTRO DO SEU NEGÓCIO',
+      desc: 'Você cadastra sua empresa com fotos, logotipo, produtos/serviços, localização e botão direto para o seu WhatsApp oficial.',
+      tag: 'Perfil Comercial Completo'
     },
     {
       num: '2',
-      title: 'ORGANIZAÇÃO DO PERFIL',
-      desc: 'Os materiais e informações da sua empresa são preparados para exibição no portal.',
-      tag: 'Perfil comercial ativo'
+      title: 'POSICIONAMENTO NO PORTAL',
+      desc: 'Sua marca ganha espaço garantido na vitrine comercial do portal Minha Divulgação, organizada por categoria para os clientes encontrarem rápido.',
+      tag: 'Vitrine Online Ativa 24h'
     },
     {
       num: '3',
-      title: 'PRESENÇA NO PORTAL',
-      desc: 'Seu negócio fica em destaque na vitrine comercial para ser conhecido pelo público.',
-      tag: 'Vitrine no portal'
+      title: 'TRÁFEGO PAGO NA PLATAFORMA',
+      desc: 'A plataforma Minha Divulgação investe constantemente em Tráfego Pago (anúncios patrocinados contínuos) para atrair milhares de pessoas todos os dias.',
+      tag: 'Investimento em Tráfego Pago'
     },
     {
       num: '4',
       title: 'DIVULGAÇÃO EM +7 MIL GRUPOS',
-      desc: 'Sua empresa é divulgada em grupos de WhatsApp e Facebook, totalizando mais de 7 mil grupos.',
+      desc: 'A plataforma inteira é compartilhada continuamente em mais de 7.000 grupos de WhatsApp e Facebook, gerando um fluxo gigante e sem parar de novos visitantes.',
       tag: 'WhatsApp e Facebook (+7.000)'
     },
     {
       num: '5',
-      title: 'CONTATO DIRETO',
-      desc: 'Pessoas interessadas nos seus produtos e serviços encontram seu WhatsApp.',
-      tag: 'Contato direto no WhatsApp'
+      title: 'MUITO MAIS CHANCES DE CLIENTES',
+      desc: 'Como a divulgação é concentrada na plataforma inteira (e não em anúncios isolados), a chance da sua empresa ser vista e chamada no WhatsApp é multiplicada!',
+      tag: 'Contatos Diretos no WhatsApp'
     }
   ];
 
@@ -274,13 +274,13 @@ export const ComoFuncionaSection: React.FC = () => {
         {/* Título da Seção */}
         <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
           <span className="text-amber-400 text-[10px] sm:text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
-            PASSO A PASSO
+            PASSO A PASSO • COMO FUNCIONA
           </span>
           <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-            Como funciona a divulgação da sua empresa
+            Como funciona a divulgação e por que gera muito mais resultados
           </h2>
           <p className="text-sm sm:text-base text-white/80 mt-3 max-w-2xl mx-auto font-medium leading-relaxed">
-            Processo rápido e descomplicado: sua empresa ganha espaço no portal e é divulgada em mais de 7 mil grupos de WhatsApp e Facebook para começar a receber contatos.
+            A divulgação <strong>não é feita de forma isolada</strong>: a plataforma Minha Divulgação é impulsionada com <strong>Tráfego Pago diário</strong> e compartilhada em <strong>mais de 7 mil grupos</strong> de WhatsApp e Facebook. Isso concentra milhares de pessoas no portal todos os dias, multiplicando as chances da sua empresa ser descoberta!
           </p>
         </div>
 
@@ -289,14 +289,14 @@ export const ComoFuncionaSection: React.FC = () => {
           {steps.map((st, idx) => (
             <div 
               key={idx}
-              className={`bg-gradient-to-b from-[#111119] to-[#09090e] border ${st.num === '4' ? 'border-amber-400/50 shadow-[0_0_25px_rgba(251,191,36,0.15)]' : 'border-white/10'} hover:border-amber-500/60 rounded-3xl p-6 flex flex-col justify-between shadow-xl transition-all duration-300 hover:-translate-y-1 group`}
+              className={`bg-gradient-to-b from-[#111119] to-[#09090e] border ${st.num === '3' || st.num === '4' ? 'border-amber-400/50 shadow-[0_0_25px_rgba(251,191,36,0.15)]' : 'border-white/10'} hover:border-amber-500/60 rounded-3xl p-6 flex flex-col justify-between shadow-xl transition-all duration-300 hover:-translate-y-1 group`}
             >
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <div className={`w-11 h-11 rounded-2xl ${st.num === '4' ? 'bg-gradient-to-br from-amber-400 via-yellow-400 to-amber-500' : 'bg-gradient-to-br from-amber-400 to-amber-600'} text-black font-black text-lg flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
+                  <div className={`w-11 h-11 rounded-2xl ${st.num === '3' || st.num === '4' ? 'bg-gradient-to-br from-amber-400 via-yellow-400 to-amber-500' : 'bg-gradient-to-br from-amber-400 to-amber-600'} text-black font-black text-lg flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
                     {st.num}
                   </div>
-                  <span className={`text-[10px] font-mono font-bold uppercase tracking-wider ${st.num === '4' ? 'text-amber-300 bg-amber-500/20 border-amber-400/40' : 'text-amber-400/90 bg-amber-500/10 border-amber-500/20'} px-2.5 py-1 rounded-full border`}>
+                  <span className={`text-[10px] font-mono font-bold uppercase tracking-wider ${st.num === '3' || st.num === '4' ? 'text-amber-300 bg-amber-500/20 border-amber-400/40' : 'text-amber-400/90 bg-amber-500/10 border-amber-500/20'} px-2.5 py-1 rounded-full border`}>
                     Etapa {st.num}
                   </span>
                 </div>
@@ -315,6 +315,74 @@ export const ComoFuncionaSection: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* BLOCO EXPLICATIVO COMPARATIVO: POR QUE A DIVULGAÇÃO DA PLATAFORMA FUNCIONA MUITO MELHOR */}
+        <div className="mt-12 max-w-5xl mx-auto rounded-3xl bg-gradient-to-r from-[#171408] via-[#221c09] to-[#120f06] border-2 border-amber-400/50 p-6 sm:p-8 md:p-10 shadow-2xl relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono font-bold uppercase tracking-wider mb-3">
+              <Zap className="w-4 h-4 text-amber-400" />
+              <span>DIFERENCIAL EXCLUSIVO DO NOSSO MODELO</span>
+            </div>
+            
+            <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight leading-snug">
+              Por que a divulgação da plataforma traz <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500">muito mais chances de clientes</span> do que tentar anunciar sozinho?
+            </h3>
+
+            <p className="text-white/85 text-xs sm:text-sm md:text-base mt-3 leading-relaxed font-medium">
+              Entenda a estratégia: <strong>não divulgamos cada empresa separadamente em posts avulsos que somem no feed</strong>. Nós concentramos todo o investimento em <strong>anúncios de Tráfego Pago diário</strong> e na distribuição maciça do portal em <strong>mais de 7.000 grupos de WhatsApp e Facebook</strong>. 
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+              <div className="p-5 rounded-2xl bg-black/60 border border-red-500/30">
+                <div className="text-red-400 font-black text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2 mb-2">
+                  <span className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center text-xs">✕</span>
+                  Tentando Divulgar Sozinho no Feed
+                </div>
+                <ul className="text-white/70 text-xs sm:text-sm leading-relaxed space-y-2 list-none p-0 m-0">
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400 shrink-0">•</span>
+                    <span><strong>Custo altíssimo:</strong> Qualquer campanha individual de tráfego pago custa centenas ou milhares de reais por mês.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400 shrink-0">•</span>
+                    <span><strong>Alcance passageiro:</strong> Posts em grupos isolados descem no feed e desaparecem em minutos.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400 shrink-0">•</span>
+                    <span><strong>Dificuldade de escala:</strong> É humanamente inviável publicar em milhares de grupos todos os dias sozinho.</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-amber-500/10 border-2 border-amber-400/60 shadow-lg shadow-amber-500/10">
+                <div className="text-amber-300 font-black text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2 mb-2">
+                  <span className="w-6 h-6 rounded-full bg-amber-500/30 flex items-center justify-center text-xs">✓</span>
+                  Estando no Portal Minha Divulgação
+                </div>
+                <ul className="text-white/85 text-xs sm:text-sm leading-relaxed space-y-2 list-none p-0 m-0">
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-400 shrink-0">•</span>
+                    <span><strong>Tráfego Pago Coletivo:</strong> O portal inteiro recebe verba profissional de tráfego pago para atrair milhares de compradores.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-400 shrink-0">•</span>
+                    <span><strong>+7.000 Grupos Ativos:</strong> O link da vitrine circula 24h por dia em grupos de WhatsApp e Facebook com mais de 100 mil pessoas.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-400 shrink-0">•</span>
+                    <span><strong>Chances Muito Maiores:</strong> O visitante entra no portal procurando opções e cai direto na sua marca, clicando para falar no seu WhatsApp!</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="mt-6 p-4 rounded-xl bg-black/40 border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+              <span className="text-xs text-amber-200/90 font-medium">
+                💡 Por isso o valor é tão acessível (<strong>R$ 49,90/mês</strong>): ao reunir as empresas em uma vitrine única e forte, nós multiplicamos a força do tráfego para todo mundo!
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Frase de Destaque */}
@@ -855,34 +923,34 @@ export const PlanoPrecoSection: React.FC<{ primaryWaLink?: string; onCadastrarCl
 }) => {
   const beneficios = [
     {
-      icon: Search,
-      title: 'ESPAÇO NO PORTAL',
-      desc: 'Apresentação da sua empresa para quem visita o Minha Divulgação.',
-      highlight: 'Portal Web'
+      icon: Flame,
+      title: 'TRÁFEGO PAGO NO PORTAL',
+      desc: 'A plataforma investe em anúncios contínuos na internet atraindo milhares de pessoas para a vitrine.',
+      highlight: 'Tráfego Pago'
     },
     {
-      icon: Layers,
-      title: 'FLYER PERSONALIZADO',
-      desc: 'Material visual para apresentar seu negócio.',
-      highlight: 'Material Visual'
+      icon: Users,
+      title: 'DIVULGAÇÃO EM +7 MIL GRUPOS',
+      desc: 'O link do portal é compartilhado em massa em mais de 7.000 grupos de WhatsApp e Facebook.',
+      highlight: '+7k Grupos'
+    },
+    {
+      icon: Search,
+      title: 'ESPAÇO & VITRINE EXCLUSIVA',
+      desc: 'Apresentação profissional com fotos, produtos, serviços e busca por categoria.',
+      highlight: 'Vitrine 24h'
+    },
+    {
+      icon: Smartphone,
+      title: 'WHATSAPP DIRETO SEM TAXAS',
+      desc: 'O cliente clica e negocia direto com você, sem intermediários e sem comissão.',
+      highlight: 'WhatsApp Direto'
     },
     {
       icon: Tv,
-      title: 'VÍDEO PARA TV DA PLATAFORMA',
-      desc: 'Conteúdo de divulgação conforme os recursos disponíveis.',
-      highlight: 'TV da Plataforma'
-    },
-    {
-      icon: Radio,
-      title: 'ÁUDIO PARA RÁDIO MINHA DIVULGAÇÃO',
-      desc: 'Apresentação comercial da sua empresa.',
-      highlight: 'Rádio Web'
-    },
-    {
-      icon: Sparkles,
-      title: 'DIVULGAÇÃO EM GRUPOS E PARCEIROS',
-      desc: 'Quando incluída e disponível na operação.',
-      highlight: 'Canais Parceiros'
+      title: 'TV & RÁDIO DA PLATAFORMA',
+      desc: 'Exibição comercial nos canais multimídia integrados do portal.',
+      highlight: 'Canais Multimídia'
     }
   ];
 
@@ -895,13 +963,13 @@ export const PlanoPrecoSection: React.FC<{ primaryWaLink?: string; onCadastrarCl
         {/* Header - Seção de Anunciantes */}
         <div className="max-w-3xl mx-auto mb-8 sm:mb-12">
           <span className="text-amber-400 text-[10px] sm:text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
-            DIVULGUE SUA EMPRESA
+            DIVULGUE SUA EMPRESA COM TRÁFEGO PAGO E +7 MIL GRUPOS
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-            Quer divulgar sua empresa?
+            Quer divulgar sua empresa com máxima visibilidade?
           </h2>
           <p className="text-base sm:text-lg text-white/85 font-medium mt-3 leading-relaxed max-w-2xl mx-auto">
-            Tenha seu espaço no Minha Divulgação, com perfil comercial, WhatsApp direto e participação nas buscas do portal.
+            Aproveite a força da plataforma impulsionada com <strong>Tráfego Pago diário</strong> e <strong>mais de 7 mil grupos</strong> de WhatsApp e Facebook: perfil comercial completo, WhatsApp direto e muito mais chances de novos clientes!
           </p>
         </div>
 

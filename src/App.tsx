@@ -64,7 +64,8 @@ import {
   ArrowRight,
   ShieldCheck,
   CreditCard,
-  QrCode
+  QrCode,
+  Flame
 } from 'lucide-react';
 
 import { 
@@ -4346,6 +4347,30 @@ function AppContent() {
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Destaque Explicativo: Tráfego Pago & Mais de 7.000 Grupos na Plataforma */}
+          <div className="w-full max-w-4xl mx-auto mt-6 p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border border-amber-500/40 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl text-center sm:text-left select-none">
+            <div className="flex items-center gap-3">
+              <span className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 shrink-0">
+                <Flame size={20} className="animate-pulse" />
+              </span>
+              <div>
+                <span className="text-xs sm:text-sm font-black text-amber-300 block">
+                  A Plataforma é Impulsionada com Tráfego Pago e +7.000 Grupos de WhatsApp e Facebook!
+                </span>
+                <span className="text-[11px] text-white/80 block mt-0.5 leading-relaxed">
+                  Não divulgamos empresas isoladas no vazio: promovemos a plataforma como um todo, atraindo milhares de pessoas diariamente para a vitrine onde sua marca está exposta.
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => scrollToSection('como-funciona')}
+              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-[11px] font-black uppercase tracking-wider shrink-0 transition-all cursor-pointer shadow-md hover:scale-105"
+            >
+              Ver Passo a Passo
+            </button>
           </div>
 
           {/* Action buttons */}
