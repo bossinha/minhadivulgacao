@@ -2678,49 +2678,78 @@ function AppContent() {
     return () => clearInterval(interval);
   }, []);
 
-  // --- Notifications Logic ---
+  // --- Notifications Logic (Sensação de Visitantes Acessando em Intervalos de 1, 2 e 5 Minutos) ---
   const addNotification = useCallback(() => {
-    if (!appData?.notificationsData) return;
-    const name = appData.notificationsData.names[Math.floor(Math.random() * appData.notificationsData.names.length)];
-    const action = appData.notificationsData.actions[Math.floor(Math.random() * appData.notificationsData.actions.length)];
+    const defaultNames = ["João", "Maria", "Carlos", "Ana", "Paulo", "Fernanda", "Lucas", "Juliana", "Roberto", "Patrícia", "Rafael", "Camila", "Bruno", "Larissa", "Diego", "Renata", "Felipe", "Vanessa", "Gabriel", "Aline", "Rodrigo", "Tatiane"];
+    const names = appData?.notificationsData?.names?.length ? appData.notificationsData.names : defaultNames;
+    const name = names[Math.floor(Math.random() * names.length)];
+
+    // Inclui ações com empresas reais anunciantes do portal para valorizar os clientes
+    const companiesList = (appData?.companies || []).filter((c: any) => c && c.name && c.active !== false);
+    const dynamicCompanyActions: string[] = [];
+
+    if (companiesList.length > 0) {
+      const sampleCompanies = [...companiesList].sort(() => 0.5 - Math.random()).slice(0, 5);
+      sampleCompanies.forEach((comp: any) => {
+        dynamicCompanyActions.push(
+          `acabou de chamar ${comp.name} no WhatsApp`,
+          `visualizou a vitrine de ${comp.name}`,
+          `pediu orçamento para ${comp.name}`,
+          `acessou as ofertas de ${comp.name}`
+        );
+      });
+    }
+
+    const generalActions = [
+      "acabou de procurar internet fibra óptica",
+      "visitou uma pizzaria e pediu o cardápio",
+      "procurou serviços de oficina mecânica",
+      "solicitou contato de eletricista e encanador",
+      "acessou as promoções e ofertas da semana",
+      "está ouvindo a Rádio Digital agora",
+      "assistiu aos comerciais na TV do portal",
+      "encontrou uma empresa pelo Guia Comercial",
+      "acabou de acessar o portal via WhatsApp",
+      "acabou de entrar pelo anúncio do Facebook"
+    ];
+
+    const actionsPool = [
+      ...(appData?.notificationsData?.actions || []),
+      ...dynamicCompanyActions,
+      ...generalActions
+    ];
+    const action = actionsPool[Math.floor(Math.random() * actionsPool.length)];
     const id = Date.now();
-    setNotifications(prev => [...prev, { id, name, action }]);
+
+    setNotifications([{ id, name, action }]);
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id));
-    }, 8000);
+    }, 7000);
   }, [appData]);
 
   useEffect(() => {
-    const ONE_HOUR_MS = 60 * 60 * 1000; // Intervalo de 1 em 1 hora (3.600.000 ms)
-    let intervalId: any = null;
+    let timeoutId: any = null;
+    let isCancelled = false;
 
-    const triggerNotification = () => {
-      addNotification();
-      try {
-        localStorage.setItem('last_fictional_notification', String(Date.now()));
-      } catch (e) {}
+    // Intervalos solicitados pelo usuário: 1, 2 e 5 minutos (em milissegundos)
+    const INTERVAL_OPTIONS_MS = [60 * 1000, 120 * 1000, 300 * 1000]; // 1 min, 2 min, 5 min
+
+    const scheduleNext = (delayMs: number) => {
+      timeoutId = setTimeout(() => {
+        if (isCancelled) return;
+        addNotification();
+        // Sorteia o próximo intervalo: 1 minuto (60s), 2 minutos (120s) ou 5 minutos (300s)
+        const nextInterval = INTERVAL_OPTIONS_MS[Math.floor(Math.random() * INTERVAL_OPTIONS_MS.length)];
+        scheduleNext(nextInterval);
+      }, delayMs);
     };
 
-    const lastTime = parseInt(localStorage.getItem('last_fictional_notification') || '0', 10);
-    const now = Date.now();
-    const timeSinceLast = now - lastTime;
-
-    // Se já foi exibido recentemente, aguarda o restante do tempo para completar 1 hora; se for primeira vez, aguarda 1 hora
-    let initialDelay = ONE_HOUR_MS;
-    if (lastTime > 0 && timeSinceLast < ONE_HOUR_MS) {
-      initialDelay = ONE_HOUR_MS - timeSinceLast;
-    }
-
-    const timeoutId = setTimeout(() => {
-      triggerNotification();
-      intervalId = setInterval(() => {
-        triggerNotification();
-      }, ONE_HOUR_MS);
-    }, initialDelay);
+    // Dispara a primeira notificação 18 segundos após o visitante abrir a página
+    scheduleNext(18 * 1000);
 
     return () => {
-      clearTimeout(timeoutId);
-      if (intervalId) clearInterval(intervalId);
+      isCancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [addNotification]);
 
@@ -4123,28 +4152,7 @@ function AppContent() {
         isPreviewMode={isWelcomeVideoPreviewMode}
       />
 
-      {/* Botão Flutuante Discreto para Reabrir Destaque Patrocinado (Vídeo ou Flyer) */}
-      {!showWelcomeVideoModal && (
-        appData?.welcomeVideo?.videoUrl?.trim() || 
-        appData?.welcomeVideo?.flyerUrl?.trim() || 
-        (Array.isArray(appData?.welcomeVideo?.items) && appData.welcomeVideo.items.some(it => it && it.enabled !== false && (it.videoUrl?.trim() || it.flyerUrl?.trim())))
-      ) && appData?.welcomeVideo?.enabled !== false && (
-        <button
-          onClick={() => {
-            setIsWelcomeVideoPreviewMode(false);
-            setShowWelcomeVideoModal(true);
-          }}
-          className="fixed bottom-20 left-4 z-40 px-3.5 py-2 rounded-full bg-black/85 hover:bg-black/95 border border-amber-500/50 text-amber-400 text-xs font-bold shadow-xl backdrop-blur-md flex items-center gap-2 cursor-pointer transition hover:scale-105"
-          title="Ver Destaque Patrocinado"
-        >
-          <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-          <span>
-            {appData?.welcomeVideo?.flyerUrl?.trim() && !appData?.welcomeVideo?.videoUrl?.trim()
-              ? '🖼️ Ver Flyer em Destaque'
-              : '🎬 Ver Destaque Patrocinado'}
-          </span>
-        </button>
-      )}
+      {/* Destaque Patrocinado Flutuante removido a pedido do usuário: substituído pelo Chat Responsivo */}
 
       {/* Floating Dev Button - SHOW ONLY IF LOGGED IN MANAGER OR MASTER ADMIN */}
       {user?.isAdmin && tenantId !== 'master' && (
@@ -8615,21 +8623,30 @@ function AppContent() {
         </AnimatePresence>
       </div>
 
-      {/* Smart Chat */}
+      {/* Mobile Backdrop Overlay quando o Chat estiver aberto */}
+      {isChatOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9990] transition-opacity duration-300 md:hidden"
+          onClick={toggleChat}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Smart Chat (Responsivo e Posicionado no Canto Inferior Esquerdo) */}
       <div id="smart-chat-container">
         <div id="chat-window" className={isChatOpen ? 'active' : ''}>
           <div className="chat-header">
             <div className="chat-header-info">
               <div className="chat-header-icon">💬</div>
               <div>
-                <div className="chat-header-title">Assistente do Portal</div>
+                <div className="chat-header-title">Assistente & Busca Comercial</div>
                 <div className="chat-header-status">
                   <div className="status-dot"></div>
-                  Online agora
+                  Online agora • Resposta Imediata
                 </div>
               </div>
             </div>
-            <button className="chat-close" onClick={toggleChat}>✕</button>
+            <button className="chat-close" onClick={toggleChat} title="Fechar Chat">✕</button>
           </div>
           <div id="chat-messages">
             {chatMessages.map((msg, i) => (
@@ -8638,7 +8655,9 @@ function AppContent() {
                 {msg.categories && msg.categories.length > 0 && (
                   <div className="chat-categories">
                     {msg.categories.map(cat => (
-                      <button key={cat} className="chat-cat-btn" onClick={() => handleSendMessage(cat)}>{cat}</button>
+                      <button key={cat} className="chat-cat-btn" onClick={() => handleSendMessage(cat)}>
+                        🔍 {cat}
+                      </button>
                     ))}
                   </div>
                 )}
@@ -8650,7 +8669,7 @@ function AppContent() {
                     const pType = getCompanyPlanType(c);
                     return (
                       <div key={c.id} className="chat-result-card" style={{
-                        border: pType === 'patrocinado' ? '1px solid rgba(245, 158, 11, 0.6)' : pType === 'destaque' ? '1px solid rgba(251, 191, 36, 0.4)' : pType === 'verificado' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255, 255, 255, 0.08)'
+                        border: pType === 'patrocinado' ? '1px solid rgba(245, 158, 11, 0.6)' : pType === 'destaque' ? '1px solid rgba(251, 191, 36, 0.4)' : pType === 'verificado' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)'
                       }}>
                         <div className="chat-result-info">
                           <img src={c.logo} className="chat-result-logo" referrerPolicy="no-referrer" alt={c.name} loading="lazy" decoding="async" />
@@ -8661,35 +8680,53 @@ function AppContent() {
                             <div className="chat-result-cat" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                               <span>{c.category}</span>
                               {pType === 'patrocinado' && (
-                                <span style={{ background: 'linear-gradient(90deg, #ef4444, #f59e0b)', color: '#fff', fontSize: '8px', fontWeight: 900, padding: '1px 5px', borderRadius: '10px' }}>
+                                <span style={{ background: 'linear-gradient(90deg, #ef4444, #f59e0b)', color: '#fff', fontSize: '9px', fontWeight: 900, padding: '2px 6px', borderRadius: '10px' }}>
                                   🔥 DESTAQUE
                                 </span>
                               )}
                               {pType === 'destaque' && (
-                                <span style={{ background: '#f59e0b', color: '#000', fontSize: '8px', fontWeight: 900, padding: '1px 5px', borderRadius: '10px' }}>
+                                <span style={{ background: '#f59e0b', color: '#000', fontSize: '9px', fontWeight: 900, padding: '2px 6px', borderRadius: '10px' }}>
                                   ⭐ RECOMENDADO
                                 </span>
                               )}
                               {pType === 'verificado' && (
-                                <span style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', fontSize: '8px', fontWeight: 900, padding: '1px 5px', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                                <span style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', fontSize: '9px', fontWeight: 900, padding: '2px 6px', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
                                   ✔ VERIFICADO
                                 </span>
                               )}
                             </div>
                           </div>
                         </div>
-                        <div className="chat-result-actions" style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
-                          <a href={getCompanyWhatsAppUrl(c)} target="_blank" rel="noreferrer" className="chat-result-wa" style={{ flex: 1 }}>
+                        <div className="chat-result-actions" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '8px' }}>
+                          <a 
+                            href={getCompanyWhatsAppUrl(c)} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="chat-result-wa" 
+                            style={{ flex: 1, minWidth: '130px' }}
+                          >
                             WhatsApp 💬
                           </a>
                           {c.ig && c.ig !== '' && c.ig !== '#' && (
-                            <a href={c.ig} target="_blank" rel="noreferrer" className="chat-result-wa" style={{ flex: 1, background: '#E1306C', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                            <a 
+                              href={c.ig} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="chat-result-wa" 
+                              style={{ background: '#E1306C', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                            >
                               <InstagramIcon className="w-3.5 h-3.5" />
                               <span>Instagram</span>
                             </a>
                           )}
                           {c.website && c.website !== '' && (
-                            <a href={c.website} target="_blank" rel="noreferrer" className="chat-result-wa" style={{ flex: 1, background: 'var(--primary)', color: 'black' }}>
+                            <a 
+                              href={c.website} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="chat-result-wa" 
+                              style={{ background: 'var(--primary)', color: 'black' }}
+                            >
                               Web 🌐
                             </a>
                           )}
@@ -8702,7 +8739,7 @@ function AppContent() {
                     <div style={{ marginTop: '10px' }}>
                       {recommended.length > 0 && (
                         <div style={{ marginBottom: '12px' }}>
-                          <div style={{ fontSize: '10px', fontWeight: 800, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+                          <div style={{ fontSize: '11px', fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
                             🔥 EMPRESAS RECOMENDADAS EM DESTAQUE:
                           </div>
                           {recommended.map(renderCard)}
@@ -8712,7 +8749,7 @@ function AppContent() {
                       {others.length > 0 && (
                         <div>
                           {recommended.length > 0 && (
-                            <div style={{ fontSize: '10px', fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', marginTop: '10px' }}>
+                            <div style={{ fontSize: '11px', fontWeight: 900, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', marginTop: '10px' }}>
                               📍 OUTROS ESTABELECIMENTOS LOCAIS:
                             </div>
                           )}
@@ -8735,21 +8772,31 @@ function AppContent() {
               <input 
                 type="text" 
                 id="chat-input" 
-                placeholder="Digite o que você precisa..." 
+                placeholder="O que você precisa encontrar hoje?..." 
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
               />
-              <button id="chat-send" onClick={() => handleSendMessage()}>
+              <button id="chat-send" onClick={() => handleSendMessage()} title="Enviar mensagem">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
               </button>
             </div>
-            <p style={{ fontSize: '10px', color: 'var(--text-dim)', textAlign: 'center', marginTop: '10px', fontWeight: 700, textTransform: 'uppercase' }}>Ex: supermercado, mecânico, internet...</p>
+            <p style={{ fontSize: '10.5px', color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginTop: '8px', fontWeight: 700, textTransform: 'uppercase' }}>Ex: pizzaria, mercado, oficina, internet...</p>
           </div>
         </div>
-        <button id="chat-toggle-btn" className={`chat-toggle ${isChatOpen ? 'active' : ''}`} onClick={toggleChat}>
-          <span>{isChatOpen ? '✕' : '💬'}</span>
-          {!isChatOpen && chatMessages.length === 0 && <div className="chat-badge">1</div>}
+        <button 
+          id="chat-toggle-btn" 
+          className={`chat-toggle ${isChatOpen ? 'active' : ''}`} 
+          onClick={toggleChat}
+          title={isChatOpen ? "Fechar Chat" : "Abrir Chat e Assistente do Portal"}
+        >
+          <span style={{ fontSize: '1.1rem' }}>{isChatOpen ? '✕' : '💬'}</span>
+          <span style={{ letterSpacing: '0.04em', textTransform: 'uppercase', fontWeight: 900 }}>
+            {isChatOpen ? 'Fechar' : 'Chat & Busca'}
+          </span>
+          {!isChatOpen && (
+            <span style={{ display: 'inline-flex', width: '8px', height: '8px', borderRadius: '50%', background: '#047857', marginLeft: '2px' }} />
+          )}
         </button>
       </div>
 
