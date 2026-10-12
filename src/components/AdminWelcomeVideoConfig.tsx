@@ -770,7 +770,25 @@ export const AdminWelcomeVideoConfig: React.FC<AdminWelcomeVideoConfigProps> = (
                   <input
                     type="text"
                     value={activeItem.companyName || activeItem.name || ''}
-                    onChange={(e) => handleUpdateActiveItem({ companyName: e.target.value, name: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const matched = companies.find((c: any) => c.name?.toLowerCase().trim() === val.toLowerCase().trim());
+                      if (matched) {
+                        const rawPhone = matched.wa || matched.whatsapp || matched.phone || '';
+                        const cleanDigits = rawPhone.replace(/\D/g, '');
+                        handleUpdateActiveItem({
+                          companyName: val,
+                          name: val,
+                          companyId: matched.id,
+                          companyCategory: matched.category || '',
+                          companyLogo: matched.logo || '',
+                          whatsappPhone: cleanDigits || rawPhone,
+                          actionType: 'whatsapp'
+                        });
+                      } else {
+                        handleUpdateActiveItem({ companyName: val, name: val });
+                      }
+                    }}
                     placeholder="Ex: Pizzaria Forno Nobre"
                     className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-xs text-white focus:outline-none focus:border-amber-400"
                   />

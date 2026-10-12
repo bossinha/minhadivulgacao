@@ -2832,16 +2832,29 @@ function AppContent() {
   };
 
   // --- Chat Logic ---
+  const handleClearChat = () => {
+    setChatMessages([]);
+    setChatInput('');
+    setIsTyping(false);
+  };
+
   const toggleChat = () => {
-    setIsChatOpen(prev => !prev);
-    if (!isChatOpen && chatMessages.length === 0) {
-      const topRecommended = sortCompaniesByPlanAndPriority(displayedCompanies.filter(c => c.active !== false)).slice(0, 3);
-      setChatMessages([{ 
-        sender: 'bot', 
-        text: `👋 Olá! Sou o Assistente do Portal Guia Comercial. Como posso te ajudar hoje?\n\n⭐ Empresas Recomendadas em Destaque:`,
-        results: topRecommended
-      }]);
-    }
+    setIsChatOpen(prev => {
+      const willOpen = !prev;
+      if (!willOpen) {
+        // Quando fechar / não usar mais o chat, limpa automaticamente a busca e mensagens
+        setChatInput('');
+        setChatMessages([]);
+      } else {
+        const topRecommended = sortCompaniesByPlanAndPriority(displayedCompanies.filter(c => c.active !== false)).slice(0, 3);
+        setChatMessages([{ 
+          sender: 'bot', 
+          text: `👋 Olá! Sou o Assistente do Portal Guia Comercial. Como posso te ajudar hoje?\n\n⭐ Empresas Recomendadas em Destaque:`,
+          results: topRecommended
+        }]);
+      }
+      return willOpen;
+    });
   };
 
   const handleSendMessage = (textOverride?: string) => {
@@ -4150,6 +4163,8 @@ function AppContent() {
         isOpen={showWelcomeVideoModal}
         onClose={handleCloseWelcomeVideo}
         isPreviewMode={isWelcomeVideoPreviewMode}
+        companies={displayedCompanies || appData?.companies || []}
+        onSelectCompany={setActiveMiniSiteCompany}
       />
 
       {/* Destaque Patrocinado Flutuante removido a pedido do usuário: substituído pelo Chat Responsivo */}
@@ -5088,12 +5103,18 @@ function AppContent() {
                     onClick={() => {
                       const activeFlyer = visibleFlyers[activeFlyerIndex];
                       if (typeof activeFlyer === 'object' && activeFlyer) {
-                        const targetComp = (activeFlyer.companyId || activeFlyer.companyName)
-                          ? (displayedCompanies || appData?.companies || []).find((c: any) => 
-                              (activeFlyer.companyId && (String(c.id) === String(activeFlyer.companyId) || c.name === activeFlyer.companyId)) ||
-                              (activeFlyer.companyName && c.name === activeFlyer.companyName)
-                            )
-                          : null;
+                        const allComps = (displayedCompanies || appData?.companies || []);
+                        const targetId = activeFlyer.companyId ? String(activeFlyer.companyId).trim().toLowerCase() : '';
+                        const targetName = (activeFlyer.companyName || activeFlyer.title || activeFlyer.name || '').trim().toLowerCase();
+                        const targetComp = allComps.find((c: any) => {
+                          if (!c) return false;
+                          const cId = String(c.id ?? '').trim().toLowerCase();
+                          const cName = String(c.name ?? '').trim().toLowerCase();
+                          if (targetId && (cId === targetId || cName === targetId)) return true;
+                          if (targetName && (cName === targetName || cName.includes(targetName) || targetName.includes(cName))) return true;
+                          return false;
+                        }) || null;
+
                         if (activeFlyer.actionType === 'company' && targetComp) {
                           setActiveMiniSiteCompany(targetComp);
                         } else if (activeFlyer.link) {
@@ -5127,11 +5148,18 @@ function AppContent() {
                 <div className="w-full md:w-1/2 flex flex-col justify-center items-center md:items-start text-center md:text-left">
                   {(() => {
                     const activeFlyer = visibleFlyers[activeFlyerIndex];
-                    const targetComp = typeof activeFlyer === 'object' && activeFlyer && (activeFlyer.companyId || activeFlyer.companyName)
-                      ? (displayedCompanies || appData?.companies || []).find((c: any) => 
-                          (activeFlyer.companyId && (String(c.id) === String(activeFlyer.companyId) || c.name === activeFlyer.companyId)) ||
-                          (activeFlyer.companyName && c.name === activeFlyer.companyName)
-                        )
+                    const allComps = (displayedCompanies || appData?.companies || []);
+                    const targetId = typeof activeFlyer === 'object' && activeFlyer?.companyId ? String(activeFlyer.companyId).trim().toLowerCase() : '';
+                    const targetName = typeof activeFlyer === 'object' && activeFlyer ? (activeFlyer.companyName || activeFlyer.title || activeFlyer.name || '').trim().toLowerCase() : '';
+                    const targetComp = typeof activeFlyer === 'object' && activeFlyer
+                      ? allComps.find((c: any) => {
+                          if (!c) return false;
+                          const cId = String(c.id ?? '').trim().toLowerCase();
+                          const cName = String(c.name ?? '').trim().toLowerCase();
+                          if (targetId && (cId === targetId || cName === targetId)) return true;
+                          if (targetName && (cName === targetName || cName.includes(targetName) || targetName.includes(cName))) return true;
+                          return false;
+                        }) || null
                       : null;
                     return (
                       <>
@@ -8578,7 +8606,7 @@ function AppContent() {
                 {activeTab === 'vídeo-portal' && (
                   <AdminWelcomeVideoConfig
                     config={appData?.welcomeVideo}
-                    companies={appData?.companies || []}
+                    companies={displayedCompanies || appData?.companies || []}
                     advertisers={advertiserCompanies || []}
                     onChange={(newConfig) => {
                       updateData('welcomeVideo', newConfig);
@@ -8646,7 +8674,39 @@ function AppContent() {
                 </div>
               </div>
             </div>
-            <button className="chat-close" onClick={toggleChat} title="Fechar Chat">✕</button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <button 
+                type="button"
+                className="chat-clear-btn" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClearChat();
+                  const topRecommended = sortCompaniesByPlanAndPriority(displayedCompanies.filter(c => c.active !== false)).slice(0, 3);
+                  setChatMessages([{ 
+                    sender: 'bot', 
+                    text: `🧹 Busca limpa com sucesso! O que você gostaria de encontrar agora?\n\n⭐ Empresas Recomendadas em Destaque:`,
+                    results: topRecommended
+                  }]);
+                }} 
+                title="Limpar pesquisa e conversa"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: '#fbbf24',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  borderRadius: '8px',
+                  padding: '4px 8px',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                🧹 Limpar
+              </button>
+              <button className="chat-close" onClick={toggleChat} title="Fechar Chat">✕</button>
+            </div>
           </div>
           <div id="chat-messages">
             {chatMessages.map((msg, i) => (
