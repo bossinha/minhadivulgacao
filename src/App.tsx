@@ -1829,7 +1829,7 @@ function AppContent() {
   const exclusiveDivulgarWaLink = useMemo(() => {
     const baseWa = appData?.pricing?.waLink || 'https://wa.me/5585992862177';
     const cleanBase = baseWa.split('?')[0];
-    const text = 'Olá! Gostaria de contratar o Plano Individual de Divulgação Exclusiva (R$ 99,90/mês) com divulgação em grupos de Facebook e WhatsApp individual somente da marca da minha empresa. Poderiam me orientar com o cadastro e ativação?';
+    const text = 'Olá! Gostaria de consultar informações sobre a Divulgação Exclusiva para a minha empresa (campanhas feitas especificamente para o meu negócio, separadas da divulgação coletiva do portal Minha Divulgação). Poderiam me orientar com opções e valores?';
     const linkWithText = `${cleanBase}?text=${encodeURIComponent(text)}`;
     return getWaLinkWithReferral(linkWithText);
   }, [appData?.pricing?.waLink, tenantId]);
@@ -2774,13 +2774,8 @@ function AppContent() {
 
   // --- Chat Logic ---
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const chatTimeoutRef = useRef<any>(null);
 
   const finishChat = () => {
-    if (chatTimeoutRef.current) {
-      clearTimeout(chatTimeoutRef.current);
-      chatTimeoutRef.current = null;
-    }
     setChatInput('');
     setChatMessages([]);
     setIsChatOpen(false);
@@ -2794,19 +2789,14 @@ function AppContent() {
   };
 
   const clearChat = () => {
-    if (chatTimeoutRef.current) {
-      clearTimeout(chatTimeoutRef.current);
-      chatTimeoutRef.current = null;
-    }
     setChatInput('');
     setIsTyping(false);
-    setChatMessages([]);
-    try {
-      sessionStorage.removeItem('portal_chat_messages');
-      sessionStorage.removeItem('portal_chat_input');
-      localStorage.removeItem('portal_chat_messages');
-      localStorage.removeItem('portal_chat_input');
-    } catch (e) {}
+    const topCats = Array.from(new Set(displayedCompanies.map(c => c.category).filter(Boolean))).slice(0, 5);
+    setChatMessages([{ 
+      sender: 'bot', 
+      text: '👋 Conversa limpa! Digite o que você precisa ou escolha uma categoria:',
+      categories: topCats.length > 0 ? topCats : ['Pizzaria', 'Supermercado', 'Automotivo', 'Saúde', 'Serviços']
+    }]);
   };
 
   // Garante que ao sair do chat clicando fora ou apertando ESC, as mensagens sumam totalmente
@@ -2853,7 +2843,12 @@ function AppContent() {
     } else {
       setIsChatOpen(true);
       setChatInput('');
-      setChatMessages([]);
+      const topCats = Array.from(new Set(displayedCompanies.map(c => c.category).filter(Boolean))).slice(0, 5);
+      setChatMessages([{ 
+        sender: 'bot', 
+        text: '👋 Olá! Sou o Assistente do Portal. Digite o que você precisa ou selecione uma opção:',
+        categories: topCats.length > 0 ? topCats : ['Pizzaria', 'Supermercado', 'Automotivo', 'Saúde', 'Serviços']
+      }]);
     }
   };
 
@@ -2861,19 +2856,13 @@ function AppContent() {
     const text = textOverride || chatInput.trim();
     if (!text) return;
 
-    if (chatTimeoutRef.current) {
-      clearTimeout(chatTimeoutRef.current);
-      chatTimeoutRef.current = null;
-    }
-
     // Substitui buscas anteriores pela pesquisa atual para não ficar amontoando cards na tela
     const userMsg = { sender: 'user' as const, text };
     setChatMessages([userMsg]);
     setChatInput('');
     setIsTyping(true);
 
-    chatTimeoutRef.current = setTimeout(() => {
-      chatTimeoutRef.current = null;
+    setTimeout(() => {
       setIsTyping(false);
       if (!appData) return;
       
@@ -8583,148 +8572,122 @@ function AppContent() {
                 type="button" 
                 className="chat-clear-btn" 
                 onClick={clearChat} 
-                title="Limpar mensagens e zerar conversa"
+                title="Limpar mensagens e iniciar nova busca"
               >
-                🧹 Limpar
-              </button>
-              <button 
-                type="button" 
-                className="chat-finish-btn" 
-                onClick={finishChat} 
-                title="Finalizar atendimento e sair"
-              >
-                Finalizar
+                Limpar
               </button>
               <button 
                 type="button" 
                 className="chat-close" 
                 onClick={finishChat} 
-                title="Fechar e sair do chat"
+                title="Fechar e encerrar chat"
               >
                 ✕
               </button>
             </div>
           </div>
           <div id="chat-messages">
-            {chatMessages.length === 0 ? (
-              <div className="message bot">
-                👋 Olá! Sou o Assistente do Portal. Digite o que você precisa ou selecione uma opção abaixo:
-                <div className="chat-categories">
-                  {(
-                    Array.from(new Set(displayedCompanies.map(c => c.category).filter(Boolean))).slice(0, 6).length > 0
-                      ? (Array.from(new Set(displayedCompanies.map(c => c.category).filter(Boolean))).slice(0, 6) as string[])
-                      : ['Pizzaria', 'Supermercado', 'Automotivo', 'Saúde', 'Serviços', 'Restaurante']
-                  ).map((cat: string) => (
-                    <button key={cat} className="chat-cat-btn" onClick={() => handleSendMessage(cat)}>{cat}</button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              chatMessages.map((msg, i) => (
-                <div key={i} className={`message ${msg.sender}`}>
-                  {msg.text}
-                  {msg.categories && msg.categories.length > 0 && (
-                    <div className="chat-categories">
-                      {msg.categories.map(cat => (
-                        <button key={cat} className="chat-cat-btn" onClick={() => handleSendMessage(cat)}>{cat}</button>
-                      ))}
-                    </div>
-                  )}
-                  {msg.results && msg.results.length > 0 && (() => {
-                    const recommended = msg.results.filter((c: any) => getCompanyPlanType(c) !== 'gratuito');
-                    const others = msg.results.filter((c: any) => getCompanyPlanType(c) === 'gratuito');
+            {chatMessages.map((msg, i) => (
+              <div key={i} className={`message ${msg.sender}`}>
+                {msg.text}
+                {msg.categories && msg.categories.length > 0 && (
+                  <div className="chat-categories">
+                    {msg.categories.map(cat => (
+                      <button key={cat} className="chat-cat-btn" onClick={() => handleSendMessage(cat)}>{cat}</button>
+                    ))}
+                  </div>
+                )}
+                {msg.results && msg.results.length > 0 && (() => {
+                  const recommended = msg.results.filter((c: any) => getCompanyPlanType(c) !== 'gratuito');
+                  const others = msg.results.filter((c: any) => getCompanyPlanType(c) === 'gratuito');
 
-                    const renderCard = (c: any) => {
-                      const pType = getCompanyPlanType(c);
-                      return (
-                        <div key={c.id} className="chat-result-card" style={{
-                          border: pType === 'patrocinado' ? '1px solid rgba(245, 158, 11, 0.6)' : pType === 'destaque' ? '1px solid rgba(251, 191, 36, 0.4)' : pType === 'verificado' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255, 255, 255, 0.08)'
-                        }}>
-                          <div className="chat-result-info">
-                            <img src={c.logo} className="chat-result-logo" referrerPolicy="no-referrer" alt={c.name} loading="lazy" decoding="async" />
-                            <div className="chat-result-details">
-                              <div className="chat-result-name" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                {c.name}
-                              </div>
-                              <div className="chat-result-cat" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                                <span>{c.category}</span>
-                                {pType === 'patrocinado' && (
-                                  <span style={{ background: 'linear-gradient(90deg, #ef4444, #f59e0b)', color: '#fff', fontSize: '8px', fontWeight: 900, padding: '1px 5px', borderRadius: '10px' }}>
-                                    🔥 DESTAQUE
-                                  </span>
-                                )}
-                                {pType === 'destaque' && (
-                                  <span style={{ background: '#f59e0b', color: '#000', fontSize: '8px', fontWeight: 900, padding: '1px 5px', borderRadius: '10px' }}>
-                                    ⭐ RECOMENDADO
-                                  </span>
-                                )}
-                                {pType === 'verificado' && (
-                                  <span style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', fontSize: '8px', fontWeight: 900, padding: '1px 5px', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                                    ✔ VERIFICADO
-                                  </span>
-                                )}
-                              </div>
+                  const renderCard = (c: any) => {
+                    const pType = getCompanyPlanType(c);
+                    return (
+                      <div key={c.id} className="chat-result-card" style={{
+                        border: pType === 'patrocinado' ? '1px solid rgba(245, 158, 11, 0.6)' : pType === 'destaque' ? '1px solid rgba(251, 191, 36, 0.4)' : pType === 'verificado' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255, 255, 255, 0.08)'
+                      }}>
+                        <div className="chat-result-info">
+                          <img src={c.logo} className="chat-result-logo" referrerPolicy="no-referrer" alt={c.name} loading="lazy" decoding="async" />
+                          <div className="chat-result-details">
+                            <div className="chat-result-name" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              {c.name}
                             </div>
-                          </div>
-                          <div className="chat-result-actions">
-                            <a href={getCompanyWhatsAppUrl(c)} target="_blank" rel="noreferrer" className="chat-result-wa">
-                              WhatsApp 💬
-                            </a>
-                            {c.ig && c.ig !== '' && c.ig !== '#' && (
-                              <a href={c.ig} target="_blank" rel="noreferrer" className="chat-result-wa" style={{ background: '#E1306C' }}>
-                                <InstagramIcon className="w-3.5 h-3.5 inline mr-1" />
-                                <span>Instagram</span>
-                              </a>
-                            )}
-                            {c.website && c.website !== '' && (
-                              <a href={c.website} target="_blank" rel="noreferrer" className="chat-result-wa" style={{ background: 'var(--primary)', color: 'black' }}>
-                                Web 🌐
-                              </a>
-                            )}
+                            <div className="chat-result-cat" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                              <span>{c.category}</span>
+                              {pType === 'patrocinado' && (
+                                <span style={{ background: 'linear-gradient(90deg, #ef4444, #f59e0b)', color: '#fff', fontSize: '8px', fontWeight: 900, padding: '1px 5px', borderRadius: '10px' }}>
+                                  🔥 DESTAQUE
+                                </span>
+                              )}
+                              {pType === 'destaque' && (
+                                <span style={{ background: '#f59e0b', color: '#000', fontSize: '8px', fontWeight: 900, padding: '1px 5px', borderRadius: '10px' }}>
+                                  ⭐ RECOMENDADO
+                                </span>
+                              )}
+                              {pType === 'verificado' && (
+                                <span style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', fontSize: '8px', fontWeight: 900, padding: '1px 5px', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                                  ✔ VERIFICADO
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      );
-                    };
-
-                    return (
-                      <div style={{ marginTop: '10px' }}>
-                        {recommended.length > 0 && (
-                          <div style={{ marginBottom: '12px' }}>
-                            <div style={{ fontSize: '10px', fontWeight: 800, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
-                              🔥 EMPRESAS RECOMENDADAS EM DESTAQUE:
-                            </div>
-                            {recommended.map(renderCard)}
-                          </div>
-                        )}
-
-                        {others.length > 0 && (
-                          <div>
-                            {recommended.length > 0 && (
-                              <div style={{ fontSize: '10px', fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', marginTop: '10px' }}>
-                                📍 OUTROS ESTABELECIMENTOS LOCAIS:
-                              </div>
-                            )}
-                            {others.map(renderCard)}
-                          </div>
-                        )}
+                        <div className="chat-result-actions">
+                          <a href={getCompanyWhatsAppUrl(c)} target="_blank" rel="noreferrer" className="chat-result-wa">
+                            WhatsApp 💬
+                          </a>
+                          {c.ig && c.ig !== '' && c.ig !== '#' && (
+                            <a href={c.ig} target="_blank" rel="noreferrer" className="chat-result-wa" style={{ background: '#E1306C' }}>
+                              <InstagramIcon className="w-3.5 h-3.5 inline mr-1" />
+                              <span>Instagram</span>
+                            </a>
+                          )}
+                          {c.website && c.website !== '' && (
+                            <a href={c.website} target="_blank" rel="noreferrer" className="chat-result-wa" style={{ background: 'var(--primary)', color: 'black' }}>
+                              Web 🌐
+                            </a>
+                          )}
+                        </div>
                       </div>
                     );
-                  })()}
-                </div>
-              ))
-            )}
+                  };
+
+                  return (
+                    <div style={{ marginTop: '10px' }}>
+                      {recommended.length > 0 && (
+                        <div style={{ marginBottom: '12px' }}>
+                          <div style={{ fontSize: '10px', fontWeight: 800, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+                            🔥 EMPRESAS RECOMENDADAS EM DESTAQUE:
+                          </div>
+                          {recommended.map(renderCard)}
+                        </div>
+                      )}
+
+                      {others.length > 0 && (
+                        <div>
+                          {recommended.length > 0 && (
+                            <div style={{ fontSize: '10px', fontWeight: 800, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', marginTop: '10px' }}>
+                              📍 OUTROS ESTABELECIMENTOS LOCAIS:
+                            </div>
+                          )}
+                          {others.map(renderCard)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            ))}
             {isTyping && (
               <div className="typing-indicator">
                 <div className="dot"></div><div className="dot"></div><div className="dot"></div>
               </div>
             )}
             {chatMessages.length > 0 && (
-              <div className="chat-finish-action-row" style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '12px' }}>
-                <button type="button" className="chat-finish-inline-btn" onClick={clearChat} style={{ flex: 1 }}>
-                  🧹 Limpar conversa
-                </button>
-                <button type="button" className="chat-finish-inline-btn" onClick={finishChat} style={{ flex: 1, borderColor: 'rgba(239, 68, 68, 0.4)', color: '#f87171' }}>
-                  ⏹️ Finalizar atendimento
+              <div className="chat-finish-action-row">
+                <button type="button" className="chat-finish-inline-btn" onClick={clearChat}>
+                  🗑️ Limpar conversa / Nova busca
                 </button>
               </div>
             )}

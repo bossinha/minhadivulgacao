@@ -32,7 +32,7 @@ const DEFAULT_WA_LINK = `https://wa.me/5585992862177?text=${encodeURIComponent(
 )}`;
 
 const DEFAULT_EXCLUSIVE_WA_LINK = `https://wa.me/5585992862177?text=${encodeURIComponent(
-  "Olá! Gostaria de informações sobre o Plano Individual de Divulgação Exclusiva (R$ 99,90/mês) em grupos de Facebook e WhatsApp individual somente da marca da minha empresa. Poderiam me orientar com o cadastro e ativação?"
+  "Olá! Gostaria de consultar informações sobre a Divulgação Exclusiva para a minha empresa (campanhas feitas especificamente para o meu negócio, separadas da divulgação coletiva do portal Minha Divulgação). Poderiam me orientar com opções e valores?"
 )}`;
 
 // ==========================================
@@ -403,54 +403,60 @@ export const PlanoEDiferencaServicosSection: React.FC<{
 
           </div>
 
-          {/* CARD 2: PLANO INDIVIDUAL - DIVULGAÇÃO EXCLUSIVA */}
-          <div className="bg-gradient-to-b from-[#11121d] via-[#0c0d15] to-[#07070b] border-2 border-cyan-400/80 hover:border-cyan-400 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-[0_15px_45px_rgba(6,182,212,0.15)] relative transition-all">
+          {/* CARD 2: DIVULGAÇÃO EXCLUSIVA DA SUA EMPRESA */}
+          <div className="bg-gradient-to-b from-[#11121d] via-[#0c0d15] to-[#07070b] border border-white/15 hover:border-cyan-500/50 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-xl relative transition-all">
             
-            <div className="absolute -top-3.5 left-6 bg-gradient-to-r from-cyan-400 to-blue-500 text-black font-black text-[10px] font-mono uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md">
-              PLANO INDIVIDUAL
+            <div className="absolute -top-3.5 left-6 bg-gradient-to-r from-cyan-500 to-blue-600 text-black font-black text-[10px] font-mono uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md">
+              CAMPANHA INDIVIDUALIZADA
             </div>
 
             <div>
               <div className="flex items-start justify-between gap-4 mt-2 mb-4">
                 <div>
                   <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                    PLANO INDIVIDUAL • DIVULGAÇÃO EXCLUSIVA
+                    DIVULGAÇÃO EXCLUSIVA DA SUA EMPRESA
                   </h3>
                   <p className="text-xs text-cyan-300 font-bold mt-1">
-                    Divulgação individual somente da marca da sua empresa
+                    Campanhas feitas especificamente para uma única empresa
                   </p>
                 </div>
               </div>
 
-              {/* Preço */}
-              <div className="flex items-baseline gap-1.5 my-4 p-4 rounded-2xl bg-black/40 border border-cyan-500/30">
-                <span className="text-xl sm:text-2xl font-black text-cyan-400">R$</span>
-                <span className="text-4xl sm:text-5xl font-black text-white tracking-tight">99,90</span>
-                <span className="text-xs sm:text-sm font-bold text-white/70 uppercase">/mês</span>
+              {/* Preço / Modelo de Contratação */}
+              <div className="my-4 p-4 rounded-2xl bg-black/40 border border-cyan-500/20 flex flex-col justify-center">
+                <span className="text-xs font-mono uppercase tracking-wider text-cyan-400 font-bold">
+                  Contratação Separada
+                </span>
+                <span className="text-2xl sm:text-3xl font-black text-white mt-1">
+                  Sob Consulta via WhatsApp
+                </span>
+                <span className="text-[11px] text-white/60 mt-0.5">
+                  Orçamento sob medida conforme sua verba de anúncios
+                </span>
               </div>
 
               {/* O que é esse serviço */}
               <div className="space-y-3 mt-6">
                 <div className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider">
-                  Como funciona o plano individual:
+                  Como funciona a divulgação exclusiva:
                 </div>
 
                 <ul className="space-y-2.5 text-xs sm:text-sm text-white/85">
                   <li className="flex items-start gap-2.5">
                     <Check size={16} className="text-cyan-400 shrink-0 mt-0.5" />
-                    <span><strong>Divulgação individual exclusiva:</strong> Ações direcionadas unicamente para a marca, produtos e WhatsApp da sua empresa, sem dividir espaço com outros negócios.</span>
+                    <span><strong>Campanhas exclusivas:</strong> Anúncios criados especificamente para a sua marca, separados da divulgação coletiva do portal.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <Check size={16} className="text-cyan-400 shrink-0 mt-0.5" />
-                    <span><strong>Grupos de Facebook:</strong> Publicações dedicadas em grupos de Facebook com alcance estratégico focado no público da sua região.</span>
+                    <span><strong>Tráfego pago individual:</strong> Verba de anúncios direcionada unicamente para os produtos, catálogo ou WhatsApp do seu negócio.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <Check size={16} className="text-cyan-400 shrink-0 mt-0.5" />
-                    <span><strong>Grupos de WhatsApp:</strong> Divulgação direta e contínua em grupos de WhatsApp promovendo somente os contatos e ofertas da sua empresa.</span>
+                    <span><strong>Segmentação avançada:</strong> Definição precisa de público por cidade, raio de entrega, idade e interesse.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <Check size={16} className="text-cyan-400 shrink-0 mt-0.5" />
-                    <span><strong>Foco 100% na sua marca:</strong> Todo o material e mensagens divulgam estritamente o seu catálogo, promoções e atendimento WhatsApp.</span>
+                    <span><strong>Relatório dedicado:</strong> Acompanhamento personalizado do alcance e cliques exclusivos da sua campanha.</span>
                   </li>
                 </ul>
 
@@ -458,25 +464,25 @@ export const PlanoEDiferencaServicosSection: React.FC<{
                 <div className="mt-5 p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-[11px] sm:text-xs text-cyan-200/90 leading-relaxed flex items-start gap-2.5">
                   <Info size={16} className="text-cyan-400 shrink-0 mt-0.5" />
                   <div>
-                    <strong>Atenção:</strong> No Plano Individual de R$ 99,90/mês, a divulgação é realizada em grupos de Facebook e WhatsApp de forma individual e exclusiva, promovendo somente a marca da sua empresa.
+                    <strong>Atenção:</strong> Esse serviço é contratado à parte e não está incluído no plano mensal de R$ 49,90. É indicado para empresas que desejam anúncios próprios na internet.
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Botão de Contratação do Plano Individual */}
+            {/* Botão de Consulta Exclusiva */}
             <div className="mt-8 pt-5 border-t border-white/10">
               <a
                 href={exclusiveWaLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-400 hover:brightness-110 text-black px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all duration-300 shadow-lg hover:scale-[1.02] active:scale-[0.98] cursor-pointer decoration-transparent"
+                className="w-full inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 hover:brightness-110 text-black px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all duration-300 shadow-lg hover:scale-[1.02] active:scale-[0.98] cursor-pointer decoration-transparent"
               >
-                <span>CONTRATAR PLANO INDIVIDUAL (R$ 99,90)</span>
+                <span>CONSULTAR DIVULGAÇÃO EXCLUSIVA</span>
                 <WhatsAppIcon className="w-5 h-5 fill-black" />
               </a>
               <p className="text-[10px] text-white/50 text-center font-mono mt-2.5">
-                Atendimento rápido e ativação via WhatsApp
+                Atendimento sob consulta via WhatsApp
               </p>
             </div>
 
@@ -559,7 +565,7 @@ export const CtaFinalSection: React.FC<{
         </h2>
 
         <p className="text-sm sm:text-base md:text-lg text-white/80 font-medium max-w-2xl mx-auto mt-3 leading-relaxed">
-          Cadastre seu negócio por R$ 49,90/mês para presença no portal comercial, ou contrate o Plano Individual por R$ 99,90/mês com campanha exclusiva para sua marca.
+          Cadastre seu negócio por R$ 49,90/mês para presença no portal com WhatsApp direto, ou consulte uma campanha exclusiva para sua marca.
         </p>
 
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -589,7 +595,7 @@ export const CtaFinalSection: React.FC<{
             rel="noreferrer"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-6 sm:px-8 py-4 sm:py-5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 cursor-pointer decoration-transparent"
           >
-            <span>PLANO INDIVIDUAL (R$ 99,90/MÊS)</span>
+            <span>CONSULTAR DIVULGAÇÃO EXCLUSIVA</span>
           </a>
         </div>
 
