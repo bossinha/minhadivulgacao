@@ -2773,6 +2773,8 @@ function AppContent() {
   };
 
   // --- Chat Logic ---
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
   const finishChat = () => {
     setChatInput('');
     setChatMessages([]);
@@ -2781,18 +2783,54 @@ function AppContent() {
     try {
       sessionStorage.removeItem('portal_chat_messages');
       sessionStorage.removeItem('portal_chat_input');
+      localStorage.removeItem('portal_chat_messages');
+      localStorage.removeItem('portal_chat_input');
     } catch (e) {}
   };
 
+  const clearChat = () => {
+    setChatInput('');
+    setIsTyping(false);
+    const topCats = Array.from(new Set(displayedCompanies.map(c => c.category).filter(Boolean))).slice(0, 5);
+    setChatMessages([{ 
+      sender: 'bot', 
+      text: '👋 Conversa limpa! Digite o que você precisa ou escolha uma categoria:',
+      categories: topCats.length > 0 ? topCats : ['Pizzaria', 'Supermercado', 'Automotivo', 'Saúde', 'Serviços']
+    }]);
+  };
+
+  // Garante que ao sair do chat clicando fora ou apertando ESC, as mensagens sumam totalmente
+  useEffect(() => {
+    if (!isChatOpen) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (chatContainerRef.current && !chatContainerRef.current.contains(event.target as Node)) {
+        finishChat();
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        finishChat();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside, { passive: true });
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isChatOpen]);
+
   // Garante que ao dar F5 ou recarregar a página o chat e o que foi escrito sejam totalmente apagados
   useEffect(() => {
-    setChatInput('');
-    setChatMessages([]);
+    finishChat();
     const handleBeforeUnload = () => {
-      try {
-        sessionStorage.removeItem('portal_chat_messages');
-        sessionStorage.removeItem('portal_chat_input');
-      } catch (e) {}
+      finishChat();
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
@@ -2800,16 +2838,16 @@ function AppContent() {
 
   const toggleChat = () => {
     if (isChatOpen) {
-      // Ao fechar/finalizar o chat, apaga completamente o que foi escrito
+      // Ao fechar/sair do chat, apaga completamente todas as mensagens para não amontoar
       finishChat();
     } else {
       setIsChatOpen(true);
       setChatInput('');
-      const topRecommended = sortCompaniesByPlanAndPriority(displayedCompanies.filter(c => c.active !== false)).slice(0, 3);
+      const topCats = Array.from(new Set(displayedCompanies.map(c => c.category).filter(Boolean))).slice(0, 5);
       setChatMessages([{ 
         sender: 'bot', 
-        text: `👋 Olá! Sou o Assistente do Portal Guia Comercial. Como posso te ajudar hoje?\n\n⭐ Empresas Recomendadas em Destaque:`,
-        results: topRecommended
+        text: '👋 Olá! Sou o Assistente do Portal. Digite o que você precisa ou selecione uma opção:',
+        categories: topCats.length > 0 ? topCats : ['Pizzaria', 'Supermercado', 'Automotivo', 'Saúde', 'Serviços']
       }]);
     }
   };
@@ -2818,7 +2856,9 @@ function AppContent() {
     const text = textOverride || chatInput.trim();
     if (!text) return;
 
-    setChatMessages(prev => [...prev, { sender: 'user', text }]);
+    // Substitui buscas anteriores pela pesquisa atual para não ficar amontoando cards na tela
+    const userMsg = { sender: 'user' as const, text };
+    setChatMessages([userMsg]);
     setChatInput('');
     setIsTyping(true);
 
@@ -2884,14 +2924,14 @@ function AppContent() {
       const isExactCategory = displayedCompanies.some(c => normalize(c.category) === query);
 
       if (results.length > 0) {
-        botText = isExactCategory ? `Mostrando empresas da categoria ${displayedCompanies.find(c => normalize(c.category) === query)?.category}:` : "Encontrei estas empresas ordenadas por recomendação e destaque:";
-        setChatMessages(prev => [...prev, { sender: 'bot', text: botText, results, categories: matchedCategories }]);
+        botText = isExactCategory ? `Mostrando empresas da categoria ${displayedCompanies.find(c => normalize(c.category) === query)?.category}:` : "Encontrei estas empresas recomendadas:";
+        setChatMessages([userMsg, { sender: 'bot', text: botText, results, categories: matchedCategories }]);
       } else if (matchedCategories.length > 0) {
-        setChatMessages(prev => [...prev, { sender: 'bot', text: "Encontrei estas categorias relacionadas. Clique em uma para ver as empresas:", categories: matchedCategories }]);
+        setChatMessages([userMsg, { sender: 'bot', text: "Encontrei estas categorias relacionadas. Clique em uma para ver as empresas:", categories: matchedCategories }]);
       } else {
-        setChatMessages(prev => [...prev, { sender: 'bot', text: "Desculpe, não encontrei nenhuma empresa com esse termo. Tente buscar por: pizzaria, supermercado, oficina, ar condicionado ou restaurante." }]);
+        setChatMessages([userMsg, { sender: 'bot', text: "Desculpe, não encontrei nenhuma empresa com esse termo. Tente buscar por: pizzaria, supermercado, oficina, ar condicionado ou restaurante." }]);
       }
-    }, 800);
+    }, 600);
   };
 
   if (user?.isAdmin && (!tenantId || tenantId.toLowerCase() === 'master')) {
@@ -8514,7 +8554,7 @@ function AppContent() {
       </div>
 
       {/* Smart Chat */}
-      <div id="smart-chat-container">
+      <div id="smart-chat-container" ref={chatContainerRef}>
         <div id="chat-window" className={isChatOpen ? 'active' : ''}>
           <div className="chat-header">
             <div className="chat-header-info">
@@ -8530,11 +8570,11 @@ function AppContent() {
             <div className="chat-header-actions">
               <button 
                 type="button" 
-                className="chat-finish-btn" 
-                onClick={finishChat} 
-                title="Finalizar atendimento e apagar conversa"
+                className="chat-clear-btn" 
+                onClick={clearChat} 
+                title="Limpar mensagens e iniciar nova busca"
               >
-                Finalizar
+                Limpar
               </button>
               <button 
                 type="button" 
@@ -8644,10 +8684,10 @@ function AppContent() {
                 <div className="dot"></div><div className="dot"></div><div className="dot"></div>
               </div>
             )}
-            {chatMessages.length > 1 && (
+            {chatMessages.length > 0 && (
               <div className="chat-finish-action-row">
-                <button type="button" className="chat-finish-inline-btn" onClick={finishChat}>
-                  🛑 Finalizar e limpar conversa
+                <button type="button" className="chat-finish-inline-btn" onClick={clearChat}>
+                  🗑️ Limpar conversa / Nova busca
                 </button>
               </div>
             )}

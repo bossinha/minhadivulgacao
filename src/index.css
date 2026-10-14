@@ -1231,6 +1231,30 @@
     transform: translateY(-1px);
   }
 
+  .chat-clear-btn {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #fcd34d;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 5px 9px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .chat-clear-btn:hover {
+    background: rgba(245, 158, 11, 0.3);
+    border-color: #f59e0b;
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+
   .chat-close {
     width: 32px;
     height: 32px;
