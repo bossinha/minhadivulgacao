@@ -1829,7 +1829,7 @@ function AppContent() {
   const exclusiveDivulgarWaLink = useMemo(() => {
     const baseWa = appData?.pricing?.waLink || 'https://wa.me/5585992862177';
     const cleanBase = baseWa.split('?')[0];
-    const text = 'Olá! Gostaria de consultar informações sobre a Divulgação Exclusiva para a minha empresa (campanhas feitas especificamente para o meu negócio, separadas da divulgação coletiva do portal Minha Divulgação). Poderiam me orientar com opções e valores?';
+    const text = 'Olá! Gostaria de contratar o Plano Individual de Divulgação Exclusiva (R$ 99,90/mês) com divulgação em grupos de Facebook e WhatsApp individual somente da marca da minha empresa. Poderiam me orientar com o cadastro e ativação?';
     const linkWithText = `${cleanBase}?text=${encodeURIComponent(text)}`;
     return getWaLinkWithReferral(linkWithText);
   }, [appData?.pricing?.waLink, tenantId]);
