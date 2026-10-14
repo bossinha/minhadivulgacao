@@ -14,6 +14,7 @@ import {
   Film
 } from 'lucide-react';
 import { WhatsAppIcon } from './SocialMediaIcons';
+import { recordCompanyEvent } from '../lib/companyAnalytics';
 
 export interface SponsoredItem {
   id: string;
@@ -66,6 +67,8 @@ interface PortalWelcomeVideoModalProps {
   isOpen: boolean;
   onClose: () => void;
   isPreviewMode?: boolean;
+  companies?: any[];
+  onSelectCompany?: (company: any) => void;
 }
 
 // Convert common video URLs to embeddable or direct playable formats
@@ -102,7 +105,9 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
   config,
   isOpen,
   onClose,
-  isPreviewMode = false
+  isPreviewMode = false,
+  companies = [],
+  onSelectCompany
 }) => {
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -180,6 +185,70 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
 
   // Patrocinador atualmente em exibição
   const activeSponsor: SponsoredItem | null = allActiveSponsors[currentSponsorIndex] || allActiveSponsors[0] || null;
+
+  // Localizar no banco de empresas do portal os dados cadastrados desta empresa (ex: Josepf Clean)
+  // Garante conformidade total com as Regras de Hooks do React (sempre chamado incondicionalmente no topo)
+  const resolvedCompany = useMemo(() => {
+    if (!companies || !Array.isArray(companies) || companies.length === 0 || !activeSponsor) {
+      return null;
+    }
+    const cleanStr = (s: any) => String(s || '').trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+    const targetId = cleanStr(activeSponsor.companyId);
+    const targetName = cleanStr(activeSponsor.companyName || activeSponsor.name || activeSponsor.title);
+    const flyerUrl = cleanStr(activeSponsor.flyerUrl || (activeSponsor as any).image);
+    const videoUrl = cleanStr(activeSponsor.videoUrl);
+    const phoneDigits = String(activeSponsor.whatsappPhone || '').replace(/\D/g, '');
+
+    // 1. Busca por ID da empresa
+    if (targetId) {
+      const match = companies.find((c: any) => {
+        if (!c) return false;
+        const cId = cleanStr(c.id);
+        const cName = cleanStr(c.name);
+        return cId === targetId || cName === targetId;
+      });
+      if (match) return match;
+    }
+
+    // 2. Busca por Nome ou Título (exato ou parcial)
+    if (targetName && targetName !== 'patrocinador' && targetName !== 'anunciante' && !targetName.includes('minha divulgacao')) {
+      const match = companies.find((c: any) => {
+        if (!c || !c.name) return false;
+        const cName = cleanStr(c.name);
+        if (!cName) return false;
+        return cName === targetName || cName.includes(targetName) || targetName.includes(cName);
+      });
+      if (match) return match;
+    }
+
+    // 3. Busca por Telefone WhatsApp cadastrado
+    if (phoneDigits && phoneDigits.length >= 8) {
+      const isBossa = ['5585992908713', '5585992862177', '85992908713', '85992862177'].some(b => phoneDigits.endsWith(b) || b.endsWith(phoneDigits));
+      if (!isBossa) {
+        const match = companies.find((c: any) => {
+          if (!c) return false;
+          const cPhone = String(c.wa || c.whatsapp || c.phone || '').replace(/\D/g, '');
+          return cPhone && (phoneDigits.endsWith(cPhone) || cPhone.endsWith(phoneDigits));
+        });
+        if (match) return match;
+      }
+    }
+
+    // 4. Busca por imagem / flyer / slug no arquivo (ex: "josepf", "clean", "refrigeracao")
+    if (flyerUrl && flyerUrl.length > 5) {
+      const match = companies.find((c: any) => {
+        if (!c || !c.name) return false;
+        const cName = cleanStr(c.name);
+        if (!cName || cName.length < 3) return false;
+        const words = cName.split(/\s+/).filter(w => w.length >= 4);
+        return words.some(word => flyerUrl.includes(word));
+      });
+      if (match) return match;
+    }
+
+    return null;
+  }, [companies, activeSponsor]);
 
   const videoUrl = (activeSponsor?.videoUrl || config?.videoUrl || '').trim();
   const flyerUrl = (activeSponsor?.flyerUrl || config?.flyerUrl || '').trim();
@@ -271,25 +340,110 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
     }
   };
 
+  // Se houver mais de um anunciante ou o anunciante atual for específico (ex: Josepf Clean),
+  // NUNCA vazar o contato geral da Bossa Infor / config raiz
+  const isMultiSponsorOrSpecific = allActiveSponsors.length > 1 || Boolean(
+    activeSponsor?.companyId || 
+    (activeSponsor?.name && activeSponsor.id !== 'principal' && activeSponsor.name !== config?.companyName) ||
+    resolvedCompany
+  );
+
+  // Helper para checar se um número pertence ao atendimento geral da Bossa Infor / Portal
+  const isBossaGeneralNumber = (rawNum: string | undefined | null) => {
+    if (!rawNum) return false;
+    const d = String(rawNum).replace(/\D/g, '');
+    if (!d) return false;
+    const portalNums = ['5585992908713', '5585992862177', '85992908713', '85992862177', '992908713', '992862177'];
+    if (config?.whatsappPhone) {
+      portalNums.push(String(config.whatsappPhone).replace(/\D/g, ''));
+    }
+    return portalNums.some(p => p && (d.endsWith(p) || p.endsWith(d)));
+  };
+
+  const isThirdPartyAdvertiser = Boolean(
+    resolvedCompany || 
+    (activeSponsor?.companyName && !activeSponsor.companyName.toLowerCase().includes('minha divulgação') && activeSponsor.companyName.toLowerCase() !== 'bossa infor') ||
+    (activeSponsor?.name && !activeSponsor.name.toLowerCase().includes('minha divulgação') && activeSponsor.name.toLowerCase() !== 'bossa infor')
+  );
+
+  const companyTitle = (
+    resolvedCompany?.name ||
+    activeSponsor?.companyName?.trim() ||
+    activeSponsor?.name?.trim() ||
+    activeSponsor?.title?.trim() ||
+    (!isMultiSponsorOrSpecific ? (config?.companyName?.trim() || config?.title?.trim()) : '') ||
+    'Destaque Patrocinado'
+  );
+
+  const companyCategory = (
+    resolvedCompany?.category ||
+    activeSponsor?.companyCategory ||
+    (!isMultiSponsorOrSpecific ? config?.companyCategory : '') ||
+    ''
+  );
+
+  const companyLogo = (
+    resolvedCompany?.logo ||
+    activeSponsor?.companyLogo ||
+    (!isMultiSponsorOrSpecific ? config?.companyLogo : '') ||
+    ''
+  );
+
+  // Telefone WhatsApp: Prioriza SEMPRE o contato da própria empresa anunciada (ex: Josepf Clean).
+  // Se for anunciante terceiro, NUNCA usa telefone da Bossa Infor!
+  const getRawPhone = () => {
+    if (resolvedCompany) {
+      const compWa = resolvedCompany.wa || resolvedCompany.whatsapp || resolvedCompany.phone || '';
+      if (compWa) return String(compWa).trim();
+    }
+    const sponsorPhone = activeSponsor?.whatsappPhone?.trim() || '';
+    if (sponsorPhone && (!isThirdPartyAdvertiser || !isBossaGeneralNumber(sponsorPhone))) {
+      return sponsorPhone;
+    }
+    if (!isThirdPartyAdvertiser && !isMultiSponsorOrSpecific) {
+      return config?.whatsappPhone?.trim() || '';
+    }
+    return '';
+  };
+
+  const sponsorPhoneRaw = getRawPhone();
+  const digits = sponsorPhoneRaw.replace(/\D/g, '');
+  const cleanPhone = digits.length === 10 || digits.length === 11 ? `55${digits}` : digits;
+
+  // Formatador visual de telefone
+  const formatPhoneForDisplay = (raw: string) => {
+    const d = raw.replace(/\D/g, '');
+    const local = d.startsWith('55') && d.length > 10 ? d.slice(2) : d;
+    if (local.length === 11) {
+      return `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`;
+    }
+    if (local.length === 10) {
+      return `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`;
+    }
+    return local;
+  };
+
+  const displayPhone = cleanPhone && cleanPhone.length >= 8 ? formatPhoneForDisplay(cleanPhone) : '';
+
+  // Mensagem do WhatsApp direcionada para a empresa específica
+  const itemMessage = (
+    activeSponsor?.whatsappMessage?.trim() ||
+    (resolvedCompany
+      ? `Olá! Vi o anúncio da empresa *${resolvedCompany.name}* no portal Minha Divulgação e gostaria de mais informações.`
+      : `Olá! Vi o anúncio de *${companyTitle}* no portal Minha Divulgação e gostaria de mais informações.`)
+  );
+
   // Build redirection link for the active sponsor
   const buildActionUrl = () => {
-    const itemActionType = activeSponsor?.actionType || config?.actionType;
-    const itemCustomLink = activeSponsor?.customLink || config?.customLink;
-    const itemPhone = activeSponsor?.whatsappPhone || config?.whatsappPhone || '';
-    const itemMessage = activeSponsor?.whatsappMessage || config?.whatsappMessage || '';
+    const itemActionType = activeSponsor?.actionType || (!isMultiSponsorOrSpecific ? config?.actionType : 'whatsapp');
+    const itemCustomLink = activeSponsor?.customLink || (!isMultiSponsorOrSpecific ? config?.customLink : '');
 
     if (itemActionType === 'link' && itemCustomLink) {
       return itemCustomLink;
     }
 
-    const digits = itemPhone.replace(/\D/g, '');
-    const cleanPhone = digits.length === 10 || digits.length === 11 ? `55${digits}` : digits;
-
-    const baseMessage = itemMessage.trim() || 
-      `Olá! Vi seu anúncio no portal Minha Divulgação e gostaria de mais informações.`;
-
-    if (cleanPhone) {
-      return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(baseMessage)}`;
+    if (cleanPhone && cleanPhone.length >= 8) {
+      return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(itemMessage)}`;
     }
 
     if (itemCustomLink) {
@@ -300,22 +454,27 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
   };
 
   const actionUrl = buildActionUrl();
-  const sponsorActionType = activeSponsor?.actionType || config?.actionType;
-  const sponsorPhone = activeSponsor?.whatsappPhone || config?.whatsappPhone;
-  const sponsorCustomLink = activeSponsor?.customLink || config?.customLink;
-  const isWhatsApp = sponsorActionType !== 'link' && (sponsorPhone || !sponsorCustomLink);
+  const sponsorActionType = activeSponsor?.actionType || (!isMultiSponsorOrSpecific ? config?.actionType : 'whatsapp');
+  const isWhatsApp = sponsorActionType !== 'link' && (Boolean(cleanPhone && cleanPhone.length >= 8) || !activeSponsor?.customLink);
 
-  const buttonLabel = activeSponsor?.buttonText?.trim() || config?.buttonText?.trim() || (isWhatsApp ? 'Falar no WhatsApp' : 'Acessar Link');
-  const badgeLabel = activeSponsor?.badge?.trim() || config?.badge?.trim() || 'PATROCINADO';
-  const companyTitle = activeSponsor?.companyName?.trim() || activeSponsor?.title?.trim() || config?.companyName?.trim() || config?.title?.trim() || 'Destaque Especial';
-  const companyCategory = activeSponsor?.companyCategory || config?.companyCategory || '';
-  const companyLogo = activeSponsor?.companyLogo || config?.companyLogo || '';
-  const displayPhone = activeSponsor?.whatsappPhone || config?.whatsappPhone || '';
+  const buttonLabel = activeSponsor?.buttonText?.trim() || 
+    (resolvedCompany ? `Falar com ${resolvedCompany.name}` : null) || 
+    (!isMultiSponsorOrSpecific ? config?.buttonText?.trim() : null) || 
+    (isWhatsApp ? `Falar com ${companyTitle}` : 'Acessar Link');
+
+  const badgeLabel = activeSponsor?.badge?.trim() || (!isMultiSponsorOrSpecific ? config?.badge?.trim() : null) || 'PATROCINADO';
 
   const handleActionClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // Registra clique nas estatísticas automáticas
+    if (resolvedCompany) {
+      recordCompanyEvent(resolvedCompany.id, resolvedCompany.name, 'whatsapp_click');
+    }
     if (actionUrl && actionUrl !== '#') {
       window.open(actionUrl, '_blank', 'noopener,noreferrer');
+    } else if (resolvedCompany && onSelectCompany) {
+      onClose();
+      onSelectCompany(resolvedCompany);
     }
   };
 
@@ -559,15 +718,19 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] text-white/50 uppercase font-bold tracking-wider">
+                <p className="text-xs text-amber-300/80 uppercase font-bold tracking-wider">
                   {allActiveSponsors.length > 1 ? `Patrocinador #${currentSponsorIndex + 1}` : 'Anunciante Oficial'}
                 </p>
-                <h5 className="text-white font-bold text-xs sm:text-sm truncate">{companyTitle}</h5>
-                {displayPhone && (
-                  <p className="text-[10px] text-emerald-400 font-mono truncate">
+                <h5 className="text-white font-extrabold text-sm sm:text-base truncate">{companyTitle}</h5>
+                {displayPhone ? (
+                  <p className="text-xs text-emerald-400 font-mono font-bold truncate">
                     WhatsApp: {displayPhone}
                   </p>
-                )}
+                ) : companyCategory ? (
+                  <p className="text-xs text-amber-300 font-medium truncate">
+                    Segmento: {companyCategory}
+                  </p>
+                ) : null}
               </div>
             </div>
           )}

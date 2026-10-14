@@ -1,51 +1,502 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { 
   Search, 
   Smartphone, 
-  Star, 
-  Flame, 
-  Tv, 
-  Radio, 
+  Store, 
+  Layers, 
+  Utensils, 
+  Scissors, 
+  Wrench, 
+  Car, 
+  ShoppingBag, 
+  Stethoscope, 
+  Briefcase, 
   ArrowRight, 
   Check, 
-  CheckCircle2, 
-  ChevronDown, 
   Sparkles, 
-  ShieldCheck,
-  Building2,
-  Store,
-  Layers,
-  Utensils,
-  Scissors,
-  Wrench,
-  Car,
-  ShoppingBag,
-  Stethoscope,
-  Briefcase,
-  Clock,
-  Activity,
-  TrendingUp,
-  BarChart3,
+  Building2, 
+  Megaphone, 
+  Users, 
+  Share2, 
+  CheckCircle2, 
+  ShieldCheck, 
+  Tv, 
+  Radio, 
   ExternalLink,
-  Eye,
-  Users,
-  Send,
-  Share2,
-  Link as LinkIcon,
-  Copy,
-  CheckCheck,
-  Play,
-  Zap,
-  CheckCircle
+  Info
 } from 'lucide-react';
-import { ClientDispatchTrackerModal } from './ClientDispatchTrackerModal';
+import { WhatsAppIcon, FacebookIcon } from './SocialMediaIcons';
 
 const DEFAULT_WA_LINK = `https://wa.me/5585992862177?text=${encodeURIComponent(
   "Olá! Gostaria de obter informações sobre a divulgação da minha empresa no portal Minha Divulgação.\n\nTenho interesse no plano comercial de R$ 49,90/mês. Poderia me orientar sobre o cadastro e a ativação, por gentileza?"
 )}`;
 
+const DEFAULT_EXCLUSIVE_WA_LINK = `https://wa.me/5585992862177?text=${encodeURIComponent(
+  "Olá! Gostaria de consultar informações sobre a Divulgação Exclusiva para a minha empresa (campanhas feitas especificamente para o meu negócio, separadas da divulgação coletiva do portal Minha Divulgação). Poderiam me orientar com opções e valores?"
+)}`;
+
 // ==========================================
-// SEGMENTOS DE EMPRESAS ATENDIDAS
+// 1. ILUSTRAÇÃO VISUAL AUTOEXPLICATIVA DO HERO
+// Mostra uma empresa dentro do portal conectada a:
+// WhatsApp, Facebook e Anúncios Online
+// ==========================================
+export const HeroPortalIllustration: React.FC = () => {
+  return (
+    <div className="w-full max-w-4xl mx-auto mt-10 mb-4 select-none">
+      <div className="relative rounded-3xl bg-gradient-to-b from-[#151726] via-[#0d0e18] to-[#08080f] border-2 border-amber-400/40 p-5 sm:p-7 md:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden">
+        
+        {/* Glow de fundo */}
+        <div className="absolute top-0 right-1/4 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Barra superior de janela de navegador */}
+        <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-red-500/70 inline-block" />
+            <span className="w-3 h-3 rounded-full bg-yellow-500/70 inline-block" />
+            <span className="w-3 h-3 rounded-full bg-emerald-500/70 inline-block" />
+            <span className="text-[11px] font-mono text-white/50 ml-2 hidden sm:inline-block">
+              minhadivulgacao.com.br
+            </span>
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span>Sua Empresa Conectada na Internet</span>
+          </div>
+        </div>
+
+        {/* Estrutura central: A Empresa no Portal e a Conexão com os Canais */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+          
+          {/* Card Principal da Empresa no Portal (Simulação de Perfil) */}
+          <div className="lg:col-span-6 bg-[#0a0b12] border border-amber-400/50 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+            <div className="flex items-start gap-3.5">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 p-0.5 shadow-lg shrink-0 flex items-center justify-center text-black font-black text-xl">
+                <Store size={28} className="text-black" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-black text-amber-400 uppercase tracking-wider bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                    Sua Empresa no Portal
+                  </span>
+                  <span className="text-[9px] font-mono text-emerald-400 font-bold">
+                    ✔ Ativa
+                  </span>
+                </div>
+                <h4 className="text-base sm:text-lg font-black text-white mt-1 truncate">
+                  Nome do Seu Negócio
+                </h4>
+                <p className="text-xs text-white/70 line-clamp-1 mt-0.5">
+                  Apresente sua marca, produtos, serviços e promoções
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-3.5 border-t border-white/5 grid grid-cols-2 gap-2 text-[11px] text-white/80">
+              <div className="flex items-center gap-1.5 bg-white/[0.03] p-2 rounded-xl border border-white/5">
+                <span className="text-amber-400">⭐</span>
+                <span>Vitrine Comercial</span>
+              </div>
+              <div className="flex items-center gap-1.5 bg-white/[0.03] p-2 rounded-xl border border-white/5">
+                <span className="text-emerald-400">📍</span>
+                <span>Buscas no Portal</span>
+              </div>
+            </div>
+
+            {/* Simulação do botão de WhatsApp direto */}
+            <div className="mt-4 bg-emerald-500/20 border border-emerald-500/40 rounded-xl p-2.5 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold text-emerald-300">
+                <WhatsAppIcon className="w-4 h-4 fill-emerald-400 shrink-0" />
+                <span>Contato Direto no WhatsApp</span>
+              </div>
+              <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/30 px-2 py-0.5 rounded">
+                Sem Taxas
+              </span>
+            </div>
+          </div>
+
+          {/* Os 3 Canais de Divulgação Conectados */}
+          <div className="lg:col-span-6 flex flex-col gap-3">
+            
+            {/* Canal 1: WhatsApp */}
+            <div className="bg-[#0b0f15] hover:bg-[#0e141d] border border-emerald-500/30 hover:border-emerald-400/60 rounded-2xl p-3.5 sm:p-4 flex items-center gap-3.5 transition-all shadow-md">
+              <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 shadow-inner">
+                <WhatsAppIcon className="w-6 h-6 fill-emerald-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs sm:text-sm font-black text-white">WhatsApp & Grupos</span>
+                  <span className="text-[9px] font-mono font-bold text-emerald-300 bg-emerald-500/15 px-2 py-0.5 rounded">
+                    DIRETO
+                  </span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-white/70 mt-0.5">
+                  Divulgação do portal em grupos e botão direto para o seu WhatsApp oficial.
+                </p>
+              </div>
+            </div>
+
+            {/* Canal 2: Facebook */}
+            <div className="bg-[#0b0e1a] hover:bg-[#0e1224] border border-blue-500/30 hover:border-blue-400/60 rounded-2xl p-3.5 sm:p-4 flex items-center gap-3.5 transition-all shadow-md">
+              <div className="w-11 h-11 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0 shadow-inner">
+                <FacebookIcon className="w-6 h-6 fill-blue-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs sm:text-sm font-black text-white">Facebook</span>
+                  <span className="text-[9px] font-mono font-bold text-blue-300 bg-blue-500/15 px-2 py-0.5 rounded">
+                    REDES
+                  </span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-white/70 mt-0.5">
+                  Presença e circulação contínua do portal em comunidades e grupos parceiros.
+                </p>
+              </div>
+            </div>
+
+            {/* Canal 3: Anúncios Online / Tráfego Pago */}
+            <div className="bg-[#140f09] hover:bg-[#1a140c] border border-amber-500/30 hover:border-amber-400/60 rounded-2xl p-3.5 sm:p-4 flex items-center gap-3.5 transition-all shadow-md">
+              <div className="w-11 h-11 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 shadow-inner">
+                <Megaphone size={22} className="text-amber-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs sm:text-sm font-black text-white">Anúncios Online & Tráfego</span>
+                  <span className="text-[9px] font-mono font-bold text-amber-300 bg-amber-500/15 px-2 py-0.5 rounded">
+                    TRÁFEGO
+                  </span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-white/70 mt-0.5">
+                  Campanhas de tráfego pago promovendo o portal para atrair novos visitantes.
+                </p>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+// ==========================================
+// 2. SEÇÃO: COMO FUNCIONA EM 3 ETAPAS ILUSTRADAS
+// Conforme especificação 2 do usuário
+// ==========================================
+export const ComoFunciona3EtapasSection: React.FC = () => {
+  const etapas = [
+    {
+      numero: 'ETAPA 1',
+      titulo: 'SUA EMPRESA ENTRA NO PORTAL',
+      desc: 'Ganha um espaço para apresentar sua marca, seus contatos, produtos e serviços, conforme os recursos disponíveis no plano.',
+      icon: Store,
+      cor: 'from-amber-400 to-amber-600',
+      badgeCor: 'text-amber-300 bg-amber-500/15 border-amber-500/30'
+    },
+    {
+      numero: 'ETAPA 2',
+      titulo: 'DIVULGAMOS O PORTAL',
+      desc: 'Promovemos o Minha Divulgação em grupos de WhatsApp, Facebook e por meio de campanhas de tráfego pago, com o objetivo de ampliar a visibilidade das empresas participantes.',
+      icon: Megaphone,
+      cor: 'from-blue-500 to-cyan-500',
+      badgeCor: 'text-cyan-300 bg-cyan-500/15 border-cyan-500/30'
+    },
+    {
+      numero: 'ETAPA 3',
+      titulo: 'O CLIENTE ENCONTRA SUA EMPRESA',
+      desc: 'Acessa o portal, conhece sua oferta e pode entrar em contato diretamente com você pelo WhatsApp.',
+      icon: Smartphone,
+      cor: 'from-emerald-400 to-green-600',
+      badgeCor: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30'
+    }
+  ];
+
+  return (
+    <section id="como-funciona" className="w-full py-16 sm:py-20 bg-[#07070d] border-b border-white/5 relative scroll-mt-20 select-none">
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 relative z-10">
+        
+        {/* Cabeçalho */}
+        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
+          <span className="text-amber-400 text-[10px] sm:text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
+            PASSO A PASSO ILUSTRADO
+          </span>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+            Como funciona a divulgação
+          </h2>
+          <p className="text-sm sm:text-base text-white/75 mt-3 max-w-2xl mx-auto font-medium leading-relaxed">
+            Um modelo simples e transparente: sua empresa ganha presença na vitrine e participa da divulgação coletiva da plataforma na internet.
+          </p>
+        </div>
+
+        {/* As 3 Etapas Ilustradas */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {etapas.map((etapa, idx) => {
+            const Icon = etapa.icon;
+            return (
+              <div 
+                key={idx}
+                className="bg-gradient-to-b from-[#11121d] to-[#090a10] border border-white/10 hover:border-amber-400/50 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-xl transition-all duration-300 hover:-translate-y-1 group"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-5">
+                    <span className={`text-[10px] font-mono font-black uppercase tracking-wider px-3 py-1 rounded-full border ${etapa.badgeCor}`}>
+                      {etapa.numero}
+                    </span>
+                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${etapa.cor} text-black font-black flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
+                      <Icon size={24} className="text-black" />
+                    </div>
+                  </div>
+
+                  <h3 className="text-base sm:text-lg font-black text-white leading-snug group-hover:text-amber-300 transition-colors">
+                    {etapa.titulo}
+                  </h3>
+
+                  <p className="text-xs sm:text-sm text-white/70 mt-3 leading-relaxed font-medium">
+                    {etapa.desc}
+                  </p>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-white/5 flex items-center gap-1.5 text-amber-400 text-xs font-mono font-bold">
+                  <CheckCircle2 size={14} className="shrink-0" />
+                  <span>Passo {idx + 1} de 3</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+      </div>
+    </section>
+  );
+};
+
+// ==========================================
+// 3. SEÇÃO: DIFERENÇA ENTRE OS SERVIÇOS & PLANO R$ 49,90/mês
+// Conforme especificação 3 do usuário
+// ==========================================
+export const PlanoEDiferencaServicosSection: React.FC<{ 
+  primaryWaLink?: string; 
+  exclusiveWaLink?: string;
+  onCadastrarClick?: () => void;
+}> = ({ 
+  primaryWaLink = DEFAULT_WA_LINK,
+  exclusiveWaLink = DEFAULT_EXCLUSIVE_WA_LINK,
+  onCadastrarClick
+}) => {
+  return (
+    <section id="planos" className="w-full py-16 sm:py-24 bg-gradient-to-b from-black via-[#080811] to-black border-b border-white/5 relative scroll-mt-20 select-none">
+      
+      {/* Luz ambiente suave */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-amber-500/5 rounded-full blur-[170px] pointer-events-none" />
+
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 relative z-10">
+        
+        {/* Cabeçalho da Seção */}
+        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
+          <span className="text-amber-400 text-[10px] sm:text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
+            TRANSPARÊNCIA TOTAL • ESCOLHA O MELHOR PARA SEU NEGÓCIO
+          </span>
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
+            Nossos planos e serviços de divulgação
+          </h2>
+          <p className="text-sm sm:text-base text-white/80 mt-3 max-w-2xl mx-auto font-medium leading-relaxed">
+            Deixamos clara a diferença entre a presença no portal com divulgação coletiva e as campanhas exclusivas para uma única empresa.
+          </p>
+        </div>
+
+        {/* Comparativo de 2 Cards: 1. Presença no Portal (R$ 49,90) vs 2. Divulgação Exclusiva */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 max-w-5xl mx-auto items-stretch">
+          
+          {/* CARD 1: PLANO DE PRESENÇA NO PORTAL (R$ 49,90/mês) */}
+          <div className="bg-gradient-to-b from-[#131422] via-[#0d0e17] to-[#08080f] border-2 border-amber-400/80 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-[0_15px_45px_rgba(245,158,11,0.2)] relative">
+            
+            <div className="absolute -top-3.5 left-6 bg-gradient-to-r from-amber-400 to-amber-500 text-black font-black text-[10px] font-mono uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md">
+              OFERTA PRINCIPAL DO SITE
+            </div>
+
+            <div>
+              <div className="flex items-start justify-between gap-4 mt-2 mb-4">
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                    PLANO DE PRESENÇA NO PORTAL
+                  </h3>
+                  <p className="text-xs text-amber-300 font-bold mt-1">
+                    Espaço comercial e participação na divulgação coletiva
+                  </p>
+                </div>
+              </div>
+
+              {/* Preço */}
+              <div className="flex items-baseline gap-1.5 my-4 p-4 rounded-2xl bg-black/40 border border-amber-400/20">
+                <span className="text-xl sm:text-2xl font-black text-amber-400">R$</span>
+                <span className="text-4xl sm:text-5xl font-black text-white tracking-tight">49,90</span>
+                <span className="text-xs sm:text-sm font-bold text-white/70 uppercase">/mês</span>
+              </div>
+
+              {/* Lista de Recursos Inclusos */}
+              <div className="space-y-3 mt-6">
+                <div className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider">
+                  O que está incluso no plano:
+                </div>
+
+                <ul className="space-y-2.5 text-xs sm:text-sm text-white/85">
+                  <li className="flex items-start gap-2.5">
+                    <Check size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                    <span><strong>Espaço comercial no Minha Divulgação:</strong> vitrine com fotos, produtos, serviços e localização.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                    <span><strong>WhatsApp direto:</strong> o cliente clica e entra em contato sem intermediários e sem taxas sobre vendas.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                    <span><strong>Divulgação coletiva do portal:</strong> participação na promoção em grupos de WhatsApp, Facebook e campanhas de tráfego pago da plataforma.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                    <span><strong>Canais complementares:</strong> inserção da sua marca na TV e Rádio web da rede.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                    <span><strong>Buscas e categorias:</strong> seu negócio listado na busca comercial por segmento.</span>
+                  </li>
+                </ul>
+
+                {/* Caixa de Transparência Obrigatória (Regra 3 e 7) */}
+                <div className="mt-5 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-[11px] sm:text-xs text-amber-200/90 leading-relaxed flex items-start gap-2.5">
+                  <Info size={16} className="text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong>Transparência comercial:</strong> A promoção do portal pode dar visibilidade às empresas cadastradas, mas não significa que cada empresa receberá uma campanha exclusiva ou uma quantidade garantida de visualizações, contatos ou vendas.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Botão de Contratação */}
+            <div className="mt-8 pt-5 border-t border-white/10">
+              {onCadastrarClick ? (
+                <button
+                  type="button"
+                  onClick={onCadastrarClick}
+                  className="w-full inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all duration-300 shadow-[0_10px_30px_rgba(245,158,11,0.3)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                >
+                  <span>QUERO DIVULGAR MINHA EMPRESA</span>
+                  <ArrowRight size={17} />
+                </button>
+              ) : (
+                <a
+                  href={primaryWaLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all duration-300 shadow-[0_10px_30px_rgba(245,158,11,0.3)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer decoration-transparent"
+                >
+                  <span>QUERO DIVULGAR MINHA EMPRESA</span>
+                  <ArrowRight size={17} />
+                </a>
+              )}
+              <p className="text-[10px] text-white/50 text-center font-mono mt-2.5">
+                Ativação rápida • Sem taxa sobre vendas
+              </p>
+            </div>
+
+          </div>
+
+          {/* CARD 2: DIVULGAÇÃO EXCLUSIVA DA SUA EMPRESA */}
+          <div className="bg-gradient-to-b from-[#11121d] via-[#0c0d15] to-[#07070b] border border-white/15 hover:border-cyan-500/50 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-xl relative transition-all">
+            
+            <div className="absolute -top-3.5 left-6 bg-gradient-to-r from-cyan-500 to-blue-600 text-black font-black text-[10px] font-mono uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md">
+              CAMPANHA INDIVIDUALIZADA
+            </div>
+
+            <div>
+              <div className="flex items-start justify-between gap-4 mt-2 mb-4">
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                    DIVULGAÇÃO EXCLUSIVA DA SUA EMPRESA
+                  </h3>
+                  <p className="text-xs text-cyan-300 font-bold mt-1">
+                    Campanhas feitas especificamente para uma única empresa
+                  </p>
+                </div>
+              </div>
+
+              {/* Preço / Modelo de Contratação */}
+              <div className="my-4 p-4 rounded-2xl bg-black/40 border border-cyan-500/20 flex flex-col justify-center">
+                <span className="text-xs font-mono uppercase tracking-wider text-cyan-400 font-bold">
+                  Contratação Separada
+                </span>
+                <span className="text-2xl sm:text-3xl font-black text-white mt-1">
+                  Sob Consulta via WhatsApp
+                </span>
+                <span className="text-[11px] text-white/60 mt-0.5">
+                  Orçamento sob medida conforme sua verba de anúncios
+                </span>
+              </div>
+
+              {/* O que é esse serviço */}
+              <div className="space-y-3 mt-6">
+                <div className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider">
+                  Como funciona a divulgação exclusiva:
+                </div>
+
+                <ul className="space-y-2.5 text-xs sm:text-sm text-white/85">
+                  <li className="flex items-start gap-2.5">
+                    <Check size={16} className="text-cyan-400 shrink-0 mt-0.5" />
+                    <span><strong>Campanhas exclusivas:</strong> Anúncios criados especificamente para a sua marca, separados da divulgação coletiva do portal.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check size={16} className="text-cyan-400 shrink-0 mt-0.5" />
+                    <span><strong>Tráfego pago individual:</strong> Verba de anúncios direcionada unicamente para os produtos, catálogo ou WhatsApp do seu negócio.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check size={16} className="text-cyan-400 shrink-0 mt-0.5" />
+                    <span><strong>Segmentação avançada:</strong> Definição precisa de público por cidade, raio de entrega, idade e interesse.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check size={16} className="text-cyan-400 shrink-0 mt-0.5" />
+                    <span><strong>Relatório dedicado:</strong> Acompanhamento personalizado do alcance e cliques exclusivos da sua campanha.</span>
+                  </li>
+                </ul>
+
+                {/* Caixa de distinção clara */}
+                <div className="mt-5 p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-[11px] sm:text-xs text-cyan-200/90 leading-relaxed flex items-start gap-2.5">
+                  <Info size={16} className="text-cyan-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong>Atenção:</strong> Esse serviço é contratado à parte e não está incluído no plano mensal de R$ 49,90. É indicado para empresas que desejam anúncios próprios na internet.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Botão de Consulta Exclusiva */}
+            <div className="mt-8 pt-5 border-t border-white/10">
+              <a
+                href={exclusiveWaLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 hover:brightness-110 text-black px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all duration-300 shadow-lg hover:scale-[1.02] active:scale-[0.98] cursor-pointer decoration-transparent"
+              >
+                <span>CONSULTAR DIVULGAÇÃO EXCLUSIVA</span>
+                <WhatsAppIcon className="w-5 h-5 fill-black" />
+              </a>
+              <p className="text-[10px] text-white/50 text-center font-mono mt-2.5">
+                Atendimento sob consulta via WhatsApp
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+  );
+};
+
+// ==========================================
+// 4. SEGMENTOS DE EMPRESAS ATENDIDAS
 // ==========================================
 export const SegmentsShowcase: React.FC = () => {
   const segments = [
@@ -63,8 +514,8 @@ export const SegmentsShowcase: React.FC = () => {
   ];
 
   return (
-    <div className="w-full mt-8 pt-6 border-t border-white/10 select-none">
-      <div className="text-center mb-3">
+    <div className="w-full mt-6 pt-5 border-t border-white/10 select-none">
+      <div className="text-center mb-2.5">
         <span className="text-[10px] sm:text-xs font-mono font-bold tracking-[0.2em] text-white/50 uppercase">
           Empresas atendidas em nossa rede
         </span>
@@ -88,1023 +539,33 @@ export const SegmentsShowcase: React.FC = () => {
 };
 
 // ==========================================
-// 2. SEÇÃO: CRIAR DESEJO DE PARTICIPAR (ENQUANTO SUA EMPRESA NÃO APARECE...)
+// 5. CHAMADA FINAL PARA ANUNCIAR (CTA FINAL)
 // ==========================================
-export const OQueSuaEmpresaGanhaSection: React.FC = () => {
-  const cards = [
-    {
-      icon: Flame,
-      badge: 'TRÁFEGO PAGO NO PORTAL',
-      title: 'IMPULSIONAMENTO EM TRÁFEGO PAGO',
-      subtitle: 'A plataforma investe em anúncios para atrair milhares de pessoas.',
-      desc: 'Nós investimos constantemente em tráfego pago na internet promovendo a plataforma inteira. Milhares de pessoas acessam a vitrine diariamente buscando comércio e serviços locais.',
-      color: 'from-amber-400/20 to-yellow-500/5 text-amber-300 border-amber-500/30'
-    },
-    {
-      icon: Users,
-      badge: 'MAIS DE 7 MIL GRUPOS',
-      title: 'DIVULGAÇÃO MASSIVA EM REDES',
-      subtitle: 'Compartilhamento contínuo em grupos de WhatsApp e Facebook.',
-      desc: 'O link do portal é divulgado diariamente em mais de 7.000 grupos qualificados, direcionando uma audiência gigantesca de clientes reais para os negócios cadastrados.',
-      color: 'from-blue-500/20 to-cyan-500/5 text-cyan-300 border-cyan-500/30'
-    },
-    {
-      icon: Smartphone,
-      badge: 'MUITO MAIS CHANCES',
-      title: 'CHANCES MULTIPLICADAS DE CONTATO',
-      subtitle: 'Não divulgamos empresas isoladas: impulsionamos a plataforma toda!',
-      desc: 'Com o tráfego pago e a rede de grupos concentrados no portal, as chances da sua empresa ser descoberta e receber mensagens no WhatsApp são infinitamente maiores.',
-      color: 'from-emerald-500/20 to-emerald-500/5 text-emerald-300 border-emerald-500/30'
-    }
-  ];
-
-  return (
-    <section id="beneficios" className="w-full py-16 sm:py-24 bg-gradient-to-b from-black via-[#08080f] to-black border-b border-white/5 relative overflow-hidden select-none">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-amber-500/5 rounded-full blur-[160px] pointer-events-none" />
-
-      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-        
-        {/* Título da Seção */}
-        <div className="text-center max-w-4xl mx-auto mb-10 sm:mb-14">
-          <span className="text-amber-400 text-[10px] sm:text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
-            A FORÇA DA DIVULGAÇÃO COLETIVA
-          </span>
-          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
-            Por que sua empresa ganha muito mais visibilidade aqui
-          </h2>
-          <p className="text-sm sm:text-base md:text-lg text-white/80 mt-3 leading-relaxed max-w-2xl mx-auto font-medium">
-            Em vez de divulgar empresas sozinhas no vazio, impulsionamos a plataforma inteira com <strong>Tráfego Pago</strong> e <strong>mais de 7 mil grupos</strong>, atraindo um fluxo contínuo de clientes prontos para falar no seu WhatsApp.
-          </p>
-        </div>
-
-        {/* Grid com as 3 ideias principais destacadas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {cards.map((item, idx) => {
-            const Icon = item.icon;
-            return (
-              <div 
-                key={idx}
-                className="bg-gradient-to-b from-[#12121d] to-[#09090f] border border-white/10 hover:border-amber-500/40 rounded-3xl p-7 flex flex-col justify-between shadow-2xl transition-all duration-300 hover:-translate-y-1 group"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-5">
-                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${item.color} border flex items-center justify-center group-hover:scale-105 transition-transform`}>
-                      <Icon size={26} />
-                    </div>
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-300 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
-                      {item.badge}
-                    </span>
-                  </div>
-
-                  <h3 className="text-lg sm:text-xl font-black text-white leading-snug group-hover:text-amber-300 transition-colors">
-                    {item.title}
-                  </h3>
-
-                  <p className="text-xs sm:text-sm text-amber-300 font-bold mt-2 leading-snug">
-                    — {item.subtitle}
-                  </p>
-
-                  <p className="text-xs sm:text-sm text-white/70 mt-3 leading-relaxed">
-                    {item.desc}
-                  </p>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-white/5 flex items-center gap-1.5 text-emerald-400 text-xs font-mono font-bold">
-                  <CheckCircle2 size={14} className="shrink-0" />
-                  <span>Destaque para o seu negócio</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-      </div>
-    </section>
-  );
-};
-
-// ==========================================
-// 3. SEÇÃO: APRESENTAR O VALOR DO PORTAL (SUA EMPRESA TEM UM LUGAR AQUI)
-// ==========================================
-export const ComoFuncionaSection: React.FC = () => {
-  // Estado para demonstração interativa em tempo real
-  const [countdown, setCountdown] = useState<number>(268); // ~4m 28s para próximo disparo
-  const [currentGroupIdx, setCurrentGroupIdx] = useState<number>(289);
-  const [isCopied, setIsCopied] = useState<boolean>(false);
-  const [showDemoTrackerModal, setShowDemoTrackerModal] = useState<boolean>(false);
-
-  // Efeito do cronômetro regressivo de 5 em 5 minutos que avança os grupos
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          // Quando o cronômetro zera (5 minutos passados), incrementa o número do grupo
-          setCurrentGroupIdx((g) => (g >= 7240 ? 1 : g + 1));
-          return 300; // Reinicia ciclo de 5 minutos
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatCountdown = (secs: number) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  };
-
-  const handleCopyLink = () => {
-    const link = "https://minhadivulgacao.com.br/rastreio/sua-empresa";
-    navigator.clipboard?.writeText(link).catch(() => {});
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2500);
-  };
-
-  const steps = [
-    {
-      num: '1',
-      title: 'CADASTRO DO SEU NEGÓCIO',
-      desc: 'Você cadastra sua empresa com fotos, logotipo, produtos/serviços, localização e botão direto para o seu WhatsApp oficial.',
-      tag: 'Perfil Comercial Completo'
-    },
-    {
-      num: '2',
-      title: 'POSICIONAMENTO NO PORTAL',
-      desc: 'Sua marca ganha espaço garantido na vitrine comercial do portal Minha Divulgação, organizada por categoria para os clientes encontrarem rápido.',
-      tag: 'Vitrine Online Ativa 24h'
-    },
-    {
-      num: '3',
-      title: 'TRÁFEGO PAGO NA PLATAFORMA',
-      desc: 'A plataforma Minha Divulgação investe constantemente em Tráfego Pago (anúncios patrocinados contínuos) para atrair milhares de pessoas todos os dias.',
-      tag: 'Investimento em Tráfego Pago'
-    },
-    {
-      num: '4',
-      title: 'DIVULGAÇÃO EM +7 MIL GRUPOS',
-      desc: 'A plataforma inteira é compartilhada continuamente em mais de 7.000 grupos de WhatsApp e Facebook, gerando um fluxo gigante e sem parar de novos visitantes.',
-      tag: 'WhatsApp e Facebook (+7.000)'
-    },
-    {
-      num: '5',
-      title: 'MUITO MAIS CHANCES DE CLIENTES',
-      desc: 'Como a divulgação é concentrada na plataforma inteira (e não em anúncios isolados), a chance da sua empresa ser vista e chamada no WhatsApp é multiplicada!',
-      tag: 'Contatos Diretos no WhatsApp'
-    }
-  ];
-
-  // Dados do gráfico ilustrativo por hora (Volume de Disparos e Pessoas Alcançadas)
-  const hourlyData = [
-    { hour: '08h', groups: 420, reach: '11.5k', height: '38%', isPeak: false },
-    { hour: '10h', groups: 680, reach: '18.2k', height: '62%', isPeak: false },
-    { hour: '12h', groups: 960, reach: '26.4k', height: '94%', isPeak: true, label: 'Pico Almoço' },
-    { hour: '14h', groups: 710, reach: '19.8k', height: '66%', isPeak: false },
-    { hour: '16h', groups: 840, reach: '22.6k', height: '78%', isPeak: false },
-    { hour: '18h', groups: 920, reach: '25.1k', height: '88%', isPeak: false },
-    { hour: '20h', groups: 990, reach: '27.8k', height: '100%', isPeak: true, label: 'Pico Noturno' },
-    { hour: '22h', groups: 610, reach: '16.5k', height: '54%', isPeak: false },
-  ];
-
-  return (
-    <section id="como-funciona" className="w-full py-16 sm:py-24 bg-[#06060a] border-b border-white/5 relative overflow-hidden select-none">
-      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-        
-        {/* Título da Seção */}
-        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
-          <span className="text-amber-400 text-[10px] sm:text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
-            PASSO A PASSO • COMO FUNCIONA
-          </span>
-          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-            Como funciona a divulgação e por que gera muito mais resultados
-          </h2>
-          <p className="text-sm sm:text-base text-white/80 mt-3 max-w-2xl mx-auto font-medium leading-relaxed">
-            A divulgação <strong>não é feita de forma isolada</strong>: a plataforma Minha Divulgação é impulsionada com <strong>Tráfego Pago diário</strong> e compartilhada em <strong>mais de 7 mil grupos</strong> de WhatsApp e Facebook. Isso concentra milhares de pessoas no portal todos os dias, multiplicando as chances da sua empresa ser descoberta!
-          </p>
-        </div>
-
-        {/* 5 Passos */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6 max-w-7xl mx-auto">
-          {steps.map((st, idx) => (
-            <div 
-              key={idx}
-              className={`bg-gradient-to-b from-[#111119] to-[#09090e] border ${st.num === '3' || st.num === '4' ? 'border-amber-400/50 shadow-[0_0_25px_rgba(251,191,36,0.15)]' : 'border-white/10'} hover:border-amber-500/60 rounded-3xl p-6 flex flex-col justify-between shadow-xl transition-all duration-300 hover:-translate-y-1 group`}
-            >
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`w-11 h-11 rounded-2xl ${st.num === '3' || st.num === '4' ? 'bg-gradient-to-br from-amber-400 via-yellow-400 to-amber-500' : 'bg-gradient-to-br from-amber-400 to-amber-600'} text-black font-black text-lg flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
-                    {st.num}
-                  </div>
-                  <span className={`text-[10px] font-mono font-bold uppercase tracking-wider ${st.num === '3' || st.num === '4' ? 'text-amber-300 bg-amber-500/20 border-amber-400/40' : 'text-amber-400/90 bg-amber-500/10 border-amber-500/20'} px-2.5 py-1 rounded-full border`}>
-                    Etapa {st.num}
-                  </span>
-                </div>
-
-                <h3 className="text-sm sm:text-base font-black text-white leading-snug group-hover:text-amber-300 transition-colors">
-                  {st.title}
-                </h3>
-                <p className="text-xs sm:text-sm text-white/70 mt-2.5 leading-relaxed font-medium">
-                  {st.desc}
-                </p>
-              </div>
-
-              <div className="mt-5 pt-3 border-t border-white/5 text-[10px] font-mono text-white/50 flex items-center justify-between">
-                <span>{st.tag}</span>
-                {st.num === '4' && <span className="text-amber-400 font-bold">⚡ +7k</span>}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* BLOCO EXPLICATIVO COMPARATIVO: POR QUE A DIVULGAÇÃO DA PLATAFORMA FUNCIONA MUITO MELHOR */}
-        <div className="mt-12 max-w-5xl mx-auto rounded-3xl bg-gradient-to-r from-[#171408] via-[#221c09] to-[#120f06] border-2 border-amber-400/50 p-6 sm:p-8 md:p-10 shadow-2xl relative overflow-hidden">
-          <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono font-bold uppercase tracking-wider mb-3">
-              <Zap className="w-4 h-4 text-amber-400" />
-              <span>DIFERENCIAL EXCLUSIVO DO NOSSO MODELO</span>
-            </div>
-            
-            <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight leading-snug">
-              Por que a divulgação da plataforma traz <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500">muito mais chances de clientes</span> do que tentar anunciar sozinho?
-            </h3>
-
-            <p className="text-white/85 text-xs sm:text-sm md:text-base mt-3 leading-relaxed font-medium">
-              Entenda a estratégia: <strong>não divulgamos cada empresa separadamente em posts avulsos que somem no feed</strong>. Nós concentramos todo o investimento em <strong>anúncios de Tráfego Pago diário</strong> e na distribuição maciça do portal em <strong>mais de 7.000 grupos de WhatsApp e Facebook</strong>. 
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-              <div className="p-5 rounded-2xl bg-black/60 border border-red-500/30">
-                <div className="text-red-400 font-black text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2 mb-2">
-                  <span className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center text-xs">✕</span>
-                  Tentando Divulgar Sozinho no Feed
-                </div>
-                <ul className="text-white/70 text-xs sm:text-sm leading-relaxed space-y-2 list-none p-0 m-0">
-                  <li className="flex items-start gap-2">
-                    <span className="text-red-400 shrink-0">•</span>
-                    <span><strong>Custo altíssimo:</strong> Qualquer campanha individual de tráfego pago custa centenas ou milhares de reais por mês.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-red-400 shrink-0">•</span>
-                    <span><strong>Alcance passageiro:</strong> Posts em grupos isolados descem no feed e desaparecem em minutos.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-red-400 shrink-0">•</span>
-                    <span><strong>Dificuldade de escala:</strong> É humanamente inviável publicar em milhares de grupos todos os dias sozinho.</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-amber-500/10 border-2 border-amber-400/60 shadow-lg shadow-amber-500/10">
-                <div className="text-amber-300 font-black text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2 mb-2">
-                  <span className="w-6 h-6 rounded-full bg-amber-500/30 flex items-center justify-center text-xs">✓</span>
-                  Estando no Portal Minha Divulgação
-                </div>
-                <ul className="text-white/85 text-xs sm:text-sm leading-relaxed space-y-2 list-none p-0 m-0">
-                  <li className="flex items-start gap-2">
-                    <span className="text-amber-400 shrink-0">•</span>
-                    <span><strong>Tráfego Pago Coletivo:</strong> O portal inteiro recebe verba profissional de tráfego pago para atrair milhares de compradores.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-amber-400 shrink-0">•</span>
-                    <span><strong>+7.000 Grupos Ativos:</strong> O link da vitrine circula 24h por dia em grupos de WhatsApp e Facebook com mais de 100 mil pessoas.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-amber-400 shrink-0">•</span>
-                    <span><strong>Chances Muito Maiores:</strong> O visitante entra no portal procurando opções e cai direto na sua marca, clicando para falar no seu WhatsApp!</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="mt-6 p-4 rounded-xl bg-black/40 border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-              <span className="text-xs text-amber-200/90 font-medium">
-                💡 Por isso o valor é tão acessível (<strong>R$ 49,90/mês</strong>): ao reunir as empresas em uma vitrine única e forte, nós multiplicamos a força do tráfego para todo mundo!
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Frase de Destaque */}
-        <div className="mt-10 max-w-3xl mx-auto bg-gradient-to-r from-[#171308] via-[#211a0a] to-[#171308] border-2 border-amber-400/40 rounded-2xl p-4 sm:p-5 text-center shadow-lg">
-          <p className="text-xs sm:text-sm md:text-base text-amber-300 font-extrabold leading-relaxed">
-            💡 Mais do que uma página de serviço: sua empresa ganha presença no portal e é divulgada em mais de 7 mil grupos de WhatsApp e Facebook para o seu negócio ser visto e lembrado.
-          </p>
-        </div>
-
-        {/* ======================================================== */}
-        {/* DESTAQUE PRINCIPAL: VOCÊ ACOMPANHA AS DIVULGAÇÕES EM TEMPO REAL */}
-        {/* ======================================================== */}
-        <div className="mt-16 sm:mt-20 max-w-6xl mx-auto">
-          <div className="relative rounded-3xl p-6 sm:p-8 md:p-10 bg-gradient-to-b from-[#161622] via-[#0d0d15] to-[#07070b] border-2 border-amber-400/50 shadow-[0_0_50px_rgba(245,158,11,0.15)] overflow-hidden">
-            
-            {/* Efeitos de iluminação de fundo */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-            <div className="absolute bottom-0 left-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
-
-            {/* Cabeçalho do Bloco Destacado */}
-            <div className="relative z-10 text-center max-w-3xl mx-auto mb-8 sm:mb-12">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-mono font-bold tracking-wider uppercase mb-4 shadow-sm">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping inline-block" />
-                <span>TECNOLOGIA EXCLUSIVA • ACOMPANHAMENTO AO VIVO</span>
-              </div>
-              <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
-                Você acompanha as divulgações <span className="bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">em tempo real!</span>
-              </h3>
-              <p className="text-white/80 text-sm sm:text-base mt-4 font-medium leading-relaxed">
-                Você recebe um <strong className="text-amber-300">link exclusivo</strong> onde acompanha todas as suas divulgações: <strong className="text-white">quanto tempo falta para o término</strong>, os <strong className="text-white">grupos exatos que estão sendo divulgados</strong> e <strong className="text-white">gráficos com estatísticas estimadas</strong> de alcance.
-              </p>
-            </div>
-
-            {/* BARRA DO LINK EXCLUSIVO DO CLIENTE */}
-            <div className="relative z-10 bg-[#0a0a10] border border-amber-400/30 rounded-2xl p-4 sm:p-5 mb-8 shadow-inner flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3 w-full md:w-auto">
-                <div className="w-10 h-10 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-amber-300 shrink-0">
-                  <LinkIcon className="w-5 h-5" />
-                </div>
-                <div className="overflow-hidden">
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-bold flex items-center gap-2">
-                    <span>SEU LINK EXCLUSIVO DE ACOMPANHAMENTO</span>
-                    <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[9px]">ATIVO 24H</span>
-                  </div>
-                  <div className="font-mono text-xs sm:text-sm text-white/90 truncate font-semibold mt-0.5">
-                    minhadivulgacao.com.br/rastreio/<span className="text-amber-300">sua-empresa</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2.5 w-full md:w-auto justify-end shrink-0">
-                <button
-                  type="button"
-                  onClick={handleCopyLink}
-                  className="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-bold transition-all"
-                  title="Copiar link"
-                >
-                  {isCopied ? (
-                    <>
-                      <CheckCheck className="w-4 h-4 text-emerald-400" />
-                      <span className="text-emerald-300">Link Copiado!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4 text-white/70" />
-                      <span>Copiar Link</span>
-                    </>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowDemoTrackerModal(true)}
-                  className="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black text-xs font-black tracking-wide shadow-lg shadow-amber-500/25 transition-all hover:scale-105"
-                >
-                  <Play className="w-3.5 h-3.5 fill-black" />
-                  <span>Ver Demonstração ao Vivo</span>
-                </button>
-              </div>
-            </div>
-
-            {/* GRID PRINCIPAL: 1. TEMPO & STATUS | 2. GRUPOS EM TEMPO REAL */}
-            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-              
-              {/* CARD 1: QUANTO TEMPO FALTA PARA O TÉRMINO & CONTADORES */}
-              <div className="lg:col-span-5 bg-gradient-to-b from-[#11111b] to-[#0a0a10] border border-white/10 rounded-2xl p-5 sm:p-6 flex flex-col justify-between shadow-xl">
-                <div>
-                  <div className="flex items-center justify-between pb-3 border-b border-white/5">
-                    <div className="flex items-center gap-2 text-white font-bold text-sm">
-                      <Clock className="w-4 h-4 text-amber-400" />
-                      <span>Tempo & Término da Divulgação</span>
-                    </div>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono font-bold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      EM ANDAMENTO
-                    </span>
-                  </div>
-
-                  {/* Cronômetro de Disparo de 5 em 5 minutos */}
-                  <div className="mt-5 p-4 rounded-xl bg-[#07070c] border border-amber-500/30 text-center relative overflow-hidden">
-                    <div className="text-[11px] font-mono text-amber-400 font-bold uppercase tracking-wider">
-                      Próximo disparo no grupo em:
-                    </div>
-                    <div className="text-3xl sm:text-4xl font-mono font-black text-white mt-1 tracking-wider text-amber-300">
-                      {formatCountdown(countdown)}
-                    </div>
-                    <p className="text-[10px] text-white/60 mt-1 font-medium">
-                      Disparos automáticos constantes de 5 em 5 minutos
-                    </p>
-
-                    {/* Barra de progresso dos 5 min */}
-                    <div className="w-full bg-white/10 h-1.5 rounded-full mt-3 overflow-hidden">
-                      <div 
-                        className="bg-gradient-to-r from-amber-400 to-yellow-300 h-full transition-all duration-1000"
-                        style={{ width: `${((300 - countdown) / 300) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Tempo restante estimado da campanha */}
-                  <div className="grid grid-cols-2 gap-3 mt-4">
-                    <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                      <span className="text-[10px] text-white/60 font-mono uppercase block">Tempo Restante:</span>
-                      <span className="text-sm sm:text-base font-black text-white font-mono mt-0.5 block">
-                        18h 35min
-                      </span>
-                      <span className="text-[9px] text-emerald-400 block mt-0.5">Ativo na rodada diária</span>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                      <span className="text-[10px] text-white/60 font-mono uppercase block">Progresso Geral:</span>
-                      <span className="text-sm sm:text-base font-black text-amber-400 font-mono mt-0.5 block">
-                        74.8% concluído
-                      </span>
-                      <span className="text-[9px] text-white/60 block mt-0.5">5.415 de 7.240 grupos</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-5 pt-4 border-t border-white/5 text-xs text-white/70 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Activity className="w-3.5 h-3.5 text-amber-400" />
-                    Transmissão 24 horas por dia
-                  </span>
-                  <span className="font-mono text-amber-300 font-bold text-[11px]">100% Auditável</span>
-                </div>
-              </div>
-
-              {/* CARD 2: GRUPOS QUE ESTÃO SENDO DIVULGADOS EM TEMPO REAL */}
-              <div className="lg:col-span-7 bg-gradient-to-b from-[#11111b] to-[#0a0a10] border border-white/10 rounded-2xl p-5 sm:p-6 flex flex-col justify-between shadow-xl">
-                <div>
-                  <div className="flex items-center justify-between pb-3 border-b border-white/5">
-                    <div className="flex items-center gap-2 text-white font-bold text-sm">
-                      <Users className="w-4 h-4 text-emerald-400" />
-                      <span>Grupos sendo divulgados agora</span>
-                    </div>
-                    <span className="text-[11px] font-mono text-amber-400 font-bold bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
-                      +7.000 Grupos na Rede
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-white/70 mt-3 font-medium">
-                    No seu link, você vê o nome dos grupos do WhatsApp e Facebook onde seu flyer e mensagem comercial estão entrando:
-                  </p>
-
-                  {/* Feed dinâmico simulando os grupos */}
-                  <div className="mt-4 space-y-2.5">
-                    {/* Grupo Ativo Atual */}
-                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-400/40 flex items-center justify-between transition-all">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-300 font-black text-xs shrink-0">
-                          WA
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-white flex items-center gap-2">
-                            <span>Grupo WhatsApp #{currentGroupIdx}</span>
-                            <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-mono font-bold animate-pulse">
-                              DISPARADO AGORA
-                            </span>
-                          </div>
-                          <div className="text-[11px] text-white/70">
-                            Empreendedores & Ofertas Comerciais • Ceará e Região
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span className="text-[10px] font-mono text-amber-300 font-bold block">100% Entregue</span>
-                        <span className="text-[9px] text-white/50 block">há 12 segundos</span>
-                      </div>
-                    </div>
-
-                    {/* Grupo Facebook */}
-                    <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-300 font-black text-xs shrink-0">
-                          FB
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-white flex items-center gap-2">
-                            <span>Grupo Facebook #{Math.floor(currentGroupIdx / 2)}</span>
-                            <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[9px] font-mono font-bold">
-                              POSTADO
-                            </span>
-                          </div>
-                          <div className="text-[11px] text-white/70">
-                            Classificados & Comércio Geral Brasil (52.000 membros)
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span className="text-[10px] font-mono text-emerald-400 font-bold block">Concluído</span>
-                        <span className="text-[9px] text-white/50 block">há 2 min</span>
-                      </div>
-                    </div>
-
-                    {/* Grupo WhatsApp Anterior */}
-                    <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-300 font-black text-xs shrink-0">
-                          WA
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-white flex items-center gap-2">
-                            <span>Grupo WhatsApp #{currentGroupIdx - 1 > 0 ? currentGroupIdx - 1 : 7240}</span>
-                            <span className="px-1.5 py-0.5 rounded bg-white/10 text-white/70 text-[9px] font-mono font-bold">
-                              CONCLUÍDO
-                            </span>
-                          </div>
-                          <div className="text-[11px] text-white/70">
-                            Vendas Rápidas, Produtos & Serviços Locais
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span className="text-[10px] font-mono text-white/60 font-bold block">Entregue</span>
-                        <span className="text-[9px] text-white/50 block">há 5 min</span>
-                      </div>
-                    </div>
-
-                    {/* Próximo da fila */}
-                    <div className="p-2.5 rounded-xl bg-black/40 border border-dashed border-white/10 flex items-center justify-between text-white/50">
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="text-amber-400 font-mono font-bold">⏳ Na fila:</span>
-                        <span>Grupo WhatsApp #{currentGroupIdx + 1} (Parcerias & Divulgação)</span>
-                      </div>
-                      <span className="text-[10px] font-mono">Disparo em {formatCountdown(countdown)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-white/60">
-                  <span>Atualização instantânea em tempo real</span>
-                  <span className="text-emerald-400 font-bold flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                    Feed sincronizado
-                  </span>
-                </div>
-              </div>
-
-            </div>
-
-            {/* SEÇÃO DO GRÁFICO E ESTATÍSTICAS ESTIMADAS */}
-            <div className="relative z-10 bg-gradient-to-b from-[#11111b] to-[#09090f] border border-amber-400/30 rounded-2xl p-5 sm:p-7 shadow-2xl">
-              
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-white/10">
-                <div>
-                  <div className="inline-flex items-center gap-2 text-xs font-mono font-bold text-amber-400 uppercase tracking-wider mb-1">
-                    <BarChart3 className="w-4 h-4" />
-                    <span>GRÁFICO E ESTATÍSTICAS ESTIMADAS</span>
-                  </div>
-                  <h4 className="text-lg sm:text-xl font-black text-white">
-                    Volume de Disparos e Estimativa de Alcance ao Longo do Dia
-                  </h4>
-                  <p className="text-xs sm:text-sm text-white/70 mt-1">
-                    Veja ilustrado como suas divulgações são distribuídas estrategicamente para atingir o maior número de pessoas:
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3 shrink-0">
-                  <div className="flex items-center gap-1.5 text-xs text-white/70 font-mono">
-                    <span className="w-3 h-3 rounded bg-gradient-to-t from-amber-500 to-yellow-300 inline-block" />
-                    <span>Disparos por hora</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs text-white/70 font-mono">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
-                    <span>Pico de Visualizações</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* GRÁFICO ILUSTRATIVO DE BARRAS E TENDÊNCIA */}
-              <div className="mt-8 pt-4">
-                <div className="h-56 sm:h-64 flex items-end justify-between gap-2 sm:gap-4 px-2 sm:px-6 relative">
-                  
-                  {/* Linhas de grade de fundo */}
-                  <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-15">
-                    <div className="border-b border-white w-full" />
-                    <div className="border-b border-white w-full" />
-                    <div className="border-b border-white w-full" />
-                    <div className="border-b border-white w-full" />
-                  </div>
-
-                  {/* Barras do Gráfico */}
-                  {hourlyData.map((d, i) => (
-                    <div key={i} className="flex-1 flex flex-col items-center h-full justify-end group relative z-10">
-                      
-                      {/* Tooltip / Indicador acima da barra */}
-                      <div className="mb-2 text-center transition-transform group-hover:scale-110">
-                        {d.isPeak && (
-                          <span className="hidden sm:inline-block bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-mono text-[9px] font-bold px-1.5 py-0.5 rounded-full mb-1">
-                            {d.label}
-                          </span>
-                        )}
-                        <span className="text-[10px] sm:text-xs font-mono font-bold text-amber-300 block">
-                          {d.groups}
-                        </span>
-                        <span className="text-[9px] font-mono text-white/50 hidden sm:block">
-                          ~{d.reach}
-                        </span>
-                      </div>
-
-                      {/* Barra Visual com Gradiente */}
-                      <div className="w-full max-w-[48px] bg-white/5 rounded-t-xl overflow-hidden p-0.5 flex flex-col justify-end transition-all h-full">
-                        <div 
-                          className={`w-full rounded-t-lg transition-all duration-500 ${
-                            d.isPeak 
-                              ? 'bg-gradient-to-t from-amber-600 via-amber-400 to-yellow-300 shadow-[0_0_20px_rgba(251,191,36,0.35)]' 
-                              : 'bg-gradient-to-t from-amber-600/80 to-amber-400/90 group-hover:from-amber-500 group-hover:to-yellow-300'
-                          }`}
-                          style={{ height: d.height }}
-                        />
-                      </div>
-
-                      {/* Legenda do Horário */}
-                      <span className="mt-3 text-[11px] sm:text-xs font-mono font-bold text-white/80 group-hover:text-amber-300 transition-colors">
-                        {d.hour}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="text-center text-[11px] font-mono text-white/50 mt-4">
-                  * Horários estratégicos com maior pico de leitura e cliques nos grupos (12h às 14h e 19h às 21h).
-                </div>
-              </div>
-
-              {/* 4 CARDS COM AS ESTATÍSTICAS ESTIMADAS */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-8 pt-6 border-t border-white/10">
-                
-                <div className="bg-[#07070d] border border-white/10 rounded-xl p-3 sm:p-4">
-                  <div className="flex items-center gap-2 text-amber-400 mb-1">
-                    <Users className="w-4 h-4" />
-                    <span className="text-[10px] font-mono uppercase font-bold text-white/70">Grupos da Rede</span>
-                  </div>
-                  <div className="text-xl sm:text-2xl font-black text-white font-mono">
-                    +7.240
-                  </div>
-                  <p className="text-[10px] text-white/60 mt-1 font-medium">
-                    WhatsApp e Facebook monitorados
-                  </p>
-                </div>
-
-                <div className="bg-[#07070d] border border-white/10 rounded-xl p-3 sm:p-4">
-                  <div className="flex items-center gap-2 text-emerald-400 mb-1">
-                    <Eye className="w-4 h-4" />
-                    <span className="text-[10px] font-mono uppercase font-bold text-white/70">Alcance Estimado</span>
-                  </div>
-                  <div className="text-xl sm:text-2xl font-black text-emerald-300 font-mono">
-                    +180.000
-                  </div>
-                  <p className="text-[10px] text-white/60 mt-1 font-medium">
-                    Pessoas impactadas na campanha
-                  </p>
-                </div>
-
-                <div className="bg-[#07070d] border border-white/10 rounded-xl p-3 sm:p-4">
-                  <div className="flex items-center gap-2 text-amber-400 mb-1">
-                    <Zap className="w-4 h-4" />
-                    <span className="text-[10px] font-mono uppercase font-bold text-white/70">Frequência</span>
-                  </div>
-                  <div className="text-xl sm:text-2xl font-black text-amber-300 font-mono">
-                    5 min
-                  </div>
-                  <p className="text-[10px] text-white/60 mt-1 font-medium">
-                    1 disparo automático a cada 5m
-                  </p>
-                </div>
-
-                <div className="bg-[#07070d] border border-white/10 rounded-xl p-3 sm:p-4">
-                  <div className="flex items-center gap-2 text-emerald-400 mb-1">
-                    <Smartphone className="w-4 h-4" />
-                    <span className="text-[10px] font-mono uppercase font-bold text-white/70">Contato Direto</span>
-                  </div>
-                  <div className="text-xl sm:text-2xl font-black text-white font-mono">
-                    WhatsApp
-                  </div>
-                  <p className="text-[10px] text-emerald-400 mt-1 font-medium">
-                    Cliques direto no seu número
-                  </p>
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-
-      {/* Modal de demonstração interativa do rastreamento do cliente */}
-      {showDemoTrackerModal && (
-        <ClientDispatchTrackerModal
-          companyId="demo-empresa-destaque"
-          companyData={{
-            name: 'Sua Empresa Comercial (Demonstração)',
-            logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200',
-            category: 'Comércio, Vendas & Serviços',
-            city: 'Brasil',
-            desc: 'Acompanhamento em tempo real de disparos em grupos de WhatsApp e Facebook.'
-          }}
-          onClose={() => setShowDemoTrackerModal(false)}
-        />
-      )}
-    </section>
-  );
-};
-
-// ==========================================
-// 4. SEÇÃO: OS BENEFÍCIOS DE PARTICIPAR (MAIS DO QUE UM CADASTRO...)
-// ==========================================
-export const OndeSuaEmpresaApareceSection: React.FC = () => {
-  const beneficios = [
-    {
-      icon: Search,
-      title: 'ESPAÇO NO PORTAL',
-      desc: 'Apresentação da sua empresa para quem visita o Minha Divulgação.',
-      highlight: 'Portal Web'
-    },
-    {
-      icon: Layers,
-      title: 'FLYER PERSONALIZADO',
-      desc: 'Material visual para apresentar seu negócio.',
-      highlight: 'Material Visual'
-    },
-    {
-      icon: Tv,
-      title: 'VÍDEO PARA TV DA PLATAFORMA',
-      desc: 'Conteúdo de divulgação conforme os recursos disponíveis.',
-      highlight: 'TV da Plataforma'
-    },
-    {
-      icon: Radio,
-      title: 'ÁUDIO PARA RÁDIO MINHA DIVULGAÇÃO',
-      desc: 'Apresentação comercial da sua empresa.',
-      highlight: 'Rádio Web'
-    },
-    {
-      icon: Sparkles,
-      title: 'DIVULGAÇÃO EM GRUPOS E CANAIS PARCEIROS',
-      desc: 'Sua empresa é divulgada em grupos de WhatsApp e Facebook, totalizando mais de 7 mil grupos.',
-      highlight: '+7 Mil Grupos'
-    }
-  ];
-
-  return (
-    <section id="onde-aparece" className="w-full py-16 sm:py-24 bg-gradient-to-b from-black via-[#090912] to-black border-b border-white/5 relative overflow-hidden select-none">
-      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-        
-        {/* Título da Seção - Seção 6 do Brief */}
-        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-          <span className="text-amber-400 text-[10px] sm:text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
-            RECURSOS INCLUÍDOS NA OFERTA
-          </span>
-          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
-            MAIS DO QUE UM CADASTRO. UM ESPAÇO PARA SUA MARCA APARECER.
-          </h2>
-          <p className="text-sm sm:text-base text-white/80 mt-4 max-w-2xl mx-auto font-medium leading-relaxed">
-            Ao participar do Minha Divulgação, sua empresa conta com os recursos de apresentação e divulgação incluídos no plano.
-          </p>
-        </div>
-
-        {/* 5 Cards dos Recursos Reais */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 max-w-6xl mx-auto">
-          {beneficios.map((c, idx) => {
-            const Icon = c.icon;
-            return (
-              <div 
-                key={idx}
-                className="bg-gradient-to-b from-[#111119] to-[#0a0a10] border border-white/10 hover:border-amber-500/40 rounded-3xl p-5 sm:p-6 flex flex-col justify-between shadow-xl transition-all duration-300 hover:-translate-y-1 group"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-11 h-11 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Icon size={20} />
-                    </div>
-                    <span className="text-[9px] font-mono font-bold uppercase text-amber-400/90 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-                      {c.highlight}
-                    </span>
-                  </div>
-
-                  <h3 className="text-sm sm:text-base font-black text-white leading-snug group-hover:text-amber-300 transition-colors">
-                    {c.title}
-                  </h3>
-
-                  <p className="text-xs text-white/70 mt-2 leading-relaxed font-medium">
-                    {c.desc}
-                  </p>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-white/5 text-[10px] font-mono text-emerald-400 font-bold flex items-center gap-1">
-                  <Check size={12} className="stroke-[3]" />
-                  <span>Incluído no plano</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Frase de Fechamento */}
-        <div className="mt-10 text-center">
-          <span className="inline-block bg-neutral-900/90 border border-white/10 text-amber-300 text-xs sm:text-sm font-bold font-mono px-5 py-2.5 rounded-xl">
-            ✨ Presença planejada para dar visibilidade ao seu negócio.
-          </span>
-        </div>
-
-      </div>
-    </section>
-  );
-};
-
-// ==========================================
-// 7. SEÇÃO DE PREÇO E CHAMADA PARA AÇÃO (4. CONVITE PARA ANUNCIAR)
-// ==========================================
-export const PlanoPrecoSection: React.FC<{ primaryWaLink?: string; onCadastrarClick?: () => void }> = ({ 
+export const CtaFinalSection: React.FC<{ 
+  primaryWaLink?: string; 
+  exclusiveWaLink?: string;
+  onCadastrarClick?: () => void;
+}> = ({ 
   primaryWaLink = DEFAULT_WA_LINK,
-  onCadastrarClick
-}) => {
-  const beneficios = [
-    {
-      icon: Flame,
-      title: 'TRÁFEGO PAGO NO PORTAL',
-      desc: 'A plataforma investe em anúncios contínuos na internet atraindo milhares de pessoas para a vitrine.',
-      highlight: 'Tráfego Pago'
-    },
-    {
-      icon: Users,
-      title: 'DIVULGAÇÃO EM +7 MIL GRUPOS',
-      desc: 'O link do portal é compartilhado em massa em mais de 7.000 grupos de WhatsApp e Facebook.',
-      highlight: '+7k Grupos'
-    },
-    {
-      icon: Search,
-      title: 'ESPAÇO & VITRINE EXCLUSIVA',
-      desc: 'Apresentação profissional com fotos, produtos, serviços e busca por categoria.',
-      highlight: 'Vitrine 24h'
-    },
-    {
-      icon: Smartphone,
-      title: 'WHATSAPP DIRETO SEM TAXAS',
-      desc: 'O cliente clica e negocia direto com você, sem intermediários e sem comissão.',
-      highlight: 'WhatsApp Direto'
-    },
-    {
-      icon: Tv,
-      title: 'TV & RÁDIO DA PLATAFORMA',
-      desc: 'Exibição comercial nos canais multimídia integrados do portal.',
-      highlight: 'Canais Multimídia'
-    }
-  ];
-
-  return (
-    <section id="anuncie" className="w-full py-16 md:py-24 bg-gradient-to-b from-black via-[#0a0a14] to-black border-b border-white/5 relative overflow-hidden select-none scroll-mt-20">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-amber-500/10 rounded-full blur-[170px] pointer-events-none" />
-
-      <div className="w-full max-w-5xl mx-auto px-4 md:px-6 relative z-10 text-center">
-        
-        {/* Header - Seção de Anunciantes */}
-        <div className="max-w-3xl mx-auto mb-8 sm:mb-12">
-          <span className="text-amber-400 text-[10px] sm:text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-3">
-            DIVULGUE SUA EMPRESA COM TRÁFEGO PAGO E +7 MIL GRUPOS
-          </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-            Quer divulgar sua empresa com máxima visibilidade?
-          </h2>
-          <p className="text-base sm:text-lg text-white/85 font-medium mt-3 leading-relaxed max-w-2xl mx-auto">
-            Aproveite a força da plataforma impulsionada com <strong>Tráfego Pago diário</strong> e <strong>mais de 7 mil grupos</strong> de WhatsApp e Facebook: perfil comercial completo, WhatsApp direto e muito mais chances de novos clientes!
-          </p>
-        </div>
-
-        {/* Card de Preço Destacado */}
-        <div className="max-w-xl mx-auto bg-gradient-to-b from-[#161626] via-[#10101b] to-[#0b0b12] border-2 border-amber-400 rounded-3xl p-7 sm:p-10 shadow-[0_15px_50px_rgba(245,158,11,0.25)]">
-          
-          <span className="text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full inline-block mb-4">
-            PLANO DE DIVULGAÇÃO
-          </span>
-
-          <div className="flex items-baseline justify-center gap-1.5 my-3">
-            <span className="text-2xl sm:text-3xl font-black text-amber-400">R$</span>
-            <span className="text-5xl sm:text-6xl md:text-7xl font-black text-white tracking-tight">
-              49,90
-            </span>
-            <span className="text-base sm:text-lg font-bold text-white/70 uppercase">
-              /mês
-            </span>
-          </div>
-
-          <p className="text-xs sm:text-sm text-amber-200/90 font-semibold mt-2">
-            Perfil comercial completo, WhatsApp direto e buscas no portal.
-          </p>
-
-          <div className="mt-7 flex flex-col gap-3">
-            {onCadastrarClick ? (
-              <button
-                type="button"
-                onClick={onCadastrarClick}
-                className="w-full inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_10px_35px_rgba(245,158,11,0.35)] cursor-pointer hover:scale-105 active:scale-95"
-              >
-                <span>QUERO DIVULGAR MINHA EMPRESA</span>
-                <ArrowRight size={18} />
-              </button>
-            ) : (
-              <a
-                href={primaryWaLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_10px_35px_rgba(245,158,11,0.35)] cursor-pointer decoration-transparent hover:scale-105 active:scale-95"
-              >
-                <span>QUERO DIVULGAR MINHA EMPRESA</span>
-                <ArrowRight size={18} />
-              </a>
-            )}
-
-            <p className="text-xs sm:text-sm text-amber-300/90 font-medium mt-1">
-              Preencha os dados da sua empresa e veja a prévia instantânea no portal.
-            </p>
-
-            <a
-              href={primaryWaLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-white/70 hover:text-amber-300 font-medium py-1.5 flex items-center justify-center gap-1.5 decoration-transparent transition-colors mt-2"
-            >
-              <span>💬 Dúvidas sobre o plano? Fale conosco no WhatsApp</span>
-            </a>
-
-            <p className="text-[11px] text-white/50 font-mono mt-1">
-              Pagamento via Cartão de Crédito ou Pix • Ativação rápida com suporte
-            </p>
-          </div>
-
-        </div>
-
-        {/* Recursos Incluídos na Assinatura */}
-        <div className="mt-14 pt-10 border-t border-white/5">
-          <div className="text-center mb-8">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold">
-              O que está incluído no seu plano
-            </span>
-            <h3 className="text-xl sm:text-2xl font-black text-white mt-1">
-              Recursos de Apresentação e Divulgação
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4 max-w-5xl mx-auto text-left">
-            {beneficios.map((c, idx) => {
-              const Icon = c.icon;
-              return (
-                <div 
-                  key={idx}
-                  className="bg-[#0e0e16] border border-white/10 rounded-2xl p-4 flex flex-col justify-between shadow-lg"
-                >
-                  <div>
-                    <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center mb-3">
-                      <Icon size={18} />
-                    </div>
-                    <h4 className="text-xs sm:text-sm font-black text-white leading-snug">
-                      {c.title}
-                    </h4>
-                    <p className="text-[11px] text-white/70 mt-1.5 leading-relaxed font-medium">
-                      {c.desc}
-                    </p>
-                  </div>
-
-                  <div className="mt-3 pt-2 border-t border-white/5 text-[9px] font-mono text-emerald-400 font-bold flex items-center gap-1">
-                    <Check size={11} className="stroke-[3]" />
-                    <span>Incluído</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-      </div>
-    </section>
-  );
-};
-
-// ==========================================
-// 8. SEÇÃO: MENSAGEM FINAL (Seção 9 do Brief)
-// ==========================================
-export const CtaFinalSection: React.FC<{ primaryWaLink?: string; onCadastrarClick?: () => void }> = ({ 
-  primaryWaLink = DEFAULT_WA_LINK,
+  exclusiveWaLink = DEFAULT_EXCLUSIVE_WA_LINK,
   onCadastrarClick
 }) => {
   return (
-    <section className="w-full py-16 md:py-24 bg-gradient-to-b from-[#0a0a12] to-black border-b border-white/5 relative overflow-hidden select-none">
+    <section className="w-full py-16 md:py-20 bg-gradient-to-b from-[#0a0a12] to-black border-b border-white/5 relative overflow-hidden select-none">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[160px] pointer-events-none" />
 
       <div className="relative w-full max-w-4xl mx-auto px-4 md:px-6 text-center z-10">
         
-        <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 text-amber-400 px-4 py-1.5 rounded-full text-xs font-mono font-bold uppercase tracking-widest mb-6">
+        <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 text-amber-400 px-4 py-1.5 rounded-full text-xs font-mono font-bold uppercase tracking-widest mb-5">
           ✨ FAÇA PARTE DO PORTAL
         </div>
 
         <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
-          SUA EMPRESA TEM MUITO A MOSTRAR. DÊ A ELA MAIS VISIBILIDADE.
+          SUA EMPRESA MAIS PRESENTE NA INTERNET
         </h2>
 
-        <p className="text-sm sm:text-base md:text-lg text-white/80 font-medium max-w-2xl mx-auto mt-4 leading-relaxed">
-          Apresente seu negócio, destaque sua marca e faça parte do Minha Divulgação.
+        <p className="text-sm sm:text-base md:text-lg text-white/80 font-medium max-w-2xl mx-auto mt-3 leading-relaxed">
+          Cadastre seu negócio por R$ 49,90/mês para presença no portal com WhatsApp direto, ou consulte uma campanha exclusiva para sua marca.
         </p>
 
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -1112,7 +573,7 @@ export const CtaFinalSection: React.FC<{ primaryWaLink?: string; onCadastrarClic
             <button
               type="button"
               onClick={onCadastrarClick}
-              className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 sm:px-10 py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_12px_40px_rgba(245,158,11,0.35)] hover:scale-105 cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 sm:px-10 py-4 sm:py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_12px_40px_rgba(245,158,11,0.35)] hover:scale-105 cursor-pointer"
             >
               <span>QUERO DIVULGAR MINHA EMPRESA</span>
               <ArrowRight size={18} />
@@ -1122,27 +583,33 @@ export const CtaFinalSection: React.FC<{ primaryWaLink?: string; onCadastrarClic
               href={primaryWaLink}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 sm:px-10 py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_12px_40px_rgba(245,158,11,0.35)] hover:scale-105 cursor-pointer decoration-transparent"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 sm:px-10 py-4 sm:py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_12px_40px_rgba(245,158,11,0.35)] hover:scale-105 cursor-pointer decoration-transparent"
             >
               <span>QUERO DIVULGAR MINHA EMPRESA</span>
               <ArrowRight size={18} />
             </a>
           )}
           <a
-            href={primaryWaLink}
+            href={exclusiveWaLink}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-6 sm:px-8 py-5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 cursor-pointer decoration-transparent"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-6 sm:px-8 py-4 sm:py-5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 cursor-pointer decoration-transparent"
           >
-            <span>Dúvidas no WhatsApp</span>
+            <span>CONSULTAR DIVULGAÇÃO EXCLUSIVA</span>
           </a>
         </div>
 
         <p className="text-xs text-white/50 font-mono mt-4">
-          Preencha os dados da sua empresa e siga para a confirmação da participação.
+          Ativação simples e transparente com suporte dedicado.
         </p>
 
       </div>
     </section>
   );
 };
+
+// Aliases para compatibilidade retroativa
+export const OQueSuaEmpresaGanhaSection = ComoFunciona3EtapasSection;
+export const ComoFuncionaSection = ComoFunciona3EtapasSection;
+export const OndeSuaEmpresaApareceSection = SegmentsShowcase;
+export const PlanoPrecoSection = PlanoEDiferencaServicosSection;

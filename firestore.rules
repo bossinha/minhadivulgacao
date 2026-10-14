@@ -77,6 +77,16 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Individual Advertiser Analytics & Metrics
+    match /company_analytics/{companyId} {
+      allow read, write: if true;
+    }
+
+    // General Portal Statistics
+    match /portal_stats/{statId} {
+      allow read, write: if true;
+    }
+
     // Company Dispatch Tracking (WhatsApp/Facebook Group Dispatches)
     match /dispatch_trackings/{trackingId} {
       allow read, write: if true;
