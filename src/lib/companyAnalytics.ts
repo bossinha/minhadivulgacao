@@ -1,6 +1,7 @@
 import { db } from './firebase';
 import { doc, setDoc, increment } from 'firebase/firestore';
 import { trackCompanyInteraction } from '../components/RealtimeCounters';
+import { trackAdvertiserClick } from './analytics';
 
 export type CompanyEventType = 
   | 'whatsapp_click' 
@@ -32,6 +33,11 @@ export async function recordCompanyEvent(
     try {
       trackCompanyInteraction(
         { id: companyId, name: companyName },
+        eventType === 'whatsapp_click' ? 'whatsapp' : 'card'
+      );
+      trackAdvertiserClick(
+        companyId,
+        companyName,
         eventType === 'whatsapp_click' ? 'whatsapp' : 'card'
       );
     } catch {

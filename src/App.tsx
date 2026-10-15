@@ -101,6 +101,9 @@ import { IncomingPushNotificationToast } from './components/IncomingPushNotifica
 import { PortalWelcomeVideoModal, PortalWelcomeVideoConfig } from './components/PortalWelcomeVideoModal';
 import { AdminWelcomeVideoConfig } from './components/AdminWelcomeVideoConfig';
 import { registerServiceWorker, recordNotificationClick } from './lib/pushNotifications';
+import { trackPortalPageView, trackAdvertiserClick } from './lib/analytics';
+import { AdvertiserImpressionTracker } from './components/AdvertiserImpressionTracker';
+import { AdminPortalAnalytics } from './components/AdminPortalAnalytics';
 
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -721,6 +724,12 @@ function AppContent() {
     const refCode = queryParams.get('ref') || queryParams.get('indica');
     return !!(refCode || sessionStorage.getItem(`ref_${tid}`));
   }, [tenantId, location]);
+
+  // Telemetria de visualização de página do portal e origem do tráfego (LGPD-compliant)
+  useEffect(() => {
+    const fullPath = `${location.pathname}${location.search}${location.hash}`;
+    trackPortalPageView(fullPath);
+  }, [location.pathname, location.search, location.hash]);
 
   const scrollToSection = (id: string) => {
     const targetId = id === 'empresas' ? 'anunciantes' : (id === 'divulgue' || id === 'anuncie' ? 'planos' : id);
@@ -2059,7 +2068,10 @@ function AppContent() {
           href={waUrl} 
           target="_blank" 
           rel="noreferrer"
-          onClick={() => trackCompanyInteraction(company, 'whatsapp')}
+          onClick={() => {
+            trackAdvertiserClick(company.id, company.name, 'whatsapp');
+            trackCompanyInteraction(company, 'whatsapp');
+          }}
           className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-2.5 sm:py-3 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md active:scale-[0.98]"
         >
           <Smartphone size={isCompact ? 12 : 14} className="shrink-0" /> Falar no WhatsApp
@@ -2071,7 +2083,10 @@ function AppContent() {
           href={cleanCatalogUrl} 
           target="_blank" 
           rel="noreferrer"
-          onClick={() => trackCompanyInteraction(company, 'catalog')}
+          onClick={() => {
+            trackAdvertiserClick(company.id, company.name, 'catalog');
+            trackCompanyInteraction(company, 'catalog');
+          }}
           className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-2.5 sm:py-3 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer active:scale-[0.98]"
         >
           <ShoppingBag size={isCompact ? 12 : 14} className="shrink-0" /> Ver Catálogo
@@ -2083,7 +2098,10 @@ function AppContent() {
           href={websiteUrl} 
           target="_blank" 
           rel="noreferrer"
-          onClick={() => trackCompanyInteraction(company, 'website')}
+          onClick={() => {
+            trackAdvertiserClick(company.id, company.name, 'website');
+            trackCompanyInteraction(company, 'website');
+          }}
           className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-2.5 sm:py-3 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer active:scale-[0.98]"
         >
           <Globe size={isCompact ? 12 : 14} className="shrink-0" /> Visitar Site Oficial
@@ -2095,7 +2113,10 @@ function AppContent() {
           href={igUrl} 
           target="_blank" 
           rel="noreferrer"
-          onClick={() => trackCompanyInteraction(company, 'instagram')}
+          onClick={() => {
+            trackAdvertiserClick(company.id, company.name, 'instagram');
+            trackCompanyInteraction(company, 'instagram');
+          }}
           className="w-full bg-[#e1306c] hover:bg-[#d6245d] text-white py-2.5 sm:py-3 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md active:scale-[0.98]"
         >
           <Instagram size={isCompact ? 12 : 14} className="shrink-0" /> Instagram Oficial
@@ -2114,7 +2135,10 @@ function AppContent() {
           href={igUrl} 
           target="_blank" 
           rel="noreferrer"
-          onClick={() => trackCompanyInteraction(company, 'instagram')}
+          onClick={() => {
+            trackAdvertiserClick(company.id, company.name, 'instagram');
+            trackCompanyInteraction(company, 'instagram');
+          }}
           className="flex-1 min-w-0 bg-pink-500/10 border border-pink-500/25 hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 hover:border-transparent text-pink-400 hover:text-white py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all duration-200"
           title="Ver Instagram"
         >
@@ -2132,7 +2156,10 @@ function AppContent() {
           href={cleanCatalogUrl} 
           target="_blank" 
           rel="noreferrer"
-          onClick={() => trackCompanyInteraction(company, 'catalog')}
+          onClick={() => {
+            trackAdvertiserClick(company.id, company.name, 'catalog');
+            trackCompanyInteraction(company, 'catalog');
+          }}
           className="flex-1 min-w-0 bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500 hover:border-amber-500 text-amber-400 hover:text-black py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all duration-200"
           title="Ver Catálogo / Cardápio"
         >
@@ -2150,7 +2177,10 @@ function AppContent() {
           href={websiteUrl} 
           target="_blank" 
           rel="noreferrer"
-          onClick={() => trackCompanyInteraction(company, 'website')}
+          onClick={() => {
+            trackAdvertiserClick(company.id, company.name, 'website');
+            trackCompanyInteraction(company, 'website');
+          }}
           className="flex-1 min-w-0 bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500 hover:border-amber-500 text-amber-400 hover:text-black py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all duration-200"
           title="Visitar Website"
         >
@@ -2168,7 +2198,10 @@ function AppContent() {
           href={fbUrl} 
           target="_blank" 
           rel="noreferrer"
-          onClick={() => trackCompanyInteraction(company, 'facebook')}
+          onClick={() => {
+            trackAdvertiserClick(company.id, company.name, 'facebook');
+            trackCompanyInteraction(company, 'facebook');
+          }}
           className="flex-1 min-w-0 bg-blue-500/10 border border-blue-500/25 hover:bg-blue-600 hover:border-blue-600 text-blue-400 hover:text-white py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all duration-200"
           title="Ver Facebook"
         >
@@ -3004,6 +3037,16 @@ function AppContent() {
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
               <button 
                 className="dev-btn" 
+                style={{ background: '#3b82f6', color: '#fff', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)' }}
+                onClick={() => {
+                  const el = document.getElementById('master-analytics-section');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                <span>📊</span> ESTATÍSTICAS DO PORTAL
+              </button>
+              <button 
+                className="dev-btn" 
                 style={{ background: '#f59e0b', color: '#000', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(245, 158, 11, 0.3)' }}
                 onClick={() => {
                   const el = document.getElementById('master-push-notifications');
@@ -3034,6 +3077,16 @@ function AppContent() {
               </button>
               <button className="dev-btn dev-btn-secondary" onClick={logout}>Sair</button>
             </div>
+          </div>
+
+          {/* ======================================================== */}
+          {/* PAINEL MASTER DE ESTATÍSTICAS E DESEMPENHO DOS ANUNCIANTES */}
+          {/* ======================================================== */}
+          <div id="master-analytics-section" className="dev-item-card" style={{ marginBottom: '40px', background: '#0a0a10', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '20px', padding: '24px' }}>
+            <AdminPortalAnalytics
+              companies={allMasterCompanies}
+              adminEmail={user?.email || 'bossinhaa80@gmail.com'}
+            />
           </div>
 
           {/* ======================================================== */}
@@ -4929,8 +4982,9 @@ function AppContent() {
               {filteredCompanies.map(company => {
                 const planType = getCompanyPlanType(company);
                 return (
-                  <div 
+                  <AdvertiserImpressionTracker 
                     key={company.id} 
+                    company={company}
                     className={`bg-[#0f1016] border transition-all duration-300 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1.5 shadow-xl hover:shadow-2xl relative select-none ${
                       planType === 'patrocinado' 
                         ? 'border-amber-400/80 shadow-[0_0_25px_rgba(251,191,36,0.25)] ring-1 ring-amber-400/50' 
@@ -4959,6 +5013,8 @@ function AppContent() {
                     
                     <div 
                       onClick={() => {
+                        trackAdvertiserClick(company.id, company.name, 'card');
+                        trackCompanyInteraction(company, 'card');
                         if (company.wa) {
                           window.open(getCompanyWhatsAppUrl(company), '_blank');
                         } else if (company.catalogUrl) {
@@ -5026,7 +5082,7 @@ function AppContent() {
                       }}
                     />
                   )}
-                </div>
+                </AdvertiserImpressionTracker>
               );
             })}
             </div>
@@ -5608,24 +5664,33 @@ function AppContent() {
               </div>
 
               <div className="dev-tabs">
-                {['geral', 'seções', 'categorias', 'empresas', 'disparos', 'notificacoes', 'vídeo-portal', 'anunciantes', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'banners-horizontais', 'depoimentos-whats', 'preços', 'segmentos', 'chat'].filter(Boolean).map(tab => (
+                {['estatísticas', 'geral', 'seções', 'categorias', 'empresas', 'disparos', 'notificacoes', 'vídeo-portal', 'anunciantes', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'banners-horizontais', 'depoimentos-whats', 'preços', 'segmentos', 'chat'].filter(Boolean).map(tab => (
                   <button 
                     key={tab} 
                     className={`dev-tab ${activeTab === tab ? 'active' : ''}`}
                     onClick={() => setActiveTab(tab)}
                     style={
-                      tab === 'disparos' ? { background: activeTab === 'disparos' ? '#fbbf24' : '#1e1b10', color: activeTab === 'disparos' ? '#000' : '#fbbf24', border: '1px solid #fbbf24', fontWeight: 900 }
+                      tab === 'estatísticas' ? { background: activeTab === 'estatísticas' ? '#3b82f6' : '#0f172a', color: activeTab === 'estatísticas' ? '#fff' : '#60a5fa', border: '1px solid #3b82f6', fontWeight: 900, boxShadow: activeTab === 'estatísticas' ? '0 0 15px rgba(59, 130, 246, 0.4)' : undefined }
+                      : tab === 'disparos' ? { background: activeTab === 'disparos' ? '#fbbf24' : '#1e1b10', color: activeTab === 'disparos' ? '#000' : '#fbbf24', border: '1px solid #fbbf24', fontWeight: 900 }
                       : tab === 'notificacoes' ? { background: activeTab === 'notificacoes' ? '#f59e0b' : '#2a1a04', color: activeTab === 'notificacoes' ? '#000' : '#fbbf24', border: '1px solid #f59e0b', fontWeight: 900, boxShadow: activeTab === 'notificacoes' ? '0 0 15px rgba(245, 158, 11, 0.4)' : undefined }
                       : tab === 'vídeo-portal' ? { background: activeTab === 'vídeo-portal' ? '#10b981' : '#042f2e', color: activeTab === 'vídeo-portal' ? '#000' : '#34d399', border: '1px solid #10b981', fontWeight: 900, boxShadow: activeTab === 'vídeo-portal' ? '0 0 15px rgba(16, 185, 129, 0.4)' : undefined }
                       : undefined
                     }
                   >
-                    {tab === 'disparos' ? '📢 DISPAROS (24H & PV)' : tab === 'notificacoes' ? '🔔 NOTIFICAÇÕES PUSH' : tab === 'vídeo-portal' ? '🎬 VÍDEO DO PORTAL (ENTRADA)' : tab === 'depoimentos-whats' ? 'DEPOIMENTOS ZAP' : tab === 'banners-horizontais' ? 'BANNERS HORIZONTAIS' : tab.toUpperCase()}
+                    {tab === 'estatísticas' ? '📊 ESTATÍSTICAS' : tab === 'disparos' ? '📢 DISPAROS (24H & PV)' : tab === 'notificacoes' ? '🔔 NOTIFICAÇÕES PUSH' : tab === 'vídeo-portal' ? '🎬 VÍDEO DO PORTAL (ENTRADA)' : tab === 'depoimentos-whats' ? 'DEPOIMENTOS ZAP' : tab === 'banners-horizontais' ? 'BANNERS HORIZONTAIS' : tab.toUpperCase()}
                   </button>
                 ))}
               </div>
 
               <div className="dev-section">
+                {activeTab === 'estatísticas' && (
+                  <div className="dev-forms-container" style={{ padding: '10px 0' }}>
+                    <AdminPortalAnalytics
+                      companies={displayedCompanies}
+                      adminEmail={user?.email || 'bossinhaa80@gmail.com'}
+                    />
+                  </div>
+                )}
                 {activeTab === 'geral' && (
                   <div className="dev-forms-container">
                     <h3>Informações Gerais e Tema</h3>

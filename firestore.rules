@@ -79,12 +79,20 @@ service cloud.firestore {
 
     // Individual Advertiser Analytics & Metrics
     match /company_analytics/{companyId} {
-      allow read, write: if true;
+      allow read: if isAdmin();
+      allow write: if true;
     }
 
-    // General Portal Statistics
+    // Daily Advertiser Performance Metrics (Impressions, CTR, Clicks)
+    match /advertiser_analytics/{analyticsId} {
+      allow read: if isAdmin();
+      allow write: if true;
+    }
+
+    // General Portal Statistics (Pageviews, Sessions, Traffic Sources)
     match /portal_stats/{statId} {
-      allow read, write: if true;
+      allow read: if isAdmin();
+      allow write: if true;
     }
 
     // Company Dispatch Tracking (WhatsApp/Facebook Group Dispatches)
