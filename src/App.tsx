@@ -298,6 +298,7 @@ const CATEGORIES = [
   { name: "Transporte, Fretes & Mudanças", icon: "🚚" },
   { name: "Perfumarias & Cosméticos", icon: "💄" },
   { name: "Papelarias & Armarinhos", icon: "📚" },
+  { name: "Artesanato & Decoração", icon: "🎨" },
   { name: "Óticas & Joalherias", icon: "👓" },
   { name: "Floriculturas & Jardinagem", icon: "💐" },
   { name: "Publicidade & Marketing", icon: "📢" },
@@ -408,6 +409,79 @@ const DEFAULT_DATA = {
 // --- Helper Functions ---
 const normalize = (str: string) => (str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const slugify = (str: string) => (str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+
+export function isCompanyInCategory(company: any, categoryName: string): boolean {
+  if (!categoryName) return true;
+  if (!company) return false;
+
+  const compCat = normalize(company.category || '');
+  const targetCat = normalize(categoryName);
+
+  // 1. Exact match
+  if (compCat === targetCat) return true;
+
+  // 2. Direct string inclusion
+  if (compCat && (compCat.includes(targetCat) || targetCat.includes(compCat))) {
+    return true;
+  }
+
+  // 3. Normalized tokens without plurals
+  const stripPlural = (w: string) => w.replace(/s$/, '').replace(/es$/, '');
+  const targetTokens = targetCat
+    .split(/[\s,&/]+/)
+    .map(w => stripPlural(w))
+    .filter(w => w.length >= 3 && !['para', 'com', 'sem', 'dos', 'das'].includes(w));
+
+  const compTokens = compCat
+    .split(/[\s,&/]+/)
+    .map(w => stripPlural(w))
+    .filter(w => w.length >= 3);
+
+  if (targetTokens.some(t => compTokens.some(c => c.includes(t) || t.includes(c)))) {
+    return true;
+  }
+
+  // 4. Semantic category synonyms / keywords dictionary
+  const categoryAliases: Record<string, string[]> = {
+    'refrigeracao': ['ar condicionado', 'climatizacao', 'geladeira', 'freezer', 'espaco frio'],
+    'ar condicionado & refrigeracao': ['refrigeracao', 'refrigera', 'climatizacao', 'split', 'ar condicionado', 'geladeira', 'espaco frio'],
+    'oficinas mecanicas & auto': ['oficina', 'mecanica', 'auto', 'carro', 'rolamento', 'mecanico', 'belem rolamentos'],
+    'autopecas & veiculos': ['autopecas', 'pecas', 'veiculos', 'carro', 'moto', 'rolamento'],
+    'restaurantes & bares': ['restaurante', 'bar', 'churrascaria', 'gastronomia', 'comida', 'almoco', 'jantar', 'ordones', 'carneiro'],
+    'pizzarias': ['pizza', 'pizzaria', 'pizzas'],
+    'hamburguerias & lanches': ['hamburguer', 'lanche', 'pastel', 'salgado', 'sanduiche', 'lanches'],
+    'mercados & supermercados': ['supermercado', 'mercado', 'mercearia', 'atacad', 'assai', 'atacadao'],
+    'farmacias & drogarias': ['farmacia', 'drogaria', 'droga', 'medicamento', 'remedio'],
+    'clinicas & medicos & dentistas': ['saude', 'clinica', 'medico', 'dentista', 'odontologia', 'hospital', 'cartao de todos'],
+    'advogados & juridico': ['advogado', 'advocacia', 'juridico', 'direito'],
+    'contabilidade & financas': ['contabilidade', 'contador', 'financas', 'financeiro', 'credito', 'emprestimo', 'gih cred'],
+    'hoteis, pousadas & lazer': ['hotel', 'pousada', 'lazer', 'shopping', 'cinema', 'parque', 'north shopping'],
+    'publicidade & marketing': ['publicidade', 'marketing', 'propaganda', 'audio', 'som', 'bossa infor'],
+    'material de construcao & reformas': ['construcao', 'reforma', 'material de construcao', 'cimento', 'tinta', 'obra'],
+    'eletronicos & assistencia de celular': ['eletronico', 'celular', 'smartphone', 'assistencia', 'telefone'],
+    'informatica & tecnologia': ['informatica', 'computador', 'tecnologia', 'software', 'site', 'internet'],
+    'lojas de roupas & calcados': ['roupa', 'calcado', 'moda', 'vestuario', 'sapato', 'tenis', 'jls'],
+    'artesanato & decoracao': ['artesanato', 'decoracao', 'artesao', 'croche', 'pintura', 'manual', 'presentes']
+  };
+
+  for (const [catKey, aliases] of Object.entries(categoryAliases)) {
+    const normKey = normalize(catKey);
+    if (targetCat.includes(normKey) || normKey.includes(targetCat)) {
+      if (aliases.some(alias => compCat.includes(normalize(alias)))) {
+        return true;
+      }
+    }
+  }
+
+  // 5. Check if company name or description explicitly matches category keywords
+  const compName = normalize(company.name || '');
+  const compDesc = normalize(company.desc || '');
+  if (targetTokens.some(t => compName.includes(t) || compDesc.includes(t))) {
+    return true;
+  }
+
+  return false;
+}
 
 // --- Plan & Monetization Helpers ---
 export function getCompanyPlanType(company: any): 'patrocinado' | 'destaque' | 'verificado' | 'gratuito' {
@@ -2501,11 +2575,12 @@ function AppContent() {
 
   const filteredCompaniesRaw = appData
     ? displayedCompanies.filter(c => {
-        const matchesCategory = selectedCategory ? c.category === selectedCategory : true;
+        const matchesCategory = selectedCategory ? isCompanyInCategory(c, selectedCategory) : true;
         const matchesSearch = searchQuery 
           ? normalize(c.name).includes(normalize(searchQuery)) || 
             normalize(c.desc || '').includes(normalize(searchQuery)) || 
             normalize(c.category || '').includes(normalize(searchQuery)) ||
+            isCompanyInCategory(c, searchQuery) ||
             (c.city && normalize(c.city).includes(normalize(searchQuery))) ||
             (c.state && normalize(c.state).includes(normalize(searchQuery))) ||
             (c.uf && normalize(c.uf).includes(normalize(searchQuery))) ||
@@ -2654,15 +2729,33 @@ function AppContent() {
     };
   }, [appData?.companies]);
 
+  const scrollToResults = () => {
+    const element = document.getElementById('resultados-anunciantes') || document.getElementById('destaque') || document.getElementById('anunciantes');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   const handleCategoryClick = (categoryName: string | null) => {
-    setSelectedCategory(categoryName);
-    // Smooth scroll to results
+    const isSame = selectedCategory === categoryName;
+    const nextCat = isSame ? null : categoryName;
+    setSelectedCategory(nextCat);
+    if (nextCat) {
+      setSearchQuery(''); // Limpa a busca para que não haja conflito de filtros
+    }
+    // Rola a tela imediatamente e suavemente direto para as empresas
     setTimeout(() => {
-      const element = document.getElementById('empresas-whatsapp');
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 100);
+      scrollToResults();
+    }, 60);
+  };
+
+  const handleSearchSubmit = () => {
+    if (searchQuery.trim()) {
+      setSelectedCategory(null);
+    }
+    setTimeout(() => {
+      scrollToResults();
+    }, 60);
   };
 
   // --- Helper to update specific data ---
@@ -4812,28 +4905,59 @@ function AppContent() {
               Conheça as empresas presentes no Minha Divulgação, utilize a busca ou categorias e fale direto com cada anunciante pelo WhatsApp.
             </p>
 
-            {/* Dynamic Keywords Search Box */}
-            <div className="relative w-full max-w-lg mt-8">
-              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-white/40">
-                <Search size={18} />
-              </div>
-              <input 
-                type="text" 
-                placeholder="Busque por Assai, Ordones, Refrigeração..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#11111a] border border-white/10 hover:border-white/20 focus:border-[var(--primary)] outline-none rounded-2xl pl-12 pr-4 py-4 text-sm text-white font-medium shadow-2xl transition-all duration-300"
-              />
-              {searchQuery && (
-                <button 
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute inset-y-0 right-4 text-xs font-bold font-mono text-white/50 hover:text-white"
+            {/* Dynamic Keywords Search Box with PESQUISAR Button */}
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSearchSubmit();
+              }}
+              className="w-full max-w-xl mt-8"
+            >
+              <div className="relative flex items-center bg-[#11111a] border border-white/15 focus-within:border-amber-400 focus-within:ring-2 focus-within:ring-amber-400/30 rounded-2xl p-1.5 shadow-2xl transition-all duration-300">
+                <div className="pl-3.5 pr-2 flex items-center pointer-events-none text-amber-400">
+                  <Search size={18} />
+                </div>
+                
+                <input 
+                  type="text" 
+                  placeholder="Digite uma categoria ou empresa (ex: Artesanato, Refrigeração)..." 
+                  value={searchQuery}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSearchQuery(val);
+                    if (val.trim() && selectedCategory) {
+                      setSelectedCategory(null);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSearchSubmit();
+                    }
+                  }}
+                  className="w-full bg-transparent outline-none py-3 pr-2 text-sm text-white placeholder-white/40 font-medium"
+                />
+
+                {searchQuery && (
+                  <button 
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="px-2.5 py-1 text-xs font-bold font-mono text-white/40 hover:text-white transition-colors cursor-pointer mr-1"
+                    title="Limpar pesquisa"
+                  >
+                    ✕
+                  </button>
+                )}
+
+                <button
+                  type="submit"
+                  className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-black text-xs px-4 sm:px-6 py-3 rounded-xl shadow-lg flex items-center gap-1.5 transition-all duration-200 cursor-pointer active:scale-95 shrink-0"
                 >
-                  LIMPAR
+                  <Search size={14} className="stroke-[3]" />
+                  <span>PESQUISAR</span>
                 </button>
-              )}
-            </div>
+              </div>
+            </form>
 
             {/* Dynamic Active Filters Badges */}
             {(selectedStateFilter || selectedTypeFilter !== 'all' || selectedCategory || searchQuery) && (
@@ -4885,32 +5009,24 @@ function AppContent() {
             </h3>
             
             {(() => {
-              const mainCats = CATEGORIES.slice(0, 12);
-              const displayedCategories = showAllCategories 
-                ? CATEGORIES 
+              const allCats = displayedCategories.length > 0 ? displayedCategories : CATEGORIES;
+              const mainCats = allCats.slice(0, 12);
+              const catsToRender = showAllCategories 
+                ? allCats 
                 : (selectedCategory && !mainCats.some(c => c.name === selectedCategory) 
-                    ? [...mainCats, ...CATEGORIES.filter(c => c.name === selectedCategory)] 
+                    ? [...mainCats, ...allCats.filter(c => c.name === selectedCategory)] 
                     : mainCats);
 
               return (
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-3">
-                    {displayedCategories.map((cat, idx) => {
+                    {catsToRender.map((cat, idx) => {
                       const isSelected = selectedCategory === cat.name;
                       return (
                         <button
                           key={idx}
                           type="button"
-                          onClick={() => {
-                            const newCat = isSelected ? null : cat.name;
-                            setSelectedCategory(newCat);
-                            setTimeout(() => {
-                              const resultsEl = document.getElementById('destaque');
-                              if (resultsEl) {
-                                resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                              }
-                            }, 50);
-                          }}
+                          onClick={() => handleCategoryClick(cat.name)}
                           className={`p-3.5 rounded-2xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer ${
                             isSelected 
                               ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-black scale-[1.03] shadow-[0_0_15px_rgba(251,191,36,0.25)]' 
@@ -4924,7 +5040,7 @@ function AppContent() {
                     })}
                   </div>
 
-                  {CATEGORIES.length > 12 && (
+                  {allCats.length > 12 && (
                     <div className="text-center mt-5">
                       <button
                         type="button"
@@ -4937,7 +5053,7 @@ function AppContent() {
                           </>
                         ) : (
                           <>
-                            <span>📂 Ver Todas as Categorias ({CATEGORIES.length})</span>
+                            <span>📂 Ver Todas as Categorias ({allCats.length})</span>
                             <ChevronDown className="w-3.5 h-3.5 text-amber-400" />
                           </>
                         )}
@@ -4949,36 +5065,72 @@ function AppContent() {
             })()}
           </div>
 
+          {/* Scroll Target Anchor for Immediate Direct View */}
+          <div id="resultados-anunciantes" className="scroll-mt-28" />
+
           {/* Header for Category or Search Filter Results */}
-          {(selectedCategory || searchQuery) && filteredCompanies.length > 0 && (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-6 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border border-amber-500/20 p-4 rounded-2xl">
+          {(selectedCategory || searchQuery) && (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border border-amber-500/20 p-4 rounded-2xl">
               <div className="flex items-center gap-2">
                 <span className="text-base">🏷️</span>
                 <h3 className="text-sm font-extrabold text-white">
                   {selectedCategory ? `Empresas Cadastradas em: ${selectedCategory}` : `Resultados da busca por "${searchQuery}"`}
                 </h3>
               </div>
-              <span className="text-xs font-mono font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full">
-                {filteredCompanies.length} {filteredCompanies.length === 1 ? 'empresa cadastrada' : 'empresas cadastradas'}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full">
+                  {filteredCompanies.length} {filteredCompanies.length === 1 ? 'empresa cadastrada' : 'empresas cadastradas'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory(null);
+                    setSearchQuery('');
+                  }}
+                  className="text-xs text-white/50 hover:text-white font-mono uppercase bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                >
+                  ✕ Ver Todas
+                </button>
+              </div>
             </div>
           )}
 
           {/* Grid of Results */}
           {filteredCompanies.length === 0 ? (
-            <div className="text-center py-16 bg-[#11111a]/40 border border-white/5 rounded-3xl mt-12 max-w-xl mx-auto">
-              <Info size={40} className="mx-auto text-white/35 mb-4" />
-              <p className="text-sm text-white/60 font-semibold text-center">Nenhum anunciante encontrado para a sua busca</p>
-              <button 
-                type="button"
-                onClick={() => { setSearchQuery(''); handleCategoryClick(null); }}
-                className="text-xs text-[var(--primary)] font-extrabold uppercase mt-3 tracking-widest hover:underline"
-              >
-                Resetar Filtros
-              </button>
+            <div className="text-center py-14 px-6 bg-[#11111a]/60 border border-white/10 rounded-3xl mt-6 max-w-xl mx-auto shadow-2xl">
+              <div className="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-4">
+                <Store size={28} className="text-amber-400" />
+              </div>
+              <h4 className="text-base font-black text-white">
+                {selectedCategory 
+                  ? `Nenhuma empresa cadastrada ainda em "${selectedCategory}"`
+                  : `Nenhum anunciante encontrado para "${searchQuery}"`}
+              </h4>
+              <p className="text-xs sm:text-sm text-white/60 max-w-md mx-auto mt-2 leading-relaxed">
+                Você tem uma empresa ou presta serviços nesse segmento? Divulgue agora e seja a <strong>empresa número 1 de destaque exclusivo</strong> da sua cidade!
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
+                <button 
+                  type="button"
+                  onClick={() => { setSearchQuery(''); handleCategoryClick(null); }}
+                  className="text-xs bg-white/10 hover:bg-white/15 text-white font-bold py-2.5 px-4 rounded-xl transition-all cursor-pointer"
+                >
+                  Ver Todas as Empresas
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => {
+                    const plansEl = document.getElementById('planos') || document.getElementById('divulgue');
+                    if (plansEl) plansEl.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="text-xs bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-black py-2.5 px-4 rounded-xl shadow-lg transition-all cursor-pointer"
+                >
+                  ⭐ Anunciar Minha Empresa Aqui
+                </button>
+              </div>
             </div>
           ) : (
-            <div id="destaque" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-12">
+            <div id="destaque" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">
               {filteredCompanies.map(company => {
                 const planType = getCompanyPlanType(company);
                 return (
