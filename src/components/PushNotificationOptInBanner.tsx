@@ -85,7 +85,7 @@ export const PushNotificationOptInBanner: React.FC<PushNotificationOptInBannerPr
         top: '12px',
         left: '50%',
         transform: 'translateX(-50%)',
-        zIndex: 99999999,
+        zIndex: 89999,
         pointerEvents: 'auto'
       }}
     >

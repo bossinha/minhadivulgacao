@@ -186,7 +186,7 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
   // Patrocinador atualmente em exibição
   const activeSponsor: SponsoredItem | null = allActiveSponsors[currentSponsorIndex] || allActiveSponsors[0] || null;
 
-  // Localizar no banco de empresas do portal os dados cadastrados desta empresa (ex: Josepf Clean)
+  // Localizar no banco de empresas do portal os dados cadastrados desta empresa com precisão absoluta
   // Garante conformidade total com as Regras de Hooks do React (sempre chamado incondicionalmente no topo)
   const resolvedCompany = useMemo(() => {
     if (!companies || !Array.isArray(companies) || companies.length === 0 || !activeSponsor) {
@@ -194,78 +194,122 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
     }
     const cleanStr = (s: any) => String(s || '').trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
+    const explicitName = cleanStr(activeSponsor.companyName);
     const targetId = cleanStr(activeSponsor.companyId);
-    const targetName = cleanStr(activeSponsor.companyName || activeSponsor.name || activeSponsor.title);
     const flyerUrl = cleanStr(activeSponsor.flyerUrl || (activeSponsor as any).image);
-    const videoUrl = cleanStr(activeSponsor.videoUrl);
+    const itemTitle = cleanStr(activeSponsor.title || activeSponsor.name);
     const phoneDigits = String(activeSponsor.whatsappPhone || '').replace(/\D/g, '');
 
-    // 1. Busca por ID da empresa
-    if (targetId) {
-      const match = companies.find((c: any) => {
+    const isPortalNumber = (raw: string) => {
+      const d = String(raw).replace(/\D/g, '');
+      return ['5585992908713', '5585992862177', '85992908713', '85992862177'].some(p => d.endsWith(p) || p.endsWith(d));
+    };
+
+    // 1. Busca prioritária por Nome explícito da Empresa cadastrada
+    if (explicitName && !explicitName.includes('patrocinador') && !explicitName.includes('minha divulgacao')) {
+      const matchByName = companies.find((c: any) => {
+        if (!c?.name) return false;
+        const cName = cleanStr(c.name);
+        return cName === explicitName || cName.includes(explicitName) || explicitName.includes(cName);
+      });
+      if (matchByName) return matchByName;
+    }
+
+    // 2. Busca por Telefone WhatsApp do patrocinador (se for número comercial específico de anunciante)
+    if (phoneDigits && phoneDigits.length >= 8 && !isPortalNumber(phoneDigits)) {
+      const matchByPhone = companies.find((c: any) => {
+        if (!c) return false;
+        const cPhone = String(c.wa || c.whatsapp || c.phone || '').replace(/\D/g, '');
+        return cPhone && (phoneDigits.endsWith(cPhone) || cPhone.endsWith(phoneDigits));
+      });
+      if (matchByPhone) return matchByPhone;
+    }
+
+    // 3. Busca por ID da empresa (garantindo que não seja ID fictício como 'principal' ou 'sponsor_...')
+    if (targetId && targetId !== 'principal' && !targetId.startsWith('sponsor_')) {
+      const matchById = companies.find((c: any) => {
         if (!c) return false;
         const cId = cleanStr(c.id);
         const cName = cleanStr(c.name);
         return cId === targetId || cName === targetId;
       });
-      if (match) return match;
+      if (matchById) return matchById;
     }
 
-    // 2. Busca por Nome ou Título (exato ou parcial)
-    if (targetName && targetName !== 'patrocinador' && targetName !== 'anunciante' && !targetName.includes('minha divulgacao')) {
-      const match = companies.find((c: any) => {
-        if (!c || !c.name) return false;
-        const cName = cleanStr(c.name);
-        if (!cName) return false;
-        return cName === targetName || cName.includes(targetName) || targetName.includes(cName);
-      });
-      if (match) return match;
-    }
-
-    // 3. Busca por Telefone WhatsApp cadastrado
-    if (phoneDigits && phoneDigits.length >= 8) {
-      const isBossa = ['5585992908713', '5585992862177', '85992908713', '85992862177'].some(b => phoneDigits.endsWith(b) || b.endsWith(phoneDigits));
-      if (!isBossa) {
-        const match = companies.find((c: any) => {
-          if (!c) return false;
-          const cPhone = String(c.wa || c.whatsapp || c.phone || '').replace(/\D/g, '');
-          return cPhone && (phoneDigits.endsWith(cPhone) || cPhone.endsWith(phoneDigits));
-        });
-        if (match) return match;
-      }
-    }
-
-    // 4. Busca por imagem / flyer / slug no arquivo (ex: "josepf", "clean", "refrigeracao")
+    // 4. Reconhecimento inteligente por imagem / slug / banner
     if (flyerUrl && flyerUrl.length > 5) {
-      const match = companies.find((c: any) => {
+      const keywordsMap: { [key: string]: string } = {
+        'gih-cred': 'Gih Cred',
+        'gih_cred': 'Gih Cred',
+        'gihcred': 'Gih Cred',
+        'salao': 'Salão Stephanny Jessie',
+        'stephanny': 'Salão Stephanny Jessie',
+        'belem': 'Belém Rolamentos',
+        'rolamentos': 'Belém Rolamentos',
+        'assai': 'Assai Atacadista',
+        'atacadao': 'Atacadão',
+        'ordones': 'Carneiro do Ordones',
+        'carneiro': 'Carneiro do Ordones',
+        'refrigeracao': 'ESPAÇO FRIO REFRIGERAÇÃO',
+        'refrigera': 'ESPAÇO FRIO REFRIGERAÇÃO',
+        'espaco frio': 'ESPAÇO FRIO REFRIGERAÇÃO',
+        'espaco_frio': 'ESPAÇO FRIO REFRIGERAÇÃO',
+        'cartao de todos': 'Cartão de Todos',
+        'cartao_de_todos': 'Cartão de Todos',
+        'north shopping': 'North Shopping',
+        'north_shopping': 'North Shopping'
+      };
+
+      for (const [kw, compName] of Object.entries(keywordsMap)) {
+        if (flyerUrl.includes(kw) || itemTitle.includes(kw)) {
+          const found = companies.find((c: any) => cleanStr(c?.name) === cleanStr(compName));
+          if (found) return found;
+        }
+      }
+
+      const matchByUrl = companies.find((c: any) => {
         if (!c || !c.name) return false;
         const cName = cleanStr(c.name);
-        if (!cName || cName.length < 3) return false;
+        if (!cName || cName.length < 3 || cName.includes('minha divulgacao')) return false;
         const words = cName.split(/\s+/).filter(w => w.length >= 4);
         return words.some(word => flyerUrl.includes(word));
       });
-      if (match) return match;
+      if (matchByUrl) return matchByUrl;
+    }
+
+    // 5. Busca por Título se for nome específico de anunciante
+    if (itemTitle && !itemTitle.includes('patrocinador') && !itemTitle.includes('minha divulgacao') && !itemTitle.includes('destaque patrocinado') && !itemTitle.includes('banner')) {
+      const matchByTitle = companies.find((c: any) => {
+        if (!c?.name) return false;
+        const cName = cleanStr(c.name);
+        return cName === itemTitle || itemTitle.includes(cName);
+      });
+      if (matchByTitle) return matchByTitle;
     }
 
     return null;
   }, [companies, activeSponsor]);
 
-  const videoUrl = (activeSponsor?.videoUrl || config?.videoUrl || '').trim();
-  const flyerUrl = (activeSponsor?.flyerUrl || config?.flyerUrl || '').trim();
+  // Isola as mídias: cada patrocinador exibe estritamente o seu banner ou seu vídeo, evitando mistura de mídias de diferentes anunciantes
+  const isMultiSponsor = allActiveSponsors.length > 1;
+  const videoUrl = (activeSponsor?.videoUrl || (!isMultiSponsor ? config?.videoUrl : '') || '').trim();
+  const flyerUrl = (activeSponsor?.flyerUrl || (!isMultiSponsor ? config?.flyerUrl : '') || '').trim();
   const hasVideo = Boolean(videoUrl);
   const hasFlyer = Boolean(flyerUrl);
-  const mediaType = activeSponsor?.mediaType || config?.mediaType || 'auto';
+  const mediaType = activeSponsor?.mediaType || (!isMultiSponsor ? config?.mediaType : undefined) || 'auto';
 
-  // Set initial active media tab based on current sponsor config
+  // Configura a aba ativa de mídia de forma limpa e fiel ao patrocinador atual
   useEffect(() => {
-    if (mediaType === 'flyer' && hasFlyer) {
+    if (hasFlyer && !hasVideo) {
+      setActiveTabMedia('flyer');
+    } else if (hasVideo && !hasFlyer) {
+      setActiveTabMedia('video');
+    } else if (mediaType === 'flyer' && hasFlyer) {
       setActiveTabMedia('flyer');
     } else if (mediaType === 'video' && hasVideo) {
       setActiveTabMedia('video');
-    } else if (!hasVideo && hasFlyer) {
-      setActiveTabMedia('flyer');
     } else {
-      setActiveTabMedia('video');
+      setActiveTabMedia(hasFlyer ? 'flyer' : 'video');
     }
   }, [mediaType, hasVideo, hasFlyer, isOpen, currentSponsorIndex]);
 
@@ -366,9 +410,10 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
     (activeSponsor?.name && !activeSponsor.name.toLowerCase().includes('minha divulgação') && activeSponsor.name.toLowerCase() !== 'bossa infor')
   );
 
+  // Nome do anunciante: sempre preserva com prioridade máxima o anunciante do banner exibido
   const companyTitle = (
-    resolvedCompany?.name ||
     activeSponsor?.companyName?.trim() ||
+    resolvedCompany?.name ||
     activeSponsor?.name?.trim() ||
     activeSponsor?.title?.trim() ||
     (!isMultiSponsorOrSpecific ? (config?.companyName?.trim() || config?.title?.trim()) : '') ||
@@ -376,28 +421,31 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
   );
 
   const companyCategory = (
+    activeSponsor?.companyCategory?.trim() ||
     resolvedCompany?.category ||
-    activeSponsor?.companyCategory ||
     (!isMultiSponsorOrSpecific ? config?.companyCategory : '') ||
     ''
   );
 
   const companyLogo = (
+    activeSponsor?.companyLogo?.trim() ||
     resolvedCompany?.logo ||
-    activeSponsor?.companyLogo ||
     (!isMultiSponsorOrSpecific ? config?.companyLogo : '') ||
     ''
   );
 
-  // Telefone WhatsApp: Prioriza SEMPRE o contato da própria empresa anunciada (ex: Josepf Clean).
-  // Se for anunciante terceiro, NUNCA usa telefone da Bossa Infor!
+  // Telefone WhatsApp: Prioriza SEMPRE o contato da própria empresa anunciada no banner.
+  // Garante que o contato de outro anunciante ou o suporte geral nunca substitua indevidamente o anunciante correto
   const getRawPhone = () => {
+    const sponsorPhone = activeSponsor?.whatsappPhone?.trim() || '';
+    if (sponsorPhone && !isBossaGeneralNumber(sponsorPhone)) {
+      return sponsorPhone;
+    }
     if (resolvedCompany) {
       const compWa = resolvedCompany.wa || resolvedCompany.whatsapp || resolvedCompany.phone || '';
       if (compWa) return String(compWa).trim();
     }
-    const sponsorPhone = activeSponsor?.whatsappPhone?.trim() || '';
-    if (sponsorPhone && (!isThirdPartyAdvertiser || !isBossaGeneralNumber(sponsorPhone))) {
+    if (sponsorPhone) {
       return sponsorPhone;
     }
     if (!isThirdPartyAdvertiser && !isMultiSponsorOrSpecific) {
@@ -428,9 +476,11 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
   // Mensagem do WhatsApp direcionada para a empresa específica
   const itemMessage = (
     activeSponsor?.whatsappMessage?.trim() ||
-    (resolvedCompany
-      ? `Olá! Vi o anúncio da empresa *${resolvedCompany.name}* no portal Minha Divulgação e gostaria de mais informações.`
-      : `Olá! Vi o anúncio de *${companyTitle}* no portal Minha Divulgação e gostaria de mais informações.`)
+    (companyTitle && companyTitle !== 'Destaque Patrocinado'
+      ? `Olá! Vi o anúncio de *${companyTitle}* no portal Minha Divulgação e gostaria de mais informações.`
+      : (resolvedCompany
+          ? `Olá! Vi o anúncio da empresa *${resolvedCompany.name}* no portal Minha Divulgação e gostaria de mais informações.`
+          : `Olá! Vi seu anúncio no portal Minha Divulgação e gostaria de mais informações.`))
   );
 
   // Build redirection link for the active sponsor
@@ -446,6 +496,14 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
       return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(itemMessage)}`;
     }
 
+    if (resolvedCompany && (resolvedCompany.wa || resolvedCompany.whatsapp || resolvedCompany.phone)) {
+      const compRaw = String(resolvedCompany.wa || resolvedCompany.whatsapp || resolvedCompany.phone).replace(/\D/g, '');
+      const compClean = compRaw.length === 10 || compRaw.length === 11 ? `55${compRaw}` : compRaw;
+      if (compClean.length >= 8) {
+        return `https://wa.me/${compClean}?text=${encodeURIComponent(itemMessage)}`;
+      }
+    }
+
     if (itemCustomLink) {
       return itemCustomLink;
     }
@@ -458,9 +516,10 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
   const isWhatsApp = sponsorActionType !== 'link' && (Boolean(cleanPhone && cleanPhone.length >= 8) || !activeSponsor?.customLink);
 
   const buttonLabel = activeSponsor?.buttonText?.trim() || 
+    (companyTitle && companyTitle !== 'Destaque Patrocinado' ? `Falar com ${companyTitle}` : null) || 
     (resolvedCompany ? `Falar com ${resolvedCompany.name}` : null) || 
     (!isMultiSponsorOrSpecific ? config?.buttonText?.trim() : null) || 
-    (isWhatsApp ? `Falar com ${companyTitle}` : 'Acessar Link');
+    (isWhatsApp ? `Falar no WhatsApp` : 'Acessar Link');
 
   const badgeLabel = activeSponsor?.badge?.trim() || (!isMultiSponsorOrSpecific ? config?.badge?.trim() : null) || 'PATROCINADO';
 
@@ -486,17 +545,17 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
       onClick={onClose}
     >
       <div 
-        className="relative w-full max-w-lg bg-[#0c101c] border border-amber-500/40 rounded-3xl overflow-hidden shadow-2xl flex flex-col my-auto max-h-[94vh]"
+        className="relative w-full max-w-lg bg-[#0c101c] border border-amber-500/40 rounded-2xl sm:rounded-3xl overflow-y-auto overscroll-contain shadow-2xl flex flex-col my-auto max-h-[96vh] sm:max-h-[92vh]"
         onClick={(e) => e.stopPropagation()}
         style={{
           boxShadow: '0 0 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(245, 158, 11, 0.2)'
         }}
       >
         {/* Top Header Bar */}
-        <div className="px-4 py-3 bg-gradient-to-r from-black/95 via-[#101524]/95 to-black/95 border-b border-white/10 flex items-center justify-between gap-3 shrink-0 z-20">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 font-extrabold text-[11px] uppercase tracking-wider shrink-0">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+        <div className="px-3.5 py-2.5 sm:px-4 sm:py-3 bg-gradient-to-r from-black/95 via-[#101524]/95 to-black/95 border-b border-white/10 flex items-center justify-between gap-2.5 sm:gap-3 shrink-0 z-20 sticky top-0 backdrop-blur-md">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 font-extrabold text-[10px] sm:text-[11px] uppercase tracking-wider shrink-0">
+              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-400 animate-ping" />
               {badgeLabel}
             </span>
             <div className="truncate">
@@ -508,7 +567,7 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
                   </span>
                 )}
               </h4>
-              <p className="text-[10px] text-white/50 truncate">
+              <p className="text-[9.5px] sm:text-[10px] text-white/50 truncate">
                 {allActiveSponsors.length > 1 ? (
                   <span className="text-amber-300 font-medium">
                     Patrocinador {currentSponsorIndex + 1} de {allActiveSponsors.length} (Revezamento a cada acesso/F5)
@@ -520,24 +579,24 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {isPreviewMode && allActiveSponsors.length > 1 && (
               <button
                 type="button"
                 onClick={() => setCurrentSponsorIndex(prev => (prev + 1) % allActiveSponsors.length)}
-                className="px-2.5 py-1.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[10px] font-bold flex items-center gap-1 transition cursor-pointer"
+                className="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[9.5px] sm:text-[10px] font-bold flex items-center gap-1 transition cursor-pointer"
                 title="Avançar para o próximo anunciante da fila"
               >
-                <span>Próximo Anúncio ➔</span>
+                <span>Próximo ➔</span>
               </button>
             )}
 
             <button
               onClick={onClose}
-              className="p-1.5 sm:px-3 sm:py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition flex items-center gap-1.5 text-xs font-semibold shrink-0 cursor-pointer"
+              className="p-1 sm:px-3 sm:py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition flex items-center gap-1 text-xs font-semibold shrink-0 cursor-pointer"
               title="Fechar e ir para o portal"
             >
-              <span className="hidden sm:inline text-[11px]">Ir para o Portal</span>
+              <span className="hidden sm:inline text-[11px]">Fechar</span>
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -545,11 +604,11 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
 
         {/* Media Switcher Tabs if BOTH video and flyer are available */}
         {hasVideo && hasFlyer && (
-          <div className="flex items-center justify-center gap-2 px-3 py-2 bg-[#090c16] border-b border-white/10 shrink-0">
+          <div className="flex items-center justify-center gap-2 px-3 py-1.5 sm:py-2 bg-[#090c16] border-b border-white/10 shrink-0">
             <button
               type="button"
               onClick={() => setActiveTabMedia('video')}
-              className={`px-3.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition ${
+              className={`px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold flex items-center gap-1.5 transition ${
                 activeTabMedia === 'video'
                   ? 'bg-amber-500 text-black shadow-md'
                   : 'bg-white/5 text-white/70 hover:text-white hover:bg-white/10'
@@ -561,7 +620,7 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
             <button
               type="button"
               onClick={() => setActiveTabMedia('flyer')}
-              className={`px-3.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition ${
+              className={`px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold flex items-center gap-1.5 transition ${
                 activeTabMedia === 'flyer'
                   ? 'bg-amber-500 text-black shadow-md'
                   : 'bg-white/5 text-white/70 hover:text-white hover:bg-white/10'
@@ -577,31 +636,29 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
         {activeTabMedia === 'flyer' && hasFlyer ? (
           /* FLYER / BANNER IMAGE DISPLAY */
           <div 
-            className="relative bg-black flex items-center justify-center overflow-hidden group p-2 cursor-pointer"
-            style={{ minHeight: '340px', maxHeight: '62vh' }}
+            className="relative bg-black flex items-center justify-center overflow-hidden group p-2 sm:p-3 cursor-pointer min-h-[160px] sm:min-h-[220px] max-h-[46vh] sm:max-h-[54vh] flex-1"
             onClick={handleActionClick}
             title="Clique para falar no WhatsApp ou abrir anúncio"
           >
             <img 
               src={flyerUrl} 
               alt={companyTitle}
-              className="w-full h-auto max-h-[60vh] object-contain mx-auto rounded-xl shadow-2xl transition duration-200 group-hover:scale-[1.01]"
+              className="w-auto h-auto max-w-full max-h-[44vh] sm:max-h-[52vh] object-contain mx-auto rounded-xl shadow-2xl transition duration-200 group-hover:scale-[1.01]"
               loading="eager"
             />
 
             {/* Click to Open Hint Badge */}
-            <div className="absolute bottom-4 right-4 z-20 pointer-events-none">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/80 text-amber-300 border border-amber-500/40 text-[11px] font-bold shadow-lg backdrop-blur-md">
+            <div className="absolute bottom-2.5 sm:bottom-3 right-2.5 sm:right-3 z-20 pointer-events-none">
+              <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-black/85 text-amber-300 border border-amber-500/40 text-[10px] sm:text-[11px] font-bold shadow-lg backdrop-blur-md">
                 <WhatsAppIcon className="w-3.5 h-3.5 fill-current" />
-                <span>Toque na imagem para contato direto</span>
+                <span>Toque para contato direto</span>
               </span>
             </div>
           </div>
         ) : hasVideo ? (
           /* VIDEO PLAYER AREA */
           <div 
-            className="relative bg-black flex items-center justify-center overflow-hidden cursor-pointer group"
-            style={{ minHeight: '320px', maxHeight: '58vh' }}
+            className="relative bg-black flex items-center justify-center overflow-hidden cursor-pointer group min-h-[160px] sm:min-h-[220px] max-h-[46vh] sm:max-h-[54vh] flex-1"
             onClick={togglePlay}
           >
             {parsed.type === 'mp4' ? (
@@ -702,32 +759,32 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
         )}
 
         {/* Call to Action Direct Redirection Area */}
-        <div className="p-4 sm:p-5 bg-gradient-to-b from-[#0c101c] via-[#101524] to-[#090d16] border-t border-white/10 flex flex-col gap-3 shrink-0">
+        <div className="p-3 sm:p-4.5 bg-gradient-to-b from-[#0c101c] via-[#101524] to-[#090d16] border-t border-white/10 flex flex-col gap-2.5 sm:gap-3 shrink-0 sticky bottom-0 z-20 backdrop-blur-md">
           {/* Target Company Info Card (if pulled from platform or manually named) */}
           {companyTitle && (
-            <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/5 border border-white/10">
+            <div className="flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-white/5 border border-white/10">
               {companyLogo ? (
                 <img 
                   src={companyLogo} 
                   alt={companyTitle} 
-                  className="w-10 h-10 rounded-full object-cover border border-white/20 bg-black shrink-0" 
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border border-white/20 bg-black shrink-0" 
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-black text-sm shrink-0">
-                  <Store className="w-5 h-5" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-black text-xs sm:text-sm shrink-0">
+                  <Store className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-amber-300/80 uppercase font-bold tracking-wider">
+                <p className="text-xs text-amber-300 font-extrabold uppercase tracking-wider truncate">
                   {allActiveSponsors.length > 1 ? `Patrocinador #${currentSponsorIndex + 1}` : 'Anunciante Oficial'}
                 </p>
-                <h5 className="text-white font-extrabold text-sm sm:text-base truncate">{companyTitle}</h5>
+                <h5 className="text-white font-black text-sm sm:text-base truncate leading-tight">{companyTitle}</h5>
                 {displayPhone ? (
-                  <p className="text-xs text-emerald-400 font-mono font-bold truncate">
+                  <p className="text-xs sm:text-sm text-emerald-400 font-mono font-bold truncate">
                     WhatsApp: {displayPhone}
                   </p>
                 ) : companyCategory ? (
-                  <p className="text-xs text-amber-300 font-medium truncate">
+                  <p className="text-xs sm:text-sm text-amber-300 font-semibold truncate">
                     Segmento: {companyCategory}
                   </p>
                 ) : null}
@@ -739,7 +796,7 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
           <button
             type="button"
             onClick={handleActionClick}
-            className={`w-full py-3.5 px-5 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
+            className={`w-full py-3 sm:py-3.5 px-4 sm:px-5 rounded-xl sm:rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2 sm:gap-2.5 shadow-xl transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.98] cursor-pointer text-center leading-snug break-words ${
               isWhatsApp 
                 ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white shadow-emerald-500/30' 
                 : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black shadow-amber-500/30'
@@ -750,19 +807,19 @@ export const PortalWelcomeVideoModal: React.FC<PortalWelcomeVideoModalProps> = (
             ) : (
               <ExternalLink className="w-5 h-5 shrink-0" />
             )}
-            <span className="truncate uppercase tracking-wide">{buttonLabel}</span>
+            <span className="uppercase tracking-wide line-clamp-2 max-w-[85%]">{buttonLabel}</span>
             <ArrowRight className="w-4 h-4 ml-1 shrink-0" />
           </button>
 
           {/* Message Preview and Skip Option */}
-          <div className="flex items-center justify-between text-[11px] text-white/50 px-1 pt-1">
-            <span className="truncate max-w-[70%] text-[10.5px]">
-              {isWhatsApp ? '💬 Abre WhatsApp com mensagem automática' : '🔗 Direciona para link oficial'}
+          <div className="flex items-center justify-between text-xs text-white/70 px-1 pt-0.5">
+            <span className="truncate max-w-[70%] text-xs font-medium">
+              {isWhatsApp ? '💬 Abre WhatsApp com mensagem direta' : '🔗 Direciona para link oficial'}
             </span>
             <button
               type="button"
               onClick={onClose}
-              className="text-white/60 hover:text-white underline cursor-pointer shrink-0"
+              className="text-white/80 hover:text-white underline cursor-pointer shrink-0 font-bold"
             >
               Pular anúncio
             </button>

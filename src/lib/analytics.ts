@@ -300,6 +300,7 @@ export async function trackAdvertiserImpression(
 
 export type AdvertiserClickType = 
   | 'card' 
+  | 'banner_click'
   | 'whatsapp' 
   | 'catalog' 
   | 'website' 
@@ -353,8 +354,11 @@ export async function trackAdvertiserClick(
       lastUpdated: new Date().toISOString()
     };
 
-    if (clickType === 'card') {
+    if (clickType === 'card' || clickType === 'banner_click') {
       updates.cardClicks = increment(1);
+      if (clickType === 'banner_click') {
+        updates.bannerClicks = increment(1);
+      }
     } else {
       updates.contactClicks = increment(1);
       if (clickType === 'whatsapp') updates.whatsappClicks = increment(1);

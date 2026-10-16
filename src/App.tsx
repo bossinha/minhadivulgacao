@@ -104,6 +104,7 @@ import { registerServiceWorker, recordNotificationClick } from './lib/pushNotifi
 import { trackPortalPageView, trackAdvertiserClick } from './lib/analytics';
 import { AdvertiserImpressionTracker } from './components/AdvertiserImpressionTracker';
 import { AdminPortalAnalytics } from './components/AdminPortalAnalytics';
+import { resolveBannerAdvertiser, getBannerWhatsAppLink, isPortalGeneralNumber } from './lib/bannerUtils';
 
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -185,7 +186,8 @@ const COMPANIES_DATA = [
   { id: 7, name: "North Shopping", category: "Lazer", desc: "O Shopping mais completo para você", logo: "https://i.postimg.cc/mZ5m083x/images.png", wa: "558534043073", ig: "https://www.northshoppingfortaleza.com.br/", website: "", featured: true },
   { id: 8, name: "Gih Cred", category: "Financeiro", desc: "Crédito Rápido e Seguro", logo: "https://i.postimg.cc/QCby11tL/GIH_CRED.jpg", wa: "5585981502984", ig: "https://www.gihcred.com.br/", website: "", featured: false },
   { id: 9, name: "Cartão de Todos", category: "Saúde", desc: "O maior cartão de descontos do Brasil", logo: "https://i.postimg.cc/K8SfGPPV/Whats-App-Image-2026-03-12-at-06-48-20.jpg", wa: "5585999093518", ig: "#", website: "", featured: false },
-  { id: 10, name: "ESPAÇO FRIO REFRIGERAÇÃO", category: "Refrigeração", desc: "Soluções em climatização com qualidade, eficiência e conforto para seu ambiente.", logo: "https://i.postimg.cc/7ZwfTgVM/LOGO.png", wa: "5585997403872", ig: "https://wa.me/5585997403872", website: "", featured: true }
+  { id: 10, name: "ESPAÇO FRIO REFRIGERAÇÃO", category: "Refrigeração", desc: "Soluções em climatização com qualidade, eficiência e conforto para seu ambiente.", logo: "https://i.postimg.cc/7ZwfTgVM/LOGO.png", wa: "5585997403872", ig: "https://wa.me/5585997403872", website: "", featured: true },
+  { id: 11, name: "Salão Stephanny Jessie", category: "Beleza", desc: "Promoções que realçam sua beleza com tratamentos exclusivos e profissionais.", logo: "https://i.postimg.cc/mD8N1b8W/banner-salao.png", wa: "5585997147273", ig: "#", website: "", featured: true }
 ];
 
 const VIDEOS = [
@@ -200,25 +202,27 @@ const VIDEOS = [
 ];
 
 const FLYERS = [
-  { image: "https://i.postimg.cc/zDHJ5cCD/CURSO.png", link: "https://wa.me/5585992908713" },
-  { image: "https://i.postimg.cc/qMbRP4YH/flyer-minha-divulgacao-c-zap-grupos.png", link: "https://wa.me/5585992908713" },
-  { image: "https://i.postimg.cc/d0MqF19v/banner-mer-marco.jpg", link: "https://wa.me/5585992908713" },
-  { image: "https://i.postimg.cc/MKvxjRsD/site.png", link: "https://wa.me/5585992908713" },
-  { image: "https://i.postimg.cc/0j4TCWtL/supermercados.png", link: "https://wa.me/5585992908713" },
-  { image: "https://i.postimg.cc/jjTGvJXY/banner-novo-comerciais-video.png", link: "https://wa.me/5585992908713" },
-  { image: "https://i.postimg.cc/W3nCr9nF/Chat-GPT-Image-12-de-mar-de-2026-06-55-05.png", link: "https://wa.me/5585992908713" },
-  { image: "https://i.postimg.cc/fbdt577W/gih-cred-2.png", link: "https://wa.me/5585992908713" },
-  { image: "https://i.postimg.cc/3wQNLBMN/b-CRIE-ALGO-MAIS-OU.jpg", link: "https://wa.me/5585992908713" },
-  { image: "https://i.postimg.cc/XYJ9KyDZ/gih-cred-1.png", link: "https://wa.me/5585992908713" },
-  { image: "https://i.postimg.cc/CLX8Swgp/ok.png", link: "https://wa.me/5585992908713" },
-  { image: "https://i.postimg.cc/fyyVkZjF/BANNER.png", link: "https://wa.me/5585992908713" }
+  { image: "https://i.postimg.cc/zDHJ5cCD/CURSO.png", link: "https://wa.me/5585992908713", title: "Cursos e Treinamentos" },
+  { image: "https://i.postimg.cc/qMbRP4YH/flyer-minha-divulgacao-c-zap-grupos.png", link: "https://wa.me/5585992908713", title: "Minha Divulgação - Portal Oficial" },
+  { image: "https://i.postimg.cc/d0MqF19v/banner-mer-marco.jpg", link: "https://wa.me/5585992908713", title: "Supermercado Marcos - Ofertas da Semana", companyName: "Supermercado Marcos" },
+  { image: "https://i.postimg.cc/MKvxjRsD/site.png", link: "https://wa.me/5585992862177", title: "Bossa Infor - Criação de Sites", companyId: 1, companyName: "Bossa Infor" },
+  { image: "https://i.postimg.cc/0j4TCWtL/supermercados.png", link: "https://wa.me/558535334476", title: "Assai Atacadista - Preço Baixo Todo Dia", companyId: 3, companyName: "Assai Atacadista" },
+  { image: "https://i.postimg.cc/jjTGvJXY/banner-novo-comerciais-video.png", link: "https://wa.me/5585992862177", title: "Bossa Infor - Comerciais em Vídeo", companyId: 1, companyName: "Bossa Infor" },
+  { image: "https://i.postimg.cc/W3nCr9nF/Chat-GPT-Image-12-de-mar-de-2026-06-55-05.png", link: "https://wa.me/5585992908713", title: "Minha Divulgação - Destaque sua Marca" },
+  { image: "https://i.postimg.cc/fbdt577W/gih-cred-2.png", link: "https://wa.me/5585981502984", title: "Gih Cred - Empréstimos e Crédito Rápido", companyId: 8, companyName: "Gih Cred" },
+  { image: "https://i.postimg.cc/3wQNLBMN/b-CRIE-ALGO-MAIS-OU.jpg", link: "https://wa.me/5585992908713", title: "Minha Divulgação - Multiplique seus Clientes" },
+  { image: "https://i.postimg.cc/XYJ9KyDZ/gih-cred-1.png", link: "https://wa.me/5585981502984", title: "Gih Cred - Soluções Financeiras", companyId: 8, companyName: "Gih Cred" },
+  { image: "https://i.postimg.cc/CLX8Swgp/ok.png", link: "https://wa.me/5585992908713", title: "Minha Divulgação - Anúncios Verificados" },
+  { image: "https://i.postimg.cc/fyyVkZjF/BANNER.png", link: "https://wa.me/5585992908713", title: "Minha Divulgação - Guia Comercial" }
 ];
 
 const HORIZONTAL_BANNERS = [
   { 
-    image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1200&h=400&q=80", 
+    image: "https://i.postimg.cc/mD8N1b8W/banner-salao.png", 
     link: "https://wa.me/5585997147273", 
     title: "Salão Stephanny Jessie - Promoções que realçam sua beleza!", 
+    companyId: 11,
+    companyName: "Salão Stephanny Jessie",
     active: true 
   },
   { 
@@ -2146,9 +2150,9 @@ function AppContent() {
             trackAdvertiserClick(company.id, company.name, 'whatsapp');
             trackCompanyInteraction(company, 'whatsapp');
           }}
-          className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-2.5 sm:py-3 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md active:scale-[0.98]"
+          className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3 sm:py-3.5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md active:scale-[0.98]"
         >
-          <Smartphone size={isCompact ? 12 : 14} className="shrink-0" /> Falar no WhatsApp
+          <Smartphone size={isCompact ? 14 : 16} className="shrink-0" /> Falar no WhatsApp
         </a>
       );
     } else if (hasCatalogLink) {
@@ -2161,9 +2165,9 @@ function AppContent() {
             trackAdvertiserClick(company.id, company.name, 'catalog');
             trackCompanyInteraction(company, 'catalog');
           }}
-          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-2.5 sm:py-3 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer active:scale-[0.98]"
+          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 sm:py-3.5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md cursor-pointer active:scale-[0.98]"
         >
-          <ShoppingBag size={isCompact ? 12 : 14} className="shrink-0" /> Ver Catálogo
+          <ShoppingBag size={isCompact ? 14 : 16} className="shrink-0" /> Ver Catálogo
         </a>
       );
     } else if (hasWebsite) {
@@ -2176,9 +2180,9 @@ function AppContent() {
             trackAdvertiserClick(company.id, company.name, 'website');
             trackCompanyInteraction(company, 'website');
           }}
-          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-2.5 sm:py-3 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest text-center flex items-center justify-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer active:scale-[0.98]"
+          className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black py-3 sm:py-3.5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md cursor-pointer active:scale-[0.98]"
         >
-          <Globe size={isCompact ? 12 : 14} className="shrink-0" /> Visitar Site Oficial
+          <Globe size={isCompact ? 14 : 16} className="shrink-0" /> Visitar Site Oficial
         </a>
       );
     } else if (hasIg) {
@@ -2191,9 +2195,9 @@ function AppContent() {
             trackAdvertiserClick(company.id, company.name, 'instagram');
             trackCompanyInteraction(company, 'instagram');
           }}
-          className="w-full bg-[#e1306c] hover:bg-[#d6245d] text-white py-2.5 sm:py-3 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md active:scale-[0.98]"
+          className="w-full bg-[#e1306c] hover:bg-[#d6245d] text-white py-3 sm:py-3.5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider text-center flex items-center justify-center gap-2 transition-all duration-300 shadow-md active:scale-[0.98]"
         >
-          <Instagram size={isCompact ? 12 : 14} className="shrink-0" /> Instagram Oficial
+          <Instagram size={isCompact ? 14 : 16} className="shrink-0" /> Instagram Oficial
         </a>
       );
     }
@@ -2213,10 +2217,10 @@ function AppContent() {
             trackAdvertiserClick(company.id, company.name, 'instagram');
             trackCompanyInteraction(company, 'instagram');
           }}
-          className="flex-1 min-w-0 bg-pink-500/10 border border-pink-500/25 hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 hover:border-transparent text-pink-400 hover:text-white py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all duration-200"
+          className="flex-1 min-w-0 bg-pink-500/10 border border-pink-500/30 hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 hover:border-transparent text-pink-300 hover:text-white py-2.5 px-2 rounded-xl font-black text-[11px] sm:text-xs uppercase tracking-wide text-center flex items-center justify-center gap-1.5 transition-all duration-200"
           title="Ver Instagram"
         >
-          <Instagram size={12} className="shrink-0" />
+          <Instagram size={14} className="shrink-0" />
           <span className="truncate">Instagram</span>
         </a>
       );
@@ -2234,10 +2238,10 @@ function AppContent() {
             trackAdvertiserClick(company.id, company.name, 'catalog');
             trackCompanyInteraction(company, 'catalog');
           }}
-          className="flex-1 min-w-0 bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500 hover:border-amber-500 text-amber-400 hover:text-black py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all duration-200"
+          className="flex-1 min-w-0 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500 hover:border-amber-500 text-amber-300 hover:text-black py-2.5 px-2 rounded-xl font-black text-[11px] sm:text-xs uppercase tracking-wide text-center flex items-center justify-center gap-1.5 transition-all duration-200"
           title="Ver Catálogo / Cardápio"
         >
-          <ShoppingBag size={12} className="shrink-0" />
+          <ShoppingBag size={14} className="shrink-0" />
           <span className="truncate">Catálogo</span>
         </a>
       );
@@ -2255,10 +2259,10 @@ function AppContent() {
             trackAdvertiserClick(company.id, company.name, 'website');
             trackCompanyInteraction(company, 'website');
           }}
-          className="flex-1 min-w-0 bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500 hover:border-amber-500 text-amber-400 hover:text-black py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all duration-200"
+          className="flex-1 min-w-0 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500 hover:border-amber-500 text-amber-300 hover:text-black py-2.5 px-2 rounded-xl font-black text-[11px] sm:text-xs uppercase tracking-wide text-center flex items-center justify-center gap-1.5 transition-all duration-200"
           title="Visitar Website"
         >
-          <Globe size={12} className="shrink-0" />
+          <Globe size={14} className="shrink-0" />
           <span className="truncate">Website</span>
         </a>
       );
@@ -2276,7 +2280,7 @@ function AppContent() {
             trackAdvertiserClick(company.id, company.name, 'facebook');
             trackCompanyInteraction(company, 'facebook');
           }}
-          className="flex-1 min-w-0 bg-blue-500/10 border border-blue-500/25 hover:bg-blue-600 hover:border-blue-600 text-blue-400 hover:text-white py-2 px-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-1 transition-all duration-200"
+          className="flex-1 min-w-0 bg-blue-500/10 border border-blue-500/30 hover:bg-blue-600 hover:border-blue-600 text-blue-300 hover:text-white py-2.5 px-2 rounded-xl font-black text-[11px] sm:text-xs uppercase tracking-wide text-center flex items-center justify-center gap-1.5 transition-all duration-200"
           title="Ver Facebook"
         >
           <span className="text-xs font-black shrink-0 leading-none">f</span>
@@ -2288,7 +2292,7 @@ function AppContent() {
     if (!primaryButton && secondaryList.length === 0) {
       return (
         <div className="mt-4 pt-3 border-t border-white/5 w-full">
-          <span className="text-[9px] text-white/35 text-center py-2.5 bg-white/5 rounded-2xl font-bold uppercase tracking-widest block w-full">
+          <span className="text-xs text-white/60 text-center py-2.5 bg-white/5 rounded-2xl font-bold uppercase tracking-wider block w-full">
             Sem Links Cadastrados
           </span>
         </div>
@@ -4935,14 +4939,14 @@ function AppContent() {
                       handleSearchSubmit();
                     }
                   }}
-                  className="w-full bg-transparent outline-none py-3 pr-2 text-sm text-white placeholder-white/40 font-medium"
+                  className="w-full bg-transparent outline-none py-3 pr-2 text-sm sm:text-base text-white placeholder-white/60 font-semibold"
                 />
 
                 {searchQuery && (
                   <button 
                     type="button"
                     onClick={() => setSearchQuery('')}
-                    className="px-2.5 py-1 text-xs font-bold font-mono text-white/40 hover:text-white transition-colors cursor-pointer mr-1"
+                    className="px-2.5 py-1 text-xs font-bold font-mono text-white/50 hover:text-white transition-colors cursor-pointer mr-1"
                     title="Limpar pesquisa"
                   >
                     ✕
@@ -4951,9 +4955,9 @@ function AppContent() {
 
                 <button
                   type="submit"
-                  className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-black text-xs px-4 sm:px-6 py-3 rounded-xl shadow-lg flex items-center gap-1.5 transition-all duration-200 cursor-pointer active:scale-95 shrink-0"
+                  className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-black text-xs sm:text-sm px-4 sm:px-6 py-3 rounded-xl shadow-lg flex items-center gap-1.5 transition-all duration-200 cursor-pointer active:scale-95 shrink-0"
                 >
-                  <Search size={14} className="stroke-[3]" />
+                  <Search size={15} className="stroke-[3]" />
                   <span>PESQUISAR</span>
                 </button>
               </div>
@@ -4963,27 +4967,27 @@ function AppContent() {
             {(selectedStateFilter || selectedTypeFilter !== 'all' || selectedCategory || searchQuery) && (
               <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
                 {selectedStateFilter && (
-                  <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-mono uppercase">
+                  <span className="bg-amber-500/15 text-amber-300 border border-amber-500/30 text-xs font-black px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 font-mono uppercase">
                     📍 {selectedStateFilter}
-                    <button type="button" onClick={() => setSelectedStateFilter('')} className="hover:text-white text-[12px] font-extrabold cursor-pointer ml-1">✕</button>
+                    <button type="button" onClick={() => setSelectedStateFilter('')} className="hover:text-white text-sm font-extrabold cursor-pointer ml-1">✕</button>
                   </span>
                 )}
                 {selectedTypeFilter !== 'all' && (
-                  <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-mono uppercase">
+                  <span className="bg-blue-500/15 text-blue-300 border border-blue-500/30 text-xs font-black px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 font-mono uppercase">
                     📁 {selectedTypeFilter === 'loja' ? 'Lojas' : 'Serviços'}
-                    <button type="button" onClick={() => setSelectedTypeFilter('all')} className="hover:text-white text-[12px] font-extrabold cursor-pointer ml-1">✕</button>
+                    <button type="button" onClick={() => setSelectedTypeFilter('all')} className="hover:text-white text-sm font-extrabold cursor-pointer ml-1">✕</button>
                   </span>
                 )}
                 {selectedCategory && (
-                  <span className="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-mono uppercase">
+                  <span className="bg-purple-500/15 text-purple-300 border border-purple-500/30 text-xs font-black px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 font-mono uppercase">
                     🏷️ {selectedCategory}
-                    <button type="button" onClick={() => setSelectedCategory(null)} className="hover:text-white text-[12px] font-extrabold cursor-pointer ml-1">✕</button>
+                    <button type="button" onClick={() => setSelectedCategory(null)} className="hover:text-white text-sm font-extrabold cursor-pointer ml-1">✕</button>
                   </span>
                 )}
                 {searchQuery && (
-                  <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-mono uppercase">
+                  <span className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-xs font-black px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 font-mono uppercase">
                     🔍 "{searchQuery}"
-                    <button type="button" onClick={() => setSearchQuery('')} className="hover:text-white text-[12px] font-extrabold cursor-pointer ml-1">✕</button>
+                    <button type="button" onClick={() => setSearchQuery('')} className="hover:text-white text-sm font-extrabold cursor-pointer ml-1">✕</button>
                   </span>
                 )}
                 <button
@@ -4994,7 +4998,7 @@ function AppContent() {
                     setSelectedCategory(null);
                     setSearchQuery('');
                   }}
-                  className="bg-neutral-900 border border-white/5 hover:bg-white/5 text-white/70 hover:text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all cursor-pointer font-mono"
+                  className="bg-neutral-900 border border-white/10 hover:bg-white/10 text-white/80 hover:text-white text-xs font-bold px-3.5 py-1.5 rounded-xl transition-all cursor-pointer font-mono"
                 >
                   🧹 LIMPAR FILTROS
                 </button>
@@ -5004,7 +5008,7 @@ function AppContent() {
 
           {/* Interactive Category Grid Filter */}
           <div className="mb-12">
-            <h3 className="text-xs font-black font-mono text-amber-400 tracking-[0.2em] uppercase text-center mb-6">
+            <h3 className="text-xs sm:text-sm font-black font-mono text-amber-400 tracking-[0.2em] uppercase text-center mb-6">
               📂 CATEGORIAS POPULARES
             </h3>
             
@@ -5027,14 +5031,14 @@ function AppContent() {
                           key={idx}
                           type="button"
                           onClick={() => handleCategoryClick(cat.name)}
-                          className={`p-3.5 rounded-2xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer ${
+                          className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer ${
                             isSelected 
                               ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-black scale-[1.03] shadow-[0_0_15px_rgba(251,191,36,0.25)]' 
-                              : 'bg-[#11121c] border-white/10 text-white/80 hover:border-amber-400/40 hover:text-white hover:bg-neutral-800'
+                              : 'bg-[#11121c] border-white/10 text-white/90 hover:border-amber-400/40 hover:text-white hover:bg-neutral-800'
                           }`}
                         >
-                          <span className="text-2xl mb-1.5">{cat.icon}</span>
-                          <span className="text-[11px] font-extrabold leading-tight">{cat.name}</span>
+                          <span className="text-2xl sm:text-3xl mb-1.5">{cat.icon}</span>
+                          <span className="text-xs sm:text-sm font-extrabold leading-snug">{cat.name}</span>
                         </button>
                       );
                     })}
@@ -5148,17 +5152,17 @@ function AppContent() {
                     }`}
                   >
                     {planType === 'patrocinado' && (
-                      <div className="absolute top-4 right-4 bg-gradient-to-r from-red-500 via-amber-500 to-yellow-500 text-black font-black text-[9px] tracking-widest uppercase px-3 py-1 rounded-full shadow-lg flex items-center gap-1 z-10 animate-pulse">
+                      <div className="absolute top-4 right-4 bg-gradient-to-r from-red-500 via-amber-500 to-yellow-500 text-black font-black text-[10px] sm:text-xs tracking-wider uppercase px-3.5 py-1 rounded-full shadow-lg flex items-center gap-1 z-10 animate-pulse">
                         🔥 PATROCINADO
                       </div>
                     )}
                     {planType === 'destaque' && (
-                      <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-black text-[9px] tracking-widest uppercase px-3 py-1 rounded-full shadow-lg flex items-center gap-1 z-10">
+                      <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-black text-[10px] sm:text-xs tracking-wider uppercase px-3.5 py-1 rounded-full shadow-lg flex items-center gap-1 z-10">
                         ⭐ DESTAQUE
                       </div>
                     )}
                     {planType === 'verificado' && (
-                      <div className="absolute top-4 right-4 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-black text-[9px] tracking-widest uppercase px-3 py-1 rounded-full shadow-lg flex items-center gap-1 z-10">
+                      <div className="absolute top-4 right-4 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-black text-[10px] sm:text-xs tracking-wider uppercase px-3.5 py-1 rounded-full shadow-lg flex items-center gap-1 z-10">
                         ✔ VERIFICADO
                       </div>
                     )}
@@ -5184,40 +5188,40 @@ function AppContent() {
                       </div>
 
                       <div className="flex flex-wrap gap-1.5 items-center">
-                        <span className="text-[10px] text-[var(--primary)] font-extrabold uppercase tracking-widest bg-[var(--primary)]/10 px-2.5 py-1 rounded-full select-none">
+                        <span className="text-xs text-[var(--primary)] font-extrabold uppercase tracking-wider bg-[var(--primary)]/15 px-3 py-1 rounded-full select-none">
                           {company.category}
                         </span>
                         {(() => {
                           const { average, count } = getCompanyReviewStats(company.id);
                           if (count > 0) {
                             return (
-                              <span className="text-[9px] text-amber-400 font-extrabold uppercase tracking-wide bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
+                              <span className="text-[11px] sm:text-xs text-amber-300 font-extrabold uppercase tracking-wide bg-amber-400/15 border border-amber-400/30 px-3 py-1 rounded-full select-none flex items-center gap-1 font-mono">
                                 ⭐ {average.toFixed(1)} ({count})
                               </span>
                             );
                           } else {
                             return (
-                              <span className="text-[9px] text-white/40 font-bold uppercase tracking-wide bg-white/5 border border-white/10 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
+                              <span className="text-[11px] sm:text-xs text-white/80 font-bold uppercase tracking-wide bg-white/10 border border-white/20 px-3 py-1 rounded-full select-none flex items-center gap-1 font-mono">
                                 ⭐ Novo
                               </span>
                             );
                           }
                         })()}
                         {(company.city || company.state || company.uf) && (
-                          <span className="text-[9px] text-white/50 font-bold uppercase tracking-wide bg-white/5 border border-white/10 px-2.5 py-1 rounded-full select-none flex items-center gap-1 font-mono">
+                          <span className="text-[11px] sm:text-xs text-white/85 font-bold uppercase tracking-wide bg-white/10 border border-white/20 px-3 py-1 rounded-full select-none flex items-center gap-1 font-mono">
                             📍 {company.city || 'Fortaleza'}{company.state || company.uf ? ` - ${company.state || company.uf}` : ''}
                           </span>
                         )}
                         <CompanyCardViewBadge company={company} />
                       </div>
 
-                      <h3 className="text-lg font-black text-white mt-4 line-clamp-1 flex items-center gap-1.5 group-hover/cardinfo:text-amber-300 transition-colors">
+                      <h3 className="text-lg sm:text-xl font-black text-white mt-4 line-clamp-1 flex items-center gap-2 group-hover/cardinfo:text-amber-300 transition-colors">
                         {company.name}
                         {planType === 'verificado' && (
-                          <span className="text-emerald-400 text-xs" title="Empresa Verificada">✔</span>
+                          <span className="text-emerald-400 text-xs sm:text-sm" title="Empresa Verificada">✔</span>
                         )}
                       </h3>
-                      <p className="text-sm font-bold text-white/95 mt-2.5 line-clamp-3 leading-snug min-h-[3.8rem] tracking-wide">{company.desc || 'Anunciante comercial verificado de alta qualidade e atendimento dedicado.'}</p>
+                      <p className="text-xs sm:text-sm font-semibold text-white/95 mt-2.5 line-clamp-3 leading-relaxed min-h-[3.6rem] tracking-normal">{company.desc || 'Anunciante comercial verificado de alta qualidade e atendimento dedicado.'}</p>
                     </div>
 
                   {/* Action Buttons */}
@@ -5324,32 +5328,33 @@ function AppContent() {
               </div>
 
               {/* Dynamic Slider Container */}
-              <div className="relative overflow-hidden bg-gradient-to-br from-[#11111a] to-[#0a0a10]/50 border border-white/10 rounded-[32px] p-6 md:p-12 shadow-2xl flex flex-col md:flex-row items-center gap-8 md:gap-16">
+              <div className="relative overflow-hidden bg-gradient-to-br from-[#11111a] to-[#0a0a10]/50 border border-white/10 rounded-2xl sm:rounded-[32px] p-4 sm:p-6 md:p-12 shadow-2xl flex flex-col md:flex-row items-center gap-6 sm:gap-8 md:gap-16">
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[var(--primary)] via-amber-500 to-transparent opacity-80" />
                 
                 {/* Active Flyer Image Frame with device-like card skeleton */}
                 <div className="relative w-full md:w-1/2 flex flex-col items-center justify-center">
                   
                   {/* Highlight badge outside and above the image banner */}
-                  <span className="mb-5 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black text-[9px] tracking-widest uppercase px-4 py-1.5 rounded-full shadow-lg z-10 whitespace-nowrap select-none">
+                  <span className="mb-4 sm:mb-5 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black text-[9px] tracking-widest uppercase px-3.5 sm:px-4 py-1.5 rounded-full shadow-lg z-10 whitespace-nowrap select-none">
                     🔥 OFERTA EM DESTAQUE
                   </span>
 
                   <div 
-                    className="relative w-full max-w-[320px] aspect-[3/4.2] rounded-3xl overflow-hidden border-2 border-white/10 shadow-[0_15px_45px_rgba(0,0,0,0.8)] bg-[#11111a] cursor-pointer group"
+                    className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-[3/4] sm:aspect-[3/4.2] rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-white/10 shadow-[0_15px_45px_rgba(0,0,0,0.8)] bg-[#11111a] cursor-pointer group"
                     onClick={() => {
                       const activeFlyer = visibleFlyers[activeFlyerIndex];
-                      if (typeof activeFlyer === 'object' && activeFlyer) {
-                        const targetComp = (activeFlyer.companyId || activeFlyer.companyName)
-                          ? (displayedCompanies || appData?.companies || []).find((c: any) => 
-                              (activeFlyer.companyId && (String(c.id) === String(activeFlyer.companyId) || c.name === activeFlyer.companyId)) ||
-                              (activeFlyer.companyName && c.name === activeFlyer.companyName)
-                            )
-                          : null;
+                      if (activeFlyer) {
+                        const allComps = displayedCompanies || appData?.companies || [];
+                        const targetComp = resolveBannerAdvertiser(activeFlyer, allComps);
+                        const flyerWa = getBannerWhatsAppLink(activeFlyer, targetComp, appData?.siteInfo?.social?.wa || "https://wa.me/5585992908713");
+
+                        if (targetComp) {
+                          trackAdvertiserClick(targetComp.id, targetComp.name, 'banner_click');
+                        }
                         if (activeFlyer.actionType === 'company' && targetComp) {
                           setActiveMiniSiteCompany(targetComp);
-                        } else if (activeFlyer.link) {
-                          window.open(getWaLinkWithReferral(activeFlyer.link, targetComp), '_blank');
+                        } else if (flyerWa) {
+                          window.open(flyerWa, '_blank');
                         } else if (targetComp) {
                           setActiveMiniSiteCompany(targetComp);
                         }
@@ -5379,23 +5384,20 @@ function AppContent() {
                 <div className="w-full md:w-1/2 flex flex-col justify-center items-center md:items-start text-center md:text-left">
                   {(() => {
                     const activeFlyer = visibleFlyers[activeFlyerIndex];
-                    const targetComp = typeof activeFlyer === 'object' && activeFlyer && (activeFlyer.companyId || activeFlyer.companyName)
-                      ? (displayedCompanies || appData?.companies || []).find((c: any) => 
-                          (activeFlyer.companyId && (String(c.id) === String(activeFlyer.companyId) || c.name === activeFlyer.companyId)) ||
-                          (activeFlyer.companyName && c.name === activeFlyer.companyName)
-                        )
-                      : null;
+                    const allComps = displayedCompanies || appData?.companies || [];
+                    const targetComp = resolveBannerAdvertiser(activeFlyer, allComps);
+                    const flyerWa = getBannerWhatsAppLink(activeFlyer, targetComp, appData?.siteInfo?.social?.wa || "https://wa.me/5585992908713");
                     return (
                       <>
-                        <div className="flex flex-wrap items-center gap-2 mb-4 justify-center md:justify-start">
-                          <span className="text-[10px] text-[var(--primary)] tracking-[0.15em] font-black uppercase bg-[var(--primary)]/10 px-4 py-1.5 rounded-full font-mono">
+                        <div className="flex flex-wrap items-center gap-2 mb-3 sm:mb-4 justify-center md:justify-start">
+                          <span className="text-[9.5px] sm:text-[10px] text-[var(--primary)] tracking-[0.15em] font-black uppercase bg-[var(--primary)]/10 px-3.5 sm:px-4 py-1.5 rounded-full font-mono">
                             PROMOÇÃO Nº {activeFlyerIndex + 1} de {visibleFlyers.length}
                           </span>
                           {targetComp && (
                             <button
                               type="button"
                               onClick={() => setActiveMiniSiteCompany(targetComp)}
-                              className="text-[11px] text-amber-300 font-bold bg-amber-500/15 border border-amber-500/30 hover:bg-amber-500/25 px-3 py-1 rounded-full flex items-center gap-1.5 transition-all cursor-pointer"
+                              className="text-[10.5px] sm:text-[11px] text-amber-300 font-bold bg-amber-500/15 border border-amber-500/30 hover:bg-amber-500/25 px-2.5 sm:px-3 py-1 rounded-full flex items-center gap-1.5 transition-all cursor-pointer"
                               title="Ver mini-site desta empresa no guia"
                             >
                               <span>🏢 {targetComp.name}</span>
@@ -5404,31 +5406,36 @@ function AppContent() {
                           )}
                         </div>
 
-                        <h3 className="text-2xl sm:text-3.5xl font-sans font-black text-white leading-tight">
-                          Aproveite esta oportunidade exclusiva
+                        <h3 className="text-xl sm:text-2xl md:text-3.5xl font-sans font-black text-white leading-tight">
+                          {targetComp ? `Oferta Especial: ${targetComp.name}` : "Aproveite esta oportunidade exclusiva"}
                         </h3>
-                        <p className="text-sm sm:text-base text-white/90 mt-4 leading-relaxed max-w-md font-extrabold">
-                          Preço especial e atendimento preferencial garantidos para usuários do portal. Toque abaixo para abrir o canal direto com o anunciante.
+                        <p className="text-xs sm:text-sm md:text-base text-white/90 mt-3 sm:mt-4 leading-relaxed max-w-md font-extrabold">
+                          {targetComp?.desc || "Preço especial e atendimento preferencial garantidos para usuários do portal. Toque abaixo para abrir o canal direto com o anunciante."}
                         </p>
 
-                        {/* Slider Action Buttons */}
-                        <div className="flex flex-wrap items-center gap-3 mt-7 justify-center md:justify-start">
-                          {typeof activeFlyer === 'object' && activeFlyer?.link && (
+                        {/* Slider Action Buttons (Fully responsive on preview & mobile) */}
+                        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3 mt-5 sm:mt-7 justify-center md:justify-start w-full">
+                          {flyerWa && (
                             <a 
-                              href={getWaLinkWithReferral(activeFlyer.link, targetComp)} 
+                              href={flyerWa} 
                               target="_blank" 
                               rel="noreferrer" 
-                              className="inline-flex items-center gap-3 bg-emerald-600 hover:bg-emerald-500 hover:scale-[1.03] text-white font-extrabold text-xs uppercase tracking-wider px-7 py-4 rounded-2xl shadow-xl transition-all duration-300 decoration-transparent"
+                              onClick={() => {
+                                if (targetComp) {
+                                  trackAdvertiserClick(targetComp.id, targetComp.name, 'whatsapp');
+                                }
+                              }}
+                              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 sm:gap-3 bg-emerald-600 hover:bg-emerald-500 hover:scale-[1.02] text-white font-extrabold text-xs sm:text-sm uppercase tracking-wide px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl shadow-xl transition-all duration-300 decoration-transparent text-center leading-snug break-words max-w-full"
                             >
-                              <Sparkles size={16} className="text-amber-300 animate-spin" />
-                              Falar no WhatsApp Comercial
+                              <Sparkles size={16} className="text-amber-300 animate-spin shrink-0" />
+                              <span className="line-clamp-2">{targetComp ? `Falar com ${targetComp.name}` : 'Falar no WhatsApp Comercial'}</span>
                             </a>
                           )}
                           {targetComp && (
                             <button
                               type="button"
                               onClick={() => setActiveMiniSiteCompany(targetComp)}
-                              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 hover:scale-[1.03] text-white font-extrabold text-xs uppercase tracking-wider px-6 py-4 rounded-2xl border border-white/20 shadow-xl transition-all duration-300 cursor-pointer"
+                              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 hover:scale-[1.02] text-white font-extrabold text-xs sm:text-sm uppercase tracking-wide px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all duration-300 cursor-pointer text-center max-w-full leading-snug"
                             >
                               <span>🏢 Ver Página da Empresa</span>
                             </button>
@@ -5439,11 +5446,11 @@ function AppContent() {
                   })()}
 
                   {/* Carousel navigation controls */}
-                  <div className="flex items-center gap-4 mt-8">
+                  <div className="flex items-center gap-3 sm:gap-4 mt-6 sm:mt-8">
                     <button 
                       type="button"
                       onClick={() => setActiveFlyerIndex(prev => (prev - 1 + visibleFlyers.length) % visibleFlyers.length)}
-                      className="w-11 h-11 rounded-full bg-white/5 border border-white/10 hover:border-[var(--primary)] text-white hover:text-[var(--primary)] hover:bg-white/10 flex items-center justify-center transition-all shadow-md cursor-pointer"
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/5 border border-white/10 hover:border-[var(--primary)] text-white hover:text-[var(--primary)] hover:bg-white/10 flex items-center justify-center transition-all shadow-md cursor-pointer"
                     >
                       <ChevronLeft size={22} className="stroke-[2.5]" />
                     </button>
@@ -5502,16 +5509,17 @@ function AppContent() {
                     onClick={() => {
                       const activeBanner = visibleHorizontalBanners[activeHorizontalBannerIndex];
                       if (activeBanner) {
-                        const targetComp = (activeBanner.companyId || activeBanner.companyName)
-                          ? (displayedCompanies || appData?.companies || []).find((c: any) => 
-                              (activeBanner.companyId && (String(c.id) === String(activeBanner.companyId) || c.name === activeBanner.companyId)) ||
-                              (activeBanner.companyName && c.name === activeBanner.companyName)
-                            )
-                          : null;
+                        const allComps = displayedCompanies || appData?.companies || [];
+                        const targetComp = resolveBannerAdvertiser(activeBanner, allComps);
+                        const bannerWa = getBannerWhatsAppLink(activeBanner, targetComp, appData?.siteInfo?.social?.wa || "https://wa.me/5585992908713");
+
+                        if (targetComp) {
+                          trackAdvertiserClick(targetComp.id, targetComp.name, 'banner_click');
+                        }
                         if (activeBanner.actionType === 'company' && targetComp) {
                           setActiveMiniSiteCompany(targetComp);
-                        } else if (activeBanner.link) {
-                          window.open(getWaLinkWithReferral(activeBanner.link, targetComp), '_blank');
+                        } else if (bannerWa) {
+                          window.open(bannerWa, '_blank');
                         } else if (targetComp) {
                           setActiveMiniSiteCompany(targetComp);
                         }
@@ -5540,34 +5548,53 @@ function AppContent() {
                   </div>
 
                   {/* Micro dashboard under the banner image */}
-                  <div className="flex flex-col sm:flex-row items-center justify-between w-full px-2 mt-4 sm:mt-5 gap-3">
-                    <div className="flex items-center gap-2.5 max-w-full sm:max-w-[70%] flex-wrap">
+                  <div className="flex flex-col md:flex-row items-center justify-between w-full px-2 mt-4 sm:mt-5 gap-3">
+                    <div className="flex items-center gap-2 max-w-full flex-wrap justify-center md:justify-start">
                       <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
-                      <p className="text-xs sm:text-sm font-sans font-bold text-white/80 truncate">
-                        {visibleHorizontalBanners[activeHorizontalBannerIndex]?.title || "Banner Comercial Promocional"}
-                      </p>
                       {(() => {
                         const activeBanner = visibleHorizontalBanners[activeHorizontalBannerIndex];
-                        const targetComp = activeBanner && (activeBanner.companyId || activeBanner.companyName)
-                          ? (displayedCompanies || appData?.companies || []).find((c: any) => 
-                              (activeBanner.companyId && (String(c.id) === String(activeBanner.companyId) || c.name === activeBanner.companyId)) ||
-                              (activeBanner.companyName && c.name === activeBanner.companyName)
-                            )
-                          : null;
-                        if (!targetComp) return null;
+                        const allComps = displayedCompanies || appData?.companies || [];
+                        const targetComp = resolveBannerAdvertiser(activeBanner, allComps);
+                        const bannerWa = getBannerWhatsAppLink(activeBanner, targetComp, appData?.siteInfo?.social?.wa || "https://wa.me/5585992908713");
+                        const title = targetComp ? `${targetComp.name} - ${targetComp.desc || 'Destaque Oficial'}` : (activeBanner?.title || "Banner Comercial Promocional");
+
                         return (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveMiniSiteCompany(targetComp);
-                            }}
-                            className="shrink-0 text-[10px] sm:text-xs font-black uppercase px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition-all flex items-center gap-1 cursor-pointer ml-1"
-                            title="Ver página da empresa parceira no guia"
-                          >
-                            <span>🏢 {targetComp.name}</span>
-                            <span className="text-[9px]">➔</span>
-                          </button>
+                          <>
+                            <p className="text-xs sm:text-sm font-sans font-bold text-white/80 truncate max-w-[280px] sm:max-w-md">
+                              {title}
+                            </p>
+                            {targetComp && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveMiniSiteCompany(targetComp);
+                                }}
+                                className="shrink-0 text-[10px] sm:text-xs font-black uppercase px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition-all flex items-center gap-1 cursor-pointer"
+                                title="Ver página da empresa parceira no guia"
+                              >
+                                <span>🏢 {targetComp.name}</span>
+                                <span className="text-[9px]">➔</span>
+                              </button>
+                            )}
+                            {bannerWa && (
+                              <a
+                                href={bannerWa}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (targetComp) {
+                                    trackAdvertiserClick(targetComp.id, targetComp.name, 'whatsapp');
+                                  }
+                                }}
+                                className="shrink-0 text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-600/30 text-emerald-300 border border-emerald-500/50 hover:bg-emerald-600/50 transition-all flex items-center gap-1 cursor-pointer decoration-transparent"
+                                title="Falar no WhatsApp com o anunciante deste banner"
+                              >
+                                <span>💬 WhatsApp</span>
+                              </a>
+                            )}
+                          </>
                         );
                       })()}
                     </div>
@@ -7946,7 +7973,7 @@ function AppContent() {
                                     ...flyerObj,
                                     companyId: targetComp.id || targetComp.name,
                                     companyName: targetComp.name,
-                                    link: flyerObj.link || waUrl,
+                                    link: waUrl || flyerObj.link,
                                     actionType: 'company'
                                   };
                                 } else {
@@ -8281,7 +8308,7 @@ function AppContent() {
                                     companyId: targetComp.id || targetComp.name,
                                     companyName: targetComp.name,
                                     title: bannerObj.title && bannerObj.title !== 'Banner sem título' ? bannerObj.title : `${targetComp.name} - Destaque no Guia`,
-                                    link: bannerObj.link || waUrl,
+                                    link: waUrl || bannerObj.link,
                                     actionType: 'company'
                                   };
                                 } else {
@@ -9038,7 +9065,7 @@ function AppContent() {
                     <img src={company.logo} alt={company.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
                   </div>
                   <div className="mb-2">
-                    <span className="bg-[var(--primary)] text-black text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow">
+                    <span className="bg-[var(--primary)] text-black text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow">
                       {company.category}
                     </span>
                     <div className="flex flex-wrap items-center gap-2 mt-1 ml-1">
@@ -9049,13 +9076,13 @@ function AppContent() {
                         const { average, count } = getCompanyReviewStats(company.id);
                         if (count > 0) {
                           return (
-                            <div className="flex items-center gap-1 bg-amber-400/10 border border-amber-400/20 text-amber-400 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full select-none font-mono">
+                            <div className="flex items-center gap-1 bg-amber-400/15 border border-amber-400/30 text-amber-300 text-xs font-extrabold uppercase px-2.5 py-0.5 rounded-full select-none font-mono">
                               ⭐ {average.toFixed(1)} ({count})
                             </div>
                           );
                         } else {
                           return (
-                            <div className="flex items-center gap-1 bg-white/5 border border-white/10 text-white/40 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full select-none font-mono">
+                            <div className="flex items-center gap-1 bg-white/10 border border-white/20 text-white/80 text-xs font-bold uppercase px-2.5 py-0.5 rounded-full select-none font-mono">
                               ⭐ Novo
                             </div>
                           );
@@ -9074,8 +9101,8 @@ function AppContent() {
                 <div className="lg:col-span-8 flex flex-col gap-6">
                   {/* Bio Description / Social Info */}
                   <div className="bg-[#0b0c10] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-xl">
-                    <h3 className="text-sm font-black font-mono uppercase tracking-[0.2em] text-[var(--primary)]">SOBRE NÓS</h3>
-                    <p className="text-white/70 text-sm mt-3 leading-relaxed">
+                    <h3 className="text-xs sm:text-sm font-black font-mono uppercase tracking-[0.2em] text-[var(--primary)]">SOBRE NÓS</h3>
+                    <p className="text-white/90 text-sm sm:text-base mt-3 leading-relaxed font-medium">
                       {company.desc || 'Anunciante comercial oficial com atendimento dedicado e garantia de qualidade.'}
                     </p>
                     
@@ -9085,9 +9112,9 @@ function AppContent() {
                         target="_blank" 
                         rel="noreferrer"
                         onClick={() => trackCompanyInteraction(company, 'whatsapp')}
-                        className="inline-flex items-center gap-2 bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 hover:text-white hover:bg-emerald-600 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-200"
+                        className="inline-flex items-center gap-2 bg-emerald-600/15 border border-emerald-500/30 text-emerald-300 hover:text-white hover:bg-emerald-600 px-5 py-3.5 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all duration-200"
                       >
-                        <Smartphone size={14} /> WhatsApp Comercial
+                        <Smartphone size={16} /> WhatsApp Comercial
                       </a>
                       {company.ig && company.ig !== '#' && company.ig !== '' && (
                         <a 
@@ -9095,9 +9122,9 @@ function AppContent() {
                           target="_blank" 
                           rel="noreferrer"
                           onClick={() => trackCompanyInteraction(company, 'instagram')}
-                          className="inline-flex items-center gap-2 bg-pink-600/10 border border-pink-500/20 text-pink-400 hover:text-white hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-200"
+                          className="inline-flex items-center gap-2 bg-pink-600/15 border border-pink-500/30 text-pink-300 hover:text-white hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 px-5 py-3.5 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all duration-200"
                         >
-                          <InstagramIcon className="w-3.5 h-3.5 shrink-0" />
+                          <InstagramIcon className="w-4 h-4 shrink-0" />
                           <span>Instagram Oficial</span>
                         </a>
                       )}
@@ -9107,9 +9134,9 @@ function AppContent() {
                           target="_blank" 
                           rel="noreferrer"
                           onClick={() => trackCompanyInteraction(company, 'website')}
-                          className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:text-black hover:bg-gradient-to-r hover:from-amber-400 hover:to-amber-500 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-200"
+                          className="inline-flex items-center gap-2 bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:text-black hover:bg-gradient-to-r hover:from-amber-400 hover:to-amber-500 px-5 py-3.5 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all duration-200"
                         >
-                          <ExternalLink size={14} /> Website Oficial
+                          <ExternalLink size={16} /> Website Oficial
                         </a>
                       )}
                     </div>
