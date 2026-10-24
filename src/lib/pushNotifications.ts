@@ -212,31 +212,45 @@ export async function displayNotificationSafely(
  * Detecta se o navegador atual suporta notificações e service workers
  */
 export function isPushSupported(): boolean {
-  if (typeof window === 'undefined') return false;
-  return 'serviceWorker' in navigator && 'Notification' in window;
+  try {
+    if (typeof window === 'undefined') return false;
+    return typeof navigator !== 'undefined' && 'serviceWorker' in navigator && typeof window.Notification !== 'undefined' && 'Notification' in window;
+  } catch (e) {
+    return false;
+  }
 }
 
 /**
  * Retorna o status atual da permissão de notificações do navegador
  */
 export function getNotificationPermission(): NotificationPermission {
-  if (typeof window === 'undefined' || !('Notification' in window)) {
+  try {
+    if (typeof window === 'undefined' || typeof window.Notification === 'undefined' || !('Notification' in window)) {
+      return 'denied';
+    }
+    return window.Notification.permission;
+  } catch (e) {
     return 'denied';
   }
-  return Notification.permission;
 }
 
 /**
  * Obtém ou gera um identificador persistente e anônimo do dispositivo/navegador
  */
 export function getLocalSubscriberId(): string {
-  if (typeof window === 'undefined') return 'server';
-  let id = localStorage.getItem(STORAGE_SUBSCRIBER_KEY);
-  if (!id) {
-    id = 'sub_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now().toString(36);
-    localStorage.setItem(STORAGE_SUBSCRIBER_KEY, id);
+  try {
+    if (typeof window === 'undefined') return 'server';
+    let id = localStorage.getItem(STORAGE_SUBSCRIBER_KEY);
+    if (!id) {
+      id = 'sub_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now().toString(36);
+      try {
+        localStorage.setItem(STORAGE_SUBSCRIBER_KEY, id);
+      } catch (_) {}
+    }
+    return id;
+  } catch (e) {
+    return 'sub_guest_' + Date.now().toString(36);
   }
-  return id;
 }
 
 /**

@@ -389,7 +389,7 @@ const DEFAULT_DATA = {
   horizontalBanners: HORIZONTAL_BANNERS,
   welcomeVideo: {
     enabled: true,
-    mediaType: 'auto',
+    mediaType: 'auto' as 'auto' | 'video' | 'flyer',
     videoUrl: '',
     flyerUrl: '',
     flyerDeleteUrl: '',
@@ -629,13 +629,13 @@ interface AppData {
   chatKeywords: Record<string, string>;
   notificationsData: any;
   companies: any[];
-  videos: string[];
-  flyers: { image: string; link: string }[];
+  videos: any[];
+  flyers: any[];
   testimonials: any[];
   categories: any[];
-  whatsappTestimonials?: { image: string; active?: boolean }[];
-  horizontalBanners?: { image: string; link: string; title?: string; active?: boolean }[];
-  welcomeVideo?: PortalWelcomeVideoConfig;
+  whatsappTestimonials?: any[];
+  horizontalBanners?: any[];
+  welcomeVideo?: any;
 }
 
 // --- ImgBB Direct Upload Helpers & Components ---
@@ -782,8 +782,10 @@ export default function App() {
     <HashRouter>
       <Routes>
         <Route path="/login" element={<AppContent />} />
+        <Route path="/:tenantId/*" element={<AppContent />} />
         <Route path="/:tenantId" element={<AppContent />} />
         <Route path="/" element={<AppContent />} />
+        <Route path="*" element={<AppContent />} />
       </Routes>
     </HashRouter>
   );
@@ -791,16 +793,39 @@ export default function App() {
 
 function AppContent() {
   const navigate = useNavigate();
-  const { tenantId } = useParams();
+  const { tenantId: routeTenantParam } = useParams();
   const location = useLocation();
+
+  // Resolução robusta da cidade do portal para que celulares e links compartilhados nunca fiquem em branco
+  const tenantId = useMemo(() => {
+    if (routeTenantParam && routeTenantParam !== 'login') {
+      const clean = routeTenantParam.replace(/^\/+|\/+$/g, '').trim();
+      if (clean) return clean;
+    }
+    if (typeof window !== 'undefined') {
+      const hashStr = (window.location.hash || '').replace(/^#\/?/, '').split('?')[0].split('/')[0].trim();
+      if (hashStr && hashStr !== 'login') {
+        return hashStr;
+      }
+      const pathStr = (window.location.pathname || '').replace(/^\/+|\/+$/g, '').split('?')[0].split('/')[0].trim();
+      if (pathStr && pathStr !== 'login' && !pathStr.includes('.')) {
+        return pathStr;
+      }
+    }
+    return 'fortaleza';
+  }, [routeTenantParam, location]);
 
   const hasActiveReferral = useMemo(() => {
     const tid = slugify(tenantId || 'fortaleza');
-    const fullUrl = window.location.href;
+    const fullUrl = typeof window !== 'undefined' ? window.location.href : '';
     const searchPart = fullUrl.includes('?') ? fullUrl.split('?')[1] : '';
     const queryParams = new URLSearchParams(searchPart);
     const refCode = queryParams.get('ref') || queryParams.get('indica');
-    return !!(refCode || sessionStorage.getItem(`ref_${tid}`));
+    let sessionRef = null;
+    try {
+      sessionRef = sessionStorage.getItem(`ref_${tid}`);
+    } catch (_) {}
+    return !!(refCode || sessionRef);
   }, [tenantId, location]);
 
   // Telemetria de visualização de página do portal e origem do tráfego (LGPD-compliant)
@@ -990,7 +1015,7 @@ function AppContent() {
   const [onlineCount, setOnlineCount] = useState(Math.floor(Math.random() * (22 - 12 + 1)) + 12);
   const [customRadioLink, setCustomRadioLink] = useState<string>('');
   const [allUsers, setAllUsers] = useState<any>(null);
-  const [editingVideosFor, setEditingVideosFor] = useState<{id: string, city: string, videos: string[]} | null>(null);
+  const [editingVideosFor, setEditingVideosFor] = useState<{id: string, city: string, videos: any[]} | null>(null);
   const [tvMuted, setTvMuted] = useState(false);
   const [tvVolume, setTvVolume] = useState(1);
   const [tvKey, setTvKey] = useState(0);
@@ -1061,10 +1086,13 @@ function AppContent() {
 
   const [appData, setAppData] = useState<AppData | null>(() => {
     try {
-      const pathSlug = slugify(window.location.pathname.replace(/^\/+/, '') || 'fortaleza');
-      const cached = localStorage.getItem(`cached_app_data_${pathSlug}`);
-      if (cached) {
-        return JSON.parse(cached);
+      if (typeof window !== 'undefined') {
+        const hashSlug = (window.location.hash || '').replace(/^#\/?/, '').split('?')[0].split('/')[0];
+        const pathSlug = slugify(hashSlug || window.location.pathname.replace(/^\/+/, '') || 'fortaleza');
+        const cached = localStorage.getItem(`cached_app_data_${pathSlug}`);
+        if (cached) {
+          return JSON.parse(cached);
+        }
       }
     } catch (e) {}
     return DEFAULT_DATA;
@@ -1158,10 +1186,21 @@ function AppContent() {
   const [activeTrackingCompanyId, setActiveTrackingCompanyId] = useState<string | null>(() => {
     try {
       if (typeof window !== 'undefined') {
-        const fullUrl = window.location.href;
-        const searchPart = fullUrl.includes('?') ? fullUrl.split('?')[1] : '';
-        const params = new URLSearchParams(searchPart);
-        return params.get('acompanhar') || params.get('tracking') || null;
+        const searchParams = new URLSearchParams(window.location.search);
+        let id = searchParams.get('acompanhar') || searchParams.get('tracking');
+        if (id) return id;
+
+        if (window.location.hash.includes('?')) {
+          const hashQuery = window.location.hash.split('?')[1];
+          const hashParams = new URLSearchParams(hashQuery);
+          id = hashParams.get('acompanhar') || hashParams.get('tracking');
+          if (id) return id;
+        }
+
+        const match = window.location.href.match(/[?&](?:acompanhar|tracking)=([^&#]+)/i);
+        if (match && match[1]) {
+          return decodeURIComponent(match[1]);
+        }
       }
     } catch (e) {}
     return null;
@@ -1490,11 +1529,13 @@ function AppContent() {
             setHasAffiliateSystem(tData.hasAffiliateSystem === true);
             setHideAdvertiserAuth(tData.hideAdvertiserAuth !== false);
           } else {
-            console.warn("Cidade não encontrada no banco");
+            console.warn("Cidade não encontrada no banco, utilizando dados padrão do portal:", targetTenantId);
+            setAppData(prev => prev || DEFAULT_DATA);
             fetchAdvertisers(targetTenantId);
           }
         } catch (e) {
-          console.error(e);
+          console.error("Erro ao carregar dados da cidade no Firestore:", e);
+          setAppData(prev => prev || DEFAULT_DATA);
         } finally {
           setIsLoading(false);
         }
@@ -1722,10 +1763,11 @@ function AppContent() {
              setAllUsers(users);
              if (!tenantId || tenantId === 'login') navigate('/master');
           } else {
-            // Unrecognized user. Before signing out, we allow them to potentially link 
-            // if they browse to their city and use the password then.
-            // For now, we take them to login.
-            navigate('/login');
+            // Visitante ou cliente regular: NÃO redireciona para /login!
+            // Permite que o visitante continue navegando e visualizando as empresas do portal livremente
+            if (location.pathname === '/login') {
+              // Somente se ele acessou explicitamente a rota /login
+            }
           }
         }
       } else {
@@ -4121,16 +4163,16 @@ function AppContent() {
     );
   }
 
-  if (!appData && (isLoading || isAuthChecking)) {
+  if (location.pathname === '/login' && isAuthChecking) {
     return (
-      <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Inter' }}>
-        <p>Carregando...</p>
+      <div style={{ background: '#090d16', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff8a00', fontFamily: 'Inter' }}>
+        <p style={{ fontWeight: 800 }}>Carregando Painel...</p>
       </div>
     );
   }
 
-  // Login UI (Always available at /login or if no appData)
-  if (location.pathname === '/login' || (!appData && !tenantId)) {
+  // Login UI (Exibido estritamente na rota /login para gestores)
+  if (location.pathname === '/login') {
     return (
       <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Inter', padding: '20px' }}>
         <div style={{ width: '100%', maxWidth: '400px', padding: '30px', background: '#111', borderRadius: '24px', border: '1px solid #222' }}>
@@ -4228,7 +4270,10 @@ function AppContent() {
   // Se o visitante abriu o link exclusivo de acompanhamento (?acompanhar=ID ou ?tracking=ID)
   const isDirectTrackingUrl = typeof window !== 'undefined' && (
     window.location.search.includes('acompanhar=') || 
-    window.location.search.includes('tracking=')
+    window.location.search.includes('tracking=') ||
+    window.location.hash.includes('acompanhar=') ||
+    window.location.hash.includes('tracking=') ||
+    Boolean(activeTrackingCompanyId)
   );
   if (activeTrackingCompanyId && isDirectTrackingUrl && !user?.isAdmin) {
     const directCompanyData = activeTrackingCompanyData || 
@@ -4265,17 +4310,8 @@ function AppContent() {
     );
   }
 
-  if (!appData) {
-    return (
-      <div style={{ background: '#000', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'Inter' }}>
-        <h2 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '20px' }}>Cidade não encontrada</h2>
-        <p style={{ color: '#888', marginBottom: '40px' }}>Verifique se o link está correto ou portal ainda não foi criado.</p>
-        <div style={{ display: 'flex', gap: '20px' }}>
-          <button onClick={() => navigate('/login')} className="dev-btn" style={{ background: '#fff', color: '#000', width: '200px' }}>Ir para Login</button>
-        </div>
-      </div>
-    );
-  }
+  // Garante que o portal SEMPRE carregue os dados sem nunca travar em tela preta
+  const portalDataToRender = appData || DEFAULT_DATA;
 
   // Blocked Screen Logic
   if (isBlocked && !user?.isAdmin) {
@@ -4303,10 +4339,10 @@ function AppContent() {
       className="min-h-screen bg-bg text-text font-jakarta"
       style={{
         // @ts-ignore
-        '--primary': appData?.theme?.primary || '#ff8a00',
-        '--bg': (appData?.theme?.bg && appData.theme.bg !== '#000000' && appData.theme.bg !== '#050505') ? appData.theme.bg : '#090d16',
-        '--text': appData?.theme?.text || '#ffffff',
-        '--text-dim': appData?.theme?.textDim || '#a0a0a0'
+        '--primary': portalDataToRender?.theme?.primary || '#ff8a00',
+        '--bg': (portalDataToRender?.theme?.bg && portalDataToRender.theme.bg !== '#000000' && portalDataToRender.theme.bg !== '#050505') ? portalDataToRender.theme.bg : '#090d16',
+        '--text': portalDataToRender?.theme?.text || '#ffffff',
+        '--text-dim': portalDataToRender?.theme?.textDim || '#a0a0a0'
       }}
     >
       {/* Toast Flutuante em Tempo Real para Notificações Recebidas */}
@@ -4317,7 +4353,7 @@ function AppContent() {
 
       {/* Vídeo Patrocinado de Entrada (Apresentação Popup ao Acessar o Portal) */}
       <PortalWelcomeVideoModal
-        config={appData?.welcomeVideo}
+        config={portalDataToRender?.welcomeVideo}
         isOpen={showWelcomeVideoModal}
         onClose={handleCloseWelcomeVideo}
         isPreviewMode={isWelcomeVideoPreviewMode}
