@@ -32,7 +32,7 @@ const DEFAULT_WA_LINK = `https://wa.me/5585992862177?text=${encodeURIComponent(
 )}`;
 
 const DEFAULT_EXCLUSIVE_WA_LINK = `https://wa.me/5585992862177?text=${encodeURIComponent(
-  "Olá! Gostaria de informações sobre o Plano Individual de Divulgação Exclusiva (R$ 99,90/mês) em grupos de Facebook e WhatsApp individual somente da marca da minha empresa. Poderiam me orientar com o cadastro e ativação?"
+  "Olá! Gostaria de informações sobre o Plano Individual de Divulgação Exclusiva (R$ 149,90/mês) em grupos de Facebook e WhatsApp individual somente da marca da minha empresa. Poderiam me orientar com o cadastro e ativação?"
 )}`;
 
 // ==========================================
@@ -382,7 +382,7 @@ export const PlanoEDiferencaServicosSection: React.FC<{
                   onClick={onCadastrarClick}
                   className="w-full inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all duration-300 shadow-[0_10px_30px_rgba(245,158,11,0.3)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                 >
-                  <span>QUERO DIVULGAR MINHA EMPRESA</span>
+                  <span>CADASTRAR MINHA EMPRESA (R$ 49,90)</span>
                   <ArrowRight size={17} />
                 </button>
               ) : (
@@ -392,7 +392,7 @@ export const PlanoEDiferencaServicosSection: React.FC<{
                   rel="noopener noreferrer"
                   className="w-full inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all duration-300 shadow-[0_10px_30px_rgba(245,158,11,0.3)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer decoration-transparent"
                 >
-                  <span>QUERO DIVULGAR MINHA EMPRESA</span>
+                  <span>CADASTRAR MINHA EMPRESA (R$ 49,90)</span>
                   <ArrowRight size={17} />
                 </a>
               )}
@@ -425,7 +425,7 @@ export const PlanoEDiferencaServicosSection: React.FC<{
               {/* Preço */}
               <div className="flex items-baseline gap-1.5 my-4 p-4 rounded-2xl bg-black/40 border border-cyan-500/30">
                 <span className="text-xl sm:text-2xl font-black text-cyan-400">R$</span>
-                <span className="text-4xl sm:text-5xl font-black text-white tracking-tight">99,90</span>
+                <span className="text-4xl sm:text-5xl font-black text-white tracking-tight">149,90</span>
                 <span className="text-xs sm:text-sm font-bold text-white/70 uppercase">/mês</span>
               </div>
 
@@ -458,7 +458,7 @@ export const PlanoEDiferencaServicosSection: React.FC<{
                 <div className="mt-5 p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-[11px] sm:text-xs text-cyan-200/90 leading-relaxed flex items-start gap-2.5">
                   <Info size={16} className="text-cyan-400 shrink-0 mt-0.5" />
                   <div>
-                    <strong>Atenção:</strong> No Plano Individual de R$ 99,90/mês, a divulgação é realizada em grupos de Facebook e WhatsApp de forma individual e exclusiva, promovendo somente a marca da sua empresa.
+                    <strong>Atenção:</strong> No Plano Individual de R$ 149,90/mês, a divulgação é realizada em grupos de Facebook e WhatsApp de forma individual e exclusiva, promovendo somente a marca da sua empresa.
                   </div>
                 </div>
               </div>
@@ -472,7 +472,7 @@ export const PlanoEDiferencaServicosSection: React.FC<{
                 rel="noopener noreferrer"
                 className="w-full inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-400 hover:brightness-110 text-black px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all duration-300 shadow-lg hover:scale-[1.02] active:scale-[0.98] cursor-pointer decoration-transparent"
               >
-                <span>CONTRATAR PLANO INDIVIDUAL (R$ 99,90)</span>
+                <span>CONTRATAR PLANO INDIVIDUAL (R$ 149,90)</span>
                 <WhatsAppIcon className="w-5 h-5 fill-black" />
               </a>
               <p className="text-[10px] text-white/50 text-center font-mono mt-2.5">
@@ -559,7 +559,7 @@ export const CtaFinalSection: React.FC<{
         </h2>
 
         <p className="text-sm sm:text-base md:text-lg text-white/80 font-medium max-w-2xl mx-auto mt-3 leading-relaxed">
-          Cadastre seu negócio por R$ 49,90/mês para presença no portal comercial, ou contrate o Plano Individual por R$ 99,90/mês com campanha exclusiva para sua marca.
+          Cadastre seu negócio por R$ 49,90/mês para presença no portal comercial, ou contrate o Plano Individual por R$ 149,90/mês com campanha exclusiva para sua marca.
         </p>
 
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -569,7 +569,7 @@ export const CtaFinalSection: React.FC<{
               onClick={onCadastrarClick}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 sm:px-10 py-4 sm:py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_12px_40px_rgba(245,158,11,0.35)] hover:scale-105 cursor-pointer"
             >
-              <span>QUERO DIVULGAR MINHA EMPRESA</span>
+              <span>CADASTRAR MINHA EMPRESA</span>
               <ArrowRight size={18} />
             </button>
           ) : (
@@ -579,7 +579,7 @@ export const CtaFinalSection: React.FC<{
               rel="noreferrer"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-8 sm:px-10 py-4 sm:py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-300 shadow-[0_12px_40px_rgba(245,158,11,0.35)] hover:scale-105 cursor-pointer decoration-transparent"
             >
-              <span>QUERO DIVULGAR MINHA EMPRESA</span>
+              <span>CADASTRAR MINHA EMPRESA</span>
               <ArrowRight size={18} />
             </a>
           )}
@@ -589,7 +589,7 @@ export const CtaFinalSection: React.FC<{
             rel="noreferrer"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-6 sm:px-8 py-4 sm:py-5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 cursor-pointer decoration-transparent"
           >
-            <span>PLANO INDIVIDUAL (R$ 99,90/MÊS)</span>
+            <span>PLANO INDIVIDUAL (R$ 149,90/MÊS)</span>
           </a>
         </div>
 

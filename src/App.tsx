@@ -373,31 +373,31 @@ const DEFAULT_DATA = {
     actions: NOTIFICATION_ACTIONS
   },
   companies: COMPANIES_DATA,
-  videos: VIDEOS,
-  flyers: FLYERS,
+  videos: VIDEOS as (string | { url: string; active?: boolean })[],
+  flyers: FLYERS as (string | { image: string; link?: string; title?: string; companyId?: string; companyName?: string; actionType?: string })[],
   testimonials: TESTIMONIALS,
   categories: CATEGORIES,
   whatsappTestimonials: [],
-  horizontalBanners: HORIZONTAL_BANNERS,
+  horizontalBanners: HORIZONTAL_BANNERS as (string | { image: string; link?: string; title?: string; companyId?: string; companyName?: string; actionType?: string; active?: boolean })[],
   welcomeVideo: {
     enabled: true,
-    mediaType: 'auto',
+    mediaType: 'auto' as 'auto' | 'video' | 'flyer',
     videoUrl: '',
     flyerUrl: '',
     flyerDeleteUrl: '',
     title: 'Destaque Patrocinado',
     badge: 'PATROCINADO',
     buttonText: 'Falar no WhatsApp',
-    targetType: 'company',
+    targetType: 'company' as 'manual' | 'company',
     companyId: '',
     companyName: '',
     companyCategory: '',
     companyLogo: '',
     whatsappPhone: '',
     customLink: '',
-    actionType: 'whatsapp',
+    actionType: 'whatsapp' as 'whatsapp' | 'link',
     whatsappMessage: 'Olá! Vi seu anúncio no portal Minha Divulgação e gostaria de mais informações.',
-    frequency: 'always',
+    frequency: 'always' as 'always' | 'once_per_day',
     autoPlayMuted: true
   }
 };
@@ -548,12 +548,12 @@ interface AppData {
   chatKeywords: Record<string, string>;
   notificationsData: any;
   companies: any[];
-  videos: string[];
-  flyers: { image: string; link: string }[];
+  videos: any[];
+  flyers: any[];
   testimonials: any[];
   categories: any[];
   whatsappTestimonials?: { image: string; active?: boolean }[];
-  horizontalBanners?: { image: string; link: string; title?: string; active?: boolean }[];
+  horizontalBanners?: any[];
   welcomeVideo?: PortalWelcomeVideoConfig;
 }
 
@@ -903,7 +903,7 @@ function AppContent() {
   const [onlineCount, setOnlineCount] = useState(Math.floor(Math.random() * (22 - 12 + 1)) + 12);
   const [customRadioLink, setCustomRadioLink] = useState<string>('');
   const [allUsers, setAllUsers] = useState<any>(null);
-  const [editingVideosFor, setEditingVideosFor] = useState<{id: string, city: string, videos: string[]} | null>(null);
+  const [editingVideosFor, setEditingVideosFor] = useState<{id: string, city: string, videos: any[]} | null>(null);
   const [tvMuted, setTvMuted] = useState(false);
   const [tvVolume, setTvVolume] = useState(1);
   const [tvKey, setTvKey] = useState(0);
@@ -2466,23 +2466,86 @@ function AppContent() {
     }
   }, [displayedCompanies, location]);
 
+  const isCompanyNicheOrSearchMatch = (c: any, query: string): boolean => {
+    if (!query) return true;
+    const q = normalize(query.trim());
+    if (!q) return true;
+
+    // Direct inclusion in text fields
+    const directFields = [
+      c.name,
+      c.desc,
+      c.category,
+      c.city,
+      c.state,
+      c.uf,
+      c.neighborhood,
+      c.bairro,
+      Array.isArray(c.tags) ? c.tags.join(' ') : '',
+      Array.isArray(c.keywords) ? c.keywords.join(' ') : ''
+    ].filter(Boolean).map(t => normalize(String(t)));
+
+    if (directFields.some(f => f.includes(q))) return true;
+
+    // Items / products inclusion
+    if (c.items && Array.isArray(c.items)) {
+      if (c.items.some((it: any) => 
+        normalize(it.title || it.name || '').includes(q) ||
+        normalize(it.desc || '').includes(q)
+      )) {
+        return true;
+      }
+    }
+
+    // Semantic niche synonyms
+    const allCorpus = normalize(`${c.name || ''} ${c.desc || ''} ${c.category || ''}`);
+
+    if ((q.includes('pizza') || q.includes('lanche') || q.includes('hamburg')) && 
+        (allCorpus.includes('pizza') || allCorpus.includes('lanche') || allCorpus.includes('hamburg') || allCorpus.includes('restaurante'))) return true;
+
+    if ((q.includes('refriger') || q.includes('ar cond') || q.includes('clima') || q.includes('frio') || q.includes('gelad')) &&
+        (allCorpus.includes('refriger') || allCorpus.includes('ar cond') || allCorpus.includes('frio') || allCorpus.includes('clima') || allCorpus.includes('gelad'))) return true;
+
+    if ((q.includes('oficina') || q.includes('mecanic') || q.includes('carro') || q.includes('veicul') || q.includes('rolamento') || q.includes('auto') || q.includes('peca')) &&
+        (allCorpus.includes('oficina') || allCorpus.includes('mecanic') || allCorpus.includes('auto') || allCorpus.includes('rolamento') || allCorpus.includes('veicul') || allCorpus.includes('peca'))) return true;
+
+    if ((q.includes('mercado') || q.includes('supermercado') || q.includes('atacad') || q.includes('compras') || q.includes('varejo')) &&
+        (allCorpus.includes('supermercado') || allCorpus.includes('mercado') || allCorpus.includes('atacad') || allCorpus.includes('assai'))) return true;
+
+    if ((q.includes('remedio') || q.includes('farmacia') || q.includes('drogaria') || q.includes('saude') || q.includes('medic') || q.includes('clinica') || q.includes('dentist')) &&
+        (allCorpus.includes('saude') || allCorpus.includes('farmacia') || allCorpus.includes('drogaria') || allCorpus.includes('clinica') || allCorpus.includes('cartao de todos'))) return true;
+
+    if ((q.includes('salao') || q.includes('cabel') || q.includes('barbearia') || q.includes('barbeiro') || q.includes('estetic') || q.includes('beleza') || q.includes('manicure')) &&
+        (allCorpus.includes('salao') || allCorpus.includes('barbearia') || allCorpus.includes('estetic') || allCorpus.includes('beleza') || allCorpus.includes('stephanny'))) return true;
+
+    if ((q.includes('restaurante') || q.includes('bar') || q.includes('comida') || q.includes('almoco') || q.includes('churrasco') || q.includes('carne') || q.includes('petisco')) &&
+        (allCorpus.includes('restaurante') || allCorpus.includes('bar') || allCorpus.includes('ordones') || allCorpus.includes('comida'))) return true;
+
+    if ((q.includes('credito') || q.includes('emprestimo') || q.includes('financ') || q.includes('dinheiro') || q.includes('banco')) &&
+        (allCorpus.includes('financ') || allCorpus.includes('cred') || allCorpus.includes('gih'))) return true;
+
+    if ((q.includes('shopping') || q.includes('lazer') || q.includes('cinema') || q.includes('passeio')) &&
+        (allCorpus.includes('shopping') || allCorpus.includes('lazer') || allCorpus.includes('north'))) return true;
+
+    if ((q.includes('publicidade') || q.includes('propag') || q.includes('audio') || q.includes('som') || q.includes('video') || q.includes('locuc') || q.includes('marketing')) &&
+        (allCorpus.includes('publicidade') || allCorpus.includes('audio') || allCorpus.includes('bossa') || allCorpus.includes('marketing') || allCorpus.includes('som'))) return true;
+
+    if ((q.includes('pet') || q.includes('veterin') || q.includes('racao') || q.includes('animal')) &&
+        (allCorpus.includes('pet') || allCorpus.includes('veterin') || allCorpus.includes('animal'))) return true;
+
+    if ((q.includes('advoga') || q.includes('jurid') || q.includes('direito') || q.includes('lei')) &&
+        (allCorpus.includes('advoga') || allCorpus.includes('jurid'))) return true;
+
+    if ((q.includes('arquit') || q.includes('construc') || q.includes('engenh') || q.includes('reforma') || q.includes('decor') || q.includes('design') || q.includes('obra')) &&
+        (allCorpus.includes('arquit') || allCorpus.includes('construc') || allCorpus.includes('reforma') || allCorpus.includes('obra') || allCorpus.includes('material'))) return true;
+
+    return false;
+  };
+
   const filteredCompaniesRaw = appData
     ? displayedCompanies.filter(c => {
         const matchesCategory = selectedCategory ? c.category === selectedCategory : true;
-        const matchesSearch = searchQuery 
-          ? normalize(c.name).includes(normalize(searchQuery)) || 
-            normalize(c.desc || '').includes(normalize(searchQuery)) || 
-            normalize(c.category || '').includes(normalize(searchQuery)) ||
-            (c.city && normalize(c.city).includes(normalize(searchQuery))) ||
-            (c.state && normalize(c.state).includes(normalize(searchQuery))) ||
-            (c.uf && normalize(c.uf).includes(normalize(searchQuery))) ||
-            (c.neighborhood && normalize(c.neighborhood).includes(normalize(searchQuery))) ||
-            (c.bairro && normalize(c.bairro).includes(normalize(searchQuery))) ||
-            (c.items && Array.isArray(c.items) && c.items.some((it: any) => 
-              normalize(it.title || it.name || '').includes(normalize(searchQuery)) ||
-              normalize(it.desc || '').includes(normalize(searchQuery))
-            ))
-          : true;
+        const matchesSearch = searchQuery ? isCompanyNicheOrSearchMatch(c, searchQuery) : true;
         
         // Match state filter
         let matchesState = true;
@@ -4238,10 +4301,10 @@ function AppContent() {
           {/* Clean Menu - Desktop */}
           <div className="hidden lg:flex items-center gap-6 text-xs font-bold uppercase tracking-wider text-white/70">
             <a href="#inicio" onClick={(e) => { e.preventDefault(); scrollToSection('inicio'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Início</a>
-            <a href="#como-funciona" onClick={(e) => { e.preventDefault(); scrollToSection('como-funciona'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Como Funciona</a>
-            <a href="#planos" onClick={(e) => { e.preventDefault(); scrollToSection('planos'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Planos & Serviços</a>
-            <a href="#tv-radio" onClick={(e) => { e.preventDefault(); scrollToSection('tv-radio'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Rádio & TV</a>
-            <a href="#anunciantes" onClick={(e) => { e.preventDefault(); scrollToSection('anunciantes'); }} className="hover:text-[var(--primary)] transition-colors duration-200">Anunciantes</a>
+            <a href="#pesquisa-nichos" onClick={(e) => { e.preventDefault(); scrollToSection('pesquisa-nichos'); }} className="hover:text-[var(--primary)] transition-colors duration-200">🔍 Buscar Nicho</a>
+            <a href="#tv-radio" onClick={(e) => { e.preventDefault(); scrollToSection('tv-radio'); }} className="hover:text-[var(--primary)] transition-colors duration-200">📺 Rádio & TV</a>
+            <a href="#anunciantes" onClick={(e) => { e.preventDefault(); scrollToSection('anunciantes'); }} className="hover:text-[var(--primary)] transition-colors duration-200">🏢 Anunciantes</a>
+            <a href="#planos" onClick={(e) => { e.preventDefault(); scrollToSection('planos'); }} className="hover:text-[var(--primary)] transition-colors duration-200">⭐ Planos</a>
           </div>
 
           {/* Action Buttons - Desktop */}
@@ -4250,21 +4313,12 @@ function AppContent() {
               href="https://crm-pi-ebon-19.vercel.app/?empresa=minhadivulgacao&view=client"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 hover:text-amber-200 px-3.5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-300 flex items-center gap-1.5 decoration-transparent cursor-pointer"
+              className="bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 hover:text-amber-200 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-300 flex items-center gap-2 decoration-transparent cursor-pointer shadow-lg shadow-amber-500/10"
               title="Atendimento Horário Comercial: Seg a Sex 08:00 às 20:00 | Sáb: 09:00 às 14:00"
             >
-              <MessageSquare size={13} className="text-amber-400" />
+              <MessageSquare size={14} className="text-amber-400" />
               <span>Atendimento Online</span>
             </a>
-            <button 
-              type="button"
-              onClick={() => {
-                setIsCompanyRegModalOpen(true);
-              }}
-              className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-300 shadow shadow-amber-500/20 cursor-pointer flex items-center gap-1.5 hover:scale-105"
-            >
-              QUERO DIVULGAR MINHA EMPRESA
-            </button>
           </div>
 
           {/* Mobile Menu Trigger & Quick Actions */}
@@ -4273,21 +4327,12 @@ function AppContent() {
               href="https://crm-pi-ebon-19.vercel.app/?empresa=minhadivulgacao&view=client"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:text-amber-200 px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-wide cursor-pointer shrink-0 decoration-transparent flex items-center gap-1"
+              className="bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:text-amber-200 px-3 py-1.5 rounded-lg font-black text-[11px] uppercase tracking-wide cursor-pointer shrink-0 decoration-transparent flex items-center gap-1.5"
               title="Atendimento Horário Comercial: Seg a Sex 08:00 às 20:00 | Sáb: 09:00 às 14:00"
             >
-              <MessageSquare size={11} className="text-amber-400" />
+              <MessageSquare size={12} className="text-amber-400" />
               <span>Dúvidas</span>
             </a>
-            <button 
-              type="button"
-              onClick={() => {
-                setIsCompanyRegModalOpen(true);
-              }}
-              className="bg-gradient-to-r from-amber-400 to-amber-500 text-black px-2.5 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-wide cursor-pointer shrink-0"
-            >
-              🚀 Cadastrar
-            </button>
             <button 
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -4309,10 +4354,10 @@ function AppContent() {
             >
               <div className="flex flex-col gap-4 text-sm font-bold uppercase tracking-wider">
                 <a href="#inicio" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('inicio'); }} className="text-white hover:text-[var(--primary)] py-2">🏠 Início</a>
-                <a href="#como-funciona" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('como-funciona'); }} className="text-white hover:text-[var(--primary)] py-2">💡 Como Funciona</a>
-                <a href="#planos" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('planos'); }} className="text-white hover:text-[var(--primary)] py-2">⭐ Planos & Serviços</a>
+                <a href="#pesquisa-nichos" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('pesquisa-nichos'); }} className="text-white hover:text-[var(--primary)] py-2">🔍 Buscar Nicho</a>
                 <a href="#tv-radio" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('tv-radio'); }} className="text-white hover:text-[var(--primary)] py-2">📺 Rádio & TV</a>
                 <a href="#anunciantes" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('anunciantes'); }} className="text-white hover:text-[var(--primary)] py-2">🏢 Anunciantes</a>
+                <a href="#planos" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); scrollToSection('planos'); }} className="text-white hover:text-[var(--primary)] py-2">⭐ Planos & Serviços</a>
               </div>
               <div className="flex flex-col gap-3 pt-4 border-t border-white/5">
                 <a 
@@ -4327,16 +4372,6 @@ function AppContent() {
                     Horário Comercial: Seg a Sex 08:00 às 20:00 • Sáb: 09:00 às 14:00
                   </span>
                 </a>
-                <button 
-                  type="button"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    setIsCompanyRegModalOpen(true);
-                  }}
-                  className="w-full text-center bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-black px-5 py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-widest block cursor-pointer shadow-lg hover:brightness-110 transition-all"
-                >
-                  QUERO DIVULGAR MINHA EMPRESA
-                </button>
 
                 <div className="flex flex-col items-center gap-2 pt-2 border-t border-white/5">
                   <span className="text-[10px] font-mono uppercase tracking-widest text-white/50 font-bold">
@@ -4388,21 +4423,27 @@ function AppContent() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-7 w-full sm:w-auto relative z-20">
             <button 
               type="button"
-              onClick={() => {
-                setIsCompanyRegModalOpen(true);
-              }}
+              onClick={() => scrollToSection('pesquisa-nichos')}
               className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:brightness-110 text-black hover:scale-105 hover:shadow-[0_0_35px_rgba(245,158,11,0.45)] px-8 sm:px-10 py-4 sm:py-5 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider text-center transition-all duration-300 shadow-2xl flex items-center justify-center gap-3 cursor-pointer w-full sm:w-auto shrink-0"
             >
-              <span>QUERO DIVULGAR MINHA EMPRESA</span>
+              <Search size={18} className="text-black stroke-[3]" />
+              <span>BUSCAR POR NICHO OU EMPRESA</span>
               <ArrowRight size={18} />
             </button>
             <button 
               type="button"
-              onClick={() => scrollToSection('anunciantes')}
+              onClick={() => scrollToSection('tv-radio')}
               className="bg-white/10 hover:bg-white/15 border border-white/20 text-white px-6 sm:px-8 py-4 sm:py-5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider text-center transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto shrink-0"
             >
-              <Search size={16} className="text-amber-400" />
-              <span>CONHECER AS EMPRESAS</span>
+              <Tv size={16} className="text-amber-400" />
+              <span>VER TV & RÁDIO AO VIVO</span>
+            </button>
+            <button 
+              type="button"
+              onClick={() => scrollToSection('anunciantes')}
+              className="bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white px-5 sm:px-7 py-4 sm:py-5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider text-center transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto shrink-0"
+            >
+              <span>🏢 TODAS AS EMPRESAS</span>
             </button>
           </div>
 
@@ -4420,23 +4461,310 @@ function AppContent() {
       </section>
 
       {/* ======================================================== */}
-      {/* B) ILUSTRAÇÃO DE COMO FUNCIONA A DIVULGAÇÃO COLETIVA      */}
-      {/* 3 etapas curtas e autoexplicativas                       */}
+      {/* 1. PESQUISA POR NICHO COM RESULTADOS INSTANTÂNEOS        */}
+      {/* (Antes da TV e da Rádio - Conforme solicitado)           */}
+      {/* Quando digitarem o nicho, já exibe os anunciantes na hora */}
       {/* ======================================================== */}
-      <ComoFunciona3EtapasSection />
+      <section id="pesquisa-nichos" className="w-full pt-14 md:pt-20 pb-14 md:pb-20 bg-[#090b14] border-b border-white/5 relative scroll-mt-20">
+        <div id="busca-nicho" className="-top-24 relative" />
+        {/* Glow de fundo */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
 
-      {/* ======================================================== */}
-      {/* C & D) O QUE A EMPRESA RECEBE & DIFERENÇA DOS SERVIÇOS    */}
-      {/* Presença no Portal (R$ 49,90) vs Divulgação Exclusiva     */}
-      {/* ======================================================== */}
-      <div id="anuncie">
-        <div id="divulgue" />
-        <PlanoEDiferencaServicosSection 
-          primaryWaLink={primaryDivulgarWaLink}
-          exclusiveWaLink={exclusiveDivulgarWaLink}
-          onCadastrarClick={() => setIsCompanyRegModalOpen(true)}
-        />
-      </div>
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 relative z-10">
+          
+          {/* Header da Seção de Pesquisa */}
+          <div className="text-center max-w-3xl mx-auto mb-8 select-none">
+            <span className="text-amber-400 text-[10px] sm:text-xs font-mono font-black tracking-[0.2em] uppercase bg-amber-500/10 border border-amber-500/25 px-4 py-1.5 rounded-full inline-flex items-center gap-2 mb-3 shadow-sm">
+              <Search size={13} className="text-amber-400" />
+              BUSCA DIRETA POR NICHO
+            </span>
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
+              Encontre Quem Está Cadastrado no Seu Nicho
+            </h2>
+            <p className="text-sm sm:text-base text-white/80 mt-3 font-medium max-w-2xl mx-auto leading-relaxed">
+              Digite o nicho ou selecione uma categoria abaixo. Os anunciantes cadastrados aparecem instantaneamente na tela para você falar direto no WhatsApp, sem precisar rolar a página!
+            </p>
+          </div>
+
+          {/* Campo de Busca Rápida Interativo com Botão BUSCAR */}
+          <div className="max-w-2xl mx-auto mb-6">
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                const el = document.getElementById('resultados-nicho');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              className="relative w-full group"
+            >
+              <div className="absolute inset-y-0 left-4 sm:left-5 flex items-center pointer-events-none text-amber-400">
+                <Search size={22} className="stroke-[2.5]" />
+              </div>
+              <input 
+                type="text" 
+                placeholder="Digite o nicho (ex: Pizzaria, Mecânico, Refrigeração, Salão, Farmácia, Advogado...)" 
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (selectedCategory && e.target.value) {
+                    setSelectedCategory(null);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const el = document.getElementById('resultados-nicho');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
+                className="w-full bg-[#121422] border-2 border-amber-500/40 focus:border-amber-400 outline-none rounded-2xl sm:rounded-3xl pl-12 sm:pl-14 pr-32 sm:pr-44 py-4 sm:py-5 text-sm sm:text-base text-white font-semibold placeholder:text-white/40 shadow-[0_10px_35px_rgba(0,0,0,0.6)] focus:shadow-[0_0_30px_rgba(245,158,11,0.25)] transition-all duration-300"
+              />
+              <div className="absolute inset-y-0 right-2 sm:right-3 my-auto flex items-center gap-1.5 h-fit">
+                {searchQuery && (
+                  <button 
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="h-8 sm:h-9 w-8 sm:w-9 text-white/50 hover:text-white hover:bg-white/10 rounded-xl text-xs font-mono font-bold flex items-center justify-center transition-colors cursor-pointer"
+                    title="Limpar texto digitado"
+                  >
+                    ✕
+                  </button>
+                )}
+                <button 
+                  type="submit"
+                  className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:brightness-110 text-black font-black text-xs sm:text-sm px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl shadow-lg transition-all active:scale-95 flex items-center gap-1.5 sm:gap-2 cursor-pointer uppercase tracking-wider shrink-0"
+                  title="Buscar empresas neste nicho"
+                >
+                  <Search size={15} className="stroke-[3]" />
+                  <span>BUSCAR</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Pílulas de Nichos Populares para Clique Rápido */}
+          <div className="mb-10">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <span className="text-[11px] font-mono font-bold text-white/50 uppercase tracking-widest">
+                Nichos em Destaque:
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2 max-w-4xl mx-auto">
+              {[
+                { label: 'Pizzarias', icon: '🍕', query: 'pizzaria' },
+                { label: 'Refrigeração & Ar', icon: '❄️', query: 'refrigeração' },
+                { label: 'Oficinas & Mecânicas', icon: '🔧', query: 'oficina' },
+                { label: 'Supermercados', icon: '🛒', query: 'supermercado' },
+                { label: 'Farmácias & Saúde', icon: '💊', query: 'farmácia' },
+                { label: 'Salões & Barbearias', icon: '✂️', query: 'salão' },
+                { label: 'Restaurantes & Bares', icon: '🍽️', query: 'restaurante' },
+                { label: 'Pet Shops', icon: '🐾', query: 'pet shop' },
+                { label: 'Crédito & Finanças', icon: '💸', query: 'crédito' },
+                { label: 'Lazer & Shopping', icon: '🏬', query: 'shopping' },
+                { label: 'Publicidade & Som', icon: '📢', query: 'publicidade' },
+                { label: 'Informática & Celular', icon: '💻', query: 'informática' }
+              ].map((niche, idx) => {
+                const isActive = searchQuery.toLowerCase() === niche.query.toLowerCase() || (selectedCategory && selectedCategory.toLowerCase().includes(niche.query));
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      if (isActive) {
+                        setSearchQuery('');
+                        setSelectedCategory(null);
+                      } else {
+                        setSearchQuery(niche.label);
+                        setSelectedCategory(null);
+                      }
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer shadow-sm active:scale-95 ${
+                      isActive 
+                        ? 'bg-amber-400 text-black font-black scale-105 shadow-[0_0_15px_rgba(245,158,11,0.5)]' 
+                        : 'bg-[#151726] border border-white/10 hover:border-amber-400/50 text-white/90 hover:text-white hover:bg-[#1c1f33]'
+                    }`}
+                  >
+                    <span>{niche.icon}</span>
+                    <span>{niche.label}</span>
+                  </button>
+                );
+              })}
+              {(searchQuery || selectedCategory) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedCategory(null);
+                  }}
+                  className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold bg-red-500/15 border border-red-500/30 text-red-300 hover:bg-red-500/25 transition-all cursor-pointer"
+                >
+                  <span>✕ Ver Todos</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* ÁREA DE RESULTADOS IMEDIATOS NA HORA */}
+          <div id="resultados-nicho" className="bg-[#0b0d18] border border-white/10 rounded-3xl p-5 sm:p-7 md:p-8 shadow-2xl relative scroll-mt-28">
+            
+            {/* Status do Nicho Buscado */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-5 border-b border-white/10 mb-6">
+              <div className="flex items-center gap-2.5 text-center sm:text-left">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <h3 className="text-base sm:text-lg font-black text-white">
+                  {searchQuery ? (
+                    <>Empresas Cadastradas no Nicho: <span className="text-amber-400">"{searchQuery}"</span></>
+                  ) : selectedCategory ? (
+                    <>Categoria Selecionada: <span className="text-amber-400">{selectedCategory}</span></>
+                  ) : (
+                    <>Empresas Cadastradas no Portal Prontas para Atendimento</>
+                  )}
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 px-3.5 py-1 rounded-full">
+                  {filteredCompanies.length} {filteredCompanies.length === 1 ? 'anunciante disponível' : 'anunciantes disponíveis'}
+                </span>
+                {(searchQuery || selectedCategory) && (
+                  <button
+                    type="button"
+                    onClick={() => { setSearchQuery(''); setSelectedCategory(null); }}
+                    className="text-xs text-white/50 hover:text-white font-mono underline cursor-pointer ml-1"
+                  >
+                    Limpar
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Grid de Cards de Anunciantes do Nicho */}
+            {filteredCompanies.length === 0 ? (
+              <div className="text-center py-12 px-4 max-w-lg mx-auto">
+                <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4 text-2xl text-white/40">
+                  🔍
+                </div>
+                <h4 className="text-lg font-black text-white mb-2">
+                  Nenhuma empresa encontrada para "{searchQuery}"
+                </h4>
+                <p className="text-xs sm:text-sm text-white/60 mb-5 leading-relaxed">
+                  Tente buscar por termos mais genéricos como Pizzaria, Mecânico, Refrigeração, Mercado ou clique em um dos nichos acima.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setSearchQuery(''); setSelectedCategory(null); }}
+                  className="bg-amber-400 hover:bg-amber-300 text-black px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer"
+                >
+                  Mostrar Todos os Anunciantes
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                {filteredCompanies.slice(0, (searchQuery || selectedCategory) ? 24 : 8).map(company => {
+                  const planType = getCompanyPlanType(company);
+                  return (
+                    <div 
+                      key={company.id} 
+                      className={`bg-[#111322] border transition-all duration-300 rounded-3xl p-5 flex flex-col justify-between hover:-translate-y-1 shadow-lg hover:shadow-2xl relative select-none ${
+                        planType === 'patrocinado' 
+                          ? 'border-amber-400/80 shadow-[0_0_20px_rgba(251,191,36,0.2)] ring-1 ring-amber-400/50' 
+                          : planType === 'destaque'
+                          ? 'border-amber-500/50 shadow-md shadow-amber-500/5'
+                          : planType === 'verificado'
+                          ? 'border-emerald-500/30 hover:border-emerald-500/50'
+                          : 'border-white/10 hover:border-white/25'
+                      }`}
+                    >
+                      {/* Badge superior de status */}
+                      <div className="flex items-center justify-between gap-1 mb-3">
+                        <span className="text-[10px] text-amber-300 font-extrabold uppercase tracking-wider bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full truncate">
+                          {company.category || 'Comércio'}
+                        </span>
+                        {planType === 'patrocinado' && (
+                          <span className="bg-gradient-to-r from-red-500 to-amber-500 text-black font-black text-[9px] uppercase px-2 py-0.5 rounded-full shrink-0">
+                            🔥 PATROCINADO
+                          </span>
+                        )}
+                        {planType === 'destaque' && (
+                          <span className="bg-amber-400 text-black font-black text-[9px] uppercase px-2 py-0.5 rounded-full shrink-0">
+                            ⭐ DESTAQUE
+                          </span>
+                        )}
+                        {planType === 'verificado' && (
+                          <span className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold text-[9px] uppercase px-2 py-0.5 rounded-full shrink-0">
+                            ✔ VERIFICADO
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Header com Logo e Nome */}
+                      <div 
+                        onClick={() => {
+                          if (company.wa) {
+                            window.open(getCompanyWhatsAppUrl(company), '_blank');
+                          } else if (company.catalogUrl) {
+                            window.open(company.catalogUrl, '_blank');
+                          }
+                        }}
+                        className="cursor-pointer group/card flex items-start gap-3.5 mb-3"
+                        title={`Falar com ${company.name}`}
+                      >
+                        <div className="w-14 h-14 rounded-2xl bg-white border border-white/20 overflow-hidden flex items-center justify-center shadow-md shrink-0 group-hover/card:scale-105 transition-transform duration-200">
+                          <img 
+                            src={company.logo} 
+                            alt={company.name} 
+                            className="w-full h-full object-cover" 
+                            referrerPolicy="no-referrer" 
+                            loading="lazy" 
+                            decoding="async" 
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-base font-black text-white line-clamp-1 group-hover/card:text-amber-300 transition-colors">
+                            {company.name}
+                          </h4>
+                          {(company.city || company.state || company.uf) && (
+                            <span className="text-[10px] text-white/50 font-mono block mt-0.5">
+                              📍 {company.city || 'Fortaleza'}{company.state || company.uf ? ` - ${company.state || company.uf}` : ''}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Descrição curta */}
+                      <p className="text-xs text-white/75 font-medium line-clamp-2 leading-relaxed mb-4 min-h-[2rem]">
+                        {company.desc || 'Atendimento comercial de qualidade e suporte rápido.'}
+                      </p>
+
+                      {/* Botões de Ação do Card */}
+                      <div className="mt-auto">
+                        {renderCardActionButtons(company, true)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Link para Rolar até o Catálogo Completo */}
+            <div className="text-center mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <span className="text-xs text-white/50 font-mono">
+                {searchQuery 
+                  ? `Mostrando resultados rápidos para "${searchQuery}"`
+                  : `Visualizando empresas cadastradas no portal`}
+              </span>
+              <button
+                type="button"
+                onClick={() => scrollToSection('anunciantes')}
+                className="inline-flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 font-extrabold uppercase tracking-wider hover:underline cursor-pointer"
+              >
+                <span>Ver Todos os Anunciantes e Filtros Avançados</span>
+                <ArrowRight size={14} />
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
 
       {/* ======================================================== */}
       {/* G) RECURSOS COMPLEMENTARES: TV & RÁDIO DA REDE           */}
@@ -4760,7 +5088,14 @@ function AppContent() {
             </p>
 
             {/* Dynamic Keywords Search Box */}
-            <div className="relative w-full max-w-lg mt-8">
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                const el = document.getElementById('destaque');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              className="relative w-full max-w-lg mt-8"
+            >
               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-white/40">
                 <Search size={18} />
               </div>
@@ -4769,18 +5104,35 @@ function AppContent() {
                 placeholder="Busque por Assai, Ordones, Refrigeração..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#11111a] border border-white/10 hover:border-white/20 focus:border-[var(--primary)] outline-none rounded-2xl pl-12 pr-4 py-4 text-sm text-white font-medium shadow-2xl transition-all duration-300"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const el = document.getElementById('destaque');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
+                className="w-full bg-[#11111a] border border-white/10 hover:border-white/20 focus:border-[var(--primary)] outline-none rounded-2xl pl-12 pr-32 py-4 text-sm text-white font-medium shadow-2xl transition-all duration-300"
               />
-              {searchQuery && (
+              <div className="absolute inset-y-0 right-2 my-auto flex items-center gap-1 h-fit">
+                {searchQuery && (
+                  <button 
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="h-8 w-8 text-xs font-bold font-mono text-white/50 hover:text-white flex items-center justify-center rounded-lg hover:bg-white/10 cursor-pointer"
+                    title="Limpar texto"
+                  >
+                    ✕
+                  </button>
+                )}
                 <button 
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute inset-y-0 right-4 text-xs font-bold font-mono text-white/50 hover:text-white"
+                  type="submit"
+                  className="bg-amber-400 hover:bg-amber-300 text-black font-black text-xs px-3.5 py-2 rounded-xl transition-all active:scale-95 cursor-pointer uppercase tracking-wider flex items-center gap-1 shadow-md"
                 >
-                  LIMPAR
+                  <Search size={13} className="stroke-[3]" />
+                  <span>BUSCAR</span>
                 </button>
-              )}
-            </div>
+              </div>
+            </form>
 
             {/* Dynamic Active Filters Badges */}
             {(selectedStateFilter || selectedTypeFilter !== 'all' || selectedCategory || searchQuery) && (
@@ -5130,7 +5482,7 @@ function AppContent() {
                   <div 
                     className="relative w-full max-w-[320px] aspect-[3/4.2] rounded-3xl overflow-hidden border-2 border-white/10 shadow-[0_15px_45px_rgba(0,0,0,0.8)] bg-[#11111a] cursor-pointer group"
                     onClick={() => {
-                      const activeFlyer = visibleFlyers[activeFlyerIndex];
+                      const activeFlyer = visibleFlyers[activeFlyerIndex] as any;
                       if (typeof activeFlyer === 'object' && activeFlyer) {
                         const targetComp = (activeFlyer.companyId || activeFlyer.companyName)
                           ? (displayedCompanies || appData?.companies || []).find((c: any) => 
@@ -5155,7 +5507,7 @@ function AppContent() {
                         animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
                         exit={{ opacity: 0, scale: 1.04, filter: "blur(5px)" }}
                         transition={{ duration: 0.4, ease: "easeInOut" }}
-                        src={typeof visibleFlyers[activeFlyerIndex] === 'string' ? visibleFlyers[activeFlyerIndex] : visibleFlyers[activeFlyerIndex]?.image} 
+                        src={typeof visibleFlyers[activeFlyerIndex] === 'string' ? visibleFlyers[activeFlyerIndex] : (visibleFlyers[activeFlyerIndex] as any)?.image} 
                         alt="Promoção em Destaque" 
                         className="w-full h-full object-contain select-none bg-[#0a0a0f] group-hover:scale-105 transition-transform duration-500"
                         referrerPolicy="no-referrer"
@@ -5170,7 +5522,7 @@ function AppContent() {
                 {/* Description and Info block */}
                 <div className="w-full md:w-1/2 flex flex-col justify-center items-center md:items-start text-center md:text-left">
                   {(() => {
-                    const activeFlyer = visibleFlyers[activeFlyerIndex];
+                    const activeFlyer = visibleFlyers[activeFlyerIndex] as any;
                     const targetComp = typeof activeFlyer === 'object' && activeFlyer && (activeFlyer.companyId || activeFlyer.companyName)
                       ? (displayedCompanies || appData?.companies || []).find((c: any) => 
                           (activeFlyer.companyId && (String(c.id) === String(activeFlyer.companyId) || c.name === activeFlyer.companyId)) ||
@@ -5292,7 +5644,7 @@ function AppContent() {
                   <div 
                     className="relative w-full rounded-2xl md:rounded-3xl overflow-hidden border border-white/5 bg-[#08080d] cursor-pointer group"
                     onClick={() => {
-                      const activeBanner = visibleHorizontalBanners[activeHorizontalBannerIndex];
+                      const activeBanner = visibleHorizontalBanners[activeHorizontalBannerIndex] as any;
                       if (activeBanner) {
                         const targetComp = (activeBanner.companyId || activeBanner.companyName)
                           ? (displayedCompanies || appData?.companies || []).find((c: any) => 
@@ -5339,7 +5691,7 @@ function AppContent() {
                         {visibleHorizontalBanners[activeHorizontalBannerIndex]?.title || "Banner Comercial Promocional"}
                       </p>
                       {(() => {
-                        const activeBanner = visibleHorizontalBanners[activeHorizontalBannerIndex];
+                        const activeBanner = visibleHorizontalBanners[activeHorizontalBannerIndex] as any;
                         const targetComp = activeBanner && (activeBanner.companyId || activeBanner.companyName)
                           ? (displayedCompanies || appData?.companies || []).find((c: any) => 
                               (activeBanner.companyId && (String(c.id) === String(activeBanner.companyId) || c.name === activeBanner.companyId)) ||
@@ -5401,6 +5753,26 @@ function AppContent() {
           </div>
         </section>
       )}
+
+      {/* ======================================================== */}
+      {/* PLANOS & COMO FUNCIONA A DIVULGAÇÃO                      */}
+      {/* (Posicionado abaixo de TV, Rádio e Anunciantes)           */}
+      {/* ======================================================== */}
+      <section id="planos" className="w-full relative scroll-mt-20">
+        <div id="anuncie" className="-top-20 relative" />
+        <div id="divulgue" className="-top-20 relative" />
+        <div id="como-funciona" className="-top-20 relative" />
+        
+        {/* 3 etapas curtas e autoexplicativas */}
+        <ComoFunciona3EtapasSection />
+
+        {/* Planos: Presença no Portal (R$ 49,90) vs Divulgação Exclusiva Individual (R$ 149,90) */}
+        <PlanoEDiferencaServicosSection 
+          primaryWaLink={primaryDivulgarWaLink}
+          exclusiveWaLink={exclusiveDivulgarWaLink}
+          onCadastrarClick={() => setIsCompanyRegModalOpen(true)}
+        />
+      </section>
 
 
       {/* ======================================================== */}
