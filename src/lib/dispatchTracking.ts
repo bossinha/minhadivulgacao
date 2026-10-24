@@ -751,9 +751,8 @@ export function subscribeToDispatchTracking(
  * Generate client private tracking link
  */
 export function generateClientTrackingLink(companyId: string, companyName?: string): string {
-  if (typeof window === 'undefined') return '';
   const origin = window.location.origin;
-  const pathname = window.location.pathname.replace(/\/+$/, '');
+  const pathname = window.location.pathname;
   const cleanId = encodeURIComponent(String(companyId).trim());
-  return `${origin}${pathname}/#/?acompanhar=${cleanId}`;
+  return `${origin}${pathname}?acompanhar=${cleanId}`;
 }

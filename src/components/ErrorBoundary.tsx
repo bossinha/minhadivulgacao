@@ -19,21 +19,25 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   public static getDerivedStateFromError(error: Error): State {
+    console.error('[ErrorBoundary caught error]:', error?.message || error);
     return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.error('ErrorBoundary details:', error, errorInfo);
   }
 
   private handleRecover = () => {
     try {
       sessionStorage.clear();
+      localStorage.removeItem('tenantId');
+      localStorage.removeItem('cached_app_data_fortaleza');
+      localStorage.removeItem('cached_ads_fortaleza');
     } catch (e) {}
     this.setState({ hasError: false, error: null });
     if (typeof window !== 'undefined') {
-      window.location.hash = '#/fortaleza';
-      window.location.reload();
+      // Abre o link oficial direto e limpo (www.minhadivulgacao.com.br)
+      window.location.replace(window.location.origin + '/');
     }
   };
 
@@ -70,7 +74,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
               MINHA DIVULGAÇÃO
             </h2>
             <p style={{ fontSize: '0.9rem', color: '#c8ceda', marginBottom: '24px', lineHeight: 1.5 }}>
-              Atualizamos o portal para oferecer a melhor experiência. Toque no botão abaixo para carregar normalmente.
+              Acessar portal oficial em todo o Brasil.
             </p>
             <button
               onClick={this.handleRecover}
@@ -86,10 +90,10 @@ export class ErrorBoundary extends React.Component<Props, State> {
                 cursor: 'pointer',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
-                boxShadow: '0 8px 24px rgba(255, 138, 0, 0.3)'
+                boxShadow: '0 10px 25px rgba(255, 138, 0, 0.3)'
               }}
             >
-              🚀 Abrir Portal Agora
+              🚀 Abrir Portal Oficial (minhadivulgacao.com.br)
             </button>
           </div>
         </div>
@@ -99,3 +103,4 @@ export class ErrorBoundary extends React.Component<Props, State> {
     return this.props.children;
   }
 }
+

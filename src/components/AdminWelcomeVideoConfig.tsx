@@ -291,8 +291,7 @@ export const AdminWelcomeVideoConfig: React.FC<AdminWelcomeVideoConfigProps> = (
       actionType: 'whatsapp',
       whatsappMessage: companyDefaultMessage,
       buttonText: 'Falar no WhatsApp',
-      name: comp.name,
-      title: comp.name
+      name: comp.name
     });
   };
 
@@ -1053,9 +1052,9 @@ export const AdminWelcomeVideoConfig: React.FC<AdminWelcomeVideoConfigProps> = (
                     <img
                       src={activeItem.flyerUrl}
                       alt="Amostra do Flyer"
-                      className="max-h-[260px] sm:max-h-[320px] w-auto max-w-full object-contain rounded-xl shadow-lg"
+                      className="max-h-[350px] w-auto max-w-full object-contain rounded-xl shadow-lg"
                     />
-                    <span className="mt-2 text-[10px] font-mono text-emerald-400 text-center truncate max-w-full">
+                    <span className="mt-2 text-[10px] font-mono text-emerald-400">
                       ✅ Amostra do Flyer ({activeItem.name || 'Patrocinador'})
                     </span>
                   </div>
@@ -1077,7 +1076,7 @@ export const AdminWelcomeVideoConfig: React.FC<AdminWelcomeVideoConfigProps> = (
                     src={parsedVideo.embedUrl}
                     controls
                     playsInline
-                    className="w-full h-full object-contain bg-black max-h-[260px] sm:max-h-[320px]"
+                    className="w-full h-full object-contain bg-black max-h-[350px]"
                     onError={() => setPreviewError(true)}
                   />
                 ) : (
@@ -1118,9 +1117,9 @@ export const AdminWelcomeVideoConfig: React.FC<AdminWelcomeVideoConfigProps> = (
               <span className="text-[10px] uppercase font-bold text-white/50 tracking-wider">
                 Amostra do Botão para o Visitante:
               </span>
-              <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg text-center leading-snug">
+              <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg">
                 <WhatsAppIcon className="w-4 h-4 fill-white shrink-0" />
-                <span className="line-clamp-2 uppercase break-words">{activeItem?.buttonText || 'Falar no WhatsApp'}</span>
+                <span className="truncate uppercase">{activeItem?.buttonText || 'Falar no WhatsApp'}</span>
               </div>
               <p className="text-[10.5px] text-white/50 text-center m-0 truncate">
                 {activeItem?.companyName ? `Empresa: ${activeItem.companyName}` : 'Direcionamento direto'}

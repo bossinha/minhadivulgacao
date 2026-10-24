@@ -18,32 +18,23 @@ export const PushNotificationOptInBanner: React.FC<PushNotificationOptInBannerPr
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    // Verifica suporte de forma ultra segura
-    try {
-      if (!isPushSupported()) return;
+    // Verifica suporte
+    if (!isPushSupported()) return;
 
-      if (typeof window !== 'undefined' && typeof window.Notification !== 'undefined' && 'Notification' in window) {
-        try {
-          if (window.Notification.permission === 'granted') {
-            return;
-          }
-        } catch (_) {}
-
-        try {
-          const isDismissed = sessionStorage.getItem('minhadivulgacao_push_dismissed') === 'true';
-          if (isDismissed) {
-            return;
-          }
-        } catch (_) {}
-
-        // Delay suave de 800ms ao carregar o portal para aparecer com efeito elegante
-        const timer = setTimeout(() => {
-          setIsVisible(true);
-        }, 800);
-        return () => clearTimeout(timer);
+    // Se já estiver autorizado no navegador ou dispensado nesta sessão, não exibe
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'granted') {
+        return;
       }
-    } catch (e) {
-      // Ignora silenciosamente qualquer restrição de API em celulares
+      const isDismissed = sessionStorage.getItem('minhadivulgacao_push_dismissed') === 'true';
+      if (isDismissed) {
+        return;
+      }
+      // Delay suave de 800ms ao carregar o portal para aparecer com efeito elegante
+      const timer = setTimeout(() => {
+        setIsVisible(true);
+      }, 800);
+      return () => clearTimeout(timer);
     }
   }, []);
 
@@ -94,7 +85,7 @@ export const PushNotificationOptInBanner: React.FC<PushNotificationOptInBannerPr
         top: '12px',
         left: '50%',
         transform: 'translateX(-50%)',
-        zIndex: 89999,
+        zIndex: 99999999,
         pointerEvents: 'auto'
       }}
     >
