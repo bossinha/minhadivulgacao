@@ -66,14 +66,27 @@ export const trackCompanyInteraction = async (
     }));
   } catch (e) {}
 
-  // 2. Increment Firestore in background
+  // 2. Increment Firestore in background with detailed click tracking
   try {
     const compDocRef = doc(db, 'company_views', companyKey);
+    const isClick = actionType !== 'card';
+    const isWa = actionType === 'whatsapp';
+
     await setDoc(compDocRef, {
       id: companyKey,
       name: company.name || '',
+      category: company.category || '',
+      city: company.city || '',
+      wa: company.wa || '',
       extraViews: increment(1),
+      totalViews: increment(1),
+      clicksWhatsapp: isWa ? increment(1) : increment(0),
+      clicksInstagram: actionType === 'instagram' ? increment(1) : increment(0),
+      clicksWebsite: actionType === 'website' ? increment(1) : increment(0),
+      clicksCatalog: actionType === 'catalog' ? increment(1) : increment(0),
+      clicksTotal: isClick ? increment(1) : increment(0),
       lastAction: actionType,
+      lastActionAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }, { merge: true });
   } catch (e) {

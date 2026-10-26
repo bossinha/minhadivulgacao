@@ -105,6 +105,8 @@ import { IncomingPushNotificationToast } from './components/IncomingPushNotifica
 import { PortalWelcomeVideoModal, PortalWelcomeVideoConfig } from './components/PortalWelcomeVideoModal';
 import { AdminWelcomeVideoConfig } from './components/AdminWelcomeVideoConfig';
 import { registerServiceWorker, recordNotificationClick } from './lib/pushNotifications';
+import { AccessStatsPanel } from './components/AccessStatsPanel';
+import { recordSiteAccess } from './lib/accessTracker';
 
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -1564,6 +1566,9 @@ function AppContent() {
   }, [hideAdvertiserAuth]);
 
   useEffect(() => {
+    // Registra acesso real automático com detecção de origem e prevenção de duplicados
+    recordSiteAccess();
+
     // Session visit count
     if (!sessionStorage.getItem('site_visited')) {
       const incrementVisits = async () => {
@@ -6244,19 +6249,20 @@ function AppContent() {
               </div>
 
               <div className="dev-tabs">
-                {['geral', 'seções', 'categorias', 'empresas', 'disparos', 'notificacoes', 'vídeo-portal', 'anunciantes', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'banners-horizontais', 'depoimentos-whats', 'preços', 'segmentos', 'chat'].filter(Boolean).map(tab => (
+                {['geral', 'seções', 'categorias', 'empresas', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'estatisticas' : null, 'disparos', 'notificacoes', 'vídeo-portal', 'anunciantes', (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') ? 'vídeos' : null, 'flyers', 'banners-horizontais', 'depoimentos-whats', 'preços', 'segmentos', 'chat'].filter(Boolean).map(tab => (
                   <button 
                     key={tab} 
                     className={`dev-tab ${activeTab === tab ? 'active' : ''}`}
                     onClick={() => setActiveTab(tab)}
                     style={
-                      tab === 'disparos' ? { background: activeTab === 'disparos' ? '#fbbf24' : '#1e1b10', color: activeTab === 'disparos' ? '#000' : '#fbbf24', border: '1px solid #fbbf24', fontWeight: 900 }
+                      tab === 'estatisticas' ? { background: activeTab === 'estatisticas' ? '#f59e0b' : '#1f1b0e', color: activeTab === 'estatisticas' ? '#000' : '#fbbf24', border: '1px solid #f59e0b', fontWeight: 900, boxShadow: activeTab === 'estatisticas' ? '0 0 15px rgba(245, 158, 11, 0.4)' : undefined }
+                      : tab === 'disparos' ? { background: activeTab === 'disparos' ? '#fbbf24' : '#1e1b10', color: activeTab === 'disparos' ? '#000' : '#fbbf24', border: '1px solid #fbbf24', fontWeight: 900 }
                       : tab === 'notificacoes' ? { background: activeTab === 'notificacoes' ? '#f59e0b' : '#2a1a04', color: activeTab === 'notificacoes' ? '#000' : '#fbbf24', border: '1px solid #f59e0b', fontWeight: 900, boxShadow: activeTab === 'notificacoes' ? '0 0 15px rgba(245, 158, 11, 0.4)' : undefined }
                       : tab === 'vídeo-portal' ? { background: activeTab === 'vídeo-portal' ? '#10b981' : '#042f2e', color: activeTab === 'vídeo-portal' ? '#000' : '#34d399', border: '1px solid #10b981', fontWeight: 900, boxShadow: activeTab === 'vídeo-portal' ? '0 0 15px rgba(16, 185, 129, 0.4)' : undefined }
                       : undefined
                     }
                   >
-                    {tab === 'disparos' ? '📢 DISPAROS (24H & PV)' : tab === 'notificacoes' ? '🔔 NOTIFICAÇÕES PUSH' : tab === 'vídeo-portal' ? '🎬 VÍDEO DO PORTAL (ENTRADA)' : tab === 'depoimentos-whats' ? 'DEPOIMENTOS ZAP' : tab === 'banners-horizontais' ? 'BANNERS HORIZONTAIS' : tab.toUpperCase()}
+                    {tab === 'estatisticas' ? '📊 ESTATÍSTICAS DE ACESSO' : tab === 'disparos' ? '📢 DISPAROS (24H & PV)' : tab === 'notificacoes' ? '🔔 NOTIFICAÇÕES PUSH' : tab === 'vídeo-portal' ? '🎬 VÍDEO DO PORTAL (ENTRADA)' : tab === 'depoimentos-whats' ? 'DEPOIMENTOS ZAP' : tab === 'banners-horizontais' ? 'BANNERS HORIZONTAIS' : tab.toUpperCase()}
                   </button>
                 ))}
               </div>
@@ -9163,6 +9169,12 @@ function AppContent() {
                     onSave={saveToFirebase}
                     onTestPreview={handleTestWelcomeVideo}
                   />
+                )}
+
+                {activeTab === 'estatisticas' && (user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') && (
+                  <div className="dev-forms-container" style={{ maxWidth: '100%' }}>
+                    <AccessStatsPanel allCompanies={displayedCompanies || appData?.companies || []} />
+                  </div>
                 )}
                 </div>
 

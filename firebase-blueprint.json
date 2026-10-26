@@ -82,6 +82,33 @@
         "company": { "type": "object" }
       },
       "required": ["email", "password", "company"]
+    },
+    "PortalStats": {
+      "title": "Portal Statistics",
+      "description": "Aggregated site visits, daily traffic and origin stats",
+      "type": "object",
+      "properties": {
+        "totalVisits": { "type": "number" },
+        "uniqueVisitors": { "type": "number" },
+        "todayVisits": { "type": "number" },
+        "todayDate": { "type": "string" },
+        "origins": { "type": "object" },
+        "lastAccessAt": { "type": "string" }
+      }
+    },
+    "CompanyView": {
+      "title": "Company View & Clicks",
+      "description": "Real interaction and click metrics for an advertiser",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "totalViews": { "type": "number" },
+        "clicksWhatsapp": { "type": "number" },
+        "clicksTotal": { "type": "number" },
+        "lastAction": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
     }
   },
   "firestore": {
@@ -104,6 +131,14 @@
     "/reviews/{reviewId}": {
       "schema": "Review",
       "description": "Reviews on advertiser items"
+    },
+    "/portal_stats/{statId}": {
+      "schema": "PortalStats",
+      "description": "Site access statistics and daily logs"
+    },
+    "/company_views/{companyId}": {
+      "schema": "CompanyView",
+      "description": "Company views and click metrics"
     }
   }
 }
