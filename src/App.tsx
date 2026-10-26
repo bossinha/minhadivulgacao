@@ -11,6 +11,10 @@ import {
   Pause, 
   Volume2, 
   VolumeX, 
+  Volume1,
+  SkipBack,
+  SkipForward,
+  Maximize,
   MessageSquare, 
   Tv, 
   Radio, 
@@ -909,66 +913,11 @@ function AppContent() {
   const [tvKey, setTvKey] = useState(0);
   const [isTvLoading, setIsTvLoading] = useState(true);
   const tvIframeRef = useRef<HTMLIFrameElement>(null);
-
-  const sendTvVolume = (vol: number, muted: boolean) => {
-    try {
-      const cw = tvIframeRef.current?.contentWindow;
-      if (cw) {
-        const payload = { type: 'SET_VOLUME', volume: vol, muted };
-        cw.postMessage(payload, '*');
-        cw.postMessage(JSON.stringify(payload), '*');
-        cw.postMessage({ action: 'setVolume', volume: vol, muted }, '*');
-        cw.postMessage(JSON.stringify({ action: 'setVolume', volume: vol, muted }), '*');
-        cw.postMessage({ type: 'volume', value: vol, muted }, '*');
-        cw.postMessage(JSON.stringify({ type: 'volume', value: vol, muted }), '*');
-        cw.postMessage({ event: 'command', func: 'setVolume', args: [vol * 100] }, '*');
-        cw.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [vol * 100] }), '*');
-        if (muted || vol === 0) {
-          cw.postMessage({ type: 'MUTE' }, '*');
-          cw.postMessage(JSON.stringify({ type: 'MUTE' }), '*');
-          cw.postMessage({ event: 'command', func: 'mute', args: [] }, '*');
-          cw.postMessage(JSON.stringify({ event: 'command', func: 'mute', args: [] }), '*');
-        } else {
-          cw.postMessage({ type: 'UNMUTE' }, '*');
-          cw.postMessage(JSON.stringify({ type: 'UNMUTE' }), '*');
-          cw.postMessage({ event: 'command', func: 'unMute', args: [] }, '*');
-          cw.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
-        }
-      }
-    } catch (err) {
-      console.error('Error sending volume to TV iframe:', err);
-    }
-    try {
-      const doc = tvIframeRef.current?.contentDocument;
-      if (doc) {
-        doc.querySelectorAll('video, audio').forEach((el: any) => {
-          el.volume = vol;
-          el.muted = muted;
-        });
-      }
-    } catch (e) {}
-  };
-
-  const handleTvVolumeChange = (newVol: number) => {
-    setTvVolume(newVol);
-    if (newVol > 0 && tvMuted) {
-      setTvMuted(false);
-      sendTvVolume(newVol, false);
-    } else {
-      sendTvVolume(newVol, tvMuted);
-    }
-  };
-
-  const handleTvMuteToggle = () => {
-    const newMuted = !tvMuted;
-    setTvMuted(newMuted);
-    sendTvVolume(tvVolume, newMuted);
-  };
-
-  const reloadTvPlayer = () => {
-    setIsTvLoading(true);
-    setTvKey(prev => prev + 1);
-  };
+  const tvVideoRef = useRef<HTMLVideoElement>(null);
+  const tvContainerRef = useRef<HTMLDivElement>(null);
+  const [tvVideoIndex, setTvVideoIndex] = useState(0);
+  const [tvIsPlaying, setTvIsPlaying] = useState(true);
+  const [tvAutoplayBlocked, setTvAutoplayBlocked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
@@ -998,6 +947,193 @@ function AppContent() {
     }, 3500);
     return () => clearTimeout(timer);
   }, [tvKey]);
+
+  // Playlist de comerciais da TV Minha Divulgação
+  const tvPlaylist = useMemo(() => {
+    const rawVideos = (appData && Array.isArray(appData.videos) && appData.videos.length > 0)
+      ? appData.videos
+      : VIDEOS;
+    const list = rawVideos.map((item: any, idx: number) => {
+      const url = typeof item === 'string' ? item : item?.url;
+      const active = typeof item === 'object' ? item.active !== false : true;
+      const title = (typeof item === 'object' && item.title) ? item.title : `Comercial Oficial #${idx + 1}`;
+      return { url: (url || '').trim(), active, title, index: idx + 1 };
+    }).filter((item: any) => item.active && item.url && item.url.length > 0);
+
+    return list.length > 0
+      ? list
+      : VIDEOS.map((u, i) => ({ url: u, active: true, title: `Comercial Oficial #${i + 1}`, index: i + 1 }));
+  }, [appData?.videos]);
+
+  const currentTvVideo = tvPlaylist[tvVideoIndex % tvPlaylist.length] || tvPlaylist[0];
+
+  const sendTvVolume = (vol: number, muted: boolean) => {
+    // 1. Direct native HTML5 video element volume control (100% real and audible)
+    if (tvVideoRef.current) {
+      try {
+        tvVideoRef.current.volume = Math.max(0, Math.min(1, vol));
+        tvVideoRef.current.muted = muted || vol === 0;
+      } catch (err) {
+        console.warn('Error setting native TV video volume:', err);
+      }
+    }
+
+    // 2. PostMessage to iframe if external mode is selected
+    try {
+      const cw = tvIframeRef.current?.contentWindow;
+      if (cw) {
+        const payload = { type: 'SET_VOLUME', volume: vol, muted };
+        cw.postMessage(payload, '*');
+        cw.postMessage(JSON.stringify(payload), '*');
+        cw.postMessage({ action: 'setVolume', volume: vol, muted }, '*');
+        cw.postMessage(JSON.stringify({ action: 'setVolume', volume: vol, muted }), '*');
+        cw.postMessage({ type: 'volume', value: vol, muted }, '*');
+        cw.postMessage(JSON.stringify({ type: 'volume', value: vol, muted }), '*');
+        cw.postMessage({ event: 'command', func: 'setVolume', args: [vol * 100] }, '*');
+        cw.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [vol * 100] }), '*');
+        if (muted || vol === 0) {
+          cw.postMessage({ type: 'MUTE' }, '*');
+          cw.postMessage(JSON.stringify({ type: 'MUTE' }), '*');
+          cw.postMessage({ event: 'command', func: 'mute', args: [] }, '*');
+          cw.postMessage(JSON.stringify({ event: 'command', func: 'mute', args: [] }), '*');
+        } else {
+          cw.postMessage({ type: 'UNMUTE' }, '*');
+          cw.postMessage(JSON.stringify({ type: 'UNMUTE' }), '*');
+          cw.postMessage({ event: 'command', func: 'unMute', args: [] }, '*');
+          cw.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
+        }
+      }
+    } catch (err) {}
+  };
+
+  const handleTvVolumeChange = (newVol: number) => {
+    const clamped = Math.max(0, Math.min(1, newVol));
+    setTvVolume(clamped);
+    if (tvVideoRef.current) {
+      tvVideoRef.current.volume = clamped;
+    }
+    if (clamped > 0) {
+      setTvMuted(false);
+      setTvAutoplayBlocked(false);
+      if (tvVideoRef.current) {
+        tvVideoRef.current.muted = false;
+        if (tvVideoRef.current.paused) {
+          tvVideoRef.current.play().catch(() => {});
+        }
+      }
+      sendTvVolume(clamped, false);
+    } else {
+      setTvMuted(true);
+      if (tvVideoRef.current) {
+        tvVideoRef.current.muted = true;
+      }
+      sendTvVolume(0, true);
+    }
+  };
+
+  const handleTvMuteToggle = () => {
+    if (tvMuted || tvVolume === 0) {
+      const targetVol = tvVolume === 0 ? 0.8 : tvVolume;
+      setTvVolume(targetVol);
+      setTvMuted(false);
+      setTvAutoplayBlocked(false);
+      if (tvVideoRef.current) {
+        tvVideoRef.current.muted = false;
+        tvVideoRef.current.volume = targetVol;
+        if (tvVideoRef.current.paused) {
+          tvVideoRef.current.play().catch(() => {});
+        }
+      }
+      sendTvVolume(targetVol, false);
+    } else {
+      setTvMuted(true);
+      if (tvVideoRef.current) {
+        tvVideoRef.current.muted = true;
+      }
+      sendTvVolume(tvVolume, true);
+    }
+  };
+
+  const handleTvPlayPauseToggle = () => {
+    if (!tvVideoRef.current) return;
+    if (tvVideoRef.current.paused) {
+      tvVideoRef.current.play().then(() => {
+        setTvIsPlaying(true);
+      }).catch(() => {});
+    } else {
+      tvVideoRef.current.pause();
+      setTvIsPlaying(false);
+    }
+  };
+
+  const handleTvPrevVideo = () => {
+    if (tvPlaylist.length <= 1) return;
+    setTvVideoIndex(prev => (prev - 1 + tvPlaylist.length) % tvPlaylist.length);
+    setIsTvLoading(true);
+  };
+
+  const handleTvNextVideo = () => {
+    if (tvPlaylist.length <= 1) return;
+    setTvVideoIndex(prev => (prev + 1) % tvPlaylist.length);
+    setIsTvLoading(true);
+  };
+
+  const handleTvFullscreen = () => {
+    if (tvContainerRef.current) {
+      if (!document.fullscreenElement) {
+        tvContainerRef.current.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+  };
+
+  const reloadTvPlayer = () => {
+    setIsTvLoading(true);
+    setTvKey(prev => prev + 1);
+    if (tvVideoRef.current) {
+      tvVideoRef.current.currentTime = 0;
+      tvVideoRef.current.play().catch(() => {});
+    }
+  };
+
+  // Synchronize audio volume and muted state to native video element whenever changed
+  useEffect(() => {
+    if (tvVideoRef.current) {
+      tvVideoRef.current.volume = tvMuted ? 0 : tvVolume;
+      tvVideoRef.current.muted = tvMuted;
+    }
+  }, [tvVolume, tvMuted]);
+
+  // Handle video playback on video change or reload
+  useEffect(() => {
+    if (tvVideoRef.current) {
+      tvVideoRef.current.volume = tvMuted ? 0 : tvVolume;
+      tvVideoRef.current.muted = tvMuted;
+      const playPromise = tvVideoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          setTvIsPlaying(true);
+          setIsTvLoading(false);
+        }).catch(() => {
+          // If browser policy blocks sound on initial autoplay, mute and continue playing smoothly
+          if (!tvMuted && tvVideoRef.current) {
+            tvVideoRef.current.muted = true;
+            setTvMuted(true);
+            setTvAutoplayBlocked(true);
+            tvVideoRef.current.play().then(() => {
+              setTvIsPlaying(true);
+              setIsTvLoading(false);
+            }).catch(() => {
+              setIsTvLoading(false);
+            });
+          } else {
+            setIsTvLoading(false);
+          }
+        });
+      }
+    }
+  }, [tvVideoIndex, tvKey]);
 
   // --- Modal states to replace window.prompt for sandboxed iframes ---
   const [showAddCityModal, setShowAddCityModal] = useState(false);
@@ -4799,22 +4935,37 @@ function AppContent() {
             </div>
 
             {/* TV Frame Container - Fully Responsive for Mobile, Tablet, Notebook & PC */}
-            <div className="relative w-full max-w-4xl lg:max-w-5xl mx-auto bg-[#0a0a10] border-2 sm:border-4 border-[#1c1e2e] rounded-2xl sm:rounded-3xl p-2 sm:p-3.5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-hidden">
+            <div 
+              ref={tvContainerRef}
+              className="relative w-full max-w-4xl lg:max-w-5xl mx-auto bg-[#0a0a10] border-2 sm:border-4 border-[#1c1e2e] rounded-2xl sm:rounded-3xl p-2 sm:p-3.5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-hidden"
+            >
               
               {/* Top Bezel & Status Bar */}
-              <div className="flex items-center justify-between px-3 sm:px-4 py-2 bg-[#121422] rounded-t-xl sm:rounded-t-2xl border-b border-white/10 mb-2 sm:mb-3">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between px-3 sm:px-4 py-2 bg-[#121422] rounded-t-xl sm:rounded-t-2xl border-b border-white/10 mb-2 sm:mb-3 flex-wrap gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
                   <span className="text-[10px] sm:text-[11px] font-mono font-black text-emerald-400 tracking-widest uppercase">🔴 CANAL AO VIVO — TV MINHA DIVULGAÇÃO</span>
+                  <span className="text-[9px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                    {`Comercial ${tvVideoIndex + 1} de ${tvPlaylist.length}`}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={reloadTvPlayer}
                     className="text-[9px] sm:text-[10px] font-mono font-extrabold text-amber-300 bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/30 px-2.5 py-0.5 rounded-full transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-sm"
-                    title="Clique para recarregar o sinal da TV sem precisar atualizar a página (F5)"
+                    title="Clique para reiniciar o comercial atual"
                   >
-                    <span>🔄 Recarregar TV</span>
+                    <span>🔄 Reiniciar</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleTvFullscreen}
+                    className="text-[9px] sm:text-[10px] font-mono font-extrabold text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/25 border border-cyan-500/30 px-2.5 py-0.5 rounded-full transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-sm"
+                    title="Tela cheia"
+                  >
+                    <Maximize size={11} />
+                    <span>Tela Cheia</span>
                   </button>
                   <span className="text-[9px] sm:text-[10px] font-mono text-white/50 tracking-widest uppercase bg-white/5 px-2.5 py-0.5 rounded-full border border-white/10 hidden sm:inline-block">
                     TRANSMISSÃO 16:9
@@ -4822,8 +4973,8 @@ function AppContent() {
                 </div>
               </div>
 
-              {/* 16:9 Aspect Ratio Frame for Iframe */}
-              <div className="relative w-full aspect-[16/9] rounded-lg sm:rounded-xl overflow-hidden bg-black shadow-inner border border-white/10">
+              {/* 16:9 Aspect Ratio Frame for Native HTML5 TV Player */}
+              <div className="relative w-full aspect-[16/9] rounded-lg sm:rounded-xl overflow-hidden bg-black shadow-inner border border-white/10 group">
                 {isTvLoading && (
                   <div className="absolute inset-0 z-10 bg-[#0a0a10]/90 backdrop-blur-sm flex flex-col items-center justify-center gap-2 pointer-events-none">
                     <div className="w-7 h-7 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
@@ -4831,50 +4982,163 @@ function AppContent() {
                   </div>
                 )}
 
-                <iframe 
-                  key={`tv-frame-${tvKey}`}
-                  ref={tvIframeRef}
-                  src={(() => {
-                    const baseUrl = universalConfig?.horizontalTvLink || (appData && appData.siteInfo && appData.siteInfo.horizontalTvLink) || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando';
-                    const sep = baseUrl.includes('?') ? '&' : '?';
-                    return `${baseUrl}${sep}_t=${tvKey}&autoplay=1&fs=0&fullscreen=0`;
-                  })()} 
-                  title="TV Minha Divulgação"
-                  className="w-full h-full border-0 select-none"
-                  loading="lazy"
-                  allow="autoplay *; encrypted-media; audio"
-                  allowFullScreen={false}
-                  onLoad={() => {
-                    setIsTvLoading(false);
-                    sendTvVolume(tvVolume, tvMuted);
-                  }}
-                  onError={() => setIsTvLoading(false)}
-                />
-              </div>
+                {/* Banner alert if browser prevented unmuted autoplay */}
+                {tvAutoplayBlocked && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTvAutoplayBlocked(false);
+                      setTvMuted(false);
+                      const targetVol = tvVolume > 0 ? tvVolume : 0.8;
+                      setTvVolume(targetVol);
+                      if (tvVideoRef.current) {
+                        tvVideoRef.current.muted = false;
+                        tvVideoRef.current.volume = targetVol;
+                        tvVideoRef.current.play().catch(() => {});
+                      }
+                    }}
+                    className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-black font-black px-4 py-2 rounded-full shadow-[0_0_20px_rgba(245,158,11,0.5)] flex items-center gap-2 cursor-pointer animate-bounce text-xs uppercase tracking-wider transition-all"
+                  >
+                    <Volume2 size={16} />
+                    <span>Toque para Ativar Som da TV</span>
+                  </button>
+                )}
 
-              {/* Bottom Bar Controls - Volume & Status */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-2.5 sm:mt-3 px-3 sm:px-4 py-2.5 bg-[#121422]/90 rounded-b-xl sm:rounded-b-2xl border-t border-white/5">
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] sm:text-xs font-bold text-white/80">📺 TV Minha Divulgação</span>
-                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Ao Vivo</span>
+                {/* Native HTML5 Video Element with 100% Direct Audio Volume Control */}
+                <video
+                  ref={tvVideoRef}
+                  key={`tv-video-${tvVideoIndex}-${tvKey}`}
+                  src={currentTvVideo?.url}
+                  className="w-full h-full object-contain bg-black select-none"
+                  playsInline
+                  autoPlay
+                  muted={tvMuted}
+                  onEnded={handleTvNextVideo}
+                  onPlay={() => {
+                    setIsTvLoading(false);
+                    setTvIsPlaying(true);
+                    if (tvVideoRef.current) {
+                      tvVideoRef.current.volume = tvMuted ? 0 : tvVolume;
+                      tvVideoRef.current.muted = tvMuted;
+                    }
+                  }}
+                  onPause={() => setTvIsPlaying(false)}
+                  onLoadedData={() => {
+                    setIsTvLoading(false);
+                    if (tvVideoRef.current) {
+                      tvVideoRef.current.volume = tvMuted ? 0 : tvVolume;
+                      tvVideoRef.current.muted = tvMuted;
+                    }
+                  }}
+                  onError={() => {
+                    setIsTvLoading(false);
+                    if (tvPlaylist.length > 1) {
+                      setTvVideoIndex(prev => (prev + 1) % tvPlaylist.length);
+                    }
+                  }}
+                />
+
+                {/* Top Overlay Badge (On-Air Watermark) */}
+                <div className="absolute top-3 left-3 z-20 pointer-events-none flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 text-white shadow-lg">
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-ping inline-block" />
+                    <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-amber-300">
+                      AO VIVO • MINHA DIVULGAÇÃO
+                    </span>
+                  </div>
                 </div>
 
-                {/* Volume Control Bar */}
-                <div className="flex items-center gap-3 w-full sm:w-auto bg-black/40 px-3 py-1.5 rounded-xl border border-white/10">
+                {/* Floating Bottom Overlay Bar on Hover */}
+                <div className="absolute bottom-2 left-2 right-2 z-20 bg-[#0c0d16]/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 flex items-center justify-between text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <span className="text-[11px] font-medium text-white/90 truncate max-w-[60%]">
+                    {currentTvVideo?.title || `Comercial Oficial #${tvVideoIndex + 1}`}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={handleTvPrevVideo}
+                      className="p-1 hover:bg-white/10 rounded text-white/80 hover:text-white cursor-pointer transition-colors"
+                      title="Comercial anterior"
+                    >
+                      <SkipBack size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleTvPlayPauseToggle}
+                      className="p-1 hover:bg-white/10 rounded text-amber-400 hover:text-amber-300 cursor-pointer transition-colors"
+                      title={tvIsPlaying ? "Pausar TV" : "Reproduzir TV"}
+                    >
+                      {tvIsPlaying ? <Pause size={14} /> : <Play size={14} />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleTvNextVideo}
+                      className="p-1 hover:bg-white/10 rounded text-white/80 hover:text-white cursor-pointer transition-colors"
+                      title="Próximo comercial"
+                    >
+                      <SkipForward size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Bar Controls - Volume & Controls */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-2.5 sm:mt-3 px-3 sm:px-4 py-2.5 bg-[#121422]/90 rounded-b-xl sm:rounded-b-2xl border-t border-white/5">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <span className="text-[11px] sm:text-xs font-bold text-white/90 flex items-center gap-1.5">
+                    <Tv size={14} className="text-amber-400" />
+                    <span>TV Minha Divulgação</span>
+                  </span>
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    Ao Vivo
+                  </span>
+                  <div className="flex items-center gap-1 bg-black/40 px-2 py-0.5 rounded-lg border border-white/5">
+                    <button
+                      type="button"
+                      onClick={handleTvPrevVideo}
+                      className="p-1 hover:bg-white/10 rounded text-white/70 hover:text-white cursor-pointer transition-colors"
+                      title="Comercial anterior"
+                    >
+                      <SkipBack size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleTvPlayPauseToggle}
+                      className="p-1 hover:bg-white/10 rounded text-amber-400 hover:text-amber-300 cursor-pointer transition-colors"
+                      title={tvIsPlaying ? "Pausar" : "Tocar"}
+                    >
+                      {tvIsPlaying ? <Pause size={13} /> : <Play size={13} />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleTvNextVideo}
+                      className="p-1 hover:bg-white/10 rounded text-white/70 hover:text-white cursor-pointer transition-colors"
+                      title="Próximo comercial"
+                    >
+                      <SkipForward size={13} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Volume Control Bar - 100% Functional Native Audio Volume */}
+                <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto bg-black/60 px-3 py-1.5 rounded-xl border border-white/10 shadow-inner">
                   <button
                     type="button"
                     onClick={handleTvMuteToggle}
-                    className="text-white/70 hover:text-white transition-colors cursor-pointer"
+                    className="text-white/80 hover:text-white transition-colors cursor-pointer p-1 rounded hover:bg-white/10 active:scale-95"
                     title={tvMuted || tvVolume === 0 ? "Ativar som da TV" : "Silenciar TV"}
+                    aria-label={tvMuted || tvVolume === 0 ? "Ativar som da TV" : "Silenciar TV"}
                   >
                     {tvMuted || tvVolume === 0 ? (
-                      <VolumeX size={16} className="text-red-400" />
+                      <VolumeX size={18} className="text-red-400 animate-pulse" />
+                    ) : tvVolume < 0.5 ? (
+                      <Volume1 size={18} className="text-amber-400" />
                     ) : (
-                      <Volume2 size={16} className="text-amber-400" />
+                      <Volume2 size={18} className="text-emerald-400" />
                     )}
                   </button>
 
-                  <div className="flex items-center gap-2 flex-1 sm:w-36">
+                  <div className="flex items-center gap-2 flex-1 sm:w-44">
                     <input
                       type="range"
                       min="0"
@@ -4882,10 +5146,10 @@ function AppContent() {
                       step="0.01"
                       value={tvMuted ? 0 : tvVolume}
                       onChange={(e) => handleTvVolumeChange(parseFloat(e.target.value))}
-                      className="w-full accent-[var(--primary)] h-1.5 rounded-full cursor-pointer bg-neutral-800"
-                      title="Ajustar volume da TV"
+                      className="w-full accent-amber-400 h-2 rounded-full cursor-pointer bg-neutral-800"
+                      title="Ajustar volume da TV (0% a 100%)"
                     />
-                    <span className="text-[10px] font-mono text-white/60 min-w-[28px] text-right">
+                    <span className="text-[11px] font-mono font-bold text-amber-300 min-w-[34px] text-right">
                       {tvMuted ? '0%' : `${Math.round(tvVolume * 100)}%`}
                     </span>
                   </div>
