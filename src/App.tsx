@@ -897,7 +897,7 @@ function AppContent() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [universalConfig, setUniversalConfig] = useState<any>({ 
     radioLink: '', 
-    horizontalTvLink: 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando',
+    horizontalTvLink: 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/promo',
     logoSpeed: 100, 
     flyerSpeed: 180, 
     testimonialSpeed: 120, 
@@ -950,8 +950,39 @@ function AppContent() {
     return () => clearTimeout(timer);
   }, [tvKey]);
 
+  // Sincronização automática com a playlist da TV Digital Signage (SaaS)
+  const [saasTvVideos, setSaasTvVideos] = useState<any[]>([]);
+
+  useEffect(() => {
+    const tvUrl = universalConfig?.horizontalTvLink || '';
+    if (!tvUrl) return;
+
+    try {
+      const parsed = new URL(tvUrl);
+      const slug = parsed.pathname.replace(/^\/+/, '').split('/')[0];
+      if (slug && parsed.hostname.includes('run.app')) {
+        fetch(`${parsed.origin}/api/playlist/${slug}`)
+          .then(res => res.ok ? res.json() : null)
+          .then(data => {
+            if (data && Array.isArray(data.videos) && data.videos.length > 0) {
+              setSaasTvVideos(data.videos);
+            }
+          })
+          .catch(() => {});
+      }
+    } catch (e) {}
+  }, [universalConfig?.horizontalTvLink]);
+
   // Playlist de comerciais da TV Minha Divulgação
   const tvPlaylist = useMemo(() => {
+    if (saasTvVideos && saasTvVideos.length > 0) {
+      return saasTvVideos.map((v: any, idx: number) => ({
+        url: v.url,
+        active: true,
+        title: v.titulo || `Comercial Oficial #${idx + 1}`,
+        index: idx + 1
+      }));
+    }
     const rawVideos = (appData && Array.isArray(appData.videos) && appData.videos.length > 0)
       ? appData.videos
       : VIDEOS;
@@ -965,7 +996,7 @@ function AppContent() {
     return list.length > 0
       ? list
       : VIDEOS.map((u, i) => ({ url: u, active: true, title: `Comercial Oficial #${i + 1}`, index: i + 1 }));
-  }, [appData?.videos]);
+  }, [saasTvVideos, appData?.videos]);
 
   const currentTvVideo = tvPlaylist[tvVideoIndex % tvPlaylist.length] || tvPlaylist[0];
 
@@ -1683,7 +1714,7 @@ function AppContent() {
         const data = snap.data();
         setUniversalConfig({
           radioLink: data.radioLink || '',
-          horizontalTvLink: data.horizontalTvLink || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando',
+          horizontalTvLink: data.horizontalTvLink || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/promo',
           logoSpeed: data.logoSpeed || 100,
           flyerSpeed: data.flyerSpeed || 180,
           testimonialSpeed: data.testimonialSpeed || 120,
@@ -2089,6 +2120,15 @@ function AppContent() {
       await updateDoc(doc(db, 'tenants', targetTenantId), {
         data: appData
       });
+
+      if (user.isAdmin || user.email === 'bossinhaa80@gmail.com') {
+        try {
+          await setDoc(doc(db, 'settings', 'universal'), universalConfig, { merge: true });
+        } catch (err) {
+          console.warn("Could not sync universalConfig:", err);
+        }
+      }
+
       alert("Alterações salvas com sucesso no Firebase!");
     } catch (e) {
       console.error(e);
@@ -3285,16 +3325,53 @@ function AppContent() {
                 />
                 <small style={{ color: '#666' }}>Direciona o anunciante para esta URL ao clicar no ícone de vídeo para upar mídias.</small>
               </div>
-              <div className="dev-form-group">
-                <label>Link da TV Minha Divulgação (Digital Signage / Promoções 📺)</label>
-                <input 
-                  type="text" 
-                  className="dev-input" 
-                  placeholder="Ex: https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando"
-                  value={universalConfig.horizontalTvLink !== undefined ? universalConfig.horizontalTvLink : 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/testando'} 
-                  onChange={e => setUniversalConfig({ ...universalConfig, horizontalTvLink: e.target.value })}
-                />
-                <small style={{ color: '#25D366' }}>✓ Link da TV Minha Divulgação exibida no portal logo abaixo das Promoções Especiais do Comércio.</small>
+              <div className="dev-form-group" style={{ background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '12px', padding: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
+                  <label style={{ margin: 0, fontWeight: 800, color: '#fbbf24' }}>
+                    📺 Link da TV Minha Divulgação (Digital Signage / Promoções)
+                  </label>
+                  <span style={{ fontSize: '10px', background: 'rgba(37, 211, 102, 0.1)', color: '#25D366', border: '1px solid #25D366', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>
+                    AO VIVO NO PORTAL
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <input 
+                    type="text" 
+                    className="dev-input" 
+                    placeholder="https://saas-tv-digital-signage-217322288286.us-east1.run.app/promo"
+                    value={universalConfig.horizontalTvLink !== undefined ? universalConfig.horizontalTvLink : 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/promo'} 
+                    onChange={e => setUniversalConfig({ ...universalConfig, horizontalTvLink: e.target.value })}
+                    style={{ flex: '1 1 260px' }}
+                  />
+                  <button
+                    type="button"
+                    className="dev-btn dev-btn-primary"
+                    style={{ padding: '8px 14px', fontSize: '11px', background: '#f59e0b', color: '#000', border: 'none', fontWeight: 900, cursor: 'pointer', borderRadius: '8px' }}
+                    onClick={async () => {
+                      try {
+                        const targetUrl = universalConfig.horizontalTvLink || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/promo';
+                        await setDoc(doc(db, 'settings', 'universal'), { horizontalTvLink: targetUrl }, { merge: true });
+                        alert("Link da TV salvo com sucesso no banco de dados!");
+                      } catch (e) {
+                        alert("Erro ao salvar link da TV.");
+                      }
+                    }}
+                  >
+                    💾 Salvar Link da TV
+                  </button>
+                  <a
+                    href={universalConfig.horizontalTvLink || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/promo'}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="dev-btn"
+                    style={{ padding: '8px 12px', fontSize: '11px', background: '#1c1e2e', color: '#38bdf8', border: '1px solid #38bdf8', textDecoration: 'none', borderRadius: '8px' }}
+                  >
+                    🔗 Testar Link
+                  </a>
+                </div>
+                <small style={{ color: '#aaa', marginTop: '6px', display: 'block' }}>
+                  ✓ Link da TV exibida na página principal do portal. Atualize sempre que quiser mudar a transmissão.
+                </small>
               </div>
               <div className="dev-form-group">
                 <label>Contador de Visitas (Total)</label>
@@ -6527,6 +6604,58 @@ function AppContent() {
                           : "A rádio é universal e controlada pelo administrador master."}
                       </p>
                     </div>
+
+                    {/* Configuração do Link da TV no Painel do Gestor (Master) */}
+                    {(user?.isAdmin || user?.email === 'bossinhaa80@gmail.com') && (
+                      <div className="dev-form-group" style={{ background: 'linear-gradient(180deg, rgba(245, 158, 11, 0.08) 0%, rgba(13, 14, 21, 0.95) 100%)', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '16px', padding: '18px', margin: '20px 0', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                          <label style={{ margin: 0, fontWeight: 900, color: '#fbbf24', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            📺 Link da TV Minha Divulgação (Digital Signage / Promoções)
+                          </label>
+                          <span style={{ fontSize: '10px', background: '#25D366', color: '#000', padding: '3px 8px', borderRadius: '6px', fontWeight: 900, textTransform: 'uppercase' }}>
+                            ✓ CONFIGURAÇÃO MASTER
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                          <input 
+                            type="text" 
+                            className="dev-input" 
+                            placeholder="https://saas-tv-digital-signage-217322288286.us-east1.run.app/promo"
+                            value={universalConfig.horizontalTvLink !== undefined ? universalConfig.horizontalTvLink : 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/promo'} 
+                            onChange={e => setUniversalConfig({ ...universalConfig, horizontalTvLink: e.target.value })}
+                            style={{ flex: '1 1 320px', background: '#0a0a10', borderColor: '#f59e0b', color: '#fff', fontSize: '13px', fontWeight: 700 }}
+                          />
+                          <button
+                            type="button"
+                            className="dev-btn dev-btn-primary"
+                            style={{ padding: '8px 14px', fontSize: '12px', background: '#f59e0b', color: '#000', border: 'none', fontWeight: 900, cursor: 'pointer', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                            onClick={async () => {
+                              try {
+                                const targetUrl = universalConfig.horizontalTvLink || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/promo';
+                                await setDoc(doc(db, 'settings', 'universal'), { horizontalTvLink: targetUrl }, { merge: true });
+                                alert("Link da TV atualizado e salvo com sucesso!");
+                              } catch (err) {
+                                alert("Erro ao salvar link da TV.");
+                              }
+                            }}
+                          >
+                            💾 Salvar Link da TV
+                          </button>
+                          <a
+                            href={universalConfig.horizontalTvLink || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/promo'}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="dev-btn"
+                            style={{ padding: '8px 12px', fontSize: '12px', background: '#222', color: '#fff', border: '1px solid #444', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', borderRadius: '8px' }}
+                          >
+                            🔗 Abrir Canal
+                          </a>
+                        </div>
+                        <p style={{ fontSize: '11px', color: '#aaa', marginTop: '8px', lineHeight: '1.4' }}>
+                          ✓ O link acima é exibido na grade de TV ao vivo do portal. Você pode atualizar ou trocar o canal quando quiser por aqui.
+                        </p>
+                      </div>
+                    )}
                     <div className="dev-grid-2">
                       <div className="dev-form-group">
                         <label>WhatsApp (Link completo)</label>
