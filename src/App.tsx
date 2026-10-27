@@ -192,14 +192,14 @@ const COMPANIES_DATA = [
 ];
 
 const VIDEOS = [
-  "https://archive.org/download/3_20260315_202603/1.mp4",
-  "https://ia601507.us.archive.org/18/items/refrigeracao_20260319/refrigera%C3%A7%C3%A3o.mp4",
-  "https://archive.org/download/3_20260315_202603/3.mp4",
-  "https://archive.org/download/3_20260315_202603/4.mp4",
-  "https://archive.org/download/3_20260315_202603/5.mp4",
-  "https://archive.org/download/3_20260315_202603/6.mp4",
-  "https://ia600408.us.archive.org/12/items/para-grupos-d-e-whatssap-novo-video/para%20grupos%20d%20e%20whatssap%20novo%20video.mp4",
-  "https://archive.org/download/3_20260315_202603/2.mp4"
+  "https://pub-2bf9b596205e46359eb22c7a5ee2e65c.r2.dev/videos%2FMINHA%20DIVULGA%C3%87%C3%83O%20COMERCIAL.mp4",
+  "https://pub-2bf9b596205e46359eb22c7a5ee2e65c.r2.dev/videos%2FMARCIA%20BORDADOS.mp4",
+  "https://pub-2bf9b596205e46359eb22c7a5ee2e65c.r2.dev/videos%2FVENDAS%20ZAP.mp4",
+  "https://pub-2bf9b596205e46359eb22c7a5ee2e65c.r2.dev/videos%2FFARMACIA.mp4",
+  "https://pub-2bf9b596205e46359eb22c7a5ee2e65c.r2.dev/videos%2FJoseph%20Clean.mp4",
+  "https://pub-2bf9b596205e46359eb22c7a5ee2e65c.r2.dev/videos%2FANTONIO%20MARTINS.mp4",
+  "https://pub-2bf9b596205e46359eb22c7a5ee2e65c.r2.dev/videos%2FCLESSIA%20COSMETICOS.mp4",
+  "https://pub-2bf9b596205e46359eb22c7a5ee2e65c.r2.dev/videos%2FL%20%26%20A%20MATERIAIS%20DE%20CONSTRU%C3%87%C3%83O.mp4"
 ];
 
 const FLYERS = [
@@ -940,6 +940,7 @@ function AppContent() {
   const [hasAffiliateSystem, setHasAffiliateSystem] = useState(false);
   const [hideAdvertiserAuth, setHideAdvertiserAuth] = useState(true);
   const [affiliates, setAffiliates] = useState<any[]>([]);
+  const [activeReferralPartner, setActiveReferralPartner] = useState<any>(null);
   const [isAffLoading, setIsAffLoading] = useState(false);
 
   // Auto-clear TV loading spinner after safety timeout
@@ -950,11 +951,46 @@ function AppContent() {
     return () => clearTimeout(timer);
   }, [tvKey]);
 
+  // Função utilitária para normalizar qualquer link de TV inserido pelo usuário no Master
+  const normalizeTvUrl = useCallback((rawUrl?: string): string => {
+    let url = (rawUrl || '').trim();
+    if (!url) return 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/promo';
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+    // Corrige domínio da Cloud Run caso colado sem o .app
+    if (url.includes('saas-tv-digital-signage') && !url.includes('.app')) {
+      url = url.replace('.run', '.run.app');
+    }
+    // Adiciona o canal /promo caso seja apenas a raiz do saas-tv
+    if (url.includes('saas-tv-digital-signage') && !url.includes('/promo')) {
+      const parts = url.split('?');
+      const base = parts[0].replace(/\/+$/, '');
+      const query = parts[1] ? `?${parts[1]}` : '';
+      if (base.endsWith('.run.app')) {
+        url = `${base}/promo${query}`;
+      }
+    }
+    return url;
+  }, []);
+
+  const effectiveTvUrl = useMemo(() => {
+    const raw = activeReferralPartner?.horizontalTvLink || 
+      universalConfig?.horizontalTvLink || 
+      (appData?.siteInfo && appData.siteInfo.horizontalTvLink) || 
+      'https://saas-tv-digital-signage-217322288286.us-east1.run.app/promo';
+    return normalizeTvUrl(raw);
+  }, [activeReferralPartner?.horizontalTvLink, universalConfig?.horizontalTvLink, appData?.siteInfo?.horizontalTvLink, normalizeTvUrl]);
+
+  const isDirectVideoFile = useMemo(() => {
+    return /\.(mp4|webm|ogg)($|\?)/i.test(effectiveTvUrl);
+  }, [effectiveTvUrl]);
+
   // Sincronização automática com a playlist da TV Digital Signage (SaaS)
   const [saasTvVideos, setSaasTvVideos] = useState<any[]>([]);
 
   useEffect(() => {
-    const tvUrl = universalConfig?.horizontalTvLink || '';
+    const tvUrl = effectiveTvUrl || '';
     if (!tvUrl) return;
 
     try {
@@ -971,7 +1007,7 @@ function AppContent() {
           .catch(() => {});
       }
     } catch (e) {}
-  }, [universalConfig?.horizontalTvLink]);
+  }, [effectiveTvUrl]);
 
   // Playlist de comerciais da TV Minha Divulgação
   const tvPlaylist = useMemo(() => {
@@ -1125,8 +1161,15 @@ function AppContent() {
     setIsTvLoading(true);
     setTvKey(prev => prev + 1);
     if (tvVideoRef.current) {
-      tvVideoRef.current.currentTime = 0;
-      tvVideoRef.current.play().catch(() => {});
+      try {
+        tvVideoRef.current.currentTime = 0;
+        tvVideoRef.current.play().catch(() => {});
+      } catch (e) {}
+    }
+    if (tvIframeRef.current) {
+      try {
+        tvIframeRef.current.src = effectiveTvUrl;
+      } catch (e) {}
     }
   };
 
@@ -1194,7 +1237,6 @@ function AppContent() {
   const [newAffCode, setNewAffCode] = useState('');
   const [newAffLogo, setNewAffLogo] = useState('');
   const [newAffCustomTitle, setNewAffCustomTitle] = useState('');
-  const [activeReferralPartner, setActiveReferralPartner] = useState<any>(null);
 
   // --- Advertiser & Mini-Site States ---
   const [advertiserCompanies, setAdvertiserCompanies] = useState<any[]>(() => {
@@ -3349,11 +3391,18 @@ function AppContent() {
                     style={{ padding: '8px 14px', fontSize: '11px', background: '#f59e0b', color: '#000', border: 'none', fontWeight: 900, cursor: 'pointer', borderRadius: '8px' }}
                     onClick={async () => {
                       try {
-                        const targetUrl = universalConfig.horizontalTvLink || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/promo';
+                        const targetUrl = normalizeTvUrl(universalConfig.horizontalTvLink || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/promo');
+                        setUniversalConfig((prev: any) => ({ ...prev, horizontalTvLink: targetUrl }));
                         await setDoc(doc(db, 'settings', 'universal'), { horizontalTvLink: targetUrl }, { merge: true });
-                        alert("Link da TV salvo com sucesso no banco de dados!");
-                      } catch (e) {
-                        alert("Erro ao salvar link da TV.");
+                        try {
+                          await updateDoc(doc(db, 'tenants', 'fortaleza'), {
+                            'data.siteInfo.horizontalTvLink': targetUrl
+                          });
+                        } catch (e) {}
+                        setTvKey(prev => prev + 1);
+                        alert("Link da TV salvo com sucesso! O novo canal já está ao vivo no portal.");
+                      } catch (e: any) {
+                        alert("Erro ao salvar link da TV: " + (e?.message || 'Verifique sua conexão'));
                       }
                     }}
                   >
@@ -5028,7 +5077,7 @@ function AppContent() {
                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
                   <span className="text-[10px] sm:text-[11px] font-mono font-black text-emerald-400 tracking-widest uppercase">🔴 CANAL AO VIVO — TV MINHA DIVULGAÇÃO</span>
                   <span className="text-[9px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full">
-                    {`Comercial ${tvVideoIndex + 1} de ${tvPlaylist.length}`}
+                    DIGITAL SIGNAGE PROMOÇÕES
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -5036,7 +5085,7 @@ function AppContent() {
                     type="button"
                     onClick={reloadTvPlayer}
                     className="text-[9px] sm:text-[10px] font-mono font-extrabold text-amber-300 bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/30 px-2.5 py-0.5 rounded-full transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-sm"
-                    title="Clique para reiniciar o comercial atual"
+                    title="Clique para reiniciar a transmissão da TV"
                   >
                     <span>🔄 Reiniciar</span>
                   </button>
@@ -5049,13 +5098,22 @@ function AppContent() {
                     <Maximize size={11} />
                     <span>Tela Cheia</span>
                   </button>
+                  <a
+                    href={effectiveTvUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[9px] sm:text-[10px] font-mono font-extrabold text-white/80 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-2.5 py-0.5 rounded-full transition-all flex items-center gap-1 cursor-pointer"
+                    title="Abrir canal direto em nova aba"
+                  >
+                    <span>🔗 Abrir Canal</span>
+                  </a>
                   <span className="text-[9px] sm:text-[10px] font-mono text-white/50 tracking-widest uppercase bg-white/5 px-2.5 py-0.5 rounded-full border border-white/10 hidden sm:inline-block">
                     TRANSMISSÃO 16:9
                   </span>
                 </div>
               </div>
 
-              {/* 16:9 Aspect Ratio Frame for Native HTML5 TV Player */}
+              {/* 16:9 Aspect Ratio Frame for Live Digital Signage TV Player */}
               <div className="relative w-full aspect-[16/9] rounded-lg sm:rounded-xl overflow-hidden bg-black shadow-inner border border-white/10 group">
                 {isTvLoading && (
                   <div className="absolute inset-0 z-10 bg-[#0a0a10]/90 backdrop-blur-sm flex flex-col items-center justify-center gap-2 pointer-events-none">
@@ -5073,6 +5131,7 @@ function AppContent() {
                       setTvMuted(false);
                       const targetVol = tvVolume > 0 ? tvVolume : 0.8;
                       setTvVolume(targetVol);
+                      sendTvVolume(targetVol, false);
                       if (tvVideoRef.current) {
                         tvVideoRef.current.muted = false;
                         tvVideoRef.current.volume = targetVol;
@@ -5086,80 +5145,55 @@ function AppContent() {
                   </button>
                 )}
 
-                {/* Native HTML5 Video Element with 100% Direct Audio Volume Control */}
-                <video
-                  ref={tvVideoRef}
-                  key={`tv-video-${tvVideoIndex}-${tvKey}`}
-                  src={currentTvVideo?.url}
-                  className="w-full h-full object-contain bg-black select-none"
-                  playsInline
-                  autoPlay
-                  muted={tvMuted}
-                  onEnded={handleTvNextVideo}
-                  onPlay={() => {
-                    setIsTvLoading(false);
-                    setTvIsPlaying(true);
-                    if (tvVideoRef.current) {
-                      tvVideoRef.current.volume = tvMuted ? 0 : tvVolume;
-                      tvVideoRef.current.muted = tvMuted;
-                    }
-                  }}
-                  onPause={() => setTvIsPlaying(false)}
-                  onLoadedData={() => {
-                    setIsTvLoading(false);
-                    if (tvVideoRef.current) {
-                      tvVideoRef.current.volume = tvMuted ? 0 : tvVolume;
-                      tvVideoRef.current.muted = tvMuted;
-                    }
-                  }}
-                  onError={() => {
-                    setIsTvLoading(false);
-                    if (tvPlaylist.length > 1) {
-                      setTvVideoIndex(prev => (prev + 1) % tvPlaylist.length);
-                    }
-                  }}
-                />
+                {/* Main Player Component: Displays the Exact Digital Signage URL OR Native Video for MP4 */}
+                {isDirectVideoFile ? (
+                  <video
+                    ref={tvVideoRef}
+                    key={`tv-video-${tvKey}-${effectiveTvUrl}`}
+                    src={effectiveTvUrl}
+                    className="w-full h-full object-contain bg-black select-none"
+                    playsInline
+                    autoPlay
+                    loop
+                    muted={tvMuted}
+                    onPlay={() => {
+                      setIsTvLoading(false);
+                      setTvIsPlaying(true);
+                      if (tvVideoRef.current) {
+                        tvVideoRef.current.volume = tvMuted ? 0 : tvVolume;
+                        tvVideoRef.current.muted = tvMuted;
+                      }
+                    }}
+                    onPause={() => setTvIsPlaying(false)}
+                    onLoadedData={() => {
+                      setIsTvLoading(false);
+                      if (tvVideoRef.current) {
+                        tvVideoRef.current.volume = tvMuted ? 0 : tvVolume;
+                        tvVideoRef.current.muted = tvMuted;
+                      }
+                    }}
+                  />
+                ) : (
+                  <iframe
+                    ref={tvIframeRef}
+                    key={`tv-iframe-${tvKey}-${effectiveTvUrl}`}
+                    src={effectiveTvUrl}
+                    title="TV Minha Divulgação"
+                    className="w-full h-full border-0 bg-black select-none"
+                    allow="autoplay; camera; microphone; display-capture; encrypted-media; fullscreen; picture-in-picture"
+                    allowFullScreen
+                    referrerPolicy="no-referrer"
+                    onLoad={() => setIsTvLoading(false)}
+                  />
+                )}
 
                 {/* Top Overlay Badge (On-Air Watermark) */}
                 <div className="absolute top-3 left-3 z-20 pointer-events-none flex flex-col gap-1">
-                  <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 text-white shadow-lg">
+                  <div className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 text-white shadow-lg">
                     <span className="w-2 h-2 rounded-full bg-red-500 animate-ping inline-block" />
                     <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-amber-300">
                       AO VIVO • MINHA DIVULGAÇÃO
                     </span>
-                  </div>
-                </div>
-
-                {/* Floating Bottom Overlay Bar on Hover */}
-                <div className="absolute bottom-2 left-2 right-2 z-20 bg-[#0c0d16]/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 flex items-center justify-between text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <span className="text-[11px] font-medium text-white/90 truncate max-w-[60%]">
-                    {currentTvVideo?.title || `Comercial Oficial #${tvVideoIndex + 1}`}
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={handleTvPrevVideo}
-                      className="p-1 hover:bg-white/10 rounded text-white/80 hover:text-white cursor-pointer transition-colors"
-                      title="Comercial anterior"
-                    >
-                      <SkipBack size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleTvPlayPauseToggle}
-                      className="p-1 hover:bg-white/10 rounded text-amber-400 hover:text-amber-300 cursor-pointer transition-colors"
-                      title={tvIsPlaying ? "Pausar TV" : "Reproduzir TV"}
-                    >
-                      {tvIsPlaying ? <Pause size={14} /> : <Play size={14} />}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleTvNextVideo}
-                      className="p-1 hover:bg-white/10 rounded text-white/80 hover:text-white cursor-pointer transition-colors"
-                      title="Próximo comercial"
-                    >
-                      <SkipForward size={14} />
-                    </button>
                   </div>
                 </div>
               </div>
@@ -5174,35 +5208,12 @@ function AppContent() {
                   <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                     Ao Vivo
                   </span>
-                  <div className="flex items-center gap-1 bg-black/40 px-2 py-0.5 rounded-lg border border-white/5">
-                    <button
-                      type="button"
-                      onClick={handleTvPrevVideo}
-                      className="p-1 hover:bg-white/10 rounded text-white/70 hover:text-white cursor-pointer transition-colors"
-                      title="Comercial anterior"
-                    >
-                      <SkipBack size={13} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleTvPlayPauseToggle}
-                      className="p-1 hover:bg-white/10 rounded text-amber-400 hover:text-amber-300 cursor-pointer transition-colors"
-                      title={tvIsPlaying ? "Pausar" : "Tocar"}
-                    >
-                      {tvIsPlaying ? <Pause size={13} /> : <Play size={13} />}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleTvNextVideo}
-                      className="p-1 hover:bg-white/10 rounded text-white/70 hover:text-white cursor-pointer transition-colors"
-                      title="Próximo comercial"
-                    >
-                      <SkipForward size={13} />
-                    </button>
+                  <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-lg border border-white/5 text-[10px] font-mono text-white/60">
+                    <span>Canal Oficial Conectado</span>
                   </div>
                 </div>
 
-                {/* Volume Control Bar - 100% Functional Native Audio Volume */}
+                {/* Volume Control Bar */}
                 <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto bg-black/60 px-3 py-1.5 rounded-xl border border-white/10 shadow-inner">
                   <button
                     type="button"
@@ -5246,6 +5257,15 @@ function AppContent() {
                   >
                     <span>🔄 Atualizar Sinal</span>
                   </button>
+                  <a
+                    href={effectiveTvUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] font-mono font-bold text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1 rounded-lg border border-amber-500/30 transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                    title="Assistir canal direto na fonte"
+                  >
+                    <span>🔗 Ver Direto</span>
+                  </a>
                 </div>
               </div>
             </div>
@@ -6631,11 +6651,18 @@ function AppContent() {
                             style={{ padding: '8px 14px', fontSize: '12px', background: '#f59e0b', color: '#000', border: 'none', fontWeight: 900, cursor: 'pointer', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}
                             onClick={async () => {
                               try {
-                                const targetUrl = universalConfig.horizontalTvLink || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/promo';
+                                const targetUrl = normalizeTvUrl(universalConfig.horizontalTvLink || 'https://saas-tv-digital-signage-217322288286.us-east1.run.app/promo');
+                                setUniversalConfig((prev: any) => ({ ...prev, horizontalTvLink: targetUrl }));
                                 await setDoc(doc(db, 'settings', 'universal'), { horizontalTvLink: targetUrl }, { merge: true });
-                                alert("Link da TV atualizado e salvo com sucesso!");
-                              } catch (err) {
-                                alert("Erro ao salvar link da TV.");
+                                try {
+                                  await updateDoc(doc(db, 'tenants', 'fortaleza'), {
+                                    'data.siteInfo.horizontalTvLink': targetUrl
+                                  });
+                                } catch (e) {}
+                                setTvKey(prev => prev + 1);
+                                alert("Link da TV atualizado e salvo com sucesso! Já está transmitindo ao vivo no portal.");
+                              } catch (err: any) {
+                                alert("Erro ao salvar link da TV: " + (err?.message || 'Verifique sua conexão'));
                               }
                             }}
                           >
