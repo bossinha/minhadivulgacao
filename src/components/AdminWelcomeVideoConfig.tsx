@@ -24,7 +24,8 @@ import {
 } from 'lucide-react';
 import { WhatsAppIcon } from './SocialMediaIcons';
 import { PortalWelcomeVideoConfig, SponsoredItem, parseVideoSource } from './PortalWelcomeVideoModal';
-import { uploadImageWithFallback } from '../lib/imageUpload';
+import { uploadImageWithFallback, getActiveImgBBKey, setActiveImgBBKey } from '../lib/imageUpload';
+
 
 
 interface AdminWelcomeVideoConfigProps {
@@ -119,6 +120,9 @@ export const AdminWelcomeVideoConfig: React.FC<AdminWelcomeVideoConfigProps> = (
   const [saveSuccessNotice, setSaveSuccessNotice] = useState(false);
   const [isUploadingFlyer, setIsUploadingFlyer] = useState(false);
   const [flyerUploadNotice, setFlyerUploadNotice] = useState('');
+  const [currentActiveKey, setCurrentActiveKey] = useState<string>(() => getActiveImgBBKey());
+  const [showKeyInput, setShowKeyInput] = useState(false);
+  const [tempKeyInput, setTempKeyInput] = useState('');
   const flyerFileInputRef = useRef<HTMLInputElement>(null);
 
   // Combine companies from appData and registered advertisers
@@ -841,6 +845,68 @@ export const AdminWelcomeVideoConfig: React.FC<AdminWelcomeVideoConfigProps> = (
                     </label>
                     <span className="text-[10px] text-white/50">JPG, PNG ou WEBP</span>
                   </div>
+
+                  {/* Barra rápida de status da Chave ImgBB */}
+                  <div className="p-2.5 rounded-lg bg-sky-950/40 border border-sky-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-bold text-sky-300">🔑 API ImgBB:</span>
+                      <code className="bg-black/60 px-2 py-0.5 rounded text-amber-300 font-mono text-[10px]">
+                        {currentActiveKey ? `${currentActiveKey.slice(0, 8)}...${currentActiveKey.slice(-4)}` : '7964279b...2dcbe'}
+                      </code>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTempKeyInput(currentActiveKey || '7964279bf733e466f7a4d3adb322dcbe');
+                          setShowKeyInput(!showKeyInput);
+                        }}
+                        className="text-amber-400 hover:text-amber-300 font-bold underline cursor-pointer"
+                      >
+                        {showKeyInput ? 'Fechar' : 'Trocar Chave Aqui'}
+                      </button>
+                      <span className="text-white/20">•</span>
+                      <a 
+                        href="https://api.imgbb.com/" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-sky-400 hover:underline"
+                      >
+                        Nova Chave no ImgBB ↗
+                      </a>
+                    </div>
+                  </div>
+
+                  {showKeyInput && (
+                    <div className="p-3 rounded-lg bg-black/60 border border-amber-500/40 flex flex-col gap-2">
+                      <label className="text-[10px] text-amber-300 font-bold">
+                        Cole sua nova chave de API do ImgBB (obtida gratuitamente em api.imgbb.com):
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={tempKeyInput}
+                          onChange={(e) => setTempKeyInput(e.target.value.trim())}
+                          placeholder="Ex: 7964279bf733e466f7a4d3adb322dcbe"
+                          className="flex-1 px-3 py-1.5 rounded-lg bg-black border border-white/20 text-xs text-white font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (tempKeyInput.trim()) {
+                              setActiveImgBBKey(tempKeyInput.trim());
+                              setCurrentActiveKey(tempKeyInput.trim());
+                              setShowKeyInput(false);
+                              alert("✅ Chave da API do ImgBB atualizada com sucesso!");
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-amber-500 text-black text-xs font-black cursor-pointer hover:bg-amber-400"
+                        >
+                          Salvar Chave
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   <input
                     type="file"

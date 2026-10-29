@@ -107,7 +107,8 @@ import { AdminWelcomeVideoConfig } from './components/AdminWelcomeVideoConfig';
 import { registerServiceWorker, recordNotificationClick } from './lib/pushNotifications';
 import { AccessStatsPanel } from './components/AccessStatsPanel';
 import { recordSiteAccess } from './lib/accessTracker';
-import { uploadImageWithFallback } from './lib/imageUpload';
+import { uploadImageWithFallback, getActiveImgBBKey, setActiveImgBBKey, testImgBBApiKey, DEFAULT_IMGBB_KEY } from './lib/imageUpload';
+
 
 
 import { auth, db, googleProvider } from './lib/firebase';
@@ -891,8 +892,10 @@ function AppContent() {
     companySpeed: 200, 
     totalVisits: 9480,
     uploadImageHelpUrl: 'https://postimages.org/',
-    uploadVideoHelpUrl: 'https://streamable.com/'
+    uploadVideoHelpUrl: 'https://streamable.com/',
+    imgbbApiKey: (typeof window !== 'undefined' ? localStorage.getItem('portal_imgbb_api_key') : null) || DEFAULT_IMGBB_KEY
   });
+  const [imgbbTestResult, setImgbbTestResult] = useState<{ testing?: boolean; message: string; success?: boolean } | null>(null);
   const [onlineCount, setOnlineCount] = useState(Math.floor(Math.random() * (22 - 12 + 1)) + 12);
   const [customRadioLink, setCustomRadioLink] = useState<string>('');
   const [allUsers, setAllUsers] = useState<any>(null);
@@ -1751,10 +1754,13 @@ function AppContent() {
           totalVisits: Math.max(Number(data.totalVisits || 0), 9480),
           uploadImageHelpUrl: data.uploadImageHelpUrl || 'https://postimages.org/',
           uploadVideoHelpUrl: data.uploadVideoHelpUrl || 'https://streamable.com/',
-          imgbbApiKey: data.imgbbApiKey || localStorage.getItem('portal_imgbb_api_key') || 'b84e5dcba9b322fbb2c1adde190bfe95'
+          imgbbApiKey: data.imgbbApiKey || localStorage.getItem('portal_imgbb_api_key') || DEFAULT_IMGBB_KEY
         });
         if (data.imgbbApiKey) {
-          try { localStorage.setItem('portal_imgbb_api_key', data.imgbbApiKey); } catch (e) {}
+          try { 
+            localStorage.setItem('portal_imgbb_api_key', data.imgbbApiKey); 
+            setActiveImgBBKey(data.imgbbApiKey);
+          } catch (e) {}
         }
       }
     }, (error) => {
@@ -3336,31 +3342,175 @@ function AppContent() {
                   onChange={e => setUniversalConfig({ ...universalConfig, radioLink: e.target.value })}
                 />
               </div>
-              <div className="dev-form-group">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label>Chave da API do ImgBB (Hospedagem Exclusiva no ImgBB 📷)</label>
+              {/* ======================================================== */}
+              {/* GERENCIADOR DE API DO IMGBB (TROCA DIRETA PELO MASTER) */}
+              {/* ======================================================== */}
+              <div className="dev-form-group" style={{ 
+                background: 'linear-gradient(180deg, rgba(14, 165, 233, 0.08) 0%, rgba(14, 165, 233, 0.02) 100%)', 
+                border: '1.5px solid rgba(56, 189, 248, 0.4)', 
+                borderRadius: '16px', 
+                padding: '20px',
+                marginBottom: '10px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '1.4rem' }}>📷</span>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: '#38bdf8' }}>
+                        API DO IMGBB (HOSPEDAGEM EXCLUSIVA DE IMAGENS E FLYERS)
+                      </h4>
+                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                        Área Master: altere sua API a qualquer momento sem depender de suporte
+                      </span>
+                    </div>
+                  </div>
+                  <span style={{ 
+                    fontSize: '10px', 
+                    background: 'rgba(37, 211, 102, 0.15)', 
+                    color: '#25D366', 
+                    border: '1px solid #25D366', 
+                    padding: '4px 9px', 
+                    borderRadius: '6px', 
+                    fontWeight: 800 
+                  }}>
+                    100% EXTERNO NO IMGBB (ZERO PESO NO FIRESTORE)
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '12px' }}>
+                  <input 
+                    type="text" 
+                    className="dev-input" 
+                    placeholder="Cole sua chave da API do ImgBB aqui (ex: 7964279bf733e466f7a4d3adb322dcbe)"
+                    value={universalConfig.imgbbApiKey !== undefined ? universalConfig.imgbbApiKey : (localStorage.getItem('portal_imgbb_api_key') || DEFAULT_IMGBB_KEY)} 
+                    onChange={e => {
+                      const newKey = e.target.value.trim();
+                      setUniversalConfig({ ...universalConfig, imgbbApiKey: newKey });
+                    }}
+                    style={{ flex: '1 1 320px', fontFamily: 'monospace', fontWeight: 800, fontSize: '13px', letterSpacing: '0.5px' }}
+                  />
+
+                  <button
+                    type="button"
+                    className="dev-btn dev-btn-primary"
+                    style={{ 
+                      padding: '10px 18px', 
+                      fontSize: '12px', 
+                      background: '#0284c7', 
+                      color: '#fff', 
+                      border: 'none', 
+                      fontWeight: 900, 
+                      cursor: 'pointer', 
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                    onClick={async () => {
+                      const keyToSave = (universalConfig.imgbbApiKey || DEFAULT_IMGBB_KEY).trim();
+                      try {
+                        setActiveImgBBKey(keyToSave);
+                        setUniversalConfig((prev: any) => ({ ...prev, imgbbApiKey: keyToSave }));
+                        await setDoc(doc(db, 'settings', 'universal'), { imgbbApiKey: keyToSave }, { merge: true });
+                        alert("✅ Chave da API do ImgBB salva com sucesso no sistema e em todos os portais!");
+                      } catch (e: any) {
+                        alert("Erro ao salvar chave: " + (e?.message || 'Verifique sua permissão'));
+                      }
+                    }}
+                  >
+                    💾 Salvar Chave ImgBB
+                  </button>
+
+                  <button
+                    type="button"
+                    className="dev-btn"
+                    style={{ 
+                      padding: '10px 14px', 
+                      fontSize: '11px', 
+                      background: 'rgba(255,255,255,0.06)', 
+                      color: '#f8fafc', 
+                      border: '1px solid rgba(255,255,255,0.2)', 
+                      fontWeight: 700, 
+                      cursor: 'pointer', 
+                      borderRadius: '8px'
+                    }}
+                    onClick={async () => {
+                      const keyToTest = (universalConfig.imgbbApiKey || getActiveImgBBKey()).trim();
+                      setImgbbTestResult({ testing: true, message: 'Testando conexão com a API do ImgBB...' });
+                      try {
+                        const res = await testImgBBApiKey(keyToTest);
+                        setImgbbTestResult({ testing: false, message: res.message, success: res.success });
+                      } catch (err: any) {
+                        setImgbbTestResult({ testing: false, message: 'Erro ao testar: ' + err.message, success: false });
+                      }
+                    }}
+                  >
+                    ⚡ Testar API / Conexão
+                  </button>
+
                   <a 
                     href="https://api.imgbb.com/" 
                     target="_blank" 
                     rel="noreferrer" 
-                    style={{ fontSize: '10px', color: '#38bdf8', textDecoration: 'underline' }}
+                    style={{ 
+                      fontSize: '11px', 
+                      color: '#38bdf8', 
+                      textDecoration: 'none', 
+                      background: 'rgba(56, 189, 248, 0.1)', 
+                      border: '1px solid rgba(56, 189, 248, 0.3)', 
+                      padding: '9px 12px', 
+                      borderRadius: '8px', 
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
                   >
-                    Obter Chave no ImgBB ↗
+                    🔑 Obter Nova Chave no ImgBB ↗
+                  </a>
+
+                  <a 
+                    href="https://imgbb.com/upload" 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    style={{ 
+                      fontSize: '11px', 
+                      color: '#a7f3d0', 
+                      textDecoration: 'none', 
+                      background: 'rgba(16, 185, 129, 0.1)', 
+                      border: '1px solid rgba(16, 185, 129, 0.3)', 
+                      padding: '9px 12px', 
+                      borderRadius: '8px', 
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    🌐 Abrir Site ImgBB (Upload Manual) ↗
                   </a>
                 </div>
-                <input 
-                  type="text" 
-                  className="dev-input" 
-                  placeholder="Ex: b84e5dcba9b322fbb2c1adde190bfe95"
-                  value={universalConfig.imgbbApiKey !== undefined ? universalConfig.imgbbApiKey : (localStorage.getItem('portal_imgbb_api_key') || 'b84e5dcba9b322fbb2c1adde190bfe95')} 
-                  onChange={e => {
-                    const newKey = e.target.value.trim();
-                    setUniversalConfig({ ...universalConfig, imgbbApiKey: newKey });
-                    try { localStorage.setItem('portal_imgbb_api_key', newKey); } catch (err) {}
-                  }}
-                />
-                <small style={{ color: '#25D366' }}>✓ Todas as fotos e banners ficam armazenados exclusivamente nos servidores do ImgBB (sem ocupar espaço no Firebase Firestore).</small>
+
+                {imgbbTestResult && (
+                  <div style={{
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    marginBottom: '10px',
+                    fontSize: '12px',
+                    background: imgbbTestResult.testing ? 'rgba(56, 189, 248, 0.1)' : imgbbTestResult.success ? 'rgba(37, 211, 102, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                    border: `1px solid ${imgbbTestResult.testing ? '#38bdf8' : imgbbTestResult.success ? '#25D366' : '#ef4444'}`,
+                    color: imgbbTestResult.testing ? '#38bdf8' : imgbbTestResult.success ? '#25D366' : '#fca5a5'
+                  }}>
+                    {imgbbTestResult.message}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', color: '#94a3b8', lineHeight: 1.5 }}>
+                  <span>✓ <strong>Segurança & Armazenamento:</strong> Nenhuma imagem é gravada no Firestore em Base64. Todas vão direto para o servidor do ImgBB.</span>
+                  <span>✓ <strong>Manutenção ou Troca:</strong> Se a API do ImgBB acusar manutenção ou limite atingido, basta abrir <em>api.imgbb.com</em>, pegar uma chave nova, colar no campo acima e clicar em <strong>Salvar Chave ImgBB</strong>.</span>
+                </div>
               </div>
+
               <div className="dev-form-group">
                 <label>Link Externo para Hospedar Vídeos (Ícone Vídeo 🎥)</label>
                 <input 

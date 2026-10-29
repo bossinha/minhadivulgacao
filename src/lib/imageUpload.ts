@@ -5,7 +5,7 @@
  * Always returns hosted image URLs (e.g. https://i.ibb.co/...).
  */
 
-export const DEFAULT_IMGBB_KEY = "b84e5dcba9b322fbb2c1adde190bfe95";
+export const DEFAULT_IMGBB_KEY = "7964279bf733e466f7a4d3adb322dcbe";
 
 export function getActiveImgBBKey(): string {
   try {
@@ -31,6 +31,55 @@ export function setActiveImgBBKey(key: string): void {
       localStorage.removeItem('portal_imgbb_api_key');
     }
   } catch (e) {}
+}
+
+/**
+ * Tests connection with ImgBB using the given API key.
+ */
+export async function testImgBBApiKey(keyToTest?: string): Promise<{ success: boolean; message: string; isMaintenance?: boolean }> {
+  const key = (keyToTest || getActiveImgBBKey()).trim();
+  if (!key) {
+    return { success: false, message: 'Nenhuma chave informada.' };
+  }
+
+  // Small 1x1 transparent gif for testing upload API
+  const testBase64 = "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+  const formData = new FormData();
+  formData.append("image", testBase64);
+
+  try {
+    const res = await fetch(`https://api.imgbb.com/1/upload?key=${key}`, {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json().catch(() => null);
+
+    if (data && data.success) {
+      return { 
+        success: true, 
+        message: '✅ Conexão com o ImgBB bem-sucedida! Chave ativa e pronta para envio.' 
+      };
+    }
+
+    const rawError = data?.error?.message || `HTTP ${res.status}`;
+    if (rawError.toLowerCase().includes('maintenance') || rawError.toLowerCase().includes('down')) {
+      return {
+        success: false,
+        isMaintenance: true,
+        message: '⚠️ A API pública do ImgBB reportou manutenção temporária nos servidores deles. Se precisar postar agora sem esperar, abra https://imgbb.com, envie a foto lá e cole o link direto.'
+      };
+    }
+
+    return {
+      success: false,
+      message: `Erro retornado pelo ImgBB: ${rawError}`
+    };
+  } catch (e: any) {
+    return {
+      success: false,
+      message: `Falha ao testar API: ${e?.message || 'Verifique sua conexão'}`
+    };
+  }
 }
 
 /**
