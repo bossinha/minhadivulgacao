@@ -23,8 +23,8 @@ import {
 } from 'lucide-react';
 import { WhatsAppIcon } from './SocialMediaIcons';
 import { PortalWelcomeVideoConfig, SponsoredItem, parseVideoSource } from './PortalWelcomeVideoModal';
+import { uploadImageWithFallback } from '../lib/imageUpload';
 
-const IMGBB_API_KEY = "b84e5dcba9b322fbb2c1adde190bfe95";
 
 interface AdminWelcomeVideoConfigProps {
   config: PortalWelcomeVideoConfig | undefined;
@@ -295,7 +295,7 @@ export const AdminWelcomeVideoConfig: React.FC<AdminWelcomeVideoConfigProps> = (
     });
   };
 
-  // Upload flyer image direct to ImgBB for active item
+  // Resilient upload of flyer image for active item (ImgBB with Canvas compression fallback)
   const handleFlyerFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !activeItem) return;
@@ -306,41 +306,35 @@ export const AdminWelcomeVideoConfig: React.FC<AdminWelcomeVideoConfigProps> = (
     }
 
     setIsUploadingFlyer(true);
-    setFlyerUploadNotice(`Enviando flyer de "${activeItem.name || 'Patrocinador'}" para o ImgBB...`);
+    setFlyerUploadNotice(`Enviando flyer de "${activeItem.name || 'Patrocinador'}"...`);
 
     try {
-      const apiKey = (import.meta as any).env?.VITE_IMGBB_API_KEY || IMGBB_API_KEY;
-      const formData = new FormData();
-      formData.append("image", file);
-
-      const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-        method: "POST",
-        body: formData,
+      const result = await uploadImageWithFallback(file, {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 0.82,
+        onNotice: (msg) => setFlyerUploadNotice(msg)
       });
 
-      const data = await res.json();
-      if (data && data.success && data.data && data.data.url) {
-        const uploadedUrl = data.data.url as string;
-        const deleteUrl = (data.data.delete_url || '') as string;
-
+      if (result && result.url) {
         handleUpdateActiveItem({
-          flyerUrl: uploadedUrl,
-          flyerDeleteUrl: deleteUrl,
+          flyerUrl: result.url,
+          flyerDeleteUrl: '',
           mediaType: 'flyer'
         });
 
-        setFlyerUploadNotice('✅ Flyer carregado com sucesso!');
-        setTimeout(() => setFlyerUploadNotice(''), 3000);
+        setFlyerUploadNotice('✅ Flyer carregado e salvo com sucesso!');
+        setTimeout(() => setFlyerUploadNotice(''), 3500);
 
         if (onSave) {
           onSave();
         }
       } else {
-        throw new Error(data?.error?.message || "Erro ao fazer upload da imagem no ImgBB.");
+        throw new Error("Não foi possível processar a imagem do flyer.");
       }
     } catch (err: any) {
       console.error("Flyer upload error:", err);
-      alert(err?.message || "Falha ao enviar flyer para o ImgBB. Tente novamente.");
+      alert(err?.message || "Falha ao processar a imagem. Tente novamente ou use outra imagem.");
       setFlyerUploadNotice('');
     } finally {
       setIsUploadingFlyer(false);
@@ -845,7 +839,7 @@ export const AdminWelcomeVideoConfig: React.FC<AdminWelcomeVideoConfigProps> = (
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-extrabold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
                       <ImageIcon className="w-4 h-4" />
-                      Flyer / Banner em Imagem (ImgBB)
+                      Flyer / Banner em Imagem (Upload Direto / Celular)
                     </label>
                     <span className="text-[10px] text-white/50">JPG, PNG ou WEBP</span>
                   </div>
@@ -866,7 +860,7 @@ export const AdminWelcomeVideoConfig: React.FC<AdminWelcomeVideoConfigProps> = (
                       className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:brightness-110 text-black text-xs font-black flex items-center justify-center gap-2 shadow-md cursor-pointer transition disabled:opacity-50"
                     >
                       <Upload className="w-4 h-4" />
-                      {isUploadingFlyer ? 'Enviando ao ImgBB...' : 'Enviar Imagem do Flyer'}
+                      {isUploadingFlyer ? 'Processando e Enviando...' : '📷 Enviar Imagem do Flyer'}
                     </button>
 
                     {activeItem.flyerUrl && (

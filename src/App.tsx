@@ -107,6 +107,8 @@ import { AdminWelcomeVideoConfig } from './components/AdminWelcomeVideoConfig';
 import { registerServiceWorker, recordNotificationClick } from './lib/pushNotifications';
 import { AccessStatsPanel } from './components/AccessStatsPanel';
 import { recordSiteAccess } from './lib/accessTracker';
+import { uploadImageWithFallback } from './lib/imageUpload';
+
 
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -563,25 +565,10 @@ interface AppData {
   welcomeVideo?: PortalWelcomeVideoConfig;
 }
 
-// --- ImgBB Direct Upload Helpers & Components ---
-const IMGBB_API_KEY = "b84e5dcba9b322fbb2c1adde190bfe95";
-
+// --- Resilient Image Upload Helpers & Components ---
 export const uploadToImgBB = async (file: File): Promise<string> => {
-  const apiKey = (import.meta as any).env?.VITE_IMGBB_API_KEY || IMGBB_API_KEY;
-  const formData = new FormData();
-  formData.append("image", file);
-
-  const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-    method: "POST",
-    body: formData,
-  });
-
-  const data = await res.json();
-  if (data && data.success && data.data && data.data.url) {
-    return data.data.url;
-  } else {
-    throw new Error(data?.error?.message || "Erro ao fazer upload da imagem no ImgBB.");
-  }
+  const result = await uploadImageWithFallback(file);
+  return result.url;
 };
 
 function DirectFileUploadButton({ 

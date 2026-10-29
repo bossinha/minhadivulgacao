@@ -13,26 +13,17 @@ import {
   triggerLocalTestNotification,
   updatePushNotification
 } from '../lib/pushNotifications';
-
-const IMGBB_API_KEY = "b84e5dcba9b322fbb2c1adde190bfe95";
+import { uploadImageWithFallback } from '../lib/imageUpload';
 
 const uploadToImgBB = async (file: File): Promise<string> => {
-  const apiKey = (import.meta as any).env?.VITE_IMGBB_API_KEY || IMGBB_API_KEY;
-  const formData = new FormData();
-  formData.append("image", file);
-
-  const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-    method: "POST",
-    body: formData,
+  const result = await uploadImageWithFallback(file, {
+    maxWidth: 800,
+    maxHeight: 800,
+    quality: 0.8
   });
-
-  const data = await res.json();
-  if (data && data.success && data.data && (data.data.url || data.data.display_url)) {
-    return data.data.url || data.data.display_url;
-  } else {
-    throw new Error(data?.error?.message || "Erro ao fazer upload da imagem no ImgBB.");
-  }
+  return result.url;
 };
+
 
 interface AdminPushNotificationsPanelProps {
   companies?: any[];
