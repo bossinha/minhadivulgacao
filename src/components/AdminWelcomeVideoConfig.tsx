@@ -19,7 +19,8 @@ import {
   ChevronDown,
   RotateCw,
   Clock,
-  ArrowRight
+  ArrowRight,
+  ExternalLink
 } from 'lucide-react';
 import { WhatsAppIcon } from './SocialMediaIcons';
 import { PortalWelcomeVideoConfig, SponsoredItem, parseVideoSource } from './PortalWelcomeVideoModal';
@@ -295,7 +296,7 @@ export const AdminWelcomeVideoConfig: React.FC<AdminWelcomeVideoConfigProps> = (
     });
   };
 
-  // Resilient upload of flyer image for active item (ImgBB with Canvas compression fallback)
+  // Upload of flyer image strictly to ImgBB (never stores raw image in Firestore)
   const handleFlyerFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !activeItem) return;
@@ -306,35 +307,32 @@ export const AdminWelcomeVideoConfig: React.FC<AdminWelcomeVideoConfigProps> = (
     }
 
     setIsUploadingFlyer(true);
-    setFlyerUploadNotice(`Enviando flyer de "${activeItem.name || 'Patrocinador'}"...`);
+    setFlyerUploadNotice(`Enviando flyer de "${activeItem.name || 'Patrocinador'}" para o ImgBB...`);
 
     try {
       const result = await uploadImageWithFallback(file, {
-        maxWidth: 1200,
-        maxHeight: 1200,
-        quality: 0.82,
         onNotice: (msg) => setFlyerUploadNotice(msg)
       });
 
-      if (result && result.url) {
+      if (result && result.url && !result.url.startsWith('data:')) {
         handleUpdateActiveItem({
           flyerUrl: result.url,
           flyerDeleteUrl: '',
           mediaType: 'flyer'
         });
 
-        setFlyerUploadNotice('✅ Flyer carregado e salvo com sucesso!');
+        setFlyerUploadNotice('✅ Flyer enviado ao ImgBB com sucesso!');
         setTimeout(() => setFlyerUploadNotice(''), 3500);
 
         if (onSave) {
           onSave();
         }
       } else {
-        throw new Error("Não foi possível processar a imagem do flyer.");
+        throw new Error("Não foi possível enviar a imagem para o ImgBB.");
       }
     } catch (err: any) {
       console.error("Flyer upload error:", err);
-      alert(err?.message || "Falha ao processar a imagem. Tente novamente ou use outra imagem.");
+      alert(err?.message || "Falha ao enviar flyer para o ImgBB. Envie pelo site https://imgbb.com e cole o link direto.");
       setFlyerUploadNotice('');
     } finally {
       setIsUploadingFlyer(false);
@@ -839,7 +837,7 @@ export const AdminWelcomeVideoConfig: React.FC<AdminWelcomeVideoConfigProps> = (
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-extrabold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
                       <ImageIcon className="w-4 h-4" />
-                      Flyer / Banner em Imagem (Upload Direto / Celular)
+                      Flyer / Banner em Imagem (Hospedado no ImgBB)
                     </label>
                     <span className="text-[10px] text-white/50">JPG, PNG ou WEBP</span>
                   </div>
@@ -852,7 +850,7 @@ export const AdminWelcomeVideoConfig: React.FC<AdminWelcomeVideoConfigProps> = (
                     className="hidden"
                   />
 
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
                       onClick={() => flyerFileInputRef.current?.click()}
@@ -860,8 +858,19 @@ export const AdminWelcomeVideoConfig: React.FC<AdminWelcomeVideoConfigProps> = (
                       className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:brightness-110 text-black text-xs font-black flex items-center justify-center gap-2 shadow-md cursor-pointer transition disabled:opacity-50"
                     >
                       <Upload className="w-4 h-4" />
-                      {isUploadingFlyer ? 'Processando e Enviando...' : '📷 Enviar Imagem do Flyer'}
+                      {isUploadingFlyer ? 'Enviando ao ImgBB...' : 'Enviar Imagem ao ImgBB'}
                     </button>
+
+                    <a
+                      href="https://imgbb.com/upload"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="py-2.5 px-3.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 text-sky-300 hover:text-white text-xs font-bold flex items-center justify-center gap-1.5 transition no-underline cursor-pointer"
+                      title="Acessar o site do ImgBB diretamente"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Abrir ImgBB (imgbb.com)</span>
+                    </a>
 
                     {activeItem.flyerUrl && (
                       <button
@@ -885,15 +894,25 @@ export const AdminWelcomeVideoConfig: React.FC<AdminWelcomeVideoConfigProps> = (
                   {/* Campo de URL direta ou colada */}
                   <div>
                     <label className="text-[10px] text-white/60 block mb-1">
-                      Ou cole o link direto da imagem:
+                      Link direto da imagem no ImgBB (ex: https://i.ibb.co/...):
                     </label>
                     <input
                       type="text"
                       value={activeItem.flyerUrl || ''}
-                      onChange={(e) => handleUpdateActiveItem({ flyerUrl: e.target.value })}
+                      onChange={(e) => {
+                        const val = e.target.value.trim();
+                        if (val.startsWith('data:')) {
+                          alert('Por favor informe o link direto hospedado no ImgBB (https://i.ibb.co/...).');
+                          return;
+                        }
+                        handleUpdateActiveItem({ flyerUrl: val });
+                      }}
                       placeholder="https://i.ibb.co/..."
                       className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white focus:outline-none focus:border-amber-400"
                     />
+                    <span className="text-[10px] text-white/40 block mt-1">
+                      Todas as imagens dos banners ficam 100% hospedadas no ImgBB.
+                    </span>
                   </div>
                 </div>
               )}

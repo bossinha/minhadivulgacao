@@ -16,13 +16,10 @@ import {
 import { uploadImageWithFallback } from '../lib/imageUpload';
 
 const uploadToImgBB = async (file: File): Promise<string> => {
-  const result = await uploadImageWithFallback(file, {
-    maxWidth: 800,
-    maxHeight: 800,
-    quality: 0.8
-  });
+  const result = await uploadImageWithFallback(file);
   return result.url;
 };
+
 
 
 interface AdminPushNotificationsPanelProps {

@@ -1750,8 +1750,12 @@ function AppContent() {
           companySpeed: data.companySpeed || 200,
           totalVisits: Math.max(Number(data.totalVisits || 0), 9480),
           uploadImageHelpUrl: data.uploadImageHelpUrl || 'https://postimages.org/',
-          uploadVideoHelpUrl: data.uploadVideoHelpUrl || 'https://streamable.com/'
+          uploadVideoHelpUrl: data.uploadVideoHelpUrl || 'https://streamable.com/',
+          imgbbApiKey: data.imgbbApiKey || localStorage.getItem('portal_imgbb_api_key') || 'b84e5dcba9b322fbb2c1adde190bfe95'
         });
+        if (data.imgbbApiKey) {
+          try { localStorage.setItem('portal_imgbb_api_key', data.imgbbApiKey); } catch (e) {}
+        }
       }
     }, (error) => {
       console.warn("Config listener notice (wait for login if needed):", error.message);
@@ -3333,15 +3337,29 @@ function AppContent() {
                 />
               </div>
               <div className="dev-form-group">
-                <label>Serviço de Upload de Imagens (ImgBB Integrado 📷)</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label>Chave da API do ImgBB (Hospedagem Exclusiva no ImgBB 📷)</label>
+                  <a 
+                    href="https://api.imgbb.com/" 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    style={{ fontSize: '10px', color: '#38bdf8', textDecoration: 'underline' }}
+                  >
+                    Obter Chave no ImgBB ↗
+                  </a>
+                </div>
                 <input 
                   type="text" 
                   className="dev-input" 
-                  placeholder="API Key ImgBB ativa"
-                  value="ImgBB API (Upload direto do Celular Ativo)" 
-                  disabled
+                  placeholder="Ex: b84e5dcba9b322fbb2c1adde190bfe95"
+                  value={universalConfig.imgbbApiKey !== undefined ? universalConfig.imgbbApiKey : (localStorage.getItem('portal_imgbb_api_key') || 'b84e5dcba9b322fbb2c1adde190bfe95')} 
+                  onChange={e => {
+                    const newKey = e.target.value.trim();
+                    setUniversalConfig({ ...universalConfig, imgbbApiKey: newKey });
+                    try { localStorage.setItem('portal_imgbb_api_key', newKey); } catch (err) {}
+                  }}
                 />
-                <small style={{ color: '#25D366' }}>✓ Upload direto ativado! Os usuários e anunciantes já podem selecionar fotos diretamente do celular.</small>
+                <small style={{ color: '#25D366' }}>✓ Todas as fotos e banners ficam armazenados exclusivamente nos servidores do ImgBB (sem ocupar espaço no Firebase Firestore).</small>
               </div>
               <div className="dev-form-group">
                 <label>Link Externo para Hospedar Vídeos (Ícone Vídeo 🎥)</label>
